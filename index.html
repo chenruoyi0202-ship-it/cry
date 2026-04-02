@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>02680 创陞控股 - 止盈方案 · 路线图</title>
+    <title>02680 创陞控股 - 止盈计算推演</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            background: #1a1a2e;
+            background: #12131a;
             color: #e0e0e0;
             min-height: 100vh;
             display: flex;
@@ -19,7 +19,7 @@
 
         .card {
             width: 100%;
-            max-width: 420px;
+            max-width: 460px;
             background: linear-gradient(180deg, #1e2230 0%, #181c28 100%);
             border-radius: 20px;
             padding: 28px 22px 24px;
@@ -39,267 +39,305 @@
             border-radius: 20px;
             margin: 0 auto 14px;
         }
-
         .badge::before {
             content: '';
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             background: #ffa000;
             border-radius: 50%;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 22px;
-        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: 2px; }
+        .header .sub { font-size: 13px; color: #6b7394; }
 
-        .header h1 {
-            font-size: 26px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 6px;
-            letter-spacing: 2px;
-        }
-
-        .header .sub {
-            font-size: 13px;
-            color: #6b7394;
-        }
-
-        /* Chart */
-        .chart-container {
-            background: #1a1e2c;
-            border-radius: 14px;
-            padding: 16px 12px 12px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .chart-svg {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .chart-phases {
+        /* Real-time price */
+        .realtime-bar {
             display: flex;
-            justify-content: space-around;
-            font-size: 11px;
-            color: #4a5070;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255,255,255,0.04);
-            margin-top: 4px;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(79,195,247,0.06);
+            border: 1px solid rgba(79,195,247,0.15);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .realtime-bar:hover { border-color: rgba(79,195,247,0.35); }
+        .realtime-bar .rt-left { display: flex; align-items: center; gap: 10px; }
+        .rt-dot {
+            width: 8px; height: 8px;
+            background: #4fc3f7;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .rt-label { font-size: 12px; color: #6b7394; }
+        .rt-price { font-size: 22px; font-weight: 700; color: #4fc3f7; }
+        .rt-change { font-size: 13px; font-weight: 600; margin-left: 8px; }
+        .rt-change.up { color: #4caf50; }
+        .rt-change.down { color: #f44336; }
+        .rt-time { font-size: 11px; color: #4a5070; }
+
+        /* Section titles */
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8892b0;
+            margin-bottom: 12px;
+            padding-left: 10px;
+            border-left: 3px solid #7b61ff;
         }
 
-        /* Batch Cards */
-        .batches {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
+        /* Input Groups */
+        .input-group {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 16px;
             margin-bottom: 16px;
         }
 
-        .batch {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px;
-            padding: 14px 10px;
-            text-align: center;
-            transition: border-color 0.3s;
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
         }
+        .form-row:last-child { margin-bottom: 0; }
+        .form-row.three-col { grid-template-columns: 1fr 1fr 1fr; }
 
-        .batch:hover {
-            border-color: rgba(255,255,255,0.15);
+        .field { display: flex; flex-direction: column; gap: 4px; }
+        .field label {
+            font-size: 11px;
+            color: #4a5070;
+            font-weight: 500;
         }
-
-        .batch-label {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 12px;
-            border-radius: 10px;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-
-        .batch:nth-child(1) .batch-label { background: rgba(79,195,247,0.15); color: #4fc3f7; }
-        .batch:nth-child(2) .batch-label { background: rgba(129,199,132,0.15); color: #81c784; }
-        .batch:nth-child(3) .batch-label { background: rgba(255,183,77,0.15); color: #ffb74d; }
-
-        .batch-price {
-            font-size: 30px;
-            font-weight: 700;
+        .field input {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
             color: #fff;
-            line-height: 1.2;
-        }
-
-        .batch-shares {
-            font-size: 12px;
-            color: #6b7394;
-            margin: 4px 0;
-        }
-
-        .batch-profit {
             font-size: 15px;
             font-weight: 600;
-            color: #4caf50;
+            outline: none;
+            transition: border-color 0.2s;
+            width: 100%;
         }
+        .field input:focus { border-color: #7b61ff; }
+        .field input::placeholder { color: #3a3f55; font-weight: 400; }
 
-        /* Summary */
-        .summary {
-            background: linear-gradient(135deg, rgba(76,175,80,0.08), rgba(76,175,80,0.02));
+        /* Reduction records */
+        .records-list { margin-top: 8px; }
+
+        .record-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .record-item .rec-info { flex: 1; }
+        .record-item .rec-info span { color: #6b7394; }
+        .record-item .rec-price { color: #4caf50; font-weight: 600; margin-right: 6px; }
+        .record-item .rec-shares { color: #ffb74d; font-weight: 600; margin-right: 6px; }
+        .record-item .rec-profit { font-weight: 700; margin-right: 12px; }
+        .record-item .rec-profit.pos { color: #4caf50; }
+        .record-item .rec-profit.neg { color: #f44336; }
+
+        .record-item .rec-del {
+            background: rgba(244,67,54,0.15);
+            border: none;
+            color: #f44336;
+            width: 24px; height: 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .record-item .rec-del:hover { background: rgba(244,67,54,0.3); }
+
+        .record-tag {
+            display: inline-block;
+            font-size: 10px;
+            padding: 1px 8px;
+            border-radius: 6px;
+            margin-right: 8px;
+            font-weight: 600;
+        }
+        .tag-done { background: rgba(76,175,80,0.15); color: #4caf50; }
+        .tag-plan { background: rgba(255,183,77,0.15); color: #ffb74d; }
+
+        /* Add buttons */
+        .add-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px dashed rgba(255,255,255,0.15);
+            background: transparent;
+            color: #8892b0;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .btn-primary {
+            border: none;
+            background: linear-gradient(135deg, #7b61ff, #6c5ce7);
+            color: #fff;
+            font-weight: 600;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+
+        /* Add form (hidden by default) */
+        .add-form {
+            display: none;
+            margin-top: 10px;
+            padding: 14px;
+            background: rgba(123,97,255,0.06);
+            border: 1px solid rgba(123,97,255,0.2);
+            border-radius: 12px;
+        }
+        .add-form.active { display: block; }
+        .add-form .form-row { margin-bottom: 10px; }
+        .add-form-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .add-form-actions .btn { padding: 8px; }
+
+        /* Results */
+        .results {
+            background: linear-gradient(135deg, rgba(76,175,80,0.06), rgba(76,175,80,0.02));
             border: 1px solid rgba(76,175,80,0.15);
             border-radius: 14px;
-            padding: 18px 20px;
-            margin-bottom: 14px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .results.loss {
+            background: linear-gradient(135deg, rgba(244,67,54,0.06), rgba(244,67,54,0.02));
+            border-color: rgba(244,67,54,0.15);
+        }
+
+        .result-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .summary-left .label {
-            font-size: 12px;
-            color: #6b7394;
-            margin-bottom: 4px;
-        }
-
-        .summary-left .total-profit {
-            font-size: 36px;
-            font-weight: 700;
-            color: #4caf50;
-        }
-
-        .summary-left .total-profit span {
-            font-size: 20px;
-        }
-
-        .summary-right {
-            text-align: right;
+            padding: 6px 0;
             font-size: 13px;
             color: #6b7394;
-            line-height: 1.8;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
         }
+        .result-row:last-child { border-bottom: none; }
+        .result-row .rv { color: #c0c8e0; font-weight: 600; }
 
-        .summary-right .rate {
-            font-size: 22px;
-            font-weight: 700;
-            color: #4caf50;
+        .result-big {
+            text-align: center;
+            padding: 16px 0 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 12px;
         }
+        .result-big .rb-label { font-size: 12px; color: #6b7394; margin-bottom: 4px; }
+        .result-big .rb-value { font-size: 38px; font-weight: 700; }
+        .result-big .rb-value.pos { color: #4caf50; }
+        .result-big .rb-value.neg { color: #f44336; }
+        .result-big .rb-value span { font-size: 20px; }
+        .result-big .rb-rate { font-size: 18px; font-weight: 600; margin-top: 4px; }
+        .result-big .rb-rate.pos { color: #4caf50; }
+        .result-big .rb-rate.neg { color: #f44336; }
 
-        /* Stop Loss */
-        .stoploss {
-            background: rgba(244,67,54,0.06);
-            border: 1px solid rgba(244,67,54,0.18);
-            border-radius: 14px;
-            padding: 14px 18px;
+        /* Position Bar */
+        .pos-bar-container { margin: 16px 0 8px; }
+        .pos-bar-label {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            font-size: 11px;
+            color: #4a5070;
+            margin-bottom: 6px;
         }
+        .pos-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+        }
+        .pos-bar .bar-sold {
+            background: linear-gradient(90deg, #4caf50, #66bb6a);
+            height: 100%;
+            transition: width 0.5s;
+        }
+        .pos-bar .bar-plan {
+            background: linear-gradient(90deg, #ffb74d, #ffa726);
+            height: 100%;
+            transition: width 0.5s;
+        }
+        .pos-bar .bar-hold {
+            background: linear-gradient(90deg, #4fc3f7, #29b6f6);
+            height: 100%;
+            transition: width 0.5s;
+        }
+        .pos-legend {
+            display: flex;
+            gap: 14px;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #6b7394;
+        }
+        .pos-legend i {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 2px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .leg-sold { background: #4caf50; }
+        .leg-plan { background: #ffb74d; }
+        .leg-hold { background: #4fc3f7; }
 
-        .stoploss-left {
+        /* Batches visual */
+        .batches-visual {
+            margin-top: 16px;
+        }
+        .bv-item {
             display: flex;
             align-items: center;
             gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
         }
-
-        .stoploss-icon {
-            width: 32px;
-            height: 32px;
-            background: rgba(244,67,54,0.2);
+        .bv-item:last-child { border-bottom: none; }
+        .bv-num {
+            width: 24px; height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .stoploss-icon::after {
-            content: '';
-            width: 14px;
-            height: 14px;
-            background: #f44336;
-            border-radius: 50%;
-        }
-
-        .stoploss-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #f44336;
-        }
-
-        .stoploss-desc {
             font-size: 11px;
-            color: #6b7394;
-        }
-
-        .stoploss-price {
-            font-size: 32px;
             font-weight: 700;
-            color: #f44336;
+            flex-shrink: 0;
         }
-
-        /* Advanced */
-        .advanced {
-            background: rgba(255,183,77,0.05);
-            border: 1px dashed rgba(255,183,77,0.25);
-            border-radius: 14px;
-            padding: 16px 18px;
-            margin-bottom: 18px;
-        }
-
-        .advanced-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #ffb74d;
-            margin-bottom: 8px;
-        }
-
-        .advanced-title::before {
-            content: '💡';
-            margin-right: 6px;
-        }
-
-        .advanced-detail {
-            font-size: 12px;
-            color: #6b7394;
-            line-height: 1.7;
-        }
-
-        .advanced-detail strong {
-            color: #b0b8d0;
-        }
-
-        /* Bottom Info */
-        .info-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 18px;
-        }
-
-        .info-item {
-            text-align: center;
-            padding: 10px 6px;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 10px;
-            background: rgba(255,255,255,0.02);
-        }
-
-        .info-item .info-label {
-            font-size: 10px;
-            color: #4a5070;
-            margin-bottom: 4px;
-        }
-
-        .info-item .info-value {
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .info-item:nth-child(3) .info-value { color: #f44336; }
-        .info-item:nth-child(4) .info-value { color: #4fc3f7; }
+        .bv-done .bv-num { background: rgba(76,175,80,0.2); color: #4caf50; }
+        .bv-plan .bv-num { background: rgba(255,183,77,0.2); color: #ffb74d; }
+        .bv-info { flex: 1; font-size: 13px; color: #8892b0; }
+        .bv-info strong { color: #c0c8e0; }
+        .bv-profit { font-size: 14px; font-weight: 700; }
+        .bv-profit.pos { color: #4caf50; }
+        .bv-profit.neg { color: #f44336; }
 
         /* Disclaimer */
         .disclaimer {
@@ -307,19 +345,21 @@
             font-size: 11px;
             color: #3e4460;
             line-height: 1.7;
-            padding-top: 8px;
+            padding-top: 16px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.04);
         }
 
-        /* Annotations on chart */
-        .annotation {
-            font-size: 10px;
-            font-weight: 600;
-            fill: #fff;
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #4a5070;
+            font-size: 13px;
         }
 
-        .annotation-bg {
-            rx: 4;
-            ry: 4;
+        @media (max-width: 400px) {
+            .form-row.three-col { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -328,171 +368,441 @@
         <!-- Header -->
         <div class="header">
             <div class="badge">02680 · 创陞控股</div>
-            <h1>止盈方案 · 路线图</h1>
-            <p class="sub">目标利润 23 万 · 分三批执行 · 2026.03.27</p>
+            <h1>止盈计算推演</h1>
+            <p class="sub">输入持仓与减仓计划，计算最终盈利</p>
         </div>
 
-        <!-- Chart -->
-        <div class="chart-container">
-            <svg class="chart-svg" viewBox="0 0 380 200" xmlns="http://www.w3.org/2000/svg">
-                <!-- Grid lines -->
-                <line x1="30" y1="20" x2="370" y2="20" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
-                <line x1="30" y1="50" x2="370" y2="50" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
-                <line x1="30" y1="80" x2="370" y2="80" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
-                <line x1="30" y1="110" x2="370" y2="110" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
-                <line x1="30" y1="140" x2="370" y2="140" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
-                <line x1="30" y1="170" x2="370" y2="170" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
-
-                <!-- Y-axis labels -->
-                <text x="24" y="24" fill="#4a5070" font-size="9" text-anchor="end">18</text>
-                <text x="24" y="54" fill="#4a5070" font-size="9" text-anchor="end">17</text>
-                <text x="24" y="84" fill="#4a5070" font-size="9" text-anchor="end">16</text>
-                <text x="24" y="114" fill="#4a5070" font-size="9" text-anchor="end">15</text>
-                <text x="24" y="144" fill="#4a5070" font-size="9" text-anchor="end">14</text>
-                <text x="24" y="174" fill="#4a5070" font-size="9" text-anchor="end">13</text>
-
-                <!-- Cost / Stop-loss line -->
-                <line x1="30" y1="185" x2="370" y2="185" stroke="#f44336" stroke-width="1" stroke-dasharray="6,4" opacity="0.6"/>
-                <text x="372" y="183" fill="#4a5070" font-size="8" text-anchor="start">成本</text>
-                <text x="372" y="192" fill="#f44336" font-size="8" text-anchor="start">止损</text>
-
-                <!-- Price line - gradient fill under -->
-                <defs>
-                    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stop-color="#4fc3f7"/>
-                        <stop offset="100%" stop-color="#4fc3f7"/>
-                    </linearGradient>
-                    <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="rgba(79,195,247,0.15)"/>
-                        <stop offset="100%" stop-color="rgba(79,195,247,0)"/>
-                    </linearGradient>
-                </defs>
-
-                <!-- Area fill -->
-                <path d="M40,178 L65,175 L90,170 L110,172 L130,168 L145,160 L160,155
-                         L180,148 L195,145 L205,140 L215,135 L225,110 L240,105
-                         L250,95 L260,80 L270,70 L280,65 L295,50 L310,42
-                         L325,35 L340,28 L355,18 L355,200 L40,200 Z"
-                      fill="url(#fillGrad)"/>
-
-                <!-- Main price line -->
-                <path d="M40,178 L65,175 L90,170 L110,172 L130,168 L145,160 L160,155
-                         L180,148 L195,145 L205,140 L215,135 L225,110 L240,105
-                         L250,95 L260,80 L270,70 L280,65 L295,50 L310,42
-                         L325,35 L340,28 L355,18"
-                      fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-
-                <!-- Buy point -->
-                <circle cx="40" cy="178" r="5" fill="#ffa000" stroke="#1a1e2c" stroke-width="2"/>
-                <text x="50" y="190" fill="#ffa000" font-size="9" font-weight="600">买入 11.50</text>
-
-                <!-- Batch 1 annotation: 14.8 -->
-                <rect x="195" y="128" width="78" height="18" rx="4" fill="rgba(79,195,247,0.25)"/>
-                <text x="234" y="141" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">第一批 @ 14.8</text>
-                <circle cx="225" cy="110" r="4" fill="#4fc3f7" stroke="#1a1e2c" stroke-width="2"/>
-
-                <!-- Batch 2 annotation: 16 -->
-                <rect x="240" y="68" width="68" height="18" rx="4" fill="rgba(129,199,132,0.3)"/>
-                <text x="274" y="81" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">第二批 @ 16</text>
-                <circle cx="270" cy="70" r="4" fill="#81c784" stroke="#1a1e2c" stroke-width="2"/>
-
-                <!-- Batch 3 annotation: 16.5 -->
-                <rect x="275" y="36" width="72" height="18" rx="4" fill="rgba(255,183,77,0.3)"/>
-                <text x="311" y="49" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">第三批 @ 16.5</text>
-                <circle cx="310" cy="42" r="4" fill="#ffb74d" stroke="#1a1e2c" stroke-width="2"/>
-
-                <!-- End annotation -->
-                <text x="348" y="14" fill="#4caf50" font-size="8" font-weight="600">📌 留尾博更高</text>
-            </svg>
-
-            <div class="chart-phases">
-                <span>洗盘期</span>
-                <span>筑底期</span>
-                <span>突破期</span>
-                <span>主升浪</span>
-                <span>进阶区</span>
-            </div>
-        </div>
-
-        <!-- 3 Batch Cards -->
-        <div class="batches">
-            <div class="batch">
-                <div class="batch-label">第一批</div>
-                <div class="batch-price">14.8</div>
-                <div class="batch-shares">卖 1.5万股</div>
-                <div class="batch-profit">+4.95万</div>
-            </div>
-            <div class="batch">
-                <div class="batch-label">第二批</div>
-                <div class="batch-price">16</div>
-                <div class="batch-shares">卖 2.0万股</div>
-                <div class="batch-profit">+9.00万</div>
-            </div>
-            <div class="batch">
-                <div class="batch-label">第三批</div>
-                <div class="batch-price">16.5</div>
-                <div class="batch-shares">卖 2.1万股</div>
-                <div class="batch-profit">+10.50万</div>
-            </div>
-        </div>
-
-        <!-- Summary -->
-        <div class="summary">
-            <div class="summary-left">
-                <div class="label">预计总利润</div>
-                <div class="total-profit">+24.45 <span>万</span></div>
-            </div>
-            <div class="summary-right">
-                <div>收益率 <span class="rate">37.9%</span></div>
-                <div>均价 15.87 · 回款 88.85万</div>
-            </div>
-        </div>
-
-        <!-- Stop Loss -->
-        <div class="stoploss">
-            <div class="stoploss-left">
-                <div class="stoploss-icon"></div>
+        <!-- Real-time Price -->
+        <div class="realtime-bar" onclick="fetchPrice()" title="点击刷新">
+            <div class="rt-left">
+                <div class="rt-dot" id="rtDot"></div>
                 <div>
-                    <div class="stoploss-title">止损线 · 跌破全清</div>
-                    <div class="stoploss-desc">最大亏损 ≈ 2.8 万</div>
+                    <div class="rt-label">实时股价 (HKD)</div>
+                    <div style="display:flex;align-items:baseline;">
+                        <span class="rt-price" id="rtPrice">--</span>
+                        <span class="rt-change" id="rtChange"></span>
+                    </div>
                 </div>
             </div>
-            <div class="stoploss-price">11.00</div>
+            <div class="rt-time" id="rtTime">点击获取报价</div>
         </div>
 
-        <!-- Advanced -->
-        <div class="advanced">
-            <div class="advanced-title">进阶：第三批留 1 万股零成本仓博 18-20</div>
-            <div class="advanced-detail">
-                到18清仓 → 总利润 <strong>25.95万</strong> ｜ 到20清仓 → 总利润 <strong>27.95万</strong>
+        <!-- 1. Position Input -->
+        <div class="section-title">持仓信息</div>
+        <div class="input-group">
+            <div class="form-row">
+                <div class="field">
+                    <label>买入均价 (HKD)</label>
+                    <input type="number" step="0.001" id="costPrice" placeholder="例: 11.50" oninput="calculate()">
+                </div>
+                <div class="field">
+                    <label>总持仓股数</label>
+                    <input type="number" step="1" id="totalShares" placeholder="例: 56000" oninput="calculate()">
+                </div>
             </div>
         </div>
 
-        <!-- Bottom Info -->
-        <div class="info-row">
-            <div class="info-item">
-                <div class="info-label">交割日</div>
-                <div class="info-value">3/30</div>
+        <!-- 2. Reduction Records -->
+        <div class="section-title">减仓记录 & 计划</div>
+        <div class="input-group">
+            <div class="records-list" id="recordsList">
+                <div class="empty-state" id="emptyState">暂无减仓记录，点击下方按钮添加</div>
             </div>
-            <div class="info-item">
-                <div class="info-label">观察截止</div>
-                <div class="info-value">4/15</div>
+
+            <!-- Add form -->
+            <div class="add-form" id="addForm">
+                <div class="form-row three-col">
+                    <div class="field">
+                        <label>卖出价格 (HKD)</label>
+                        <input type="number" step="0.001" id="addPrice" placeholder="价格">
+                    </div>
+                    <div class="field">
+                        <label>卖出股数</label>
+                        <input type="number" step="1" id="addShares" placeholder="股数">
+                    </div>
+                    <div class="field">
+                        <label>类型</label>
+                        <select id="addType" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
+                            <option value="done" style="background:#1e2230;">已卖出</option>
+                            <option value="plan" style="background:#1e2230;">计划卖出</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="add-form-actions">
+                    <button class="btn" onclick="hideAddForm()">取消</button>
+                    <button class="btn btn-primary" onclick="addRecord()">确认添加</button>
+                </div>
             </div>
-            <div class="info-item">
-                <div class="info-label">第一阻力</div>
-                <div class="info-value">14.80</div>
+
+            <div class="add-row">
+                <button class="btn" onclick="showAddForm()">+ 添加减仓记录</button>
+                <button class="btn" onclick="useCurrentPrice()">用实时价添加</button>
             </div>
-            <div class="info-item">
-                <div class="info-label">前高</div>
-                <div class="info-value">16.50</div>
+        </div>
+
+        <!-- 3. Results -->
+        <div class="section-title">推演结果</div>
+        <div id="resultsArea">
+            <div class="input-group">
+                <div class="empty-state">请先输入持仓信息和减仓记录</div>
             </div>
         </div>
 
         <!-- Disclaimer -->
         <div class="disclaimer">
-            本方案仅为个人分析参考，不构成投资建议<br>
-            市场有风险 · 严守纪律，不贪不惧 · 2026.03.27
+            本工具仅为个人计算参考，不构成投资建议<br>
+            市场有风险 · 严守纪律，不贪不惧
         </div>
     </div>
+
+    <script>
+        // --- State ---
+        let records = [];
+        let currentRtPrice = null;
+
+        // --- Real-time Price ---
+        async function fetchPrice() {
+            const dot = document.getElementById('rtDot');
+            const priceEl = document.getElementById('rtPrice');
+            const changeEl = document.getElementById('rtChange');
+            const timeEl = document.getElementById('rtTime');
+
+            dot.style.background = '#ffb74d';
+            timeEl.textContent = '获取中...';
+
+            // Try multiple CORS proxy + Yahoo Finance approaches
+            const symbol = '2680.HK';
+            const apis = [
+                {
+                    url: `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`)}`,
+                    parse: (data) => {
+                        const meta = data.chart.result[0].meta;
+                        return {
+                            price: meta.regularMarketPrice,
+                            prevClose: meta.chartPreviousClose || meta.previousClose
+                        };
+                    }
+                },
+                {
+                    url: `https://corsproxy.io/?${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`)}`,
+                    parse: (data) => {
+                        const meta = data.chart.result[0].meta;
+                        return {
+                            price: meta.regularMarketPrice,
+                            prevClose: meta.chartPreviousClose || meta.previousClose
+                        };
+                    }
+                },
+                {
+                    url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`)}`,
+                    parse: (data) => {
+                        const meta = data.chart.result[0].meta;
+                        return {
+                            price: meta.regularMarketPrice,
+                            prevClose: meta.chartPreviousClose || meta.previousClose
+                        };
+                    }
+                }
+            ];
+
+            let success = false;
+            for (const api of apis) {
+                try {
+                    const resp = await fetch(api.url, { signal: AbortSignal.timeout(8000) });
+                    if (!resp.ok) continue;
+                    const data = await resp.json();
+                    const result = api.parse(data);
+
+                    if (result.price) {
+                        currentRtPrice = result.price;
+                        priceEl.textContent = result.price.toFixed(3);
+
+                        if (result.prevClose) {
+                            const chg = result.price - result.prevClose;
+                            const chgPct = (chg / result.prevClose * 100);
+                            const sign = chg >= 0 ? '+' : '';
+                            changeEl.textContent = `${sign}${chg.toFixed(3)} (${sign}${chgPct.toFixed(2)}%)`;
+                            changeEl.className = 'rt-change ' + (chg >= 0 ? 'up' : 'down');
+                        }
+
+                        dot.style.background = '#4caf50';
+                        timeEl.textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN');
+                        success = true;
+                        calculate();
+                        break;
+                    }
+                } catch (e) { continue; }
+            }
+
+            if (!success) {
+                dot.style.background = '#f44336';
+                timeEl.textContent = '获取失败，可手动输入价格';
+                // Allow manual input
+                const val = prompt('无法自动获取报价，请手动输入当前股价 (HKD):');
+                if (val && !isNaN(parseFloat(val))) {
+                    currentRtPrice = parseFloat(val);
+                    priceEl.textContent = currentRtPrice.toFixed(3);
+                    changeEl.textContent = '';
+                    dot.style.background = '#ffb74d';
+                    timeEl.textContent = '手动输入 · ' + new Date().toLocaleTimeString('zh-CN');
+                    calculate();
+                }
+            }
+        }
+
+        // --- Records Management ---
+        function showAddForm() {
+            document.getElementById('addForm').classList.add('active');
+            document.getElementById('addPrice').focus();
+        }
+
+        function hideAddForm() {
+            document.getElementById('addForm').classList.remove('active');
+            document.getElementById('addPrice').value = '';
+            document.getElementById('addShares').value = '';
+        }
+
+        function useCurrentPrice() {
+            if (!currentRtPrice) {
+                alert('请先点击上方获取实时报价');
+                return;
+            }
+            showAddForm();
+            document.getElementById('addPrice').value = currentRtPrice.toFixed(3);
+            document.getElementById('addType').value = 'plan';
+            document.getElementById('addShares').focus();
+        }
+
+        function addRecord() {
+            const price = parseFloat(document.getElementById('addPrice').value);
+            const shares = parseInt(document.getElementById('addShares').value);
+            const type = document.getElementById('addType').value;
+
+            if (!price || price <= 0) { alert('请输入有效价格'); return; }
+            if (!shares || shares <= 0) { alert('请输入有效股数'); return; }
+
+            records.push({ price, shares, type, id: Date.now() });
+            hideAddForm();
+            renderRecords();
+            calculate();
+        }
+
+        function removeRecord(id) {
+            records = records.filter(r => r.id !== id);
+            renderRecords();
+            calculate();
+        }
+
+        function renderRecords() {
+            const list = document.getElementById('recordsList');
+            const empty = document.getElementById('emptyState');
+
+            if (records.length === 0) {
+                empty.style.display = 'block';
+                list.querySelectorAll('.record-item').forEach(el => el.remove());
+                return;
+            }
+
+            empty.style.display = 'none';
+            // Remove old items
+            list.querySelectorAll('.record-item').forEach(el => el.remove());
+
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+
+            records.forEach((rec, i) => {
+                const profit = costPrice > 0 ? (rec.price - costPrice) * rec.shares : 0;
+                const div = document.createElement('div');
+                div.className = 'record-item';
+                div.innerHTML = `
+                    <span class="record-tag ${rec.type === 'done' ? 'tag-done' : 'tag-plan'}">${rec.type === 'done' ? '已卖' : '计划'}</span>
+                    <span class="rec-price">${rec.price.toFixed(3)}</span>
+                    <span class="rec-shares">${rec.shares.toLocaleString()}股</span>
+                    <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) : '--'}</span>
+                    <button class="rec-del" onclick="removeRecord(${rec.id})">×</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // --- Calculate ---
+        function calculate() {
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
+            const area = document.getElementById('resultsArea');
+
+            if (costPrice <= 0 || totalShares <= 0) {
+                area.innerHTML = '<div class="input-group"><div class="empty-state">请先输入持仓信息和减仓记录</div></div>';
+                return;
+            }
+
+            // Re-render records to update profit
+            renderRecordsQuiet();
+
+            const totalCost = costPrice * totalShares;
+
+            let soldShares = 0, soldRevenue = 0;
+            let planShares = 0, planRevenue = 0;
+
+            records.forEach(r => {
+                if (r.type === 'done') {
+                    soldShares += r.shares;
+                    soldRevenue += r.price * r.shares;
+                } else {
+                    planShares += r.shares;
+                    planRevenue += r.price * r.shares;
+                }
+            });
+
+            const remainShares = totalShares - soldShares - planShares;
+            const totalRevenue = soldRevenue + planRevenue;
+            const totalProfit = totalRevenue - (soldShares + planShares) * costPrice;
+
+            // Remaining value (use realtime price if available)
+            let remainValue = 0;
+            let remainProfit = 0;
+            if (remainShares > 0 && currentRtPrice) {
+                remainValue = remainShares * currentRtPrice;
+                remainProfit = (currentRtPrice - costPrice) * remainShares;
+            }
+
+            const grandProfit = totalProfit + remainProfit;
+            const grandRevenue = totalRevenue + remainValue;
+            const profitRate = ((grandProfit) / totalCost * 100);
+
+            const isProfit = grandProfit >= 0;
+
+            // Calculate average sell price
+            const allSellShares = soldShares + planShares;
+            const avgSellPrice = allSellShares > 0 ? (soldRevenue + planRevenue) / allSellShares : 0;
+
+            area.innerHTML = `
+                <div class="results ${isProfit ? '' : 'loss'}">
+                    <div class="result-big">
+                        <div class="rb-label">预计总盈亏</div>
+                        <div class="rb-value ${isProfit ? 'pos' : 'neg'}">
+                            ${isProfit ? '+' : ''}${formatMoney(grandProfit)} <span>HKD</span>
+                        </div>
+                        <div class="rb-rate ${isProfit ? 'pos' : 'neg'}">
+                            收益率 ${isProfit ? '+' : ''}${profitRate.toFixed(2)}%
+                        </div>
+                    </div>
+
+                    <div class="result-row">
+                        <span>总成本</span>
+                        <span class="rv">${formatMoney(totalCost)} HKD</span>
+                    </div>
+                    <div class="result-row">
+                        <span>已卖出回款</span>
+                        <span class="rv">${formatMoney(soldRevenue)} HKD (${soldShares.toLocaleString()}股)</span>
+                    </div>
+                    <div class="result-row">
+                        <span>计划卖出回款</span>
+                        <span class="rv">${formatMoney(planRevenue)} HKD (${planShares.toLocaleString()}股)</span>
+                    </div>
+                    ${remainShares > 0 ? `
+                    <div class="result-row">
+                        <span>剩余持仓${currentRtPrice ? '(按实时价)' : ''}</span>
+                        <span class="rv">${remainShares.toLocaleString()}股${currentRtPrice ? ' ≈ ' + formatMoney(remainValue) + ' HKD' : ''}</span>
+                    </div>` : ''}
+                    ${allSellShares > 0 ? `
+                    <div class="result-row">
+                        <span>卖出均价</span>
+                        <span class="rv">${avgSellPrice.toFixed(3)} HKD</span>
+                    </div>` : ''}
+                    <div class="result-row">
+                        <span>预计总回款</span>
+                        <span class="rv" style="color:#fff;font-size:15px;">${formatMoney(grandRevenue)} HKD</span>
+                    </div>
+
+                    <!-- Position Bar -->
+                    <div class="pos-bar-container">
+                        <div class="pos-bar-label">
+                            <span>仓位分布</span>
+                            <span>总 ${totalShares.toLocaleString()} 股</span>
+                        </div>
+                        <div class="pos-bar">
+                            <div class="bar-sold" style="width:${totalShares > 0 ? soldShares / totalShares * 100 : 0}%"></div>
+                            <div class="bar-plan" style="width:${totalShares > 0 ? planShares / totalShares * 100 : 0}%"></div>
+                            <div class="bar-hold" style="width:${totalShares > 0 ? Math.max(0, remainShares) / totalShares * 100 : 0}%"></div>
+                        </div>
+                        <div class="pos-legend">
+                            <span><i class="leg-sold"></i>已卖 ${soldShares.toLocaleString()}</span>
+                            <span><i class="leg-plan"></i>计划 ${planShares.toLocaleString()}</span>
+                            <span><i class="leg-hold"></i>持有 ${Math.max(0, remainShares).toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    <!-- Batch Breakdown -->
+                    ${records.length > 0 ? `
+                    <div class="batches-visual">
+                        ${records.map((r, i) => {
+                            const p = (r.price - costPrice) * r.shares;
+                            return `
+                            <div class="bv-item ${r.type === 'done' ? 'bv-done' : 'bv-plan'}">
+                                <div class="bv-num">${r.type === 'done' ? '✓' : (i + 1)}</div>
+                                <div class="bv-info">
+                                    <strong>${r.price.toFixed(3)}</strong> × ${r.shares.toLocaleString()}股
+                                    = ${formatMoney(r.price * r.shares)}
+                                </div>
+                                <div class="bv-profit ${p >= 0 ? 'pos' : 'neg'}">
+                                    ${p >= 0 ? '+' : ''}${formatMoney(p)}
+                                </div>
+                            </div>`;
+                        }).join('')}
+                        ${remainShares > 0 && currentRtPrice ? `
+                        <div class="bv-item bv-plan">
+                            <div class="bv-num" style="background:rgba(79,195,247,0.2);color:#4fc3f7;">⟡</div>
+                            <div class="bv-info">
+                                剩余 <strong>${remainShares.toLocaleString()}股</strong> 按实时价 ${currentRtPrice.toFixed(3)}
+                            </div>
+                            <div class="bv-profit ${remainProfit >= 0 ? 'pos' : 'neg'}">
+                                ${remainProfit >= 0 ? '+' : ''}${formatMoney(remainProfit)}
+                            </div>
+                        </div>` : ''}
+                    </div>` : ''}
+                </div>
+            `;
+        }
+
+        function renderRecordsQuiet() {
+            const list = document.getElementById('recordsList');
+            const empty = document.getElementById('emptyState');
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+
+            if (records.length === 0) {
+                empty.style.display = 'block';
+                list.querySelectorAll('.record-item').forEach(el => el.remove());
+                return;
+            }
+            empty.style.display = 'none';
+            list.querySelectorAll('.record-item').forEach(el => el.remove());
+
+            records.forEach((rec) => {
+                const profit = costPrice > 0 ? (rec.price - costPrice) * rec.shares : 0;
+                const div = document.createElement('div');
+                div.className = 'record-item';
+                div.innerHTML = `
+                    <span class="record-tag ${rec.type === 'done' ? 'tag-done' : 'tag-plan'}">${rec.type === 'done' ? '已卖' : '计划'}</span>
+                    <span class="rec-price">${rec.price.toFixed(3)}</span>
+                    <span class="rec-shares">${rec.shares.toLocaleString()}股</span>
+                    <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) : '--'}</span>
+                    <button class="rec-del" onclick="removeRecord(${rec.id})">×</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function formatMoney(n) {
+            if (Math.abs(n) >= 10000) {
+                return (n / 10000).toFixed(2) + '万';
+            }
+            return n.toFixed(2);
+        }
+
+        // Auto-fetch price on load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPrice();
+        });
+    </script>
 </body>
 </html>
