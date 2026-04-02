@@ -3,592 +3,496 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>02680 创升控股 - 止盈路线图</title>
+    <title>02680 创陞控股 - 止盈方案 · 路线图</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 50%, #0d1117 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #1a1a2e;
             color: #e0e0e0;
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
             padding: 20px;
         }
 
-        .container {
-            max-width: 960px;
-            margin: 0 auto;
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: linear-gradient(180deg, #1e2230 0%, #181c28 100%);
+            border-radius: 20px;
+            padding: 28px 22px 24px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
         }
 
         /* Header */
-        .header {
-            text-align: center;
-            padding: 40px 20px 30px;
-            position: relative;
-        }
-
-        .stock-code {
-            display: inline-block;
-            background: linear-gradient(135deg, #f7931a, #ff6b00);
-            color: #fff;
-            padding: 6px 18px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-        }
-
-        .header h1 {
-            font-size: 36px;
-            font-weight: 700;
-            background: linear-gradient(90deg, #00d4ff, #7b61ff, #ff6b9d);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
-
-        .header .subtitle {
-            font-size: 16px;
-            color: #8892b0;
-        }
-
-        /* Current Price Card */
-        .price-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 24px 32px;
-            margin: 20px 0 36px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            backdrop-filter: blur(10px);
-        }
-
-        .price-main {
-            display: flex;
-            align-items: baseline;
-            gap: 12px;
-        }
-
-        .price-label {
-            font-size: 14px;
-            color: #8892b0;
-        }
-
-        .price-value {
-            font-size: 42px;
-            font-weight: 700;
-            color: #00e676;
-        }
-
-        .price-currency {
-            font-size: 18px;
-            color: #8892b0;
-        }
-
-        .price-meta {
-            text-align: right;
-        }
-
-        .price-meta div {
-            font-size: 13px;
-            color: #8892b0;
-            margin-bottom: 4px;
-        }
-
-        .price-meta .cost-basis {
-            color: #ffab40;
-            font-weight: 600;
-            font-size: 15px;
-        }
-
-        /* Strategy Note */
-        .strategy-note {
-            background: linear-gradient(135deg, rgba(123, 97, 255, 0.1), rgba(0, 212, 255, 0.05));
-            border: 1px solid rgba(123, 97, 255, 0.3);
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 36px;
-            font-size: 14px;
-            line-height: 1.8;
-            color: #b8c0d8;
-        }
-
-        .strategy-note strong {
-            color: #7b61ff;
-        }
-
-        /* Roadmap */
-        .roadmap-title {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            padding-left: 16px;
-            border-left: 4px solid #7b61ff;
-            color: #fff;
-        }
-
-        .roadmap {
-            position: relative;
-            padding-left: 40px;
-        }
-
-        .roadmap::before {
-            content: '';
-            position: absolute;
-            left: 15px;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: linear-gradient(to bottom, #00e676, #ffab40, #ff6b9d, #f44336);
-            border-radius: 3px;
-        }
-
-        .roadmap-item {
-            position: relative;
-            margin-bottom: 28px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 22px 26px;
-            transition: all 0.3s ease;
-        }
-
-        .roadmap-item:hover {
-            background: rgba(255, 255, 255, 0.07);
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateX(4px);
-        }
-
-        .roadmap-item::before {
-            content: '';
-            position: absolute;
-            left: -33px;
-            top: 28px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            border: 3px solid;
-            background: #0a0e27;
-        }
-
-        .roadmap-item.level-1::before { border-color: #00e676; box-shadow: 0 0 10px rgba(0, 230, 118, 0.4); }
-        .roadmap-item.level-2::before { border-color: #69f0ae; box-shadow: 0 0 10px rgba(105, 240, 174, 0.4); }
-        .roadmap-item.level-3::before { border-color: #ffab40; box-shadow: 0 0 10px rgba(255, 171, 64, 0.4); }
-        .roadmap-item.level-4::before { border-color: #ff6b9d; box-shadow: 0 0 10px rgba(255, 107, 157, 0.4); }
-        .roadmap-item.level-5::before { border-color: #f44336; box-shadow: 0 0 10px rgba(244, 67, 54, 0.4); }
-
-        .item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .item-target {
-            font-size: 26px;
-            font-weight: 700;
-        }
-
-        .level-1 .item-target { color: #00e676; }
-        .level-2 .item-target { color: #69f0ae; }
-        .level-3 .item-target { color: #ffab40; }
-        .level-4 .item-target { color: #ff6b9d; }
-        .level-5 .item-target { color: #f44336; }
-
-        .item-badge {
+        .badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 4px 14px;
-            border-radius: 20px;
+            background: rgba(255,160,0,0.15);
+            color: #ffa000;
             font-size: 13px;
             font-weight: 600;
+            padding: 5px 16px;
+            border-radius: 20px;
+            margin: 0 auto 14px;
         }
 
-        .level-1 .item-badge { background: rgba(0, 230, 118, 0.15); color: #00e676; }
-        .level-2 .item-badge { background: rgba(105, 240, 174, 0.15); color: #69f0ae; }
-        .level-3 .item-badge { background: rgba(255, 171, 64, 0.15); color: #ffab40; }
-        .level-4 .item-badge { background: rgba(255, 107, 157, 0.15); color: #ff6b9d; }
-        .level-5 .item-badge { background: rgba(244, 67, 54, 0.15); color: #f44336; }
-
-        .item-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 20px;
-            font-size: 14px;
-            color: #8892b0;
+        .badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #ffa000;
+            border-radius: 50%;
         }
 
-        .item-details dt {
-            color: #5a6380;
+        .header {
+            text-align: center;
+            margin-bottom: 22px;
         }
 
-        .item-details dd {
-            font-weight: 500;
-            color: #c0c8e0;
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+            letter-spacing: 2px;
         }
 
-        .item-action {
-            margin-top: 14px;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
+        .header .sub {
             font-size: 13px;
-            line-height: 1.7;
-            color: #8892b0;
-            border-left: 3px solid;
+            color: #6b7394;
         }
 
-        .level-1 .item-action { border-color: #00e676; }
-        .level-2 .item-action { border-color: #69f0ae; }
-        .level-3 .item-action { border-color: #ffab40; }
-        .level-4 .item-action { border-color: #ff6b9d; }
-        .level-5 .item-action { border-color: #f44336; }
+        /* Chart */
+        .chart-container {
+            background: #1a1e2c;
+            border-radius: 14px;
+            padding: 16px 12px 12px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
 
-        /* Progress Bar */
-        .progress-section {
-            margin-top: 40px;
+        .chart-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .chart-phases {
+            display: flex;
+            justify-content: space-around;
+            font-size: 11px;
+            color: #4a5070;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            margin-top: 4px;
+        }
+
+        /* Batch Cards */
+        .batches {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .batch {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 14px 10px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .batch:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .batch-label {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .batch:nth-child(1) .batch-label { background: rgba(79,195,247,0.15); color: #4fc3f7; }
+        .batch:nth-child(2) .batch-label { background: rgba(129,199,132,0.15); color: #81c784; }
+        .batch:nth-child(3) .batch-label { background: rgba(255,183,77,0.15); color: #ffb74d; }
+
+        .batch-price {
+            font-size: 30px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .batch-shares {
+            font-size: 12px;
+            color: #6b7394;
+            margin: 4px 0;
+        }
+
+        .batch-profit {
+            font-size: 15px;
+            font-weight: 600;
+            color: #4caf50;
+        }
+
+        /* Summary */
+        .summary {
+            background: linear-gradient(135deg, rgba(76,175,80,0.08), rgba(76,175,80,0.02));
+            border: 1px solid rgba(76,175,80,0.15);
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-left .label {
+            font-size: 12px;
+            color: #6b7394;
+            margin-bottom: 4px;
+        }
+
+        .summary-left .total-profit {
+            font-size: 36px;
+            font-weight: 700;
+            color: #4caf50;
+        }
+
+        .summary-left .total-profit span {
+            font-size: 20px;
+        }
+
+        .summary-right {
+            text-align: right;
+            font-size: 13px;
+            color: #6b7394;
+            line-height: 1.8;
+        }
+
+        .summary-right .rate {
+            font-size: 22px;
+            font-weight: 700;
+            color: #4caf50;
+        }
+
+        /* Stop Loss */
+        .stoploss {
+            background: rgba(244,67,54,0.06);
+            border: 1px solid rgba(244,67,54,0.18);
+            border-radius: 14px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 20px;
         }
 
-        .progress-bar-bg {
-            width: 100%;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-            margin-top: 12px;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            border-radius: 10px;
-            background: linear-gradient(90deg, #00e676, #69f0ae, #ffab40, #ff6b9d, #f44336);
-            width: 0%;
-            transition: width 1.5s ease;
-        }
-
-        .progress-markers {
+        .stoploss-left {
             display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            font-size: 11px;
-            color: #5a6380;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Summary Table */
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
+        .stoploss-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(244,67,54,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stoploss-icon::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            background: #f44336;
+            border-radius: 50%;
+        }
+
+        .stoploss-title {
             font-size: 14px;
-        }
-
-        .summary-table th {
-            text-align: left;
-            padding: 12px 16px;
-            background: rgba(123, 97, 255, 0.1);
-            color: #7b61ff;
             font-weight: 600;
-            border-bottom: 2px solid rgba(123, 97, 255, 0.3);
-        }
-
-        .summary-table td {
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            color: #b8c0d8;
-        }
-
-        .summary-table tr:hover td {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .profit-positive { color: #00e676; font-weight: 600; }
-
-        /* Disclaimer */
-        .disclaimer {
-            margin-top: 48px;
-            padding: 18px 22px;
-            background: rgba(244, 67, 54, 0.06);
-            border: 1px solid rgba(244, 67, 54, 0.15);
-            border-radius: 10px;
-            font-size: 12px;
-            line-height: 1.7;
-            color: #777;
-        }
-
-        .disclaimer strong {
             color: #f44336;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            font-size: 12px;
-            color: #3a4060;
+        .stoploss-desc {
+            font-size: 11px;
+            color: #6b7394;
         }
 
-        @media (max-width: 640px) {
-            .price-card {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .price-meta {
-                text-align: left;
-            }
-            .price-value {
-                font-size: 32px;
-            }
-            .header h1 {
-                font-size: 26px;
-            }
-            .item-details {
-                grid-template-columns: 1fr;
-            }
+        .stoploss-price {
+            font-size: 32px;
+            font-weight: 700;
+            color: #f44336;
+        }
+
+        /* Advanced */
+        .advanced {
+            background: rgba(255,183,77,0.05);
+            border: 1px dashed rgba(255,183,77,0.25);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 18px;
+        }
+
+        .advanced-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffb74d;
+            margin-bottom: 8px;
+        }
+
+        .advanced-title::before {
+            content: '💡';
+            margin-right: 6px;
+        }
+
+        .advanced-detail {
+            font-size: 12px;
+            color: #6b7394;
+            line-height: 1.7;
+        }
+
+        .advanced-detail strong {
+            color: #b0b8d0;
+        }
+
+        /* Bottom Info */
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .info-item {
+            text-align: center;
+            padding: 10px 6px;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .info-item .info-label {
+            font-size: 10px;
+            color: #4a5070;
+            margin-bottom: 4px;
+        }
+
+        .info-item .info-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .info-item:nth-child(3) .info-value { color: #f44336; }
+        .info-item:nth-child(4) .info-value { color: #4fc3f7; }
+
+        /* Disclaimer */
+        .disclaimer {
+            text-align: center;
+            font-size: 11px;
+            color: #3e4460;
+            line-height: 1.7;
+            padding-top: 8px;
+        }
+
+        /* Annotations on chart */
+        .annotation {
+            font-size: 10px;
+            font-weight: 600;
+            fill: #fff;
+        }
+
+        .annotation-bg {
+            rx: 4;
+            ry: 4;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="card">
         <!-- Header -->
         <div class="header">
-            <div class="stock-code">HK: 02680</div>
-            <h1>创升控股 止盈路线图</h1>
-            <p class="subtitle">Profit-Taking Roadmap for Chuangsheng Holdings</p>
+            <div class="badge">02680 · 创陞控股</div>
+            <h1>止盈方案 · 路线图</h1>
+            <p class="sub">目标利润 23 万 · 分三批执行 · 2026.03.27</p>
         </div>
 
-        <!-- Current Price -->
-        <div class="price-card">
-            <div>
-                <div class="price-label">参考建仓价</div>
-                <div class="price-main">
-                    <span class="price-currency">HKD</span>
-                    <span class="price-value" id="costBasis">0.060</span>
-                </div>
-            </div>
-            <div class="price-meta">
-                <div>持仓股数: <strong style="color:#fff;">500,000 股</strong></div>
-                <div>持仓成本: <strong class="cost-basis">HKD 30,000</strong></div>
-                <div>数据日期: 2026-04-02</div>
-            </div>
-        </div>
+        <!-- Chart -->
+        <div class="chart-container">
+            <svg class="chart-svg" viewBox="0 0 380 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- Grid lines -->
+                <line x1="30" y1="20" x2="370" y2="20" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
+                <line x1="30" y1="50" x2="370" y2="50" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
+                <line x1="30" y1="80" x2="370" y2="80" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
+                <line x1="30" y1="110" x2="370" y2="110" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
+                <line x1="30" y1="140" x2="370" y2="140" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
+                <line x1="30" y1="170" x2="370" y2="170" stroke="#2a2e40" stroke-width="0.5" stroke-dasharray="4,4"/>
 
-        <!-- Strategy Note -->
-        <div class="strategy-note">
-            <strong>止盈策略说明：</strong>本路线图采用<strong>分批止盈</strong>策略，随着股价上涨逐步减仓锁定利润。
-            每到达一个目标价位卖出一定比例仓位，既能锁定部分收益，又保留上涨空间。
-            剩余仓位设置移动止损保护已有利润。具体操作请根据实时行情和个人风险偏好灵活调整。
-        </div>
+                <!-- Y-axis labels -->
+                <text x="24" y="24" fill="#4a5070" font-size="9" text-anchor="end">18</text>
+                <text x="24" y="54" fill="#4a5070" font-size="9" text-anchor="end">17</text>
+                <text x="24" y="84" fill="#4a5070" font-size="9" text-anchor="end">16</text>
+                <text x="24" y="114" fill="#4a5070" font-size="9" text-anchor="end">15</text>
+                <text x="24" y="144" fill="#4a5070" font-size="9" text-anchor="end">14</text>
+                <text x="24" y="174" fill="#4a5070" font-size="9" text-anchor="end">13</text>
 
-        <!-- Roadmap -->
-        <h2 class="roadmap-title">止盈目标路线</h2>
+                <!-- Cost / Stop-loss line -->
+                <line x1="30" y1="185" x2="370" y2="185" stroke="#f44336" stroke-width="1" stroke-dasharray="6,4" opacity="0.6"/>
+                <text x="372" y="183" fill="#4a5070" font-size="8" text-anchor="start">成本</text>
+                <text x="372" y="192" fill="#f44336" font-size="8" text-anchor="start">止损</text>
 
-        <div class="roadmap">
-            <!-- Level 1 -->
-            <div class="roadmap-item level-1">
-                <div class="item-header">
-                    <span class="item-target">HKD 0.080</span>
-                    <span class="item-badge">+33% 第一目标</span>
-                </div>
-                <dl class="item-details">
-                    <dt>卖出比例</dt>
-                    <dd>20% 仓位 (100,000 股)</dd>
-                    <dt>预计回收</dt>
-                    <dd>HKD 8,000</dd>
-                    <dt>止损设置</dt>
-                    <dd>回落至 0.068 清仓剩余</dd>
-                    <dt>成本回收</dt>
-                    <dd>回收 26.7% 成本</dd>
-                </dl>
-                <div class="item-action">
-                    <strong>操作建议：</strong>初步获利了结，回收部分成本。此阶段重点是降低持仓风险，将止损上移至保本价附近。若成交量温和放大，可考虑只卖出15%。
-                </div>
-            </div>
+                <!-- Price line - gradient fill under -->
+                <defs>
+                    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#4fc3f7"/>
+                        <stop offset="100%" stop-color="#4fc3f7"/>
+                    </linearGradient>
+                    <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="rgba(79,195,247,0.15)"/>
+                        <stop offset="100%" stop-color="rgba(79,195,247,0)"/>
+                    </linearGradient>
+                </defs>
 
-            <!-- Level 2 -->
-            <div class="roadmap-item level-2">
-                <div class="item-header">
-                    <span class="item-target">HKD 0.100</span>
-                    <span class="item-badge">+67% 第二目标</span>
-                </div>
-                <dl class="item-details">
-                    <dt>卖出比例</dt>
-                    <dd>20% 仓位 (100,000 股)</dd>
-                    <dt>预计回收</dt>
-                    <dd>HKD 10,000</dd>
-                    <dt>止损设置</dt>
-                    <dd>回落至 0.085 清仓剩余</dd>
-                    <dt>累计回收</dt>
-                    <dd>HKD 18,000 (60% 成本)</dd>
-                </dl>
-                <div class="item-action">
-                    <strong>操作建议：</strong>突破心理关口 0.10，获利动力增强。继续减仓锁定利润，将剩余仓位止损上移至 0.085。累计已回收60%成本，后续持仓压力大幅降低。
-                </div>
-            </div>
+                <!-- Area fill -->
+                <path d="M40,178 L65,175 L90,170 L110,172 L130,168 L145,160 L160,155
+                         L180,148 L195,145 L205,140 L215,135 L225,110 L240,105
+                         L250,95 L260,80 L270,70 L280,65 L295,50 L310,42
+                         L325,35 L340,28 L355,18 L355,200 L40,200 Z"
+                      fill="url(#fillGrad)"/>
 
-            <!-- Level 3 -->
-            <div class="roadmap-item level-3">
-                <div class="item-header">
-                    <span class="item-target">HKD 0.130</span>
-                    <span class="item-badge">+117% 第三目标</span>
-                </div>
-                <dl class="item-details">
-                    <dt>卖出比例</dt>
-                    <dd>20% 仓位 (100,000 股)</dd>
-                    <dt>预计回收</dt>
-                    <dd>HKD 13,000</dd>
-                    <dt>止损设置</dt>
-                    <dd>回落至 0.110 清仓剩余</dd>
-                    <dt>累计回收</dt>
-                    <dd>HKD 31,000 (已回本+盈利)</dd>
-                </dl>
-                <div class="item-action">
-                    <strong>操作建议：</strong>翻倍以上获利，累计回收已超过全部成本。此后剩余 200,000 股为"零成本"仓位，可以更从容地持有。关注是否有重大利好驱动继续上行。
-                </div>
-            </div>
+                <!-- Main price line -->
+                <path d="M40,178 L65,175 L90,170 L110,172 L130,168 L145,160 L160,155
+                         L180,148 L195,145 L205,140 L215,135 L225,110 L240,105
+                         L250,95 L260,80 L270,70 L280,65 L295,50 L310,42
+                         L325,35 L340,28 L355,18"
+                      fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 
-            <!-- Level 4 -->
-            <div class="roadmap-item level-4">
-                <div class="item-header">
-                    <span class="item-target">HKD 0.180</span>
-                    <span class="item-badge">+200% 第四目标</span>
-                </div>
-                <dl class="item-details">
-                    <dt>卖出比例</dt>
-                    <dd>20% 仓位 (100,000 股)</dd>
-                    <dt>预计回收</dt>
-                    <dd>HKD 18,000</dd>
-                    <dt>止损设置</dt>
-                    <dd>回落至 0.150 清仓剩余</dd>
-                    <dt>累计回收</dt>
-                    <dd>HKD 49,000 (净赚 63%)</dd>
-                </dl>
-                <div class="item-action">
-                    <strong>操作建议：</strong>股价三倍涨幅区域，多数仙股在此区间会遭遇较大抛压。密切关注成交量变化，若出现放量滞涨信号，可考虑一次性清仓剩余。
-                </div>
-            </div>
+                <!-- Buy point -->
+                <circle cx="40" cy="178" r="5" fill="#ffa000" stroke="#1a1e2c" stroke-width="2"/>
+                <text x="50" y="190" fill="#ffa000" font-size="9" font-weight="600">买入 11.50</text>
 
-            <!-- Level 5 -->
-            <div class="roadmap-item level-5">
-                <div class="item-header">
-                    <span class="item-target">HKD 0.250+</span>
-                    <span class="item-badge">+317% 终极目标</span>
-                </div>
-                <dl class="item-details">
-                    <dt>卖出比例</dt>
-                    <dd>剩余全部 (100,000 股)</dd>
-                    <dt>预计回收</dt>
-                    <dd>HKD 25,000+</dd>
-                    <dt>触发条件</dt>
-                    <dd>重大利好 / 资产重组</dd>
-                    <dt>累计总回收</dt>
-                    <dd>HKD 74,000+ (净赚 147%+)</dd>
-                </dl>
-                <div class="item-action">
-                    <strong>操作建议：</strong>极端乐观情景。仙股达到此涨幅通常伴随重大事件驱动。无论如何，到达此价位建议全部清仓，落袋为安。切勿因贪婪而错失离场时机。
-                </div>
+                <!-- Batch 1 annotation: 14.8 -->
+                <rect x="195" y="128" width="78" height="18" rx="4" fill="rgba(79,195,247,0.25)"/>
+                <text x="234" y="141" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">第一批 @ 14.8</text>
+                <circle cx="225" cy="110" r="4" fill="#4fc3f7" stroke="#1a1e2c" stroke-width="2"/>
+
+                <!-- Batch 2 annotation: 16 -->
+                <rect x="240" y="68" width="68" height="18" rx="4" fill="rgba(129,199,132,0.3)"/>
+                <text x="274" y="81" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">第二批 @ 16</text>
+                <circle cx="270" cy="70" r="4" fill="#81c784" stroke="#1a1e2c" stroke-width="2"/>
+
+                <!-- Batch 3 annotation: 16.5 -->
+                <rect x="275" y="36" width="72" height="18" rx="4" fill="rgba(255,183,77,0.3)"/>
+                <text x="311" y="49" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">第三批 @ 16.5</text>
+                <circle cx="310" cy="42" r="4" fill="#ffb74d" stroke="#1a1e2c" stroke-width="2"/>
+
+                <!-- End annotation -->
+                <text x="348" y="14" fill="#4caf50" font-size="8" font-weight="600">📌 留尾博更高</text>
+            </svg>
+
+            <div class="chart-phases">
+                <span>洗盘期</span>
+                <span>筑底期</span>
+                <span>突破期</span>
+                <span>主升浪</span>
+                <span>进阶区</span>
             </div>
         </div>
 
-        <!-- Progress Bar -->
-        <div class="progress-section">
-            <h2 class="roadmap-title">止盈进度总览</h2>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progressBar"></div>
+        <!-- 3 Batch Cards -->
+        <div class="batches">
+            <div class="batch">
+                <div class="batch-label">第一批</div>
+                <div class="batch-price">14.8</div>
+                <div class="batch-shares">卖 1.5万股</div>
+                <div class="batch-profit">+4.95万</div>
             </div>
-            <div class="progress-markers">
-                <span>建仓 0.060</span>
-                <span>0.080</span>
-                <span>0.100</span>
-                <span>0.130</span>
-                <span>0.180</span>
-                <span>0.250+</span>
+            <div class="batch">
+                <div class="batch-label">第二批</div>
+                <div class="batch-price">16</div>
+                <div class="batch-shares">卖 2.0万股</div>
+                <div class="batch-profit">+9.00万</div>
+            </div>
+            <div class="batch">
+                <div class="batch-label">第三批</div>
+                <div class="batch-price">16.5</div>
+                <div class="batch-shares">卖 2.1万股</div>
+                <div class="batch-profit">+10.50万</div>
             </div>
         </div>
 
-        <!-- Summary Table -->
-        <h2 class="roadmap-title" style="margin-top:40px;">止盈计划汇总</h2>
-        <table class="summary-table">
-            <thead>
-                <tr>
-                    <th>目标价 (HKD)</th>
-                    <th>涨幅</th>
-                    <th>卖出股数</th>
-                    <th>预计回收</th>
-                    <th>累计净利润</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>0.080</td>
-                    <td class="profit-positive">+33%</td>
-                    <td>100,000</td>
-                    <td>HKD 8,000</td>
-                    <td>-22,000</td>
-                </tr>
-                <tr>
-                    <td>0.100</td>
-                    <td class="profit-positive">+67%</td>
-                    <td>100,000</td>
-                    <td>HKD 10,000</td>
-                    <td>-12,000</td>
-                </tr>
-                <tr>
-                    <td>0.130</td>
-                    <td class="profit-positive">+117%</td>
-                    <td>100,000</td>
-                    <td>HKD 13,000</td>
-                    <td class="profit-positive">+1,000</td>
-                </tr>
-                <tr>
-                    <td>0.180</td>
-                    <td class="profit-positive">+200%</td>
-                    <td>100,000</td>
-                    <td>HKD 18,000</td>
-                    <td class="profit-positive">+19,000</td>
-                </tr>
-                <tr>
-                    <td>0.250</td>
-                    <td class="profit-positive">+317%</td>
-                    <td>100,000</td>
-                    <td>HKD 25,000</td>
-                    <td class="profit-positive">+44,000</td>
-                </tr>
-            </tbody>
-        </table>
+        <!-- Summary -->
+        <div class="summary">
+            <div class="summary-left">
+                <div class="label">预计总利润</div>
+                <div class="total-profit">+24.45 <span>万</span></div>
+            </div>
+            <div class="summary-right">
+                <div>收益率 <span class="rate">37.9%</span></div>
+                <div>均价 15.87 · 回款 88.85万</div>
+            </div>
+        </div>
+
+        <!-- Stop Loss -->
+        <div class="stoploss">
+            <div class="stoploss-left">
+                <div class="stoploss-icon"></div>
+                <div>
+                    <div class="stoploss-title">止损线 · 跌破全清</div>
+                    <div class="stoploss-desc">最大亏损 ≈ 2.8 万</div>
+                </div>
+            </div>
+            <div class="stoploss-price">11.00</div>
+        </div>
+
+        <!-- Advanced -->
+        <div class="advanced">
+            <div class="advanced-title">进阶：第三批留 1 万股零成本仓博 18-20</div>
+            <div class="advanced-detail">
+                到18清仓 → 总利润 <strong>25.95万</strong> ｜ 到20清仓 → 总利润 <strong>27.95万</strong>
+            </div>
+        </div>
+
+        <!-- Bottom Info -->
+        <div class="info-row">
+            <div class="info-item">
+                <div class="info-label">交割日</div>
+                <div class="info-value">3/30</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">观察截止</div>
+                <div class="info-value">4/15</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">第一阻力</div>
+                <div class="info-value">14.80</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">前高</div>
+                <div class="info-value">16.50</div>
+            </div>
+        </div>
 
         <!-- Disclaimer -->
         <div class="disclaimer">
-            <strong>免责声明：</strong>本页面仅供个人投资参考，不构成任何投资建议。股票投资有风险，仙股（细价股）波动尤其剧烈，可能出现大幅亏损。
-            所有目标价位均为假设情景，实际走势可能与预期大相径庭。请根据自身风险承受能力谨慎决策，盈亏自负。
-            过往表现不代表未来收益。投资前请咨询持牌专业顾问。
-        </div>
-
-        <div class="footer">
-            02680 创升控股 止盈路线图 &middot; 仅供参考 &middot; 2026
+            本方案仅为个人分析参考，不构成投资建议<br>
+            市场有风险 · 严守纪律，不贪不惧 · 2026.03.27
         </div>
     </div>
-
-    <script>
-        // Animate progress bar on load
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                document.getElementById('progressBar').style.width = '8%';
-            }, 300);
-        });
-    </script>
 </body>
 </html>
