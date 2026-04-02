@@ -358,6 +358,51 @@
             font-size: 13px;
         }
 
+        /* Plan management */
+        .plan-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .plan-bar select {
+            flex: 1;
+            min-width: 0;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+        }
+        .plan-bar select option { background: #1e2230; }
+        .plan-btn {
+            padding: 8px 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: #8892b0;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .plan-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .plan-btn-save {
+            background: linear-gradient(135deg, #7b61ff, #6c5ce7);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+        }
+        .plan-btn-save:hover { opacity: 0.9; }
+        .plan-btn-del {
+            border-color: rgba(244,67,54,0.3);
+            color: #f44336;
+        }
+        .plan-btn-del:hover { background: rgba(244,67,54,0.15); }
+
         @media (max-width: 400px) {
             .form-row.three-col { grid-template-columns: 1fr 1fr; }
         }
@@ -370,6 +415,16 @@
             <div class="badge" id="stockBadge">止盈推演工具</div>
             <h1>止盈计算推演</h1>
             <p class="sub">输入股票代码，持仓与减仓计划，计算最终盈利</p>
+        </div>
+
+        <!-- Plan Management -->
+        <div class="section-title">方案管理</div>
+        <div class="plan-bar">
+            <select id="planSelect" onchange="loadPlan()">
+                <option value="">-- 选择已保存方案 --</option>
+            </select>
+            <button class="plan-btn plan-btn-save" onclick="savePlan()">保存</button>
+            <button class="plan-btn plan-btn-del" onclick="deletePlan()">删除</button>
         </div>
 
         <!-- Stock Info + Price -->
@@ -793,8 +848,95 @@
             return n.toFixed(2);
         }
 
-        // Focus stock input on load
+        // --- Plan Save/Load (localStorage, private to your browser) ---
+        const PLAN_STORAGE_KEY = 'cry_plans';
+
+        function getPlans() {
+            try { return JSON.parse(localStorage.getItem(PLAN_STORAGE_KEY)) || {}; }
+            catch { return {}; }
+        }
+
+        function refreshPlanSelect(selectName) {
+            const sel = document.getElementById('planSelect');
+            const plans = getPlans();
+            const names = Object.keys(plans).sort();
+            sel.innerHTML = '<option value="">-- 选择已保存方案 --</option>';
+            names.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                sel.appendChild(opt);
+            });
+            if (selectName && names.includes(selectName)) {
+                sel.value = selectName;
+            }
+        }
+
+        function savePlan() {
+            const stock = document.getElementById('stockInput').value.trim();
+            const costPrice = document.getElementById('costPrice').value;
+            const totalShares = document.getElementById('totalShares').value;
+            const manualPrice = document.getElementById('manualPrice').value;
+
+            if (!stock && !costPrice && records.length === 0) {
+                alert('当前没有数据可保存'); return;
+            }
+
+            const defaultName = stock || '未命名方案';
+            const currentSel = document.getElementById('planSelect').value;
+            const name = prompt('方案名称：', currentSel || defaultName);
+            if (!name) return;
+
+            const plans = getPlans();
+            plans[name] = {
+                stock, costPrice, totalShares, manualPrice,
+                records: records.map(r => ({ price: r.price, shares: r.shares, type: r.type })),
+                savedAt: new Date().toISOString()
+            };
+            localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+            refreshPlanSelect(name);
+            alert('方案已保存到本地浏览器');
+        }
+
+        function loadPlan() {
+            const name = document.getElementById('planSelect').value;
+            if (!name) return;
+            const plans = getPlans();
+            const plan = plans[name];
+            if (!plan) return;
+
+            document.getElementById('stockInput').value = plan.stock || '';
+            document.getElementById('costPrice').value = plan.costPrice || '';
+            document.getElementById('totalShares').value = plan.totalShares || '';
+            document.getElementById('manualPrice').value = plan.manualPrice || '';
+            updateBadge();
+
+            if (plan.manualPrice) {
+                currentRtPrice = parseFloat(plan.manualPrice);
+            } else {
+                currentRtPrice = null;
+            }
+
+            records = (plan.records || []).map((r, i) => ({
+                price: r.price, shares: r.shares, type: r.type, id: Date.now() + i
+            }));
+            renderRecords();
+            calculate();
+        }
+
+        function deletePlan() {
+            const name = document.getElementById('planSelect').value;
+            if (!name) { alert('请先选择一个方案'); return; }
+            if (!confirm(`确定删除方案「${name}」？`)) return;
+            const plans = getPlans();
+            delete plans[name];
+            localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+            refreshPlanSelect();
+        }
+
+        // Focus stock input on load, refresh plan list
         document.addEventListener('DOMContentLoaded', () => {
+            refreshPlanSelect();
             document.getElementById('stockInput').focus();
         });
     </script>
