@@ -149,6 +149,10 @@
         .record-item .rec-info span { color: #6b7394; }
         .record-item .rec-price { color: #4caf50; font-weight: 600; margin-right: 6px; }
         .record-item .rec-shares { color: #ffb74d; font-weight: 600; margin-right: 6px; }
+        .record-item .rec-pct { display: flex; gap: 4px; margin-right: 6px; }
+        .record-item .rec-pct span { font-size: 10px; font-weight: 600; padding: 1px 4px; border-radius: 4px; }
+        .record-item .rec-pct .pos { color: #4caf50; background: rgba(76,175,80,0.1); }
+        .record-item .rec-pct .neg { color: #f44336; background: rgba(244,67,54,0.1); }
         .record-item .rec-profit { font-weight: 700; margin-right: 12px; }
         .record-item .rec-profit.pos { color: #4caf50; }
         .record-item .rec-profit.neg { color: #f44336; }
@@ -683,11 +687,17 @@
 
             records.forEach((rec, i) => {
                 const profit = costPrice > 0 ? (rec.price - costPrice) * rec.shares : 0;
+                const vsCost = costPrice > 0 ? ((rec.price - costPrice) / costPrice * 100) : null;
+                const vsNow = currentRtPrice ? ((rec.price - currentRtPrice) / currentRtPrice * 100) : null;
                 const div = document.createElement('div');
                 div.className = 'record-item';
                 div.innerHTML = `
                     <span class="record-tag ${rec.type === 'done' ? 'tag-done' : 'tag-plan'}">${rec.type === 'done' ? '已卖' : '计划'}</span>
                     <span class="rec-price">${rec.price.toFixed(3)}</span>
+                    <span class="rec-pct">
+                        ${vsCost !== null ? `<span class="${vsCost >= 0 ? 'pos' : 'neg'}" title="vs 买入价">${vsCost >= 0 ? '+' : ''}${vsCost.toFixed(1)}%</span>` : ''}
+                        ${vsNow !== null ? `<span class="${vsNow >= 0 ? 'pos' : 'neg'}" title="vs 现价">${vsNow >= 0 ? '+' : ''}${vsNow.toFixed(1)}%</span>` : ''}
+                    </span>
                     <span class="rec-shares">${rec.shares.toLocaleString()}股</span>
                     <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) : '--'}</span>
                     <span class="rec-actions">
@@ -854,11 +864,17 @@
 
             records.forEach((rec) => {
                 const profit = costPrice > 0 ? (rec.price - costPrice) * rec.shares : 0;
+                const vsCost = costPrice > 0 ? ((rec.price - costPrice) / costPrice * 100) : null;
+                const vsNow = currentRtPrice ? ((rec.price - currentRtPrice) / currentRtPrice * 100) : null;
                 const div = document.createElement('div');
                 div.className = 'record-item';
                 div.innerHTML = `
                     <span class="record-tag ${rec.type === 'done' ? 'tag-done' : 'tag-plan'}">${rec.type === 'done' ? '已卖' : '计划'}</span>
                     <span class="rec-price">${rec.price.toFixed(3)}</span>
+                    <span class="rec-pct">
+                        ${vsCost !== null ? `<span class="${vsCost >= 0 ? 'pos' : 'neg'}" title="vs 买入价">${vsCost >= 0 ? '+' : ''}${vsCost.toFixed(1)}%</span>` : ''}
+                        ${vsNow !== null ? `<span class="${vsNow >= 0 ? 'pos' : 'neg'}" title="vs 现价">${vsNow >= 0 ? '+' : ''}${vsNow.toFixed(1)}%</span>` : ''}
+                    </span>
                     <span class="rec-shares">${rec.shares.toLocaleString()}股</span>
                     <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) : '--'}</span>
                     <span class="rec-actions">
