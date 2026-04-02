@@ -386,6 +386,15 @@
             </div>
             <div class="rt-time" id="rtTime">点击获取报价</div>
         </div>
+        <!-- Manual price fallback -->
+        <div id="manualPriceRow" style="display:none; margin-bottom:16px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+                <input type="number" step="0.001" id="manualPrice" placeholder="手动输入股价"
+                    style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,183,77,0.3);border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;font-weight:600;outline:none;">
+                <button onclick="applyManualPrice()" style="padding:10px 16px;background:linear-gradient(135deg,#ffb74d,#ffa000);border:none;border-radius:8px;color:#fff;font-weight:600;font-size:13px;cursor:pointer;">确认</button>
+            </div>
+            <div style="font-size:11px;color:#6b7394;margin-top:4px;">自动获取失败，请手动输入当前股价后点击确认</div>
+        </div>
 
         <!-- 1. Position Input -->
         <div class="section-title">持仓信息</div>
@@ -470,37 +479,29 @@
             dot.style.background = '#ffb74d';
             timeEl.textContent = '获取中...';
 
-            // Try multiple CORS proxy + Yahoo Finance approaches
+            // Try multiple APIs with CORS proxies
             const symbol = '2680.HK';
+            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
+            const yahooParse = (data) => {
+                const meta = data.chart.result[0].meta;
+                return { price: meta.regularMarketPrice, prevClose: meta.chartPreviousClose || meta.previousClose };
+            };
             const apis = [
+                // CORS proxy #1
+                { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
+                // CORS proxy #2
+                { url: `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
+                // CORS proxy #3
+                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
+                // CORS proxy #4 - corsproxy.org
+                { url: `https://corsproxy.org/?${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
+                // Alpha Vantage free demo (very limited but sometimes works)
                 {
-                    url: `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`)}`,
+                    url: `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=2680.HKG&apikey=demo`,
                     parse: (data) => {
-                        const meta = data.chart.result[0].meta;
-                        return {
-                            price: meta.regularMarketPrice,
-                            prevClose: meta.chartPreviousClose || meta.previousClose
-                        };
-                    }
-                },
-                {
-                    url: `https://corsproxy.io/?${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`)}`,
-                    parse: (data) => {
-                        const meta = data.chart.result[0].meta;
-                        return {
-                            price: meta.regularMarketPrice,
-                            prevClose: meta.chartPreviousClose || meta.previousClose
-                        };
-                    }
-                },
-                {
-                    url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`)}`,
-                    parse: (data) => {
-                        const meta = data.chart.result[0].meta;
-                        return {
-                            price: meta.regularMarketPrice,
-                            prevClose: meta.chartPreviousClose || meta.previousClose
-                        };
+                        const q = data['Global Quote'];
+                        if (!q || !q['05. price']) return {};
+                        return { price: parseFloat(q['05. price']), prevClose: parseFloat(q['08. previous close']) };
                     }
                 }
             ];
@@ -536,18 +537,23 @@
 
             if (!success) {
                 dot.style.background = '#f44336';
-                timeEl.textContent = '获取失败，可手动输入价格';
-                // Allow manual input
-                const val = prompt('无法自动获取报价，请手动输入当前股价 (HKD):');
-                if (val && !isNaN(parseFloat(val))) {
-                    currentRtPrice = parseFloat(val);
-                    priceEl.textContent = currentRtPrice.toFixed(3);
-                    changeEl.textContent = '';
-                    dot.style.background = '#ffb74d';
-                    timeEl.textContent = '手动输入 · ' + new Date().toLocaleTimeString('zh-CN');
-                    calculate();
-                }
+                timeEl.textContent = '获取失败，请在下方手动输入';
+                document.getElementById('manualPriceRow').style.display = 'block';
+            } else {
+                document.getElementById('manualPriceRow').style.display = 'none';
             }
+        }
+
+        function applyManualPrice() {
+            const val = parseFloat(document.getElementById('manualPrice').value);
+            if (isNaN(val) || val <= 0) { alert('请输入有效股价'); return; }
+            currentRtPrice = val;
+            document.getElementById('rtPrice').textContent = val.toFixed(3);
+            document.getElementById('rtChange').textContent = '';
+            document.getElementById('rtDot').style.background = '#ffb74d';
+            document.getElementById('rtTime').textContent = '手动输入 · ' + new Date().toLocaleTimeString('zh-CN');
+            document.getElementById('manualPriceRow').style.display = 'none';
+            calculate();
         }
 
         // --- Records Management ---
