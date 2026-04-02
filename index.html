@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>02680 创陞控股 - 止盈计算推演</title>
+    <title>止盈计算推演 - 通用港股/美股工具</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -367,24 +367,33 @@
     <div class="card">
         <!-- Header -->
         <div class="header">
-            <div class="badge">02680 · 创陞控股</div>
+            <div class="badge" id="stockBadge">止盈推演工具</div>
             <h1>止盈计算推演</h1>
-            <p class="sub">输入持仓与减仓计划，计算最终盈利</p>
+            <p class="sub">输入股票代码，持仓与减仓计划，计算最终盈利</p>
         </div>
 
-        <!-- Real-time Price -->
-        <div class="realtime-bar" onclick="fetchPrice()" title="点击刷新">
-            <div class="rt-left">
-                <div class="rt-dot" id="rtDot"></div>
-                <div>
-                    <div class="rt-label">实时股价 (HKD)</div>
-                    <div style="display:flex;align-items:baseline;">
-                        <span class="rt-price" id="rtPrice">--</span>
-                        <span class="rt-change" id="rtChange"></span>
+        <!-- Stock Search + Real-time Price -->
+        <div class="section-title">股票报价</div>
+        <div class="input-group">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+                <input type="text" id="stockInput" placeholder="输入代码，如 2680.HK / AAPL / 00700.HK"
+                    style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-weight:600;outline:none;"
+                    onkeydown="if(event.key==='Enter')fetchPrice()">
+                <button onclick="fetchPrice()" style="padding:10px 16px;background:linear-gradient(135deg,#4fc3f7,#29b6f6);border:none;border-radius:8px;color:#fff;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;">获取报价</button>
+            </div>
+            <div class="realtime-bar" onclick="fetchPrice()" title="点击刷新" style="margin-bottom:0;">
+                <div class="rt-left">
+                    <div class="rt-dot" id="rtDot"></div>
+                    <div>
+                        <div class="rt-label" id="rtLabel">实时股价</div>
+                        <div style="display:flex;align-items:baseline;">
+                            <span class="rt-price" id="rtPrice">--</span>
+                            <span class="rt-change" id="rtChange"></span>
+                        </div>
                     </div>
                 </div>
+                <div class="rt-time" id="rtTime">请输入股票代码</div>
             </div>
-            <div class="rt-time" id="rtTime">点击获取报价</div>
         </div>
         <!-- Manual price fallback -->
         <div id="manualPriceRow" style="display:none; margin-bottom:16px;">
@@ -401,7 +410,7 @@
         <div class="input-group">
             <div class="form-row">
                 <div class="field">
-                    <label>买入均价 (HKD)</label>
+                    <label>买入均价</label>
                     <input type="number" step="0.001" id="costPrice" placeholder="例: 11.50" oninput="calculate()">
                 </div>
                 <div class="field">
@@ -422,7 +431,7 @@
             <div class="add-form" id="addForm">
                 <div class="form-row three-col">
                     <div class="field">
-                        <label>卖出价格 (HKD)</label>
+                        <label>卖出价格</label>
                         <input type="number" step="0.001" id="addPrice" placeholder="价格">
                     </div>
                     <div class="field">
@@ -470,40 +479,48 @@
         let currentRtPrice = null;
 
         // --- Real-time Price ---
+        let currentSymbol = '';
+
         async function fetchPrice() {
+            const input = document.getElementById('stockInput').value.trim();
+            if (!input) { alert('请输入股票代码，如 2680.HK 或 AAPL'); return; }
+
+            // Normalize symbol: if user types "02680" or "2680", auto-append .HK
+            let symbol = input.toUpperCase();
+            if (/^\d{1,5}$/.test(symbol)) {
+                symbol = symbol.replace(/^0+/, '') + '.HK'; // 02680 → 2680.HK
+            }
+            currentSymbol = symbol;
+
             const dot = document.getElementById('rtDot');
             const priceEl = document.getElementById('rtPrice');
             const changeEl = document.getElementById('rtChange');
             const timeEl = document.getElementById('rtTime');
+            const labelEl = document.getElementById('rtLabel');
 
             dot.style.background = '#ffb74d';
             timeEl.textContent = '获取中...';
+            labelEl.textContent = `${symbol} 实时股价`;
+
+            // Update badge
+            document.getElementById('stockBadge').textContent = symbol;
 
             // Try multiple APIs with CORS proxies
-            const symbol = '2680.HK';
-            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
+            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`;
             const yahooParse = (data) => {
                 const meta = data.chart.result[0].meta;
-                return { price: meta.regularMarketPrice, prevClose: meta.chartPreviousClose || meta.previousClose };
+                return {
+                    price: meta.regularMarketPrice,
+                    prevClose: meta.chartPreviousClose || meta.previousClose,
+                    currency: meta.currency || '',
+                    name: meta.shortName || meta.symbol || symbol
+                };
             };
             const apis = [
-                // CORS proxy #1
                 { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
-                // CORS proxy #2
                 { url: `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
-                // CORS proxy #3
                 { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
-                // CORS proxy #4 - corsproxy.org
                 { url: `https://corsproxy.org/?${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
-                // Alpha Vantage free demo (very limited but sometimes works)
-                {
-                    url: `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=2680.HKG&apikey=demo`,
-                    parse: (data) => {
-                        const q = data['Global Quote'];
-                        if (!q || !q['05. price']) return {};
-                        return { price: parseFloat(q['05. price']), prevClose: parseFloat(q['08. previous close']) };
-                    }
-                }
             ];
 
             let success = false;
@@ -516,13 +533,21 @@
 
                     if (result.price) {
                         currentRtPrice = result.price;
-                        priceEl.textContent = result.price.toFixed(3);
+                        const decimals = result.price >= 10 ? 2 : 3;
+                        priceEl.textContent = result.price.toFixed(decimals);
+
+                        if (result.currency) {
+                            labelEl.textContent = `${symbol} 实时股价 (${result.currency})`;
+                        }
+                        if (result.name && result.name !== symbol) {
+                            document.getElementById('stockBadge').textContent = `${symbol} · ${result.name}`;
+                        }
 
                         if (result.prevClose) {
                             const chg = result.price - result.prevClose;
                             const chgPct = (chg / result.prevClose * 100);
                             const sign = chg >= 0 ? '+' : '';
-                            changeEl.textContent = `${sign}${chg.toFixed(3)} (${sign}${chgPct.toFixed(2)}%)`;
+                            changeEl.textContent = `${sign}${chg.toFixed(decimals)} (${sign}${chgPct.toFixed(2)}%)`;
                             changeEl.className = 'rt-change ' + (chg >= 0 ? 'up' : 'down');
                         }
 
@@ -686,7 +711,7 @@
                     <div class="result-big">
                         <div class="rb-label">预计总盈亏</div>
                         <div class="rb-value ${isProfit ? 'pos' : 'neg'}">
-                            ${isProfit ? '+' : ''}${formatMoney(grandProfit)} <span>HKD</span>
+                            ${isProfit ? '+' : ''}${formatMoney(grandProfit)} <span>${currentSymbol.includes('.HK') ? 'HKD' : 'USD'}</span>
                         </div>
                         <div class="rb-rate ${isProfit ? 'pos' : 'neg'}">
                             收益率 ${isProfit ? '+' : ''}${profitRate.toFixed(2)}%
@@ -695,29 +720,29 @@
 
                     <div class="result-row">
                         <span>总成本</span>
-                        <span class="rv">${formatMoney(totalCost)} HKD</span>
+                        <span class="rv">${formatMoney(totalCost)} ${currentSymbol.includes('.HK') ? 'HKD' : 'USD'}</span>
                     </div>
                     <div class="result-row">
                         <span>已卖出回款</span>
-                        <span class="rv">${formatMoney(soldRevenue)} HKD (${soldShares.toLocaleString()}股)</span>
+                        <span class="rv">${formatMoney(soldRevenue)} (${soldShares.toLocaleString()}股)</span>
                     </div>
                     <div class="result-row">
                         <span>计划卖出回款</span>
-                        <span class="rv">${formatMoney(planRevenue)} HKD (${planShares.toLocaleString()}股)</span>
+                        <span class="rv">${formatMoney(planRevenue)} (${planShares.toLocaleString()}股)</span>
                     </div>
                     ${remainShares > 0 ? `
                     <div class="result-row">
                         <span>剩余持仓${currentRtPrice ? '(按实时价)' : ''}</span>
-                        <span class="rv">${remainShares.toLocaleString()}股${currentRtPrice ? ' ≈ ' + formatMoney(remainValue) + ' HKD' : ''}</span>
+                        <span class="rv">${remainShares.toLocaleString()}股${currentRtPrice ? ' ≈ ' + formatMoney(remainValue) : ''}</span>
                     </div>` : ''}
                     ${allSellShares > 0 ? `
                     <div class="result-row">
                         <span>卖出均价</span>
-                        <span class="rv">${avgSellPrice.toFixed(3)} HKD</span>
+                        <span class="rv">${avgSellPrice.toFixed(3)} ${currentSymbol.includes('.HK') ? 'HKD' : 'USD'}</span>
                     </div>` : ''}
                     <div class="result-row">
                         <span>预计总回款</span>
-                        <span class="rv" style="color:#fff;font-size:15px;">${formatMoney(grandRevenue)} HKD</span>
+                        <span class="rv" style="color:#fff;font-size:15px;">${formatMoney(grandRevenue)} ${currentSymbol.includes('.HK') ? 'HKD' : 'USD'}</span>
                     </div>
 
                     <!-- Position Bar -->
@@ -805,9 +830,9 @@
             return n.toFixed(2);
         }
 
-        // Auto-fetch price on load
+        // Focus stock input on load
         document.addEventListener('DOMContentLoaded', () => {
-            fetchPrice();
+            document.getElementById('stockInput').focus();
         });
     </script>
 </body>
