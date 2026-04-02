@@ -458,6 +458,10 @@
                 </div>
             </div>
             <div id="rtStatus" style="font-size:11px;color:#4a5070;margin-top:4px;display:none;"></div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+                <div id="fxStatus" style="font-size:11px;color:#4a5070;flex:1;">汇率加载中...</div>
+                <button onclick="fetchFxRates()" style="padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#6b7394;font-size:10px;cursor:pointer;">刷新汇率</button>
+            </div>
         </div>
 
         <!-- 1. Position Input -->
@@ -533,8 +537,48 @@
         let records = [];
         let currentRtPrice = null;
 
-        // --- Currency ---
-        const FX_RATES = { HK: 0.89, US: 6.90 }; // HKD->CNY, USD->CNY (2026.04 approximate)
+        // --- Currency (real-time via Yahoo Finance) ---
+        let FX_RATES = { HK: 0.89, US: 6.90 }; // fallback defaults
+        let fxLoaded = false;
+
+        async function fetchFxRates() {
+            const pairs = [
+                { key: 'HK', symbol: 'HKDCNY=X' },
+                { key: 'US', symbol: 'USDCNY=X' }
+            ];
+            const proxies = [
+                url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+            ];
+            for (const pair of pairs) {
+                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${pair.symbol}?interval=1d&range=1d`;
+                for (const proxy of proxies) {
+                    try {
+                        const resp = await fetch(proxy(yahooUrl), { signal: AbortSignal.timeout(5000) });
+                        if (!resp.ok) continue;
+                        const data = await resp.json();
+                        const price = data.chart.result[0].meta.regularMarketPrice;
+                        if (price) { FX_RATES[pair.key] = price; fxLoaded = true; break; }
+                    } catch { continue; }
+                }
+            }
+            updateFxDisplay();
+            calculate();
+        }
+
+        function updateFxDisplay() {
+            const el = document.getElementById('fxStatus');
+            if (!el) return;
+            if (fxLoaded) {
+                el.textContent = `汇率: 1 HKD = ${FX_RATES.HK.toFixed(4)} CNY | 1 USD = ${FX_RATES.US.toFixed(4)} CNY · ${new Date().toLocaleTimeString('zh-CN')}`;
+                el.style.color = '#4caf50';
+            } else {
+                el.textContent = `汇率获取失败，使用默认值 (HKD ${FX_RATES.HK} / USD ${FX_RATES.US})`;
+                el.style.color = '#ffb74d';
+            }
+        }
+
         function getCurrency() {
             const m = document.getElementById('marketSelect').value;
             return m === 'US' ? 'USD' : 'HKD';
@@ -1009,6 +1053,7 @@
         // Focus stock input on load, refresh plan list
         document.addEventListener('DOMContentLoaded', () => {
             refreshPlanSelect();
+            fetchFxRates();
             document.getElementById('stockInput').focus();
         });
     </script>
