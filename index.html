@@ -153,10 +153,10 @@
         .record-item .rec-profit.pos { color: #4caf50; }
         .record-item .rec-profit.neg { color: #f44336; }
 
-        .record-item .rec-del {
+        .record-item .rec-actions { display: flex; gap: 4px; }
+        .record-item .rec-btn {
             background: rgba(244,67,54,0.15);
             border: none;
-            color: #f44336;
             width: 24px; height: 24px;
             border-radius: 6px;
             cursor: pointer;
@@ -166,7 +166,10 @@
             justify-content: center;
             transition: background 0.2s;
         }
+        .record-item .rec-del { color: #f44336; background: rgba(244,67,54,0.15); }
         .record-item .rec-del:hover { background: rgba(244,67,54,0.3); }
+        .record-item .rec-edit { color: #4fc3f7; background: rgba(79,195,247,0.15); }
+        .record-item .rec-edit:hover { background: rgba(79,195,247,0.3); }
 
         .record-tag {
             display: inline-block;
@@ -609,6 +612,7 @@
             document.getElementById('addForm').classList.remove('active');
             document.getElementById('addPrice').value = '';
             document.getElementById('addShares').value = '';
+            editingId = null;
         }
 
         function useCurrentPrice() {
@@ -622,6 +626,8 @@
             document.getElementById('addShares').focus();
         }
 
+        let editingId = null;
+
         function addRecord() {
             const price = parseFloat(document.getElementById('addPrice').value);
             const shares = parseInt(document.getElementById('addShares').value);
@@ -630,10 +636,27 @@
             if (!price || price <= 0) { alert('请输入有效价格'); return; }
             if (!shares || shares <= 0) { alert('请输入有效股数'); return; }
 
-            records.push({ price, shares, type, id: Date.now() });
+            if (editingId !== null) {
+                const rec = records.find(r => r.id === editingId);
+                if (rec) { rec.price = price; rec.shares = shares; rec.type = type; }
+                editingId = null;
+            } else {
+                records.push({ price, shares, type, id: Date.now() });
+            }
             hideAddForm();
             renderRecords();
             calculate();
+        }
+
+        function editRecord(id) {
+            const rec = records.find(r => r.id === id);
+            if (!rec) return;
+            editingId = id;
+            document.getElementById('addPrice').value = rec.price;
+            document.getElementById('addShares').value = rec.shares;
+            document.getElementById('addType').value = rec.type;
+            document.getElementById('addForm').classList.add('active');
+            document.getElementById('addPrice').focus();
         }
 
         function removeRecord(id) {
@@ -667,7 +690,10 @@
                     <span class="rec-price">${rec.price.toFixed(3)}</span>
                     <span class="rec-shares">${rec.shares.toLocaleString()}股</span>
                     <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) : '--'}</span>
-                    <button class="rec-del" onclick="removeRecord(${rec.id})">×</button>
+                    <span class="rec-actions">
+                        <button class="rec-btn rec-edit" onclick="editRecord(${rec.id})" title="修改">✎</button>
+                        <button class="rec-btn rec-del" onclick="removeRecord(${rec.id})" title="删除">×</button>
+                    </span>
                 `;
                 list.appendChild(div);
             });
@@ -835,7 +861,10 @@
                     <span class="rec-price">${rec.price.toFixed(3)}</span>
                     <span class="rec-shares">${rec.shares.toLocaleString()}股</span>
                     <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) : '--'}</span>
-                    <button class="rec-del" onclick="removeRecord(${rec.id})">×</button>
+                    <span class="rec-actions">
+                        <button class="rec-btn rec-edit" onclick="editRecord(${rec.id})" title="修改">✎</button>
+                        <button class="rec-btn rec-del" onclick="removeRecord(${rec.id})" title="删除">×</button>
+                    </span>
                 `;
                 list.appendChild(div);
             });
