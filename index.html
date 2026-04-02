@@ -437,10 +437,17 @@
         <!-- Stock Info + Price -->
         <div class="section-title">股票 & 当前价格</div>
         <div class="input-group">
-            <div class="form-row">
+            <div class="form-row three-col">
                 <div class="field">
                     <label>股票名称/代码</label>
-                    <input type="text" id="stockInput" placeholder="如: 02680 创陞控股" oninput="updateBadge()">
+                    <input type="text" id="stockInput" placeholder="如: 02680" oninput="updateBadge()">
+                </div>
+                <div class="field">
+                    <label>市场</label>
+                    <select id="marketSelect" onchange="calculate()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
+                        <option value="HK" style="background:#1e2230;">港股 (HKD)</option>
+                        <option value="US" style="background:#1e2230;">美股 (USD)</option>
+                    </select>
                 </div>
                 <div class="field">
                     <label>当前股价</label>
@@ -525,6 +532,21 @@
         // --- State ---
         let records = [];
         let currentRtPrice = null;
+
+        // --- Currency ---
+        const FX_RATES = { HK: 0.92, US: 7.27 }; // HKD->CNY, USD->CNY (approximate)
+        function getCurrency() {
+            const m = document.getElementById('marketSelect').value;
+            return m === 'US' ? 'USD' : 'HKD';
+        }
+        function toCNY(amount) {
+            const m = document.getElementById('marketSelect').value;
+            return amount * FX_RATES[m];
+        }
+        function fmtCNY(amount) {
+            const cny = toCNY(amount);
+            return '≈ ¥' + formatMoney(cny);
+        }
 
         // --- Price ---
         let currentSymbol = '';
@@ -760,43 +782,46 @@
             const allSellShares = soldShares + planShares;
             const avgSellPrice = allSellShares > 0 ? (soldRevenue + planRevenue) / allSellShares : 0;
 
+            const cur = getCurrency();
+
             area.innerHTML = `
                 <div class="results ${isProfit ? '' : 'loss'}">
                     <div class="result-big">
                         <div class="rb-label">预计总盈亏</div>
                         <div class="rb-value ${isProfit ? 'pos' : 'neg'}">
-                            ${isProfit ? '+' : ''}${formatMoney(grandProfit)} <span>${currentSymbol.includes('.HK') ? 'HKD' : 'USD'}</span>
+                            ${isProfit ? '+' : ''}${formatMoney(grandProfit)} <span>${cur}</span>
                         </div>
                         <div class="rb-rate ${isProfit ? 'pos' : 'neg'}">
                             收益率 ${isProfit ? '+' : ''}${profitRate.toFixed(2)}%
                         </div>
+                        <div style="font-size:14px;color:#6b7394;margin-top:4px;">${fmtCNY(grandProfit)}</div>
                     </div>
 
                     <div class="result-row">
                         <span>总成本</span>
-                        <span class="rv">${formatMoney(totalCost)} ${currentSymbol.includes('.HK') ? 'HKD' : 'USD'}</span>
+                        <span class="rv">${formatMoney(totalCost)} ${cur} <small style="color:#4a5070">${fmtCNY(totalCost)}</small></span>
                     </div>
                     <div class="result-row">
                         <span>已卖出回款</span>
-                        <span class="rv">${formatMoney(soldRevenue)} (${soldShares.toLocaleString()}股)</span>
+                        <span class="rv">${formatMoney(soldRevenue)} (${soldShares.toLocaleString()}股) <small style="color:#4a5070">${fmtCNY(soldRevenue)}</small></span>
                     </div>
                     <div class="result-row">
                         <span>计划卖出回款</span>
-                        <span class="rv">${formatMoney(planRevenue)} (${planShares.toLocaleString()}股)</span>
+                        <span class="rv">${formatMoney(planRevenue)} (${planShares.toLocaleString()}股) <small style="color:#4a5070">${fmtCNY(planRevenue)}</small></span>
                     </div>
                     ${remainShares > 0 ? `
                     <div class="result-row">
                         <span>剩余持仓${currentRtPrice ? '(按实时价)' : ''}</span>
-                        <span class="rv">${remainShares.toLocaleString()}股${currentRtPrice ? ' ≈ ' + formatMoney(remainValue) : ''}</span>
+                        <span class="rv">${remainShares.toLocaleString()}股${currentRtPrice ? ' ≈ ' + formatMoney(remainValue) + ' <small style="color:#4a5070">' + fmtCNY(remainValue) + '</small>' : ''}</span>
                     </div>` : ''}
                     ${allSellShares > 0 ? `
                     <div class="result-row">
                         <span>卖出均价</span>
-                        <span class="rv">${avgSellPrice.toFixed(3)} ${currentSymbol.includes('.HK') ? 'HKD' : 'USD'}</span>
+                        <span class="rv">${avgSellPrice.toFixed(3)} ${cur}</span>
                     </div>` : ''}
                     <div class="result-row">
                         <span>预计总回款</span>
-                        <span class="rv" style="color:#fff;font-size:15px;">${formatMoney(grandRevenue)} ${currentSymbol.includes('.HK') ? 'HKD' : 'USD'}</span>
+                        <span class="rv" style="color:#fff;font-size:15px;">${formatMoney(grandRevenue)} ${cur} <small style="color:#4a5070">${fmtCNY(grandRevenue)}</small></span>
                     </div>
 
                     <!-- Position Bar -->
@@ -932,9 +957,10 @@
             const name = prompt('方案名称：', currentSel || defaultName);
             if (!name) return;
 
+            const market = document.getElementById('marketSelect').value;
             const plans = getPlans();
             plans[name] = {
-                stock, costPrice, totalShares, manualPrice,
+                stock, costPrice, totalShares, manualPrice, market,
                 records: records.map(r => ({ price: r.price, shares: r.shares, type: r.type })),
                 savedAt: new Date().toISOString()
             };
@@ -951,6 +977,7 @@
             if (!plan) return;
 
             document.getElementById('stockInput').value = plan.stock || '';
+            document.getElementById('marketSelect').value = plan.market || 'HK';
             document.getElementById('costPrice').value = plan.costPrice || '';
             document.getElementById('totalShares').value = plan.totalShares || '';
             document.getElementById('manualPrice').value = plan.manualPrice || '';
