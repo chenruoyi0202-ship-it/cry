@@ -94,7 +94,7 @@
         .kline-container {
             position: fixed;
             inset: 0;
-            z-index: 0;
+            z-index: 2;
             pointer-events: none;
             overflow: hidden;
         }
@@ -164,8 +164,8 @@
 
         @keyframes kline-rise {
             0% { opacity: 0; transform: translateY(100vh); }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
             100% { opacity: 0; transform: translateY(-100px); }
         }
 
