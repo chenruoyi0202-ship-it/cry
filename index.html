@@ -842,21 +842,31 @@
             statusEl.textContent = `正在获取 ${symbol} 报价...`;
             statusEl.style.color = '#ffb74d';
 
-            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`;
-            const yahooParse = (data) => {
+            const yahooV8 = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`;
+            const yahooV6 = `https://query2.finance.yahoo.com/v6/finance/quote?symbols=${encodeURIComponent(symbol)}`;
+            const parseV8 = (data) => {
                 const meta = data.chart.result[0].meta;
                 return { price: meta.regularMarketPrice, prevClose: meta.chartPreviousClose || meta.previousClose };
             };
+            const parseV6 = (data) => {
+                const q = data.quoteResponse.result[0];
+                return { price: q.regularMarketPrice, prevClose: q.regularMarketPreviousClose };
+            };
+            const proxies = [
+                u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+                u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+                u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+                u => `https://corsproxy.org/?${encodeURIComponent(u)}`,
+                u => `https://thingproxy.freeboard.io/fetch/${u}`,
+            ];
             const apis = [
-                { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
-                { url: `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
-                { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
-                { url: `https://corsproxy.org/?${encodeURIComponent(yahooUrl)}`, parse: yahooParse },
+                ...proxies.map(p => ({ url: p(yahooV8), parse: parseV8 })),
+                ...proxies.map(p => ({ url: p(yahooV6), parse: parseV6 })),
             ];
 
             for (const api of apis) {
                 try {
-                    const resp = await fetch(api.url, { signal: AbortSignal.timeout(6000) });
+                    const resp = await fetch(api.url, { signal: AbortSignal.timeout(8000) });
                     if (!resp.ok) continue;
                     const data = await resp.json();
                     const result = api.parse(data);
