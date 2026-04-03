@@ -771,39 +771,6 @@
             </div>
         </div>
 
-        <!-- Auth Modal -->
-        <div class="auth-overlay" id="authOverlay">
-            <div class="auth-box">
-                <h2>云端同步设置</h2>
-                <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
-                    使用 GitHub Gist 加密存储方案数据。<br>
-                    需要一个 GitHub 个人令牌（PAT）和加密密码。
-                </p>
-                <div class="field">
-                    <label>GitHub Token</label>
-                    <input type="password" id="authToken" placeholder="ghp_xxxx（需 gist 权限）">
-                </div>
-                <div class="field">
-                    <label>加密密码</label>
-                    <input type="password" id="authPassword" placeholder="用于加密数据（牢记，无法找回）">
-                </div>
-                <div class="auth-error" id="authError"></div>
-                <div class="auth-actions">
-                    <button class="auth-btn-primary" id="authSubmitBtn" onclick="doAuth()">保存并同步</button>
-                </div>
-                <details style="margin-top:14px;font-size:11px;color:#475569">
-                    <summary style="cursor:pointer">如何获取 GitHub Token？</summary>
-                    <ol style="padding-left:18px;line-height:1.8;margin-top:8px">
-                        <li>打开 github.com → Settings → Developer settings</li>
-                        <li>Personal access tokens → Tokens (classic)</li>
-                        <li>Generate new token → 勾选 <b>gist</b> 权限</li>
-                        <li>复制生成的 token 粘贴到上方</li>
-                    </ol>
-                </details>
-                <div class="auth-close" onclick="hideAuth()">取消</div>
-            </div>
-        </div>
-
         <!-- Plan Management -->
         <div class="section-title">方案管理</div>
         <div class="plan-bar">
@@ -2001,5 +1968,37 @@
             document.getElementById('stockInput').focus();
         });
     </script>
+<!-- Auth Modal (outside .card to avoid backdrop-filter breaking fixed positioning) -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="auth-box">
+        <h2>云端同步设置</h2>
+        <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
+            使用 GitHub Gist 加密存储方案数据。<br>
+            需要一个 GitHub 个人令牌（PAT）和加密密码。
+        </p>
+        <div class="field">
+            <label>GitHub Token</label>
+            <input type="password" id="authToken" placeholder="ghp_xxxx（需 gist 权限）">
+        </div>
+        <div class="field">
+            <label>加密密码</label>
+            <input type="password" id="authPassword" placeholder="用于加密数据（牢记，无法找回）">
+        </div>
+        <div class="auth-error" id="authError"></div>
+        <div class="auth-actions">
+            <button class="auth-btn-primary" id="authSubmitBtn" onclick="doAuth()">保存并同步</button>
+        </div>
+        <details style="margin-top:14px;font-size:11px;color:#475569">
+            <summary style="cursor:pointer">如何获取 GitHub Token？</summary>
+            <ol style="padding-left:18px;line-height:1.8;margin-top:8px">
+                <li>打开 github.com → Settings → Developer settings</li>
+                <li>Personal access tokens → Tokens (classic)</li>
+                <li>Generate new token → 勾选 <b>gist</b> 权限</li>
+                <li>复制生成的 token 粘贴到上方</li>
+            </ol>
+        </details>
+        <div class="auth-close" onclick="hideAuth()">取消</div>
+    </div>
+</div>
 </body>
 </html>
