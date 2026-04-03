@@ -90,9 +90,88 @@
             50% { transform: translate(-25px, 35px); }
         }
 
+        /* Floating K-line candles */
+        .kline-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .kline {
+            position: absolute;
+            width: 6px;
+            border-radius: 1px;
+            opacity: 0;
+            animation: kline-rise linear infinite;
+        }
+        .kline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            background: inherit;
+        }
+        /* Green rising candle */
+        .kline-up {
+            background: rgba(76,175,80,0.25);
+            box-shadow: 0 0 8px rgba(76,175,80,0.1);
+        }
+        .kline-up::before {
+            background: rgba(76,175,80,0.15);
+            top: -8px; height: 8px;
+        }
+        .kline-up::after {
+            content: '';
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            width: 1px; bottom: -6px; height: 6px;
+            background: rgba(76,175,80,0.15);
+        }
+        /* Red falling candle */
+        .kline-down {
+            background: rgba(244,67,54,0.2);
+            box-shadow: 0 0 8px rgba(244,67,54,0.08);
+        }
+        .kline-down::before {
+            background: rgba(244,67,54,0.12);
+            top: -6px; height: 6px;
+        }
+        .kline-down::after {
+            content: '';
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            width: 1px; bottom: -8px; height: 8px;
+            background: rgba(244,67,54,0.12);
+        }
+        /* Gold candle */
+        .kline-gold {
+            background: rgba(202,138,4,0.2);
+            box-shadow: 0 0 10px rgba(202,138,4,0.08);
+        }
+        .kline-gold::before {
+            background: rgba(202,138,4,0.12);
+            top: -7px; height: 7px;
+        }
+        .kline-gold::after {
+            content: '';
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            width: 1px; bottom: -7px; height: 7px;
+            background: rgba(202,138,4,0.12);
+        }
+
+        @keyframes kline-rise {
+            0% { opacity: 0; transform: translateY(100vh); }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
+
         /* Respect reduced motion */
         @media (prefers-reduced-motion: reduce) {
-            .bg-orb { animation: none !important; }
+            .bg-orb, .kline { animation: none !important; opacity: 0 !important; }
         }
 
         .card {
@@ -539,6 +618,7 @@
     <div class="bg-orb bg-orb-1"></div>
     <div class="bg-orb bg-orb-2"></div>
     <div class="bg-orb bg-orb-3"></div>
+    <div class="kline-container" id="klineContainer"></div>
     <div class="card">
         <!-- Header -->
         <div class="header">
@@ -1227,6 +1307,26 @@
             refreshPlanSelect();
             fetchFxRates();
             document.getElementById('stockInput').focus();
+
+            // Spawn floating K-line candles
+            const kc = document.getElementById('klineContainer');
+            const types = ['kline-up', 'kline-down', 'kline-gold'];
+            function spawnCandle() {
+                const el = document.createElement('div');
+                const type = types[Math.floor(Math.random() * types.length)];
+                const h = 15 + Math.random() * 30;
+                const left = Math.random() * 100;
+                const dur = 12 + Math.random() * 18;
+                const delay = Math.random() * 2;
+                el.className = `kline ${type}`;
+                el.style.cssText = `left:${left}%;height:${h}px;animation-duration:${dur}s;animation-delay:${delay}s;`;
+                kc.appendChild(el);
+                el.addEventListener('animationend', () => el.remove());
+            }
+            // Initial batch
+            for (let i = 0; i < 8; i++) setTimeout(() => spawnCandle(), i * 600);
+            // Continuous spawn
+            setInterval(spawnCandle, 2500);
         });
     </script>
 </body>
