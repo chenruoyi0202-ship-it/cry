@@ -242,6 +242,67 @@
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.error { background: linear-gradient(135deg, #d9636a, #c0392b); box-shadow: 0 4px 16px rgba(217,99,106,0.3); }
 
+        /* Calendar */
+        .cal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .cal-header h2 { font-size: 17px; font-weight: 600; color: #1a2a3a; }
+        .cal-nav {
+            background: #f4f6f8; border: none; width: 36px; height: 36px;
+            border-radius: 50%; font-size: 18px; color: #5a6b7b;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .cal-nav:active { background: #e8ecf0; }
+        .cal-weekdays {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            text-align: center; font-size: 12px; color: #b0bec5;
+            font-weight: 500; margin-bottom: 8px;
+        }
+        .cal-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .cal-day {
+            aspect-ratio: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border-radius: 50%; font-size: 15px; color: #2d3748;
+            cursor: default; position: relative; transition: background 0.15s;
+        }
+        .cal-day.other-month { color: #d0d5dd; }
+        .cal-day.today {
+            background: #007aff; color: #fff; font-weight: 700;
+        }
+        .cal-day.has-migraine { cursor: pointer; font-weight: 600; }
+        .cal-day.has-migraine:active { background: rgba(67,184,156,0.1); }
+        .cal-day .cal-dot {
+            position: absolute; bottom: 4px;
+            width: 6px; height: 6px; border-radius: 50%;
+        }
+        .cal-day.today .cal-dot { bottom: 3px; }
+        .cal-day.selected {
+            background: rgba(67,184,156,0.12);
+        }
+        .cal-day.today.selected {
+            background: #007aff;
+        }
+        .cal-detail {
+            margin-top: 16px; border-top: 1px solid #eef1f5; padding-top: 14px;
+        }
+        .cal-detail-title {
+            font-size: 14px; font-weight: 600; color: #1a2a3a; margin-bottom: 10px;
+        }
+        .cal-detail-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f9fbfc; border: 1px solid #eef1f5;
+            border-radius: 12px; padding: 10px 14px; margin-bottom: 8px;
+            cursor: pointer; transition: box-shadow 0.2s;
+        }
+        .cal-detail-item:active { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .cal-detail-time { font-size: 13px; color: #5a6b7b; }
+        .cal-detail-info { font-size: 13px; color: #2d3748; font-weight: 500; }
+
         /* Sync settings info box */
         .info-box {
             background: #f0faf6; border: 1px solid #d4efe5; border-radius: 12px;
@@ -265,6 +326,7 @@
 
         <div class="tab-bar">
             <button class="tab active" onclick="switchTab('record')">记录</button>
+            <button class="tab" onclick="switchTab('calendar')">日历</button>
             <button class="tab" onclick="switchTab('history')">历史</button>
             <button class="tab" onclick="switchTab('stats')">统计</button>
             <button class="tab" onclick="switchTab('sync')">同步</button>
@@ -331,6 +393,20 @@
                 <textarea id="inputNotes" placeholder="其他信息..."></textarea>
             </div>
             <button class="btn btn-primary" onclick="addEpisode()">保存记录</button>
+        </div>
+
+        <!-- Tab: Calendar -->
+        <div class="tab-content" id="tabCalendar" style="display:none">
+            <div class="cal-header">
+                <button class="cal-nav" onclick="prevMonth()">&#8249;</button>
+                <h2 id="calTitle"></h2>
+                <button class="cal-nav" onclick="nextMonth()">&#8250;</button>
+            </div>
+            <div class="cal-weekdays">
+                <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div id="calDetail"></div>
         </div>
 
         <!-- Tab: History -->
@@ -406,8 +482,9 @@
             const tabEl = document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1));
             if (tabEl) tabEl.style.display = '';
             const tabs = document.querySelectorAll('.tab');
-            const tabMap = { record: 0, history: 1, stats: 2, sync: 3 };
+            const tabMap = { record: 0, calendar: 1, history: 2, stats: 3, sync: 4 };
             if (tabMap[name] !== undefined && tabs[tabMap[name]]) tabs[tabMap[name]].classList.add('active');
+            if (name === 'calendar') renderCalendar();
             if (name === 'history') renderHistory();
             if (name === 'stats') renderStats();
         }
@@ -610,6 +687,111 @@
             ).join('')}</div>`;
         }
 
+        // ==================== Calendar ====================
+        let calYear, calMonth, calSelectedDate = null;
+        function initCalendar() {
+            const now = new Date();
+            calYear = now.getFullYear();
+            calMonth = now.getMonth();
+        }
+        function prevMonth() {
+            calMonth--;
+            if (calMonth < 0) { calMonth = 11; calYear--; }
+            calSelectedDate = null;
+            renderCalendar();
+        }
+        function nextMonth() {
+            calMonth++;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            calSelectedDate = null;
+            renderCalendar();
+        }
+        function getRecordsByDate() {
+            const map = {};
+            records.forEach(r => {
+                const day = r.datetime.slice(0, 10);
+                if (!map[day]) map[day] = [];
+                map[day].push(r);
+            });
+            return map;
+        }
+        function renderCalendar() {
+            document.getElementById('calTitle').textContent = `${calYear}年${calMonth + 1}月`;
+            const grid = document.getElementById('calGrid');
+            const byDate = getRecordsByDate();
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            const firstDay = new Date(calYear, calMonth, 1);
+            let startDow = firstDay.getDay() - 1;
+            if (startDow < 0) startDow = 6;
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+            const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+            let html = '';
+            // Previous month trailing days
+            for (let i = startDow - 1; i >= 0; i--) {
+                html += `<div class="cal-day other-month">${daysInPrev - i}</div>`;
+            }
+            // Current month days
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isToday = dateStr === todayStr;
+                const dayRecords = byDate[dateStr];
+                const hasMigraine = dayRecords && dayRecords.length > 0;
+                const isSelected = dateStr === calSelectedDate;
+
+                let cls = 'cal-day';
+                if (isToday) cls += ' today';
+                if (hasMigraine) cls += ' has-migraine';
+                if (isSelected) cls += ' selected';
+
+                let dot = '';
+                if (hasMigraine) {
+                    const maxIntensity = Math.max(...dayRecords.map(r => r.intensity));
+                    const dotColor = getIntensityColor(maxIntensity);
+                    dot = `<span class="cal-dot" style="background:${dotColor}"></span>`;
+                }
+
+                const onclick = hasMigraine ? ` onclick="showDayDetail('${dateStr}')"` : '';
+                html += `<div class="${cls}"${onclick}>${d}${dot}</div>`;
+            }
+            // Next month leading days
+            const totalCells = startDow + daysInMonth;
+            const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let i = 1; i <= remaining; i++) {
+                html += `<div class="cal-day other-month">${i}</div>`;
+            }
+            grid.innerHTML = html;
+
+            // Keep detail if selected date is still in this month
+            if (!calSelectedDate) document.getElementById('calDetail').innerHTML = '';
+        }
+
+        function showDayDetail(dateStr) {
+            calSelectedDate = dateStr;
+            renderCalendar();
+            const byDate = getRecordsByDate();
+            const dayRecords = byDate[dateStr] || [];
+            if (dayRecords.length === 0) return;
+
+            const d = new Date(dateStr);
+            const title = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+            let html = `<div class="cal-detail"><div class="cal-detail-title">${title} · ${dayRecords.length}次发作</div>`;
+            dayRecords.forEach(r => {
+                const time = r.datetime.slice(11, 16) || '未知时间';
+                const color = getIntensityColor(r.intensity);
+                const label = getIntensityLabel(r.intensity);
+                const loc = (r.location || []).join('、') || '';
+                html += `<div class="cal-detail-item" onclick="editEpisode(${r.id})">
+                    <div class="cal-detail-time">${time}</div>
+                    <div class="cal-detail-info" style="color:${color}">${label} ${r.intensity}${loc ? ' · ' + loc : ''}</div>
+                </div>`;
+            });
+            html += '</div>';
+            document.getElementById('calDetail').innerHTML = html;
+        }
+
         // ==================== Utility ====================
         function formatDate(dt) {
             if (!dt) return '';
@@ -803,6 +985,7 @@
             loadRecords();
             loadSyncConfig();
             initForm();
+            initCalendar();
             // Auto pull on load if sync is configured
             if (syncConfig) {
                 manualSync().catch(() => {});
