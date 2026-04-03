@@ -265,11 +265,45 @@
             padding: 14px 16px;
             margin-bottom: 10px;
             transition: all 0.25s ease;
+            position: relative;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .record-item:hover {
             border-color: rgba(202,138,4,0.25);
             background: rgba(255,255,255,0.04);
             box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        .record-item.dragging {
+            opacity: 0.4;
+            border-color: rgba(202,138,4,0.3);
+        }
+        .record-item.drag-over {
+            border-color: rgba(202,138,4,0.5);
+            background: rgba(202,138,4,0.06);
+            box-shadow: 0 0 16px rgba(202,138,4,0.08);
+        }
+
+        .drag-handle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+            cursor: grab;
+            color: #3A4558;
+            font-size: 14px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            touch-action: none;
+        }
+        .drag-handle:hover { color: #94A3B8; background: rgba(255,255,255,0.06); }
+        .drag-handle:active { cursor: grabbing; }
+        .drag-handle svg {
+            width: 16px;
+            height: 16px;
+            pointer-events: none;
         }
 
         .record-top {
@@ -1199,9 +1233,12 @@
                 const vsNow = currentRtPrice ? ((rec.price - currentRtPrice) / currentRtPrice * 100) : null;
                 const div = document.createElement('div');
                 div.className = 'record-item';
+                div.dataset.index = i;
+                div.draggable = true;
                 div.innerHTML = `
                     <div class="record-top">
                         <div class="record-top-left">
+                            <span class="drag-handle" title="拖拽排序"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg></span>
                             <span class="record-tag ${rec.type === 'done' ? 'tag-done' : 'tag-plan'}">${rec.type === 'done' ? '已卖出' : '计划卖出'}</span>
                             <span class="rec-price">${rec.price.toFixed(3)}</span>
                             <span class="rec-pct">
@@ -1223,6 +1260,7 @@
                 `;
                 list.appendChild(div);
             });
+            initDragAndDrop();
         }
 
         // --- Calculate ---
@@ -1623,6 +1661,159 @@
             if (minP < 0) ctx.fillText(formatMoney(minP / 1.2), pad.left - 6, H - pad.bottom);
         }
 
+        // --- Drag & Drop (desktop + touch) ---
+        let dragState = null; // { el, fromIndex, clone, startY, scrollTop }
+
+        function initDragAndDrop() {
+            const list = document.getElementById('recordsList');
+            const items = list.querySelectorAll('.record-item');
+
+            items.forEach(item => {
+                // Desktop drag events
+                item.addEventListener('dragstart', onDragStart);
+                item.addEventListener('dragend', onDragEnd);
+                item.addEventListener('dragover', onDragOver);
+                item.addEventListener('dragenter', onDragEnter);
+                item.addEventListener('dragleave', onDragLeave);
+                item.addEventListener('drop', onDrop);
+
+                // Touch events (mobile) - only from handle
+                const handle = item.querySelector('.drag-handle');
+                if (handle) {
+                    handle.addEventListener('touchstart', onTouchStart, { passive: false });
+                }
+            });
+        }
+
+        // --- Desktop HTML5 Drag ---
+        function onDragStart(e) {
+            // Only allow drag from handle
+            if (!e.target.closest('.drag-handle')) { e.preventDefault(); return; }
+            dragState = { fromIndex: parseInt(this.dataset.index) };
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.index);
+        }
+
+        function onDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.record-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+            dragState = null;
+        }
+
+        function onDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function onDragEnter(e) {
+            e.preventDefault();
+            if (!this.classList.contains('dragging')) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function onDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function onDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const from = parseInt(e.dataTransfer.getData('text/plain'));
+            const to = parseInt(this.dataset.index);
+            if (from !== to) moveRecord(from, to);
+        }
+
+        // --- Touch Drag (mobile) ---
+        function onTouchStart(e) {
+            e.preventDefault();
+            const item = this.closest('.record-item');
+            const fromIndex = parseInt(item.dataset.index);
+            const touch = e.touches[0];
+            const rect = item.getBoundingClientRect();
+
+            // Create floating clone
+            const clone = item.cloneNode(true);
+            clone.style.cssText = `
+                position: fixed;
+                left: ${rect.left}px;
+                top: ${rect.top}px;
+                width: ${rect.width}px;
+                z-index: 200;
+                opacity: 0.9;
+                pointer-events: none;
+                border-color: rgba(202,138,4,0.5);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(202,138,4,0.1);
+                transition: none;
+                transform: scale(1.02);
+            `;
+            document.body.appendChild(clone);
+
+            item.classList.add('dragging');
+            dragState = {
+                el: item,
+                fromIndex,
+                clone,
+                startY: touch.clientY,
+                offsetY: touch.clientY - rect.top,
+                lastOverIndex: fromIndex
+            };
+
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            document.addEventListener('touchend', onTouchEnd);
+        }
+
+        function onTouchMove(e) {
+            if (!dragState) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+
+            // Move clone
+            dragState.clone.style.top = (touch.clientY - dragState.offsetY) + 'px';
+
+            // Find which item we're over
+            const items = document.querySelectorAll('.record-item:not(.dragging)');
+            items.forEach(item => item.classList.remove('drag-over'));
+
+            const overItem = [...items].find(item => {
+                const r = item.getBoundingClientRect();
+                return touch.clientY > r.top && touch.clientY < r.bottom;
+            });
+
+            if (overItem) {
+                overItem.classList.add('drag-over');
+                dragState.lastOverIndex = parseInt(overItem.dataset.index);
+            }
+        }
+
+        function onTouchEnd(e) {
+            if (!dragState) return;
+
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+
+            // Clean up
+            if (dragState.clone) dragState.clone.remove();
+            dragState.el.classList.remove('dragging');
+            document.querySelectorAll('.record-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+            const from = dragState.fromIndex;
+            const to = dragState.lastOverIndex;
+            dragState = null;
+
+            if (from !== to) moveRecord(from, to);
+        }
+
+        function moveRecord(from, to) {
+            if (from === to || from < 0 || to < 0) return;
+            if (from >= records.length || to >= records.length) return;
+            const item = records.splice(from, 1)[0];
+            records.splice(to, 0, item);
+            renderRecords();
+            calculate();
+        }
+
         function renderRecordsQuiet() {
             const list = document.getElementById('recordsList');
             const empty = document.getElementById('emptyState');
@@ -1642,9 +1833,12 @@
                 const vsNow = currentRtPrice ? ((rec.price - currentRtPrice) / currentRtPrice * 100) : null;
                 const div = document.createElement('div');
                 div.className = 'record-item';
+                div.dataset.index = records.indexOf(rec);
+                div.draggable = true;
                 div.innerHTML = `
                     <div class="record-top">
                         <div class="record-top-left">
+                            <span class="drag-handle" title="拖拽排序"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg></span>
                             <span class="record-tag ${rec.type === 'done' ? 'tag-done' : 'tag-plan'}">${rec.type === 'done' ? '已卖出' : '计划卖出'}</span>
                             <span class="rec-price">${rec.price.toFixed(3)}</span>
                             <span class="rec-pct">
@@ -1666,6 +1860,7 @@
                 `;
                 list.appendChild(div);
             });
+            initDragAndDrop();
         }
 
         // --- Save as image ---
