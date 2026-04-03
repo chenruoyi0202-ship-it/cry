@@ -193,17 +193,19 @@
         .hi-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .hi-tag { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: #eef5f2; color: #43b89c; font-weight: 500; }
         .hi-actions {
-            position: absolute; top: 12px; right: 14px;
-            display: flex; gap: 8px;
+            display: flex; gap: 8px; margin-top: 10px;
+            border-top: 1px solid #eef1f5; padding-top: 10px;
         }
         .hi-btn {
-            background: none; border: none; font-size: 16px;
-            cursor: pointer; opacity: 0.4; transition: opacity 0.2s;
-            line-height: 1; padding: 2px;
+            flex: 1; border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            cursor: pointer; padding: 7px 0;
+            transition: all 0.2s;
         }
-        .hi-btn:hover { opacity: 1; }
-        .hi-btn.edit { color: #43b89c; }
-        .hi-btn.del { color: #d9636a; }
+        .hi-btn.edit { background: #eef5f2; color: #43b89c; }
+        .hi-btn.edit:active { background: #d4efe5; }
+        .hi-btn.del { background: #fff0f0; color: #d9636a; }
+        .hi-btn.del:active { background: #ffe0e0; }
 
         /* Stats */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
@@ -528,16 +530,16 @@
                 if (r.notes) details += `备注: <span>${r.notes}</span><br>`;
                 const tags = [...(r.location || []), ...(r.symptoms || []), ...(r.triggers || [])];
                 return `<div class="history-item">
-                    <div class="hi-actions">
-                        <button class="hi-btn edit" onclick="editEpisode(${r.id})" title="编辑">&#9998;</button>
-                        <button class="hi-btn del" onclick="deleteEpisode(${r.id})" title="删除">×</button>
-                    </div>
                     <div class="hi-top">
                         <div class="hi-date">${formatDate(r.datetime)}</div>
                         <div class="hi-intensity" style="background:${color}18;color:${color}">${label} ${r.intensity}</div>
                     </div>
                     ${details ? `<div class="hi-details">${details}</div>` : ''}
                     ${tags.length ? `<div class="hi-tags">${tags.map(t => `<span class="hi-tag">${t}</span>`).join('')}</div>` : ''}
+                    <div class="hi-actions">
+                        <button class="hi-btn edit" onclick="editEpisode(${r.id})">编辑</button>
+                        <button class="hi-btn del" onclick="deleteEpisode(${r.id})">删除</button>
+                    </div>
                 </div>`;
             }).join('');
         }
