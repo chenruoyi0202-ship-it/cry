@@ -24,8 +24,6 @@
             box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
             align-self: flex-start;
         }
-
-        /* Header */
         .header { text-align: center; margin-bottom: 20px; }
         .header-icon {
             width: 56px; height: 56px;
@@ -37,16 +35,30 @@
             margin-bottom: 12px;
             font-size: 28px;
         }
-        .header h1 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1a2a3a;
-            margin-bottom: 4px;
-        }
-        .header .sub {
-            font-size: 13px;
+        .header h1 { font-size: 22px; font-weight: 700; color: #1a2a3a; margin-bottom: 4px; }
+        .header .sub { font-size: 13px; color: #8896a6; }
+
+        /* Sync status bar */
+        .sync-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 16px;
+            font-size: 12px;
             color: #8896a6;
+            cursor: pointer;
+            padding: 6px 0;
         }
+        .sync-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #b0bec5;
+        }
+        .sync-dot.connected { background: #43b89c; }
+        .sync-dot.syncing { background: #e6a23c; animation: pulse 1s infinite; }
+        .sync-dot.error { background: #d9636a; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
         /* Tabs */
         .tab-bar {
@@ -78,39 +90,23 @@
 
         /* Form */
         .section-title {
-            font-size: 15px;
-            color: #1a2a3a;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 15px; color: #1a2a3a; font-weight: 600;
+            margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
         }
         .section-title::before {
-            content: '';
-            width: 4px;
-            height: 18px;
-            background: linear-gradient(180deg, #43b89c, #38a3d0);
-            border-radius: 2px;
+            content: ''; width: 4px; height: 18px;
+            background: linear-gradient(180deg, #43b89c, #38a3d0); border-radius: 2px;
         }
         .field { margin-bottom: 18px; }
         .field label {
-            display: block;
-            font-size: 13px;
-            color: #5a6b7b;
-            margin-bottom: 8px;
-            font-weight: 500;
+            display: block; font-size: 13px; color: #5a6b7b;
+            margin-bottom: 8px; font-weight: 500;
         }
         .field input, .field textarea {
-            width: 100%;
-            background: #f7f9fb;
-            border: 1.5px solid #e8ecf0;
-            border-radius: 12px;
-            padding: 11px 14px;
-            color: #2d3748;
-            font-size: 15px;
-            outline: none;
-            font-family: inherit;
+            width: 100%; background: #f7f9fb;
+            border: 1.5px solid #e8ecf0; border-radius: 12px;
+            padding: 11px 14px; color: #2d3748; font-size: 15px;
+            outline: none; font-family: inherit;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .field input:focus, .field textarea:focus {
@@ -118,289 +114,122 @@
             box-shadow: 0 0 0 3px rgba(67,184,156,0.12);
             background: #fff;
         }
-        .field textarea {
-            min-height: 64px;
-            resize: vertical;
-        }
+        .field textarea { min-height: 64px; resize: vertical; }
+        .field .hint { font-size: 11px; color: #b0bec5; margin-top: 6px; line-height: 1.5; }
 
         /* Intensity slider */
-        .intensity-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
+        .intensity-row { display: flex; align-items: center; gap: 14px; }
         .intensity-row input[type="range"] {
-            flex: 1;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 8px;
-            border-radius: 4px;
+            flex: 1; -webkit-appearance: none; appearance: none;
+            height: 8px; border-radius: 4px;
             background: linear-gradient(90deg, #81d8b4, #f6c97a, #e87f7f);
-            outline: none;
-            border: none;
-            padding: 0;
+            outline: none; border: none; padding: 0;
         }
         .intensity-row input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #fff;
-            border: 3px solid #43b89c;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-            cursor: pointer;
-            transition: border-color 0.2s;
+            -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+            background: #fff; border: 3px solid #43b89c;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12); cursor: pointer;
         }
         .intensity-row input[type="range"]::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #fff;
-            border: 3px solid #43b89c;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-            cursor: pointer;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: #fff; border: 3px solid #43b89c;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12); cursor: pointer;
         }
         .intensity-val {
-            min-width: 48px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: 700;
-            background: #f7f9fb;
-            border-radius: 10px;
-            padding: 4px 0;
+            min-width: 48px; text-align: center; font-size: 24px;
+            font-weight: 700; background: #f7f9fb; border-radius: 10px; padding: 4px 0;
         }
 
         /* Tag toggles */
-        .tag-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
+        .tag-group { display: flex; flex-wrap: wrap; gap: 8px; }
         .tag-toggle {
-            display: inline-flex;
-            align-items: center;
-            background: #f4f6f8;
-            border: 1.5px solid #e8ecf0;
-            border-radius: 20px;
-            padding: 7px 15px;
-            font-size: 13px;
-            color: #5a6b7b;
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
+            display: inline-flex; align-items: center;
+            background: #f4f6f8; border: 1.5px solid #e8ecf0;
+            border-radius: 20px; padding: 7px 15px; font-size: 13px;
+            color: #5a6b7b; cursor: pointer; transition: all 0.2s; user-select: none;
         }
         .tag-toggle.active {
-            background: rgba(67,184,156,0.1);
-            border-color: #43b89c;
-            color: #2a9d7c;
-            font-weight: 500;
+            background: rgba(67,184,156,0.1); border-color: #43b89c;
+            color: #2a9d7c; font-weight: 500;
         }
 
         /* Buttons */
         .btn {
-            width: 100%;
-            padding: 13px;
-            border: none;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+            width: 100%; padding: 13px; border: none; border-radius: 14px;
+            font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
         .btn-primary {
             background: linear-gradient(135deg, #43b89c 0%, #38a3d0 100%);
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(67,184,156,0.3);
+            color: #fff; box-shadow: 0 4px 16px rgba(67,184,156,0.3);
         }
-        .btn-primary:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 8px rgba(67,184,156,0.3);
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-secondary {
+            background: #f4f6f8; color: #5a6b7b; margin-top: 10px;
+        }
+        .btn-danger {
+            background: #fff0f0; color: #d9636a; margin-top: 10px;
         }
 
         /* History */
         .history-item {
-            background: #f9fbfc;
-            border: 1px solid #eef1f5;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
-            position: relative;
-            transition: box-shadow 0.2s;
+            background: #f9fbfc; border: 1px solid #eef1f5;
+            border-radius: 16px; padding: 16px; margin-bottom: 12px;
+            position: relative; transition: box-shadow 0.2s;
         }
-        .history-item:hover {
-            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-        }
-        .hi-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .hi-date {
-            font-size: 14px;
-            color: #1a2a3a;
-            font-weight: 600;
-        }
-        .hi-intensity {
-            font-size: 12px;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 20px;
-        }
-        .hi-details {
-            font-size: 13px;
-            color: #6b7b8d;
-            line-height: 1.9;
-        }
-        .hi-details span {
-            color: #2d3748;
-        }
-        .hi-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-        }
-        .hi-tag {
-            font-size: 11px;
-            padding: 3px 10px;
-            border-radius: 12px;
-            background: #eef5f2;
-            color: #43b89c;
-            font-weight: 500;
-        }
+        .history-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .hi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .hi-date { font-size: 14px; color: #1a2a3a; font-weight: 600; }
+        .hi-intensity { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+        .hi-details { font-size: 13px; color: #6b7b8d; line-height: 1.9; }
+        .hi-details span { color: #2d3748; }
+        .hi-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .hi-tag { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: #eef5f2; color: #43b89c; font-weight: 500; }
         .hi-del {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            background: none;
-            border: none;
-            color: #d9636a;
-            font-size: 18px;
-            cursor: pointer;
-            opacity: 0.4;
-            transition: opacity 0.2s;
-            line-height: 1;
+            position: absolute; top: 14px; right: 14px; background: none;
+            border: none; color: #d9636a; font-size: 18px; cursor: pointer;
+            opacity: 0.4; transition: opacity 0.2s; line-height: 1;
         }
         .hi-del:hover { opacity: 1; }
 
         /* Stats */
-        .stat-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 22px;
-        }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
         .stat-card {
             background: linear-gradient(135deg, #f0faf6 0%, #f0f6ff 100%);
-            border: 1px solid #e4efe9;
-            border-radius: 16px;
-            padding: 16px;
-            text-align: center;
+            border: 1px solid #e4efe9; border-radius: 16px; padding: 16px; text-align: center;
         }
-        .stat-card .sc-val {
-            font-size: 26px;
-            font-weight: 700;
-            color: #1a2a3a;
-        }
-        .stat-card .sc-label {
-            font-size: 12px;
-            color: #8896a6;
-            margin-top: 4px;
-        }
-        .stat-section {
-            margin-bottom: 20px;
-        }
-        .stat-section h3 {
-            font-size: 14px;
-            color: #1a2a3a;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .stat-bar-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 13px;
-        }
-        .stat-bar-label {
-            width: 70px;
-            color: #5a6b7b;
-            flex-shrink: 0;
-            font-weight: 500;
-        }
-        .stat-bar-track {
-            flex: 1;
-            height: 10px;
-            background: #f0f3f6;
-            border-radius: 5px;
-            overflow: hidden;
-            margin: 0 10px;
-        }
-        .stat-bar-fill {
-            height: 100%;
-            border-radius: 5px;
-            background: linear-gradient(90deg, #43b89c, #38a3d0);
-            transition: width 0.3s;
-        }
-        .stat-bar-count {
-            width: 28px;
-            text-align: right;
-            color: #8896a6;
-            font-size: 13px;
-            font-weight: 600;
-        }
+        .stat-card .sc-val { font-size: 26px; font-weight: 700; color: #1a2a3a; }
+        .stat-card .sc-label { font-size: 12px; color: #8896a6; margin-top: 4px; }
+        .stat-section { margin-bottom: 20px; }
+        .stat-section h3 { font-size: 14px; color: #1a2a3a; font-weight: 600; margin-bottom: 12px; }
+        .stat-bar-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; }
+        .stat-bar-label { width: 70px; color: #5a6b7b; flex-shrink: 0; font-weight: 500; }
+        .stat-bar-track { flex: 1; height: 10px; background: #f0f3f6; border-radius: 5px; overflow: hidden; margin: 0 10px; }
+        .stat-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #43b89c, #38a3d0); transition: width 0.3s; }
+        .stat-bar-count { width: 28px; text-align: right; color: #8896a6; font-size: 13px; font-weight: 600; }
 
         /* Empty */
-        .empty-state {
-            text-align: center;
-            color: #b0bec5;
-            font-size: 14px;
-            padding: 40px 0;
-        }
-        .empty-state::before {
-            content: '';
-            display: block;
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 12px;
-            background: #f4f6f8;
-            border-radius: 50%;
-        }
+        .empty-state { text-align: center; color: #b0bec5; font-size: 14px; padding: 40px 0; }
 
         /* Footer */
-        .disclaimer {
-            text-align: center;
-            color: #b0bec5;
-            font-size: 11px;
-            margin-top: 20px;
-            line-height: 1.8;
-        }
+        .disclaimer { text-align: center; color: #b0bec5; font-size: 11px; margin-top: 20px; line-height: 1.8; }
 
-        /* Success toast */
+        /* Toast */
         .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
+            position: fixed; top: 20px; left: 50%;
             transform: translateX(-50%) translateY(-60px);
             background: linear-gradient(135deg, #43b89c, #38a3d0);
-            color: #fff;
-            padding: 12px 28px;
-            border-radius: 14px;
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0;
-            transition: all 0.3s;
-            z-index: 100;
-            pointer-events: none;
+            color: #fff; padding: 12px 28px; border-radius: 14px;
+            font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s;
+            z-index: 100; pointer-events: none;
             box-shadow: 0 4px 16px rgba(67,184,156,0.3);
         }
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.error { background: linear-gradient(135deg, #d9636a, #c0392b); box-shadow: 0 4px 16px rgba(217,99,106,0.3); }
+
+        /* Sync settings info box */
+        .info-box {
+            background: #f0faf6; border: 1px solid #d4efe5; border-radius: 12px;
+            padding: 12px 14px; margin-bottom: 18px; font-size: 12px; color: #5a6b7b; line-height: 1.7;
         }
     </style>
 </head>
@@ -413,21 +242,25 @@
             <p class="sub">记录 · 追踪 · 分析</p>
         </div>
 
+        <div class="sync-bar" id="syncBar" onclick="switchTab('sync')">
+            <div class="sync-dot" id="syncDot"></div>
+            <span id="syncLabel">未配置同步</span>
+        </div>
+
         <div class="tab-bar">
             <button class="tab active" onclick="switchTab('record')">记录</button>
             <button class="tab" onclick="switchTab('history')">历史</button>
             <button class="tab" onclick="switchTab('stats')">统计</button>
+            <button class="tab" onclick="switchTab('sync')">同步</button>
         </div>
 
         <!-- Tab: Record -->
         <div class="tab-content" id="tabRecord">
             <div class="section-title">新建记录</div>
-
             <div class="field">
                 <label>发作时间</label>
                 <input type="datetime-local" id="inputDatetime">
             </div>
-
             <div class="field">
                 <label>疼痛强度</label>
                 <div class="intensity-row">
@@ -435,12 +268,10 @@
                     <div class="intensity-val" id="intensityVal">5</div>
                 </div>
             </div>
-
             <div class="field">
                 <label>持续时长（小时）</label>
                 <input type="number" id="inputDuration" min="0" step="0.5" placeholder="例如 2.5">
             </div>
-
             <div class="field">
                 <label>头痛位置</label>
                 <div class="tag-group" id="groupLocation">
@@ -451,7 +282,6 @@
                     <span class="tag-toggle" data-value="全头" onclick="toggleTag(this)">全头</span>
                 </div>
             </div>
-
             <div class="field">
                 <label>伴随症状</label>
                 <div class="tag-group" id="groupSymptoms">
@@ -462,7 +292,6 @@
                     <span class="tag-toggle" data-value="视觉障碍" onclick="toggleTag(this)">视觉障碍</span>
                 </div>
             </div>
-
             <div class="field">
                 <label>可能诱因</label>
                 <div class="tag-group" id="groupTriggers">
@@ -476,97 +305,122 @@
                     <span class="tag-toggle" data-value="其他" onclick="toggleTag(this)">其他</span>
                 </div>
             </div>
-
             <div class="field">
                 <label>用药</label>
                 <input type="text" id="inputMedication" placeholder="例如 布洛芬 400mg">
             </div>
-
             <div class="field">
                 <label>备注</label>
                 <textarea id="inputNotes" placeholder="其他信息..."></textarea>
             </div>
-
             <button class="btn btn-primary" onclick="addEpisode()">保存记录</button>
         </div>
 
         <!-- Tab: History -->
         <div class="tab-content" id="tabHistory" style="display:none">
             <div class="section-title">历史记录</div>
-            <div id="historyList">
-                <div class="empty-state">暂无记录</div>
-            </div>
+            <div id="historyList"><div class="empty-state">暂无记录</div></div>
         </div>
 
         <!-- Tab: Stats -->
         <div class="tab-content" id="tabStats" style="display:none">
             <div class="section-title">统计分析</div>
-            <div id="statsArea">
-                <div class="empty-state">暂无数据</div>
-            </div>
+            <div id="statsArea"><div class="empty-state">暂无数据</div></div>
         </div>
 
-        <div class="disclaimer">
-            数据仅保存在本地浏览器中
+        <!-- Tab: Sync Settings -->
+        <div class="tab-content" id="tabSync" style="display:none">
+            <div class="section-title">云端同步设置</div>
+            <div class="info-box">
+                数据使用 AES-256 加密后存储到你的 GitHub 仓库。<br>
+                即使仓库公开，没有密码也无法解读数据。<br>
+                Token 和密码仅保存在当前浏览器中。
+            </div>
+            <div class="field">
+                <label>GitHub Personal Access Token</label>
+                <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
+                <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 创建 Token，勾选 repo 权限</div>
+            </div>
+            <div class="field">
+                <label>仓库（owner/repo）</label>
+                <input type="text" id="inputRepo" placeholder="例如 yourname/yourrepo">
+            </div>
+            <div class="field">
+                <label>加密密码</label>
+                <input type="password" id="inputPassword" placeholder="设置一个你记得住的密码">
+                <div class="hint">用于加密/解密数据，换设备时需要输入相同密码</div>
+            </div>
+            <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
+            <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
+            <button class="btn btn-danger" onclick="clearSyncConfig()">清除同步配置</button>
         </div>
+
+        <div class="disclaimer">数据仅保存在本地浏览器中</div>
     </div>
 
     <script>
         let records = [];
+        let syncConfig = null;
+        let fileSha = null;
 
+        // ==================== Storage ====================
         function loadRecords() {
-            try {
-                records = JSON.parse(localStorage.getItem('migraine_records')) || [];
-            } catch (e) {
-                records = [];
-            }
+            try { records = JSON.parse(localStorage.getItem('migraine_records')) || []; }
+            catch (e) { records = []; }
         }
-
         function saveRecords() {
             localStorage.setItem('migraine_records', JSON.stringify(records));
         }
+        function loadSyncConfig() {
+            try { syncConfig = JSON.parse(localStorage.getItem('migraine_sync_config')); }
+            catch (e) { syncConfig = null; }
+            updateSyncBar();
+            if (syncConfig) {
+                document.getElementById('inputToken').value = syncConfig.token || '';
+                document.getElementById('inputRepo').value = syncConfig.repo || '';
+                document.getElementById('inputPassword').value = syncConfig.password || '';
+            }
+        }
 
-        // --- Tabs ---
+        // ==================== Tabs ====================
         function switchTab(name) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1)).style.display = '';
-            event.target.classList.add('active');
+            const tabEl = document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1));
+            if (tabEl) tabEl.style.display = '';
+            const tabs = document.querySelectorAll('.tab');
+            const tabMap = { record: 0, history: 1, stats: 2, sync: 3 };
+            if (tabMap[name] !== undefined && tabs[tabMap[name]]) tabs[tabMap[name]].classList.add('active');
             if (name === 'history') renderHistory();
             if (name === 'stats') renderStats();
         }
 
-        // --- Intensity ---
+        // ==================== Intensity ====================
         function updateIntensity() {
             const v = document.getElementById('inputIntensity').value;
             const el = document.getElementById('intensityVal');
             el.textContent = v;
             el.style.color = getIntensityColor(v);
         }
-
         function getIntensityColor(v) {
             if (v <= 3) return '#43b89c';
             if (v <= 6) return '#e6a23c';
             return '#d9636a';
         }
-
         function getIntensityLabel(v) {
             if (v <= 3) return '轻度';
             if (v <= 6) return '中度';
             return '重度';
         }
 
-        // --- Tags ---
-        function toggleTag(el) {
-            el.classList.toggle('active');
-        }
-
+        // ==================== Tags ====================
+        function toggleTag(el) { el.classList.toggle('active'); }
         function getTagValues(groupId) {
             return Array.from(document.querySelectorAll('#' + groupId + ' .tag-toggle.active'))
                 .map(el => el.dataset.value);
         }
 
-        // --- Form ---
+        // ==================== Form ====================
         function initForm() {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -578,7 +432,6 @@
             document.querySelectorAll('.tag-toggle').forEach(el => el.classList.remove('active'));
             updateIntensity();
         }
-
         function addEpisode() {
             const datetime = document.getElementById('inputDatetime').value;
             const intensity = parseInt(document.getElementById('inputIntensity').value);
@@ -588,33 +441,26 @@
             const triggers = getTagValues('groupTriggers');
             const medication = document.getElementById('inputMedication').value.trim();
             const notes = document.getElementById('inputNotes').value.trim();
-
             if (!datetime) return;
-
-            records.push({
-                id: Date.now(),
-                datetime, intensity, duration,
-                location, symptoms, triggers,
-                medication, notes
-            });
+            records.push({ id: Date.now(), datetime, intensity, duration, location, symptoms, triggers, medication, notes });
             saveRecords();
-            showToast();
+            showToast('记录已保存');
             initForm();
+            autoSync();
         }
 
-        function showToast() {
+        // ==================== Toast ====================
+        function showToast(msg, isError) {
             const t = document.getElementById('toast');
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 1800);
+            t.textContent = msg;
+            t.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => t.className = 'toast', 2000);
         }
 
-        // --- History ---
+        // ==================== History ====================
         function renderHistory() {
             const container = document.getElementById('historyList');
-            if (records.length === 0) {
-                container.innerHTML = '<div class="empty-state">暂无记录</div>';
-                return;
-            }
+            if (records.length === 0) { container.innerHTML = '<div class="empty-state">暂无记录</div>'; return; }
             const sorted = [...records].sort((a, b) => b.datetime.localeCompare(a.datetime));
             container.innerHTML = sorted.map(r => {
                 const color = getIntensityColor(r.intensity);
@@ -635,76 +481,211 @@
                 </div>`;
             }).join('');
         }
-
         function deleteEpisode(id) {
             if (!confirm('确认删除此记录？')) return;
             records = records.filter(r => r.id !== id);
             saveRecords();
             renderHistory();
+            autoSync();
         }
 
-        // --- Stats ---
+        // ==================== Stats ====================
         function renderStats() {
             const area = document.getElementById('statsArea');
-            if (records.length === 0) {
-                area.innerHTML = '<div class="empty-state">暂无数据</div>';
-                return;
-            }
-
+            if (records.length === 0) { area.innerHTML = '<div class="empty-state">暂无数据</div>'; return; }
             const avgIntensity = (records.reduce((s, r) => s + r.intensity, 0) / records.length).toFixed(1);
             const avgDuration = (records.reduce((s, r) => s + (r.duration || 0), 0) / records.length).toFixed(1);
-
             const now = new Date();
             const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             const monthCount = records.filter(r => r.datetime.slice(0, 7) === thisMonth).length;
-
             let html = `<div class="stat-grid">
                 <div class="stat-card"><div class="sc-val">${records.length}</div><div class="sc-label">总次数</div></div>
                 <div class="stat-card"><div class="sc-val" style="color:${getIntensityColor(avgIntensity)}">${avgIntensity}</div><div class="sc-label">平均强度</div></div>
                 <div class="stat-card"><div class="sc-val">${avgDuration}h</div><div class="sc-label">平均时长</div></div>
                 <div class="stat-card"><div class="sc-val">${monthCount}</div><div class="sc-label">本月次数</div></div>
             </div>`;
-
             html += renderBarSection('常见诱因', getFieldFrequency('triggers'));
             html += renderBarSection('头痛位置', getFieldFrequency('location'));
             html += renderBarSection('伴随症状', getFieldFrequency('symptoms'));
-
             area.innerHTML = html;
         }
-
         function getFieldFrequency(field) {
             const counts = {};
-            records.forEach(r => {
-                (r[field] || []).forEach(v => { counts[v] = (counts[v] || 0) + 1; });
-            });
-            return Object.entries(counts)
-                .map(([value, count]) => ({ value, count }))
-                .sort((a, b) => b.count - a.count);
+            records.forEach(r => { (r[field] || []).forEach(v => { counts[v] = (counts[v] || 0) + 1; }); });
+            return Object.entries(counts).map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count);
         }
-
         function renderBarSection(title, data) {
             if (data.length === 0) return '';
             const max = data[0].count;
             return `<div class="stat-section"><h3>${title}</h3>${data.map(d =>
-                `<div class="stat-bar-row">
-                    <div class="stat-bar-label">${d.value}</div>
-                    <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${(d.count / max * 100)}%"></div></div>
-                    <div class="stat-bar-count">${d.count}</div>
-                </div>`
+                `<div class="stat-bar-row"><div class="stat-bar-label">${d.value}</div><div class="stat-bar-track"><div class="stat-bar-fill" style="width:${(d.count / max * 100)}%"></div></div><div class="stat-bar-count">${d.count}</div></div>`
             ).join('')}</div>`;
         }
 
-        // --- Utility ---
+        // ==================== Utility ====================
         function formatDate(dt) {
             if (!dt) return '';
             const d = new Date(dt);
             return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
 
-        // --- Init ---
+        // ==================== AES-256-GCM Encryption ====================
+        async function deriveKey(password, salt) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+            return crypto.subtle.deriveKey(
+                { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+                keyMaterial,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+        async function encryptData(data, password) {
+            const enc = new TextEncoder();
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const key = await deriveKey(password, salt);
+            const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
+            const buf = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+            buf.set(salt, 0);
+            buf.set(iv, salt.length);
+            buf.set(new Uint8Array(encrypted), salt.length + iv.length);
+            return btoa(String.fromCharCode(...buf));
+        }
+        async function decryptData(base64, password) {
+            const buf = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+            const salt = buf.slice(0, 16);
+            const iv = buf.slice(16, 28);
+            const data = buf.slice(28);
+            const key = await deriveKey(password, salt);
+            const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+            return JSON.parse(new TextDecoder().decode(decrypted));
+        }
+
+        // ==================== GitHub API ====================
+        async function ghGet(token, repo, path) {
+            const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (res.status === 404) return null;
+            if (!res.ok) throw new Error(`GitHub GET failed: ${res.status}`);
+            return res.json();
+        }
+        async function ghPut(token, repo, path, content, sha) {
+            const body = { message: 'Update migraine data', content: btoa(unescape(encodeURIComponent(content))), branch: 'main' };
+            if (sha) body.sha = sha;
+            const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(`GitHub PUT failed: ${res.status}`);
+            return res.json();
+        }
+
+        // ==================== Sync Logic ====================
+        function updateSyncBar() {
+            const dot = document.getElementById('syncDot');
+            const label = document.getElementById('syncLabel');
+            if (!syncConfig) {
+                dot.className = 'sync-dot';
+                label.textContent = '未配置同步 - 点击设置';
+            } else {
+                dot.className = 'sync-dot connected';
+                label.textContent = '已连接 · ' + syncConfig.repo;
+            }
+        }
+        function setSyncStatus(status, text) {
+            const dot = document.getElementById('syncDot');
+            const label = document.getElementById('syncLabel');
+            dot.className = 'sync-dot ' + status;
+            label.textContent = text;
+        }
+
+        function saveSyncConfig() {
+            const token = document.getElementById('inputToken').value.trim();
+            const repo = document.getElementById('inputRepo').value.trim();
+            const password = document.getElementById('inputPassword').value.trim();
+            if (!token || !repo || !password) { showToast('请填写所有字段', true); return; }
+            syncConfig = { token, repo, password };
+            localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
+            updateSyncBar();
+            showToast('同步配置已保存');
+            manualSync();
+        }
+        function clearSyncConfig() {
+            if (!confirm('确认清除同步配置？')) return;
+            syncConfig = null;
+            localStorage.removeItem('migraine_sync_config');
+            fileSha = null;
+            document.getElementById('inputToken').value = '';
+            document.getElementById('inputRepo').value = '';
+            document.getElementById('inputPassword').value = '';
+            updateSyncBar();
+            showToast('同步配置已清除');
+        }
+
+        async function manualSync() {
+            if (!syncConfig) { showToast('请先配置同步', true); return; }
+            setSyncStatus('syncing', '同步中...');
+            try {
+                await pullFromCloud();
+                await pushToCloud();
+                setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+                showToast('同步完成');
+            } catch (e) {
+                console.error('Sync error:', e);
+                setSyncStatus('error', '同步失败 · 点击重试');
+                showToast('同步失败: ' + e.message, true);
+            }
+        }
+
+        async function autoSync() {
+            if (!syncConfig) return;
+            setSyncStatus('syncing', '同步中...');
+            try {
+                await pushToCloud();
+                setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+            } catch (e) {
+                console.error('Auto sync error:', e);
+                setSyncStatus('error', '同步失败');
+            }
+        }
+
+        async function pullFromCloud() {
+            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json');
+            if (!file) return;
+            fileSha = file.sha;
+            const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+            const parsed = JSON.parse(content);
+            const cloudRecords = await decryptData(parsed.encrypted, syncConfig.password);
+            // Merge: combine by id, keep all unique records
+            const localMap = new Map(records.map(r => [r.id, r]));
+            cloudRecords.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
+            records = Array.from(localMap.values());
+            saveRecords();
+        }
+
+        async function pushToCloud() {
+            const encrypted = await encryptData(records, syncConfig.password);
+            const content = JSON.stringify({ encrypted, updatedAt: new Date().toISOString() });
+            // Get latest sha first
+            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json');
+            if (file) fileSha = file.sha;
+            const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha);
+            fileSha = result.content.sha;
+        }
+
+        // ==================== Init ====================
         document.addEventListener('DOMContentLoaded', () => {
             loadRecords();
+            loadSyncConfig();
             initForm();
+            // Auto pull on load if sync is configured
+            if (syncConfig) {
+                manualSync().catch(() => {});
+            }
         });
     </script>
 </body>
