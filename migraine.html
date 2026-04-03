@@ -691,10 +691,23 @@
             const branch = await getDefaultBranch();
             const encrypted = await encryptData(records, syncConfig.password);
             const content = JSON.stringify({ encrypted, updatedAt: new Date().toISOString() });
-            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch);
+            // Fetch with cache-bust to avoid stale SHA
+            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch + '&t=' + Date.now());
             fileSha = file ? file.sha : null;
-            const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha, branch);
-            fileSha = result.content.sha;
+            try {
+                const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha, branch);
+                fileSha = result.content.sha;
+            } catch (e) {
+                if (e.message && e.message.includes('does not match')) {
+                    // SHA mismatch - refetch and retry once
+                    const freshFile = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch + '&t=' + Date.now());
+                    fileSha = freshFile ? freshFile.sha : null;
+                    const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha, branch);
+                    fileSha = result.content.sha;
+                } else {
+                    throw e;
+                }
+            }
         }
 
         // ==================== Init ====================
