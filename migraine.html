@@ -564,23 +564,36 @@
         }
 
         // ==================== GitHub API ====================
-        async function ghGet(token, repo, path) {
-            const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+        async function ghGetDefaultBranch(token, repo) {
+            const res = await fetch(`https://api.github.com/repos/${repo}`, {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!res.ok) throw new Error('无法获取仓库信息');
+            const data = await res.json();
+            return data.default_branch;
+        }
+        async function ghGet(token, repo, path, branch) {
+            const url = `https://api.github.com/repos/${repo}/contents/${path}` + (branch ? `?ref=${branch}` : '');
+            const res = await fetch(url, {
                 headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
             });
             if (res.status === 404) return null;
             if (!res.ok) throw new Error(`GitHub GET failed: ${res.status}`);
             return res.json();
         }
-        async function ghPut(token, repo, path, content, sha) {
+        async function ghPut(token, repo, path, content, sha, branch) {
             const body = { message: 'Update migraine data', content: btoa(unescape(encodeURIComponent(content))) };
             if (sha) body.sha = sha;
+            if (branch) body.branch = branch;
             const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
                 body: JSON.stringify(body)
             });
-            if (!res.ok) throw new Error(`GitHub PUT failed: ${res.status}`);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || `GitHub PUT failed: ${res.status}`);
+            }
             return res.json();
         }
 
@@ -653,14 +666,21 @@
             }
         }
 
+        async function getDefaultBranch() {
+            if (!syncConfig._branch) {
+                syncConfig._branch = await ghGetDefaultBranch(syncConfig.token, syncConfig.repo);
+            }
+            return syncConfig._branch;
+        }
+
         async function pullFromCloud() {
-            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json');
+            const branch = await getDefaultBranch();
+            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch);
             if (!file) return;
             fileSha = file.sha;
             const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
             const parsed = JSON.parse(content);
             const cloudRecords = await decryptData(parsed.encrypted, syncConfig.password);
-            // Merge: combine by id, keep all unique records
             const localMap = new Map(records.map(r => [r.id, r]));
             cloudRecords.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
             records = Array.from(localMap.values());
@@ -668,12 +688,12 @@
         }
 
         async function pushToCloud() {
+            const branch = await getDefaultBranch();
             const encrypted = await encryptData(records, syncConfig.password);
             const content = JSON.stringify({ encrypted, updatedAt: new Date().toISOString() });
-            // Get latest sha first
-            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json');
-            if (file) fileSha = file.sha;
-            const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha);
+            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch);
+            fileSha = file ? file.sha : null;
+            const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha, branch);
             fileSha = result.content.sha;
         }
 
