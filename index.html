@@ -1109,23 +1109,36 @@
                         </div>
                     </div>
 
-                    <!-- Batch Breakdown -->
+                    <!-- Batch Breakdown with floating profit -->
                     ${records.length > 0 ? `
                     <div class="batches-visual">
-                        ${records.map((r, i) => {
-                            const p = (r.price - costPrice) * r.shares;
-                            return `
-                            <div class="bv-item ${r.type === 'done' ? 'bv-done' : 'bv-plan'}">
-                                <div class="bv-num">${r.type === 'done' ? '✓' : (i + 1)}</div>
-                                <div class="bv-info">
-                                    <strong>${r.price.toFixed(3)}</strong> × ${r.shares.toLocaleString()}股
-                                    = ${formatMoney(r.price * r.shares)}
-                                </div>
-                                <div class="bv-profit ${p >= 0 ? 'pos' : 'neg'}">
-                                    ${p >= 0 ? '+' : ''}${formatMoney(p)}
-                                </div>
-                            </div>`;
-                        }).join('')}
+                        ${(() => {
+                            let accRev = 0, accSh = 0;
+                            return records.map((r, i) => {
+                                const batchProfit = (r.price - costPrice) * r.shares;
+                                accRev += r.price * r.shares;
+                                accSh += r.shares;
+                                const remSh = totalShares - accSh;
+                                const floatingProfit = (accRev + remSh * r.price) - totalCost;
+                                return `
+                                <div class="bv-item ${r.type === 'done' ? 'bv-done' : 'bv-plan'}">
+                                    <div class="bv-num">${r.type === 'done' ? '✓' : (i + 1)}</div>
+                                    <div class="bv-info">
+                                        <strong>${r.price.toFixed(3)}</strong> × ${r.shares.toLocaleString()}股
+                                        = ${formatMoney(r.price * r.shares)}
+                                        <div style="font-size:11px;color:#64748B;margin-top:2px;">
+                                            本批盈亏 <span class="${batchProfit >= 0 ? 'pos' : 'neg'}" style="color:${batchProfit >= 0 ? '#4caf50' : '#f44336'}">${batchProfit >= 0 ? '+' : ''}${formatMoney(batchProfit)}</span>
+                                        </div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div class="bv-profit ${floatingProfit >= 0 ? 'pos' : 'neg'}">
+                                            ${floatingProfit >= 0 ? '+' : ''}${formatMoney(floatingProfit)}
+                                        </div>
+                                        <div style="font-size:10px;color:#475569;">浮盈</div>
+                                    </div>
+                                </div>`;
+                            }).join('');
+                        })()}
                         ${remainShares > 0 && currentRtPrice ? `
                         <div class="bv-item bv-plan">
                             <div class="bv-num" style="background:rgba(79,195,247,0.2);color:#4fc3f7;">⟡</div>
