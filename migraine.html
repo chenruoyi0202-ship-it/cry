@@ -12,54 +12,56 @@
     <meta property="og:type" content="website">
     <link rel="icon" type="image/png" href="migraine-logo.png">
     <link rel="icon" type="image/svg+xml" href="migraine-logo.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: linear-gradient(135deg, #e8f5f0 0%, #f0f4ff 50%, #fef6f0 100%);
+            --bg: linear-gradient(135deg, #F0FDFA 0%, #f0f4ff 50%, #F0FDFA 100%);
             --card-bg: #fff;
             --card-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
-            --text: #2d3748;
-            --text-strong: #1a2a3a;
-            --text-muted: #5a6b7b;
-            --text-dim: #8896a6;
-            --text-faint: #b0bec5;
-            --input-bg: #f7f9fb;
-            --input-border: #e8ecf0;
-            --tab-bg: #f4f6f8;
-            --tag-bg: #f4f6f8;
-            --item-bg: #f9fbfc;
-            --item-border: #eef1f5;
-            --stat-bg: linear-gradient(135deg, #f0faf6 0%, #f0f6ff 100%);
-            --stat-border: #e4efe9;
-            --bar-track: #f0f3f6;
-            --accent: #43b89c;
-            --accent2: #38a3d0;
-            --tag-hi-bg: #eef5f2;
+            --text: #134E4A;
+            --text-strong: #0F2E2B;
+            --text-muted: #3D7A75;
+            --text-dim: #6B9E99;
+            --text-faint: #A0C4C0;
+            --input-bg: #F0FDFA;
+            --input-border: #CCFBF1;
+            --tab-bg: #F0FDFA;
+            --tag-bg: #F0FDFA;
+            --item-bg: #F7FFFE;
+            --item-border: #E0F5F0;
+            --stat-bg: linear-gradient(135deg, #F0FDFA 0%, #ECFDF5 100%);
+            --stat-border: #CCFBF1;
+            --bar-track: #E0F5F0;
+            --accent: #0891B2;
+            --accent2: #22C55E;
+            --tag-hi-bg: #ECFDF5;
         }
         body.dark {
-            --bg: linear-gradient(135deg, #0f1117 0%, #161822 50%, #1a1c28 100%);
-            --card-bg: #1e2030;
-            --card-shadow: 0 4px 24px rgba(0,0,0,0.3);
-            --text: #d0d5e0;
-            --text-strong: #eef0f6;
-            --text-muted: #8892b0;
-            --text-dim: #6b7394;
-            --text-faint: #4a5070;
-            --input-bg: rgba(255,255,255,0.06);
-            --input-border: rgba(255,255,255,0.1);
+            --bg: linear-gradient(135deg, #0a0f0f 0%, #0f1519 50%, #0d1214 100%);
+            --card-bg: #162024;
+            --card-shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --text: #B8D8D3;
+            --text-strong: #E0F5F0;
+            --text-muted: #7FADA6;
+            --text-dim: #5A8A84;
+            --text-faint: #2D4F4A;
+            --input-bg: rgba(8,145,178,0.06);
+            --input-border: rgba(8,145,178,0.15);
             --tab-bg: rgba(255,255,255,0.05);
             --tag-bg: rgba(255,255,255,0.06);
-            --item-bg: rgba(255,255,255,0.04);
-            --item-border: rgba(255,255,255,0.08);
-            --stat-bg: linear-gradient(135deg, rgba(67,184,156,0.08) 0%, rgba(56,163,208,0.08) 100%);
-            --stat-border: rgba(255,255,255,0.08);
+            --item-bg: rgba(255,255,255,0.03);
+            --item-border: rgba(8,145,178,0.12);
+            --stat-bg: linear-gradient(135deg, rgba(8,145,178,0.08) 0%, rgba(34,197,94,0.06) 100%);
+            --stat-border: rgba(8,145,178,0.15);
             --bar-track: rgba(255,255,255,0.06);
-            --tag-hi-bg: rgba(67,184,156,0.12);
+            --tag-hi-bg: rgba(34,197,94,0.1);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-family: 'Figtree', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -77,14 +79,14 @@
         .header { text-align: center; margin-bottom: 20px; }
         .header-icon {
             width: 56px; height: 56px;
-            background: linear-gradient(135deg, #43b89c 0%, #38a3d0 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
             border-radius: 16px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 12px;
-            font-size: 28px;
         }
+        .header-icon svg { width: 32px; height: 32px; }
         .header h1 { font-size: 22px; font-weight: 700; color: var(--text-strong); margin-bottom: 4px; }
         .header .sub { font-size: 13px; color: var(--text-dim); }
 
@@ -143,7 +145,7 @@
         }
         .tab.active {
             background: var(--card-bg);
-            color: #43b89c;
+            color: var(--accent);
             font-weight: 600;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
@@ -155,7 +157,7 @@
         }
         .section-title::before {
             content: ''; width: 4px; height: 18px;
-            background: linear-gradient(180deg, #43b89c, #38a3d0); border-radius: 2px;
+            background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 2px;
         }
         .field { margin-bottom: 18px; }
         .field label {
@@ -170,8 +172,8 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .field input:focus, .field textarea:focus {
-            border-color: #43b89c;
-            box-shadow: 0 0 0 3px rgba(67,184,156,0.12);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(8,145,178,0.12);
             background: var(--card-bg);
         }
         .field textarea { min-height: 64px; resize: vertical; }
@@ -182,17 +184,17 @@
         .intensity-row input[type="range"] {
             flex: 1; -webkit-appearance: none; appearance: none;
             height: 8px; border-radius: 4px;
-            background: linear-gradient(90deg, #81d8b4, #f6c97a, #e87f7f);
+            background: linear-gradient(90deg, #0891B2, #D97706, #DC2626);
             outline: none; border: none; padding: 0;
         }
         .intensity-row input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
-            background: #fff; border: 3px solid #43b89c;
+            background: #fff; border: 3px solid var(--accent);
             box-shadow: 0 2px 8px rgba(0,0,0,0.12); cursor: pointer;
         }
         .intensity-row input[type="range"]::-moz-range-thumb {
             width: 24px; height: 24px; border-radius: 50%;
-            background: #fff; border: 3px solid #43b89c;
+            background: #fff; border: 3px solid var(--accent);
             box-shadow: 0 2px 8px rgba(0,0,0,0.12); cursor: pointer;
         }
         .intensity-val {
@@ -209,8 +211,8 @@
             color: var(--text-muted); cursor: pointer; transition: all 0.2s; user-select: none;
         }
         .tag-toggle.active {
-            background: rgba(67,184,156,0.1); border-color: #43b89c;
-            color: #2a9d7c; font-weight: 500;
+            background: rgba(8,145,178,0.08); border-color: var(--accent);
+            color: var(--accent); font-weight: 500;
         }
 
         /* Buttons */
@@ -219,10 +221,20 @@
             font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #43b89c 0%, #38a3d0 100%);
-            color: #fff; box-shadow: 0 4px 16px rgba(67,184,156,0.3);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+            color: #fff; box-shadow: 0 4px 16px rgba(8,145,178,0.25);
         }
-        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-primary:disabled {
+            opacity: 0.6; cursor: not-allowed; transform: none;
+        }
+        .btn-primary .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+            vertical-align: middle; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .btn-secondary {
             background: var(--tab-bg); color: var(--text-muted); margin-top: 10px;
         }
@@ -272,7 +284,7 @@
         .stat-bar-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; }
         .stat-bar-label { width: 70px; color: var(--text-muted); flex-shrink: 0; font-weight: 500; }
         .stat-bar-track { flex: 1; height: 10px; background: var(--bar-track); border-radius: 5px; overflow: hidden; margin: 0 10px; }
-        .stat-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #43b89c, #38a3d0); transition: width 0.3s; }
+        .stat-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.3s; }
         .stat-bar-count { width: 28px; text-align: right; color: var(--text-dim); font-size: 13px; font-weight: 600; }
 
         /* Empty */
@@ -289,7 +301,7 @@
             color: #fff; padding: 12px 28px; border-radius: 14px;
             font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s;
             z-index: 100; pointer-events: none;
-            box-shadow: 0 4px 16px rgba(67,184,156,0.3);
+            box-shadow: 0 4px 16px rgba(8,145,178,0.25);
         }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .toast.error { background: linear-gradient(135deg, #d9636a, #c0392b); box-shadow: 0 4px 16px rgba(217,99,106,0.3); }
@@ -327,14 +339,14 @@
             background: #007aff; color: #fff; font-weight: 700;
         }
         .cal-day.has-migraine { cursor: pointer; font-weight: 600; }
-        .cal-day.has-migraine:active { background: rgba(67,184,156,0.1); }
+        .cal-day.has-migraine:active { background: rgba(8,145,178,0.1); }
         .cal-day .cal-dot {
             position: absolute; bottom: 4px;
             width: 6px; height: 6px; border-radius: 50%;
         }
         .cal-day.today .cal-dot { bottom: 3px; }
         .cal-day.selected {
-            background: rgba(67,184,156,0.12);
+            background: rgba(8,145,178,0.1);
         }
         .cal-day.today.selected {
             background: #007aff;
@@ -370,7 +382,7 @@
     <div class="card" style="position:relative">
         <button class="dark-toggle" id="darkToggle" onclick="toggleDarkMode()" aria-label="切换深色模式">&#9789;</button>
         <div class="header">
-            <div class="header-icon">&#129504;</div>
+            <div class="header-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C9 2 6.5 4 6 7c-1.5.5-3 2-3 4.5C3 14 5 16 7 16"/><path d="M12 2c3 0 5.5 2 6 5 1.5.5 3 2 3 4.5C21 14 19 16 17 16"/><path d="M7 16c0 2 1.5 4 5 4s5-2 5-4"/><path d="M12 2v18"/><path d="M8 8c1 1 2 2 4 2"/><path d="M16 8c-1 1-2 2-4 2"/><path d="M8 12c1 1 2 1.5 4 1.5"/><path d="M16 12c-1 1-2 1.5-4 1.5"/></svg></div>
             <h1>偏头痛记录</h1>
             <p class="sub">记录 · 追踪 · 分析</p>
         </div>
@@ -609,9 +621,9 @@
             el.style.color = getIntensityColor(v);
         }
         function getIntensityColor(v) {
-            if (v <= 3) return '#43b89c';
-            if (v <= 6) return '#e6a23c';
-            return '#d9636a';
+            if (v <= 3) return '#0891B2';
+            if (v <= 6) return '#D97706';
+            return '#DC2626';
         }
         function getIntensityLabel(v) {
             if (v <= 3) return '轻度';
@@ -695,6 +707,12 @@
 
         async function addEpisode() {
             const datetime = document.getElementById('inputDatetime').value;
+            if (!datetime) return;
+            const btn = document.querySelector('#tabRecord .btn-primary');
+            const origText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>' + (editingId ? '更新中...' : '保存中...');
+
             const intensity = parseInt(document.getElementById('inputIntensity').value);
             const duration = parseFloat(document.getElementById('inputDuration').value) || 0;
             const location = getTagValues('groupLocation');
@@ -707,7 +725,6 @@
             }
             const medication = document.getElementById('inputMedication').value.trim();
             const notes = document.getElementById('inputNotes').value.trim();
-            if (!datetime) return;
             if (editingId) {
                 const idx = records.findIndex(r => r.id === editingId);
                 if (idx !== -1) {
@@ -716,12 +733,13 @@
                 }
                 showToast('记录已更新');
             } else {
-                showToast('正在获取天气...');
                 const weather = await fetchWeather();
                 records.push({ id: Date.now(), datetime, intensity, duration, location, symptoms, triggers, medication, notes, weather: weather || '' });
-                showToast(weather ? '记录已保存（含天气）' : '记录已保存');
+                showToast(weather ? '已保存（含天气）' : '已保存');
             }
             saveRecords();
+            btn.disabled = false;
+            btn.textContent = origText;
             initForm();
             autoSync();
         }
