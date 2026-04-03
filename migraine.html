@@ -318,8 +318,9 @@
                     <span class="tag-toggle" data-value="月经" onclick="toggleTag(this)">月经</span>
                     <span class="tag-toggle" data-value="运动" onclick="toggleTag(this)">运动</span>
                     <span class="tag-toggle" data-value="酒精" onclick="toggleTag(this)">酒精</span>
-                    <span class="tag-toggle" data-value="其他" onclick="toggleTag(this)">其他</span>
+                    <span class="tag-toggle" data-value="其他" onclick="toggleTag(this, true)">其他</span>
                 </div>
+                <input type="text" id="inputOtherTrigger" style="display:none;margin-top:8px" placeholder="请输入其他诱因">
             </div>
             <div class="field">
                 <label>用药</label>
@@ -430,7 +431,14 @@
         }
 
         // ==================== Tags ====================
-        function toggleTag(el) { el.classList.toggle('active'); }
+        function toggleTag(el, showInput) {
+            el.classList.toggle('active');
+            if (showInput) {
+                const input = document.getElementById('inputOtherTrigger');
+                input.style.display = el.classList.contains('active') ? '' : 'none';
+                if (!el.classList.contains('active')) input.value = '';
+            }
+        }
         function getTagValues(groupId) {
             return Array.from(document.querySelectorAll('#' + groupId + ' .tag-toggle.active'))
                 .map(el => el.dataset.value);
@@ -449,6 +457,8 @@
             document.getElementById('inputMedication').value = '';
             document.getElementById('inputNotes').value = '';
             document.querySelectorAll('.tag-toggle').forEach(el => el.classList.remove('active'));
+            document.getElementById('inputOtherTrigger').style.display = 'none';
+            document.getElementById('inputOtherTrigger').value = '';
             updateIntensity();
             document.querySelector('#tabRecord .section-title').textContent = '新建记录';
             document.querySelector('#tabRecord .btn-primary').textContent = '保存记录';
@@ -474,9 +484,20 @@
                 const el = document.querySelector(`#groupSymptoms .tag-toggle[data-value="${v}"]`);
                 if (el) el.classList.add('active');
             });
+            const otherInput = document.getElementById('inputOtherTrigger');
+            otherInput.style.display = 'none';
+            otherInput.value = '';
             (r.triggers || []).forEach(v => {
                 const el = document.querySelector(`#groupTriggers .tag-toggle[data-value="${v}"]`);
-                if (el) el.classList.add('active');
+                if (el) {
+                    el.classList.add('active');
+                } else {
+                    // Custom trigger — activate "其他" and fill input
+                    const otherTag = document.querySelector('#groupTriggers .tag-toggle[data-value="其他"]');
+                    if (otherTag) otherTag.classList.add('active');
+                    otherInput.style.display = '';
+                    otherInput.value = v;
+                }
             });
             document.querySelector('#tabRecord .section-title').textContent = '编辑记录';
             document.querySelector('#tabRecord .btn-primary').textContent = '更新记录';
@@ -489,7 +510,12 @@
             const duration = parseFloat(document.getElementById('inputDuration').value) || 0;
             const location = getTagValues('groupLocation');
             const symptoms = getTagValues('groupSymptoms');
-            const triggers = getTagValues('groupTriggers');
+            let triggers = getTagValues('groupTriggers');
+            const otherVal = document.getElementById('inputOtherTrigger').value.trim();
+            if (otherVal) {
+                triggers = triggers.filter(t => t !== '其他');
+                triggers.push(otherVal);
+            }
             const medication = document.getElementById('inputMedication').value.trim();
             const notes = document.getElementById('inputNotes').value.trim();
             if (!datetime) return;
