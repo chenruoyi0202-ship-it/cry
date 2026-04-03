@@ -1148,7 +1148,7 @@
                                 <canvas id="priceChart" height="180"></canvas>
                             </div>
                             <div class="chart-card">
-                                <div class="chart-card-title">盈亏分布</div>
+                                <div class="chart-card-title">卖出节点浮盈走势</div>
                                 <canvas id="profitChart" height="180"></canvas>
                             </div>
                         </div>
@@ -1157,14 +1157,14 @@
             `;
             document.getElementById('saveImgBtn').classList.add('visible');
             if (records.length > 0) {
-                setTimeout(() => drawCharts(costPrice, records, remainShares, currentRtPrice), 0);
+                setTimeout(() => drawCharts(costPrice, totalShares, records, remainShares, currentRtPrice), 0);
             }
         }
 
         // --- Charts ---
-        function drawCharts(costPrice, recs, remainShares, rtPrice) {
+        function drawCharts(costPrice, totalShares, recs, remainShares, rtPrice) {
             drawPriceChart(costPrice, recs, remainShares, rtPrice);
-            drawProfitChart(costPrice, recs, remainShares, rtPrice);
+            drawProfitChart(costPrice, totalShares, recs, remainShares, rtPrice);
         }
 
         function drawPriceChart(costPrice, recs, remainShares, rtPrice) {
@@ -1248,7 +1248,7 @@
             });
         }
 
-        function drawProfitChart(costPrice, recs, remainShares, rtPrice) {
+        function drawProfitChart(costPrice, totalShares, recs, remainShares, rtPrice) {
             const canvas = document.getElementById('profitChart');
             if (!canvas) return;
             const dpr = window.devicePixelRatio || 1;
@@ -1259,85 +1259,127 @@
             ctx.scale(dpr, dpr);
             const W = rect.width, H = rect.height;
 
-            const items = recs.map((r, i) => ({
-                label: `${r.type === 'done' ? '已卖' : '计划'}${i + 1}`,
-                profit: (r.price - costPrice) * r.shares,
-                shares: r.shares
-            }));
-            if (remainShares > 0 && rtPrice) {
-                items.push({
-                    label: '持有',
-                    profit: (rtPrice - costPrice) * remainShares,
-                    shares: remainShares
-                });
-            }
-            if (items.length === 0) return;
-
-            const absValues = items.map(d => Math.abs(d.profit));
-            const total = absValues.reduce((a, b) => a + b, 0) || 1;
-
-            const cx = W * 0.38, cy = H / 2;
-            const radius = Math.min(cx - 10, cy - 10, 70);
-            let startAngle = -Math.PI / 2;
-
-            const colors = items.map(d => d.profit >= 0 ? '#4caf50' : '#f44336');
-            const altColors = ['#4caf50', '#66bb6a', '#81c784', '#a5d6a7', '#FBBF24', '#f44336', '#ef5350'];
-
-            // Draw pie slices
-            items.forEach((d, i) => {
-                const sliceAngle = (Math.abs(d.profit) / total) * Math.PI * 2;
-                const endAngle = startAngle + sliceAngle;
-
-                ctx.fillStyle = d.profit >= 0
-                    ? ['#4caf50', '#66bb6a', '#81c784', '#a5d6a7'][i % 4]
-                    : ['#f44336', '#ef5350', '#e57373'][i % 3];
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, radius, startAngle, endAngle);
-                ctx.closePath();
-                ctx.fill();
-
-                startAngle = endAngle;
+            // Calculate floating profit at each sell node
+            const totalCost = costPrice * totalShares;
+            let accRevenue = 0;
+            let accShares = 0;
+            const nodes = recs.map((r, i) => {
+                accRevenue += r.price * r.shares;
+                accShares += r.shares;
+                const remShares = totalShares - accShares;
+                const remValue = remShares * r.price; // remaining valued at this sell price
+                const floatingProfit = (accRevenue + remValue) - totalCost;
+                return {
+                    label: `${r.type === 'done' ? '已卖' : '计划'}${i + 1}`,
+                    profit: floatingProfit,
+                    price: r.price
+                };
             });
+            if (nodes.length === 0) return;
 
-            // Center hole (donut)
-            ctx.fillStyle = 'rgba(10,10,10,0.95)';
+            const pad = { top: 24, bottom: 28, left: 50, right: 14 };
+            const chartW = W - pad.left - pad.right;
+            const chartH = H - pad.top - pad.bottom;
+
+            const profits = nodes.map(n => n.profit);
+            const maxP = Math.max(...profits, 0) * 1.2 || 1;
+            const minP = Math.min(...profits, 0) * 1.2 || -1;
+            const range = maxP - minP || 1;
+
+            const toY = v => pad.top + chartH * (1 - (v - minP) / range);
+            const toX = i => pad.left + (nodes.length === 1 ? chartW / 2 : i / (nodes.length - 1) * chartW);
+
+            // Zero line
+            const zeroY = toY(0);
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
             ctx.beginPath();
-            ctx.arc(cx, cy, radius * 0.55, 0, Math.PI * 2);
+            ctx.moveTo(pad.left, zeroY);
+            ctx.lineTo(W - pad.right, zeroY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#475569';
+            ctx.font = '10px IBM Plex Sans, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('0', pad.left - 6, zeroY);
+
+            // Fill area
+            ctx.beginPath();
+            nodes.forEach((n, i) => {
+                const x = toX(i), y = toY(n.profit);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            // Close to zero line
+            ctx.lineTo(toX(nodes.length - 1), zeroY);
+            ctx.lineTo(toX(0), zeroY);
+            ctx.closePath();
+
+            // Gradient fill
+            const lastProfit = nodes[nodes.length - 1].profit;
+            const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+            if (maxP > 0) {
+                grad.addColorStop(0, 'rgba(76,175,80,0.25)');
+                grad.addColorStop((maxP) / range, 'rgba(76,175,80,0.05)');
+            }
+            if (minP < 0) {
+                grad.addColorStop((maxP) / range, 'rgba(244,67,54,0.05)');
+                grad.addColorStop(1, 'rgba(244,67,54,0.2)');
+            }
+            ctx.fillStyle = grad;
             ctx.fill();
 
-            // Center text
-            const totalProfit = items.reduce((a, d) => a + d.profit, 0);
-            ctx.fillStyle = totalProfit >= 0 ? '#4caf50' : '#f44336';
-            ctx.font = 'bold 14px IBM Plex Sans, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText((totalProfit >= 0 ? '+' : '') + formatMoney(totalProfit), cx, cy);
-
-            // Legend on the right
-            const legendX = W * 0.68;
-            let legendY = 20;
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-
-            items.forEach((d, i) => {
-                const color = d.profit >= 0
-                    ? ['#4caf50', '#66bb6a', '#81c784', '#a5d6a7'][i % 4]
-                    : ['#f44336', '#ef5350', '#e57373'][i % 3];
-
-                ctx.fillStyle = color;
-                ctx.fillRect(legendX, legendY + 2, 8, 8);
-
-                ctx.fillStyle = '#94A3B8';
-                ctx.font = '11px IBM Plex Sans, sans-serif';
-                ctx.fillText(d.label, legendX + 14, legendY);
-
-                ctx.fillStyle = d.profit >= 0 ? '#4caf50' : '#f44336';
-                ctx.font = 'bold 11px IBM Plex Sans, sans-serif';
-                ctx.fillText((d.profit >= 0 ? '+' : '') + formatMoney(d.profit), legendX + 14, legendY + 15);
-
-                legendY += 34;
+            // Line
+            ctx.beginPath();
+            nodes.forEach((n, i) => {
+                const x = toX(i), y = toY(n.profit);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
             });
+            ctx.strokeStyle = lastProfit >= 0 ? '#4caf50' : '#f44336';
+            ctx.lineWidth = 2;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+
+            // Data points + values
+            nodes.forEach((n, i) => {
+                const x = toX(i), y = toY(n.profit);
+                const color = n.profit >= 0 ? '#4caf50' : '#f44336';
+
+                // Dot
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#0a0a0a';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Value label
+                ctx.fillStyle = color;
+                ctx.font = 'bold 11px IBM Plex Sans, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = n.profit >= 0 ? 'bottom' : 'top';
+                ctx.fillText((n.profit >= 0 ? '+' : '') + formatMoney(n.profit), x, y + (n.profit >= 0 ? -8 : 8));
+
+                // X label
+                ctx.fillStyle = '#64748B';
+                ctx.font = '10px IBM Plex Sans, sans-serif';
+                ctx.textBaseline = 'top';
+                ctx.fillText(n.label, x, H - 18);
+            });
+
+            // Y-axis labels (max/min)
+            ctx.fillStyle = '#475569';
+            ctx.font = '10px IBM Plex Sans, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            if (maxP > 0) ctx.fillText('+' + formatMoney(maxP / 1.2), pad.left - 6, pad.top);
+            ctx.textBaseline = 'bottom';
+            if (minP < 0) ctx.fillText(formatMoney(minP / 1.2), pad.left - 6, H - pad.bottom);
         }
 
         function renderRecordsQuiet() {
