@@ -285,7 +285,7 @@
         }
 
         .drag-handle {
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             width: 28px;
@@ -298,12 +298,31 @@
             transition: all 0.2s;
             touch-action: none;
         }
+        .reorder-mode .drag-handle { display: flex; }
         .drag-handle:hover { color: #94A3B8; background: rgba(255,255,255,0.06); }
         .drag-handle:active { cursor: grabbing; }
         .drag-handle svg {
             width: 16px;
             height: 16px;
             pointer-events: none;
+        }
+        .reorder-btn {
+            padding: 6px 12px;
+            min-height: 32px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: #64748B;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .reorder-btn:hover { color: #94A3B8; background: rgba(255,255,255,0.06); }
+        .reorder-btn.active {
+            border-color: rgba(202,138,4,0.3);
+            background: rgba(202,138,4,0.08);
+            color: #FBBF24;
         }
 
         .record-top {
@@ -945,7 +964,10 @@
         </div>
 
         <!-- 2. Reduction Records -->
-        <div class="section-title">减仓记录 & 计划</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div class="section-title" style="margin-bottom:0">减仓记录 & 计划</div>
+            <button class="reorder-btn" id="reorderBtn" onclick="toggleReorder()">调整顺序</button>
+        </div>
         <div class="input-group">
             <div class="records-list" id="recordsList">
                 <div class="empty-state" id="emptyState">暂无减仓记录，点击下方按钮添加</div>
@@ -1661,6 +1683,23 @@
             if (minP < 0) ctx.fillText(formatMoney(minP / 1.2), pad.left - 6, H - pad.bottom);
         }
 
+        // --- Reorder mode toggle ---
+        let reorderMode = false;
+        function toggleReorder() {
+            reorderMode = !reorderMode;
+            const list = document.getElementById('recordsList');
+            const btn = document.getElementById('reorderBtn');
+            if (reorderMode) {
+                list.classList.add('reorder-mode');
+                btn.classList.add('active');
+                btn.textContent = '完成';
+            } else {
+                list.classList.remove('reorder-mode');
+                btn.classList.remove('active');
+                btn.textContent = '调整顺序';
+            }
+        }
+
         // --- Drag & Drop (desktop + touch) ---
         let dragState = null; // { el, fromIndex, clone, startY, scrollTop }
 
@@ -1687,8 +1726,7 @@
 
         // --- Desktop HTML5 Drag ---
         function onDragStart(e) {
-            // Only allow drag from handle
-            if (!e.target.closest('.drag-handle')) { e.preventDefault(); return; }
+            if (!reorderMode || !e.target.closest('.drag-handle')) { e.preventDefault(); return; }
             dragState = { fromIndex: parseInt(this.dataset.index) };
             this.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -1727,6 +1765,7 @@
 
         // --- Touch Drag (mobile) ---
         function onTouchStart(e) {
+            if (!reorderMode) return;
             e.preventDefault();
             const item = this.closest('.record-item');
             const fromIndex = parseInt(item.dataset.index);
@@ -2081,7 +2120,7 @@
             else if (status === 'error') info.innerHTML = '<span class="sync-dot error"></span>同步失败';
         }
 
-        async function syncPlans() {
+        async function syncPlans(forceUpload) {
             if (!isLoggedIn()) return;
             const token = getGHToken();
             const password = localStorage.getItem('cry_enc_key');
@@ -2091,30 +2130,37 @@
 
             try {
                 let gistId = getGistId();
-                let cloudPlans = {};
+                let finalPlans;
 
-                // Try to read from gist
-                if (gistId) {
-                    const content = await gistGet(token, gistId);
-                    if (content) {
-                        try { cloudPlans = await decryptData(content, password); }
-                        catch (e) { console.warn('Decrypt failed, password may differ:', e); }
+                if (forceUpload) {
+                    // After delete/save: local is the source of truth, push directly
+                    finalPlans = getPlans();
+                } else {
+                    // Normal sync: merge local + cloud
+                    let cloudPlans = {};
+                    if (gistId) {
+                        const content = await gistGet(token, gistId);
+                        if (content) {
+                            try { cloudPlans = await decryptData(content, password); }
+                            catch (e) { console.warn('Decrypt failed, password may differ:', e); }
+                        }
                     }
-                }
-
-                // Merge: local + cloud, keep newer by savedAt
-                const localPlans = getPlans();
-                const merged = { ...cloudPlans };
-                for (const name in localPlans) {
-                    const local = localPlans[name];
-                    const cloud = merged[name];
-                    if (!cloud || (local.savedAt && (!cloud.savedAt || local.savedAt > cloud.savedAt))) {
-                        merged[name] = local;
+                    const localPlans = getPlans();
+                    finalPlans = { ...cloudPlans };
+                    for (const name in localPlans) {
+                        const local = localPlans[name];
+                        const cloud = finalPlans[name];
+                        if (!cloud || (local.savedAt && (!cloud.savedAt || local.savedAt > cloud.savedAt))) {
+                            finalPlans[name] = local;
+                        }
                     }
+                    // Save merged locally
+                    localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(finalPlans));
+                    refreshPlanSelect();
                 }
 
                 // Encrypt and save to gist
-                const encrypted = await encryptData(merged, password);
+                const encrypted = await encryptData(finalPlans, password);
                 if (gistId) {
                     await gistUpdate(token, gistId, encrypted);
                 } else {
@@ -2122,9 +2168,6 @@
                     localStorage.setItem('cry_gist_id', gistId);
                 }
 
-                // Save merged locally
-                localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(merged));
-                refreshPlanSelect();
                 setSyncStatus('synced');
             } catch (e) {
                 console.error('Sync failed:', e);
@@ -2195,7 +2238,7 @@
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
             refreshPlanSelect(name);
             alert('方案已保存');
-            syncPlans();
+            syncPlans(true);
         }
 
         function loadPlan() {
@@ -2233,7 +2276,7 @@
             delete plans[name];
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
             refreshPlanSelect();
-            syncPlans();
+            syncPlans(true);
         }
 
         // Focus stock input on load, refresh plan list
