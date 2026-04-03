@@ -116,7 +116,7 @@
         /* Green rising candle */
         .kline-up {
             background: rgba(76,175,80,0.25);
-            box-shadow: 0 0 8px rgba(76,175,80,0.1);
+            box-shadow: none;
         }
         .kline-up::before {
             background: rgba(76,175,80,0.15);
@@ -132,7 +132,7 @@
         /* Red falling candle */
         .kline-down {
             background: rgba(244,67,54,0.2);
-            box-shadow: 0 0 8px rgba(244,67,54,0.08);
+            box-shadow: none;
         }
         .kline-down::before {
             background: rgba(244,67,54,0.12);
@@ -148,7 +148,7 @@
         /* Gold candle */
         .kline-gold {
             background: rgba(202,138,4,0.2);
-            box-shadow: 0 0 10px rgba(202,138,4,0.08);
+            box-shadow: none;
         }
         .kline-gold::before {
             background: rgba(202,138,4,0.12);
@@ -164,8 +164,8 @@
 
         @keyframes kline-rise {
             0% { opacity: 0; transform: translateY(100vh); }
-            10% { opacity: 0.5; }
-            90% { opacity: 0.5; }
+            10% { opacity: 0.2; }
+            90% { opacity: 0.2; }
             100% { opacity: 0; transform: translateY(-100px); }
         }
 
@@ -1336,9 +1336,8 @@
                 el.addEventListener('animationend', () => el.remove());
             }
             // Initial batch
-            for (let i = 0; i < 8; i++) setTimeout(() => spawnCandle(), i * 600);
-            // Continuous spawn
-            setInterval(spawnCandle, 2500);
+            for (let i = 0; i < 5; i++) setTimeout(() => spawnCandle(), i * 800);
+            setInterval(spawnCandle, 4000);
         });
     </script>
 </body>
