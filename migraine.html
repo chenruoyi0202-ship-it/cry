@@ -573,7 +573,7 @@
             return res.json();
         }
         async function ghPut(token, repo, path, content, sha) {
-            const body = { message: 'Update migraine data', content: btoa(unescape(encodeURIComponent(content))), branch: 'main' };
+            const body = { message: 'Update migraine data', content: btoa(unescape(encodeURIComponent(content))) };
             if (sha) body.sha = sha;
             const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
                 method: 'PUT',
