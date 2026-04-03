@@ -611,6 +611,69 @@
                 padding: 40px 40px 32px;
             }
         }
+        /* AI Review */
+        .ai-section { margin-top: 16px; }
+        .ai-btn {
+            width: 100%;
+            min-height: 44px;
+            padding: 12px;
+            border: 1px solid rgba(202,138,4,0.3);
+            border-radius: 12px;
+            background: rgba(202,138,4,0.08);
+            color: #FBBF24;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none;
+        }
+        .ai-btn.visible { display: block; }
+        .ai-btn:hover { background: rgba(202,138,4,0.15); }
+        .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .ai-result {
+            margin-top: 12px;
+            padding: 16px;
+            background: rgba(202,138,4,0.05);
+            border: 1px solid rgba(202,138,4,0.15);
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #E2E8F0;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .ai-result.visible { display: block; }
+        .ai-result .ai-label {
+            font-size: 11px;
+            color: #CA8A04;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .ai-settings {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .ai-settings input {
+            flex: 1;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #fff;
+            font-size: 12px;
+            outline: none;
+        }
+        .ai-settings input:focus { border-color: #CA8A04; }
+        .ai-settings-toggle {
+            font-size: 11px;
+            color: #475569;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+        .ai-settings-toggle:hover { color: #94A3B8; }
+
     </style>
 </head>
 <body>
@@ -728,6 +791,20 @@
             </div>
         </div>
         <button class="save-img-btn" id="saveImgBtn" onclick="saveAsImage()">保存推演结果为图片</button>
+
+        <!-- AI Review -->
+        <div class="ai-section">
+            <button class="ai-btn" id="aiReviewBtn" onclick="aiReview()">AI 智能点评我的止盈计划</button>
+            <div class="ai-result" id="aiResult">
+                <div class="ai-label">AI 点评 · 通义千问</div>
+                <div id="aiContent"></div>
+            </div>
+            <div class="ai-settings-toggle" onclick="toggleAiSettings()">API 设置</div>
+            <div class="ai-settings" id="aiSettings" style="display:none;">
+                <input type="password" id="aiKeyInput" placeholder="DashScope API Key (sk-...)" />
+                <button class="plan-btn" onclick="saveAiKey()" style="font-size:11px;padding:8px 12px;">保存</button>
+            </div>
+        </div>
 
         <!-- Disclaimer -->
         <div class="disclaimer">
@@ -1006,6 +1083,7 @@
             if (costPrice <= 0 || totalShares <= 0) {
                 area.innerHTML = '<div class="input-group"><div class="empty-state">请先输入持仓信息和减仓记录</div></div>';
                 document.getElementById('saveImgBtn').classList.remove('visible');
+                document.getElementById('aiReviewBtn').classList.remove('visible');
                 return;
             }
 
@@ -1169,6 +1247,7 @@
                 </div>
             `;
             document.getElementById('saveImgBtn').classList.add('visible');
+            document.getElementById('aiReviewBtn').classList.add('visible');
             if (records.length > 0) {
                 setTimeout(() => drawCharts(costPrice, totalShares, records, remainShares, currentRtPrice), 0);
             }
@@ -1580,6 +1659,133 @@
         }
 
         // Focus stock input on load, refresh plan list
+        // --- AI Review ---
+        const AI_KEY_STORAGE = 'cry_ai_key';
+        const AI_DEFAULT_KEY = 'sk-7e559c2e63b04177941f084f8782aa88';
+
+        function getAiKey() {
+            return localStorage.getItem(AI_KEY_STORAGE) || AI_DEFAULT_KEY;
+        }
+        function saveAiKey() {
+            const key = document.getElementById('aiKeyInput').value.trim();
+            if (key) {
+                localStorage.setItem(AI_KEY_STORAGE, key);
+                alert('API Key 已保存');
+            }
+        }
+        function toggleAiSettings() {
+            const el = document.getElementById('aiSettings');
+            el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+            if (el.style.display === 'flex') {
+                document.getElementById('aiKeyInput').value = getAiKey();
+            }
+        }
+
+        async function aiReview() {
+            const btn = document.getElementById('aiReviewBtn');
+            const resultEl = document.getElementById('aiResult');
+            const contentEl = document.getElementById('aiContent');
+            const key = getAiKey();
+
+            if (!key) {
+                alert('请先在下方 API 设置中填入 DashScope API Key');
+                toggleAiSettings();
+                return;
+            }
+
+            // Build plan summary
+            const stock = document.getElementById('stockInput').value.trim() || '未知';
+            const market = document.getElementById('marketSelect').value;
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
+            const price = currentRtPrice || 0;
+            const cur = market === 'US' ? 'USD' : 'HKD';
+
+            if (costPrice <= 0 || totalShares <= 0 || records.length === 0) {
+                alert('请先填写持仓信息和减仓计划');
+                return;
+            }
+
+            let planText = `股票: ${stock} (${cur})\n买入均价: ${costPrice}\n总持仓: ${totalShares}股\n当前价: ${price || '未设置'}\n\n止盈计划:\n`;
+            let accRev = 0, accSh = 0;
+            records.forEach((r, i) => {
+                accRev += r.price * r.shares;
+                accSh += r.shares;
+                const remSh = totalShares - accSh;
+                const fp = (accRev + remSh * r.price) - costPrice * totalShares;
+                planText += `第${i+1}批: ${r.type === 'done' ? '已卖出' : '计划'} ${r.price.toFixed(3)} × ${r.shares}股, 浮盈${fp >= 0 ? '+' : ''}${fp.toFixed(0)}${cur}\n`;
+            });
+            const remainShares = totalShares - accSh;
+            if (remainShares > 0) {
+                planText += `剩余持有: ${remainShares}股\n`;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'AI 分析中...';
+            contentEl.textContent = '';
+            resultEl.classList.add('visible');
+
+            try {
+                const resp = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${key}`
+                    },
+                    body: JSON.stringify({
+                        model: 'qwen-plus',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: '你是一位专业的股票投资顾问。用户会给你一个止盈减仓计划，请从以下角度简洁点评（总共不超过300字）：\n1. 整体策略评价（分批止盈节奏是否合理）\n2. 价格区间设置是否合理\n3. 仓位分配建议\n4. 风险提示\n请用简洁专业的语言，给出实用建议。不要使用markdown格式。'
+                            },
+                            {
+                                role: 'user',
+                                content: `请点评我的止盈计划：\n\n${planText}`
+                            }
+                        ],
+                        stream: true
+                    })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.text();
+                    throw new Error(`API 请求失败 (${resp.status}): ${err}`);
+                }
+
+                const reader = resp.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        const data = line.slice(6).trim();
+                        if (data === '[DONE]') continue;
+                        try {
+                            const json = JSON.parse(data);
+                            const delta = json.choices?.[0]?.delta?.content;
+                            if (delta) {
+                                contentEl.textContent += delta;
+                            }
+                        } catch {}
+                    }
+                }
+            } catch (e) {
+                contentEl.textContent = '点评失败: ' + e.message + '\n\n请检查 API Key 是否正确，或网络是否正常。';
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'AI 智能点评我的止盈计划';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             refreshPlanSelect();
             fetchFxRates();
