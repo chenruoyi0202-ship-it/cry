@@ -511,6 +511,44 @@
         }
         .plan-btn-del:hover { background: rgba(244,67,54,0.15); }
 
+        /* Charts */
+        .charts-section {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .charts-title {
+            font-size: 13px;
+            color: #64748B;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        @media (min-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .chart-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .chart-card-title {
+            font-size: 12px;
+            color: #94A3B8;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .chart-card canvas {
+            width: 100%;
+            height: 180px;
+            display: block;
+        }
+
         /* Save image button */
         .save-img-btn {
             display: none;
@@ -1099,9 +1137,207 @@
                             </div>
                         </div>` : ''}
                     </div>` : ''}
+
+                    <!-- Charts -->
+                    ${records.length > 0 ? `
+                    <div class="charts-section">
+                        <div class="charts-title">可视化分析</div>
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <div class="chart-card-title">各批次价格 vs 买入均价</div>
+                                <canvas id="priceChart" height="180"></canvas>
+                            </div>
+                            <div class="chart-card">
+                                <div class="chart-card-title">盈亏分布</div>
+                                <canvas id="profitChart" height="180"></canvas>
+                            </div>
+                        </div>
+                    </div>` : ''}
                 </div>
             `;
             document.getElementById('saveImgBtn').classList.add('visible');
+            if (records.length > 0) {
+                setTimeout(() => drawCharts(costPrice, records, remainShares, currentRtPrice), 0);
+            }
+        }
+
+        // --- Charts ---
+        function drawCharts(costPrice, recs, remainShares, rtPrice) {
+            drawPriceChart(costPrice, recs, remainShares, rtPrice);
+            drawProfitChart(costPrice, recs, remainShares, rtPrice);
+        }
+
+        function drawPriceChart(costPrice, recs, remainShares, rtPrice) {
+            const canvas = document.getElementById('priceChart');
+            if (!canvas) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = rect.height;
+
+            // Data: each record + optional remaining
+            const items = recs.map((r, i) => ({
+                label: `${r.type === 'done' ? '已卖' : '计划'}${i + 1}`,
+                price: r.price,
+                color: r.type === 'done' ? '#4caf50' : '#FBBF24'
+            }));
+            if (remainShares > 0 && rtPrice) {
+                items.push({ label: '持有', price: rtPrice, color: '#4fc3f7' });
+            }
+            if (items.length === 0) return;
+
+            const allPrices = items.map(d => d.price).concat([costPrice]);
+            const maxP = Math.max(...allPrices) * 1.15;
+            const minP = Math.min(...allPrices) * 0.85;
+            const range = maxP - minP || 1;
+
+            const pad = { top: 20, bottom: 28, left: 10, right: 10 };
+            const chartW = W - pad.left - pad.right;
+            const chartH = H - pad.top - pad.bottom;
+            const barW = Math.min(36, (chartW / items.length) * 0.6);
+            const gap = chartW / items.length;
+
+            // Cost line
+            const costY = pad.top + chartH * (1 - (costPrice - minP) / range);
+            ctx.strokeStyle = 'rgba(244,67,54,0.5)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, costY);
+            ctx.lineTo(W - pad.right, costY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Cost label
+            ctx.fillStyle = '#f44336';
+            ctx.font = '10px IBM Plex Sans, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText('成本 ' + costPrice.toFixed(2), W - pad.right, costY - 4);
+
+            // Bars
+            items.forEach((d, i) => {
+                const x = pad.left + i * gap + (gap - barW) / 2;
+                const barH = chartH * (d.price - minP) / range;
+                const y = pad.top + chartH - barH;
+
+                ctx.fillStyle = d.color;
+                ctx.beginPath();
+                const r = 3;
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + barW - r, y);
+                ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+                ctx.lineTo(x + barW, pad.top + chartH);
+                ctx.lineTo(x, pad.top + chartH);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.fill();
+
+                // Price on top
+                ctx.fillStyle = '#F8FAFC';
+                ctx.font = 'bold 11px IBM Plex Sans, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(d.price.toFixed(2), x + barW / 2, y - 4);
+
+                // Label below
+                ctx.fillStyle = '#64748B';
+                ctx.font = '10px IBM Plex Sans, sans-serif';
+                ctx.fillText(d.label, x + barW / 2, H - 6);
+            });
+        }
+
+        function drawProfitChart(costPrice, recs, remainShares, rtPrice) {
+            const canvas = document.getElementById('profitChart');
+            if (!canvas) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = rect.height;
+
+            const items = recs.map((r, i) => ({
+                label: `${r.type === 'done' ? '已卖' : '计划'}${i + 1}`,
+                profit: (r.price - costPrice) * r.shares,
+                shares: r.shares
+            }));
+            if (remainShares > 0 && rtPrice) {
+                items.push({
+                    label: '持有',
+                    profit: (rtPrice - costPrice) * remainShares,
+                    shares: remainShares
+                });
+            }
+            if (items.length === 0) return;
+
+            const absValues = items.map(d => Math.abs(d.profit));
+            const total = absValues.reduce((a, b) => a + b, 0) || 1;
+
+            const cx = W * 0.38, cy = H / 2;
+            const radius = Math.min(cx - 10, cy - 10, 70);
+            let startAngle = -Math.PI / 2;
+
+            const colors = items.map(d => d.profit >= 0 ? '#4caf50' : '#f44336');
+            const altColors = ['#4caf50', '#66bb6a', '#81c784', '#a5d6a7', '#FBBF24', '#f44336', '#ef5350'];
+
+            // Draw pie slices
+            items.forEach((d, i) => {
+                const sliceAngle = (Math.abs(d.profit) / total) * Math.PI * 2;
+                const endAngle = startAngle + sliceAngle;
+
+                ctx.fillStyle = d.profit >= 0
+                    ? ['#4caf50', '#66bb6a', '#81c784', '#a5d6a7'][i % 4]
+                    : ['#f44336', '#ef5350', '#e57373'][i % 3];
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fill();
+
+                startAngle = endAngle;
+            });
+
+            // Center hole (donut)
+            ctx.fillStyle = 'rgba(10,10,10,0.95)';
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius * 0.55, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Center text
+            const totalProfit = items.reduce((a, d) => a + d.profit, 0);
+            ctx.fillStyle = totalProfit >= 0 ? '#4caf50' : '#f44336';
+            ctx.font = 'bold 14px IBM Plex Sans, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText((totalProfit >= 0 ? '+' : '') + formatMoney(totalProfit), cx, cy);
+
+            // Legend on the right
+            const legendX = W * 0.68;
+            let legendY = 20;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+
+            items.forEach((d, i) => {
+                const color = d.profit >= 0
+                    ? ['#4caf50', '#66bb6a', '#81c784', '#a5d6a7'][i % 4]
+                    : ['#f44336', '#ef5350', '#e57373'][i % 3];
+
+                ctx.fillStyle = color;
+                ctx.fillRect(legendX, legendY + 2, 8, 8);
+
+                ctx.fillStyle = '#94A3B8';
+                ctx.font = '11px IBM Plex Sans, sans-serif';
+                ctx.fillText(d.label, legendX + 14, legendY);
+
+                ctx.fillStyle = d.profit >= 0 ? '#4caf50' : '#f44336';
+                ctx.font = 'bold 11px IBM Plex Sans, sans-serif';
+                ctx.fillText((d.profit >= 0 ? '+' : '') + formatMoney(d.profit), legendX + 14, legendY + 15);
+
+                legendY += 34;
+            });
         }
 
         function renderRecordsQuiet() {
