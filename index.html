@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>止盈计算推演 - 通用港股/美股工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -430,6 +431,25 @@
         }
         .plan-btn-del:hover { background: rgba(244,67,54,0.15); }
 
+        /* Save image button */
+        .save-img-btn {
+            display: none;
+            width: 100%;
+            min-height: 44px;
+            padding: 12px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: #0F172A;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .save-img-btn:hover { opacity: 0.9; }
+        .save-img-btn.visible { display: block; }
+
         @media (max-width: 400px) {
             .form-row.three-col { grid-template-columns: 1fr 1fr; }
         }
@@ -544,6 +564,7 @@
                 <div class="empty-state">请先输入持仓信息和减仓记录</div>
             </div>
         </div>
+        <button class="save-img-btn" id="saveImgBtn" onclick="saveAsImage()">保存推演结果为图片</button>
 
         <!-- Disclaimer -->
         <div class="disclaimer">
@@ -811,6 +832,7 @@
 
             if (costPrice <= 0 || totalShares <= 0) {
                 area.innerHTML = '<div class="input-group"><div class="empty-state">请先输入持仓信息和减仓记录</div></div>';
+                document.getElementById('saveImgBtn').classList.remove('visible');
                 return;
             }
 
@@ -944,6 +966,7 @@
                     </div>` : ''}
                 </div>
             `;
+            document.getElementById('saveImgBtn').classList.add('visible');
         }
 
         function renderRecordsQuiet() {
@@ -988,6 +1011,36 @@
                     </div>
                 `;
                 list.appendChild(div);
+            });
+        }
+
+        // --- Save as image ---
+        function saveAsImage() {
+            const area = document.getElementById('resultsArea');
+            const btn = document.getElementById('saveImgBtn');
+            if (!area.querySelector('.results')) return;
+
+            btn.textContent = '正在生成图片...';
+            btn.disabled = true;
+
+            html2canvas(area, {
+                backgroundColor: '#0F172A',
+                scale: 2,
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const stock = document.getElementById('stockInput').value.trim() || '推演';
+                const date = new Date().toISOString().slice(0, 10);
+                link.download = `${stock}_止盈推演_${date}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.textContent = '保存推演结果为图片';
+                btn.disabled = false;
+            }).catch(() => {
+                btn.textContent = '保存推演结果为图片';
+                btn.disabled = false;
+                alert('生成图片失败，请重试');
             });
         }
 
