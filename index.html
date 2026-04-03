@@ -12,18 +12,98 @@
 
         body {
             font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-            background: #111111;
+            background: #0a0a0a;
             color: #F8FAFC;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Finance background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                /* subtle grid lines */
+                linear-gradient(rgba(202,138,4,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(202,138,4,0.03) 1px, transparent 1px),
+                /* diagonal accent lines like a trading chart */
+                repeating-linear-gradient(
+                    -30deg,
+                    transparent,
+                    transparent 80px,
+                    rgba(202,138,4,0.015) 80px,
+                    rgba(202,138,4,0.015) 81px
+                ),
+                /* base gradient */
+                radial-gradient(ellipse at 20% 80%, rgba(30,58,138,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(202,138,4,0.08) 0%, transparent 50%),
+                #0a0a0a;
+            background-size: 40px 40px, 40px 40px, auto, auto, auto, auto;
+        }
+
+        /* Floating glow orbs */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .bg-orb-1 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(202,138,4,0.2), transparent 70%);
+            top: -100px; right: -80px;
+            animation: float1 20s ease-in-out infinite;
+        }
+        .bg-orb-2 {
+            width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(30,58,138,0.25), transparent 70%);
+            bottom: 10%; left: -60px;
+            animation: float2 25s ease-in-out infinite;
+        }
+        .bg-orb-3 {
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(202,138,4,0.1), transparent 70%);
+            top: 40%; right: -40px;
+            animation: float3 18s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(-30px, 40px); }
+            66% { transform: translate(20px, -20px); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(40px, -30px); }
+            66% { transform: translate(-20px, 20px); }
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-25px, 35px); }
+        }
+
+        /* Respect reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .bg-orb { animation: none !important; }
         }
 
         .card {
             width: 100%;
             max-width: 460px;
-            background: linear-gradient(180deg, #1A1A1A 0%, #111111 100%);
+            position: relative;
+            z-index: 1;
+            background: linear-gradient(180deg, rgba(26,26,26,0.95) 0%, rgba(10,10,10,0.98) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(202,138,4,0.08);
             border-radius: 20px;
             padding: 28px 22px 24px;
             box-shadow: 0 8px 40px rgba(0,0,0,0.5);
@@ -456,6 +536,9 @@
     </style>
 </head>
 <body>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
     <div class="card">
         <!-- Header -->
         <div class="header">
@@ -1024,7 +1107,7 @@
             btn.disabled = true;
 
             html2canvas(area, {
-                backgroundColor: '#111111',
+                backgroundColor: '#0a0a0a',
                 scale: 2,
                 useCORS: true,
                 logging: false
