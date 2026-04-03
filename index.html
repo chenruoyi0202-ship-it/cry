@@ -1511,10 +1511,24 @@
                 alert('当前没有数据可保存'); return;
             }
 
-            const defaultName = stock || '未命名方案';
             const currentSel = document.getElementById('planSelect').value;
-            const name = prompt('方案名称：', currentSel || defaultName);
-            if (!name) return;
+            let name;
+
+            if (currentSel) {
+                // Editing an existing plan - ask overwrite or new
+                const overwrite = confirm(`覆盖当前方案「${currentSel}」？\n\n点击「确定」覆盖原方案\n点击「取消」另存为新方案`);
+                if (overwrite) {
+                    name = currentSel;
+                } else {
+                    name = prompt('新方案名称：', currentSel + ' 副本');
+                    if (!name) return;
+                }
+            } else {
+                // Fresh save
+                const defaultName = stock || '未命名方案';
+                name = prompt('方案名称：', defaultName);
+                if (!name) return;
+            }
 
             const market = document.getElementById('marketSelect').value;
             const plans = getPlans();
