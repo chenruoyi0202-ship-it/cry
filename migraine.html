@@ -532,14 +532,24 @@
                 const pos = await new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
                 });
-                const lat = pos.coords.latitude.toFixed(2);
-                const lon = pos.coords.longitude.toFixed(2);
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m`);
-                if (!res.ok) return null;
-                const data = await res.json();
+                const lat = pos.coords.latitude.toFixed(4);
+                const lon = pos.coords.longitude.toFixed(4);
+                // Fetch weather and city in parallel
+                const [weatherRes, geoRes] = await Promise.all([
+                    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m`),
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh`).catch(() => null)
+                ]);
+                if (!weatherRes.ok) return null;
+                const data = await weatherRes.json();
                 const c = data.current;
                 const desc = weatherCodeToText(c.weather_code);
-                return `${desc} ${c.temperature_2m}°C 湿度${c.relative_humidity_2m}% 风速${c.wind_speed_10m}km/h`;
+                let city = '';
+                if (geoRes && geoRes.ok) {
+                    const geo = await geoRes.json();
+                    const addr = geo.address || {};
+                    city = addr.city || addr.town || addr.county || addr.state || '';
+                }
+                return `${city ? city + ' · ' : ''}${desc} ${c.temperature_2m}°C 湿度${c.relative_humidity_2m}%`;
             } catch (e) {
                 return null;
             }
