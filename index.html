@@ -640,24 +640,26 @@
         <!-- Stock Info + Price -->
         <div class="section-title">股票 & 当前价格</div>
         <div class="input-group">
-            <div class="form-row three-col">
+            <div class="form-row">
                 <div class="field">
                     <label>股票名称/代码</label>
                     <input type="text" id="stockInput" placeholder="如: 02680" oninput="updateBadge()">
                 </div>
                 <div class="field">
                     <label>市场</label>
-                    <select id="marketSelect" onchange="calculate()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
+                    <select id="marketSelect" onchange="calculate()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 10px;min-height:44px;color:#fff;font-size:16px;font-weight:600;outline:none;">
                         <option value="HK" style="background:#1E293B;">港股 (HKD)</option>
                         <option value="US" style="background:#1E293B;">美股 (USD)</option>
                     </select>
                 </div>
+            </div>
+            <div class="form-row">
                 <div class="field">
                     <label>当前股价</label>
-                    <div style="display:flex;gap:6px;">
-                        <input type="number" step="0.001" id="manualPrice" placeholder="输入当前价" oninput="applyManualPrice()" style="flex:1;">
-                        <button onclick="fetchPrice()" style="padding:8px 10px;background:linear-gradient(135deg,#4fc3f7,#29b6f6);border:none;border-radius:8px;color:#fff;font-weight:600;font-size:11px;cursor:pointer;white-space:nowrap;" title="尝试自动获取">刷新</button>
-                    </div>
+                    <input type="number" step="0.001" id="manualPrice" placeholder="输入当前价" oninput="applyManualPrice()">
+                </div>
+                <div class="field" style="justify-content:flex-end;">
+                    <button onclick="fetchPrice()" style="padding:12px 16px;min-height:44px;background:linear-gradient(135deg,#4fc3f7,#29b6f6);border:none;border-radius:10px;color:#fff;font-weight:600;font-size:14px;cursor:pointer;width:100%;" title="尝试自动获取">刷新股价</button>
                 </div>
             </div>
             <div id="rtStatus" style="font-size:11px;color:#475569;margin-top:4px;display:none;"></div>
