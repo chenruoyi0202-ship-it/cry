@@ -192,12 +192,18 @@
         .hi-details span { color: #2d3748; }
         .hi-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .hi-tag { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: #eef5f2; color: #43b89c; font-weight: 500; }
-        .hi-del {
-            position: absolute; top: 14px; right: 14px; background: none;
-            border: none; color: #d9636a; font-size: 18px; cursor: pointer;
-            opacity: 0.4; transition: opacity 0.2s; line-height: 1;
+        .hi-actions {
+            position: absolute; top: 12px; right: 14px;
+            display: flex; gap: 8px;
         }
-        .hi-del:hover { opacity: 1; }
+        .hi-btn {
+            background: none; border: none; font-size: 16px;
+            cursor: pointer; opacity: 0.4; transition: opacity 0.2s;
+            line-height: 1; padding: 2px;
+        }
+        .hi-btn:hover { opacity: 1; }
+        .hi-btn.edit { color: #43b89c; }
+        .hi-btn.del { color: #d9636a; }
 
         /* Stats */
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
@@ -429,7 +435,10 @@
         }
 
         // ==================== Form ====================
+        let editingId = null;
+
         function initForm() {
+            editingId = null;
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('inputDatetime').value = now.toISOString().slice(0, 16);
@@ -439,7 +448,39 @@
             document.getElementById('inputNotes').value = '';
             document.querySelectorAll('.tag-toggle').forEach(el => el.classList.remove('active'));
             updateIntensity();
+            document.querySelector('#tabRecord .section-title').textContent = '新建记录';
+            document.querySelector('#tabRecord .btn-primary').textContent = '保存记录';
         }
+
+        function editEpisode(id) {
+            const r = records.find(r => r.id === id);
+            if (!r) return;
+            editingId = id;
+            document.getElementById('inputDatetime').value = r.datetime;
+            document.getElementById('inputIntensity').value = r.intensity;
+            document.getElementById('inputDuration').value = r.duration || '';
+            document.getElementById('inputMedication').value = r.medication || '';
+            document.getElementById('inputNotes').value = r.notes || '';
+            updateIntensity();
+            // Set tag toggles
+            document.querySelectorAll('.tag-toggle').forEach(el => el.classList.remove('active'));
+            (r.location || []).forEach(v => {
+                const el = document.querySelector(`#groupLocation .tag-toggle[data-value="${v}"]`);
+                if (el) el.classList.add('active');
+            });
+            (r.symptoms || []).forEach(v => {
+                const el = document.querySelector(`#groupSymptoms .tag-toggle[data-value="${v}"]`);
+                if (el) el.classList.add('active');
+            });
+            (r.triggers || []).forEach(v => {
+                const el = document.querySelector(`#groupTriggers .tag-toggle[data-value="${v}"]`);
+                if (el) el.classList.add('active');
+            });
+            document.querySelector('#tabRecord .section-title').textContent = '编辑记录';
+            document.querySelector('#tabRecord .btn-primary').textContent = '更新记录';
+            switchTab('record');
+        }
+
         function addEpisode() {
             const datetime = document.getElementById('inputDatetime').value;
             const intensity = parseInt(document.getElementById('inputIntensity').value);
@@ -450,9 +491,17 @@
             const medication = document.getElementById('inputMedication').value.trim();
             const notes = document.getElementById('inputNotes').value.trim();
             if (!datetime) return;
-            records.push({ id: Date.now(), datetime, intensity, duration, location, symptoms, triggers, medication, notes });
+            if (editingId) {
+                const idx = records.findIndex(r => r.id === editingId);
+                if (idx !== -1) {
+                    records[idx] = { id: editingId, datetime, intensity, duration, location, symptoms, triggers, medication, notes };
+                }
+                showToast('记录已更新');
+            } else {
+                records.push({ id: Date.now(), datetime, intensity, duration, location, symptoms, triggers, medication, notes });
+                showToast('记录已保存');
+            }
             saveRecords();
-            showToast('记录已保存');
             initForm();
             autoSync();
         }
@@ -479,7 +528,10 @@
                 if (r.notes) details += `备注: <span>${r.notes}</span><br>`;
                 const tags = [...(r.location || []), ...(r.symptoms || []), ...(r.triggers || [])];
                 return `<div class="history-item">
-                    <button class="hi-del" onclick="deleteEpisode(${r.id})">×</button>
+                    <div class="hi-actions">
+                        <button class="hi-btn edit" onclick="editEpisode(${r.id})" title="编辑">&#9998;</button>
+                        <button class="hi-btn del" onclick="deleteEpisode(${r.id})" title="删除">×</button>
+                    </div>
                     <div class="hi-top">
                         <div class="hi-date">${formatDate(r.datetime)}</div>
                         <div class="hi-intensity" style="background:${color}18;color:${color}">${label} ${r.intensity}</div>
