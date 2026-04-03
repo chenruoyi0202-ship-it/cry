@@ -989,7 +989,7 @@
                     <div class="record-bottom">
                         <span class="rec-details">
                             <span class="rec-shares">${rec.shares.toLocaleString()} 股</span>
-                            <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) : '--'}</span>
+                            <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) + ' <small style="color:#475569">' + fmtCNY(profit) + '</small>' : '--'}</span>
                         </span>
                     </div>
                 `;
@@ -1127,14 +1127,14 @@
                                         <strong>${r.price.toFixed(3)}</strong> × ${r.shares.toLocaleString()}股
                                         = ${formatMoney(r.price * r.shares)}
                                         <div style="font-size:11px;color:#64748B;margin-top:2px;">
-                                            本批盈亏 <span class="${batchProfit >= 0 ? 'pos' : 'neg'}" style="color:${batchProfit >= 0 ? '#4caf50' : '#f44336'}">${batchProfit >= 0 ? '+' : ''}${formatMoney(batchProfit)}</span>
+                                            本批盈亏 <span class="${batchProfit >= 0 ? 'pos' : 'neg'}" style="color:${batchProfit >= 0 ? '#4caf50' : '#f44336'}">${batchProfit >= 0 ? '+' : ''}${formatMoney(batchProfit)}</span> <span style="color:#475569">${fmtCNY(batchProfit)}</span>
                                         </div>
                                     </div>
                                     <div style="text-align:right;">
                                         <div class="bv-profit ${floatingProfit >= 0 ? 'pos' : 'neg'}">
                                             ${floatingProfit >= 0 ? '+' : ''}${formatMoney(floatingProfit)}
                                         </div>
-                                        <div style="font-size:10px;color:#475569;">浮盈</div>
+                                        <div style="font-size:10px;color:#475569;">浮盈 ${fmtCNY(floatingProfit)}</div>
                                     </div>
                                 </div>`;
                             }).join('');
@@ -1146,7 +1146,7 @@
                                 剩余 <strong>${remainShares.toLocaleString()}股</strong> 按实时价 ${currentRtPrice.toFixed(3)}
                             </div>
                             <div class="bv-profit ${remainProfit >= 0 ? 'pos' : 'neg'}">
-                                ${remainProfit >= 0 ? '+' : ''}${formatMoney(remainProfit)}
+                                ${remainProfit >= 0 ? '+' : ''}${formatMoney(remainProfit)} <small style="color:#475569">${fmtCNY(remainProfit)}</small>
                             </div>
                         </div>` : ''}
                     </div>` : ''}
@@ -1432,7 +1432,7 @@
                     <div class="record-bottom">
                         <span class="rec-details">
                             <span class="rec-shares">${rec.shares.toLocaleString()} 股</span>
-                            <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) : '--'}</span>
+                            <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) + ' <small style="color:#475569">' + fmtCNY(profit) + '</small>' : '--'}</span>
                         </span>
                     </div>
                 `;
