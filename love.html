@@ -442,7 +442,7 @@
 
         </div>
 
-        <footer class="app-footer">Made with &#x2764;&#xFE0F; <span style="opacity:0.5;font-size:11px;">v2026.04.04.23:45</span></footer>
+        <footer class="app-footer">Made with &#x2764;&#xFE0F; <span id="dataTime" style="opacity:0.7;font-size:12px;">数据更新：--</span></footer>
     </div>
 
     <!-- Lightbox -->
@@ -698,6 +698,13 @@
         } catch(e) {}
     }
 
+    // Sync when tab becomes visible again (e.g., switching back from another app)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && currentPwd && !isEditing) {
+            syncFromGitHub(currentPwd);
+        }
+    });
+
     async function doUnlock() {
         const pwd = document.getElementById('pwdInput').value;
         if (!pwd) return;
@@ -767,6 +774,17 @@
         renderAnniversaries();
         renderDiary();
         renderGallery();
+        renderDataTime();
+    }
+
+    function renderDataTime() {
+        const el = document.getElementById('dataTime');
+        if (!el || !appData) return;
+        const t = appData._updatedAt;
+        if (!t) { el.textContent = '数据更新：--'; return; }
+        const d = new Date(new Date(t).getTime() + 8 * 3600000);
+        const s = d.toISOString();
+        el.textContent = '数据更新：' + s.substring(5,10) + ' ' + s.substring(11,16);
     }
 
     function renderHeader() {
