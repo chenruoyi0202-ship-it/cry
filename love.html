@@ -384,21 +384,29 @@
 
     async function tryUnlock(pwd, isAuto) {
         try {
-            const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-            if (!resp.ok) {
-                // No data file — first time use
-                appData = {
-                    version: 1,
-                    couple: { person1: 'TA', person2: 'TA' },
-                    anniversaries: [], diary: [], photos: []
-                };
-                sessionStorage.setItem('_lp', pwd);
-                showApp();
-                renderAll();
-                if (!isAuto) toggleEdit();
-                return true;
+            // Try sessionStorage cache first (avoids GitHub Pages deploy delay)
+            const cached = sessionStorage.getItem('_ld');
+            let json = null;
+            if (cached) {
+                try { json = JSON.parse(cached); } catch(e) {}
             }
-            const json = await resp.json();
+            if (!json) {
+                const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
+                if (!resp.ok) {
+                    // No data file — first time use
+                    appData = {
+                        version: 1,
+                        couple: { person1: 'TA', person2: 'TA' },
+                        anniversaries: [], diary: [], photos: []
+                    };
+                    sessionStorage.setItem('_lp', pwd);
+                    showApp();
+                    renderAll();
+                    if (!isAuto) toggleEdit();
+                    return true;
+                }
+                json = await resp.json();
+            }
             appData = await decryptData(pwd, json.encrypted);
             sessionStorage.setItem('_lp', pwd);
             showApp();
@@ -789,6 +797,8 @@
                 throw new Error(err.message || 'GitHub API error');
             }
 
+            // Cache locally so refresh doesn't need to wait for GitHub Pages deploy
+            sessionStorage.setItem('_ld', output);
             dirty = false;
             return true;
         } catch (e) {
