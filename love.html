@@ -9,7 +9,8 @@
     <title>Our Memory</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { touch-action: manipulation; }
+        html { touch-action: manipulation; -ms-touch-action: manipulation; }
+        body { -webkit-text-size-adjust: 100%; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
             background: #fdf6f0;
@@ -425,17 +426,23 @@
         return bufToB64(combined);
     }
 
-    // ===== Password storage (cookie only — localStorage reserved for data cache) =====
-    const _secure = location.protocol === 'https:' ? ';Secure' : '';
+    // ===== Password storage (triple: localStorage + sessionStorage + cookie) =====
+    const _ck = location.protocol === 'https:' ? ';Secure' : '';
     function savePwd(p) {
-        document.cookie = '_lp=' + encodeURIComponent(p) + ';max-age=31536000;path=/' + _secure + ';SameSite=Lax';
+        try { localStorage.setItem('_lp', p); } catch(e) {}
+        try { sessionStorage.setItem('_lp', p); } catch(e) {}
+        try { document.cookie = '_lp=' + encodeURIComponent(p) + ';max-age=31536000;path=/' + _ck + ';SameSite=Lax'; } catch(e) {}
     }
     function getPwd() {
-        const m = document.cookie.match(/(?:^|;\s*)_lp=([^;]*)/);
-        return m ? decodeURIComponent(m[1]) : '';
+        try { const v = localStorage.getItem('_lp'); if (v) return v; } catch(e) {}
+        try { const v = sessionStorage.getItem('_lp'); if (v) return v; } catch(e) {}
+        try { const m = document.cookie.match(/(?:^|;\s*)_lp=([^;]*)/); if (m) return decodeURIComponent(m[1]); } catch(e) {}
+        return '';
     }
     function clearPwd() {
-        document.cookie = '_lp=;max-age=0;path=/' + _secure;
+        try { localStorage.removeItem('_lp'); } catch(e) {}
+        try { sessionStorage.removeItem('_lp'); } catch(e) {}
+        try { document.cookie = '_lp=;max-age=0;path=/' + _ck; } catch(e) {}
     }
 
     // ===== Data cache (localStorage, with quota handling) =====
@@ -443,8 +450,8 @@
         try {
             localStorage.setItem('_ld', jsonStr);
         } catch(e) {
-            // Quota exceeded — clear old cache and retry
-            try { localStorage.removeItem('_ld'); localStorage.removeItem('_lp'); } catch(e2) {}
+            // Quota exceeded — clear data cache only, never touch _lp
+            try { localStorage.removeItem('_ld'); } catch(e2) {}
             try { localStorage.setItem('_ld', jsonStr); } catch(e2) { /* give up */ }
         }
     }
