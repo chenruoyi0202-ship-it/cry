@@ -711,6 +711,11 @@
     }
 
     // Auto-sync triggers: visibilitychange + pageshow (iOS fallback) + periodic
+    function fmtTime(t) {
+        if (!t) return '无';
+        return new Date(new Date(t).getTime() + 8 * 3600000).toISOString().substring(11,16);
+    }
+
     async function manualSync() {
         if (!currentPwd) return alert('请先解锁');
         const btn = document.getElementById('syncToggle');
@@ -718,21 +723,17 @@
         showToast('同步中...');
         try {
             const remote = await fetchFromGitHubAPI();
-            if (!remote) { showToast('同步失败'); btn.classList.remove('spinning'); return; }
+            if (!remote) { showToast('拉取失败：无法连接GitHub'); btn.classList.remove('spinning'); return; }
             const localTime = (appData && appData._updatedAt) || '';
             const remoteTime = remote.updatedAt || '';
-            if (remoteTime > localTime) {
-                const newData = await decryptData(currentPwd, remote.encrypted);
-                appData = newData;
-                migrateDiaryPhotos();
-                cacheData(JSON.stringify(remote));
-                renderAll();
-                const beijing = new Date(new Date(remoteTime).getTime() + 8 * 3600000);
-                showToast('已同步最新 ' + beijing.toISOString().substring(11,16) + ' (北京)');
-            } else {
-                showToast('数据已是最新');
-            }
-        } catch(e) { showToast('同步失败'); }
+            // Force replace on manual sync (user explicitly wants latest)
+            const newData = await decryptData(currentPwd, remote.encrypted);
+            appData = newData;
+            migrateDiaryPhotos();
+            cacheData(JSON.stringify(remote));
+            renderAll();
+            showToast('本地:' + fmtTime(localTime) + ' → 远程:' + fmtTime(remoteTime));
+        } catch(e) { showToast('同步失败: ' + (e.message||'')); }
         setTimeout(() => btn.classList.remove('spinning'), 500);
     }
 
