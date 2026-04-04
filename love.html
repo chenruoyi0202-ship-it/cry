@@ -587,6 +587,7 @@
         if (json) {
             try {
                 appData = await decryptData(pwd, json.encrypted);
+                migrateDiaryPhotos();
                 if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
                 currentPwd = pwd; savePwd(pwd);
                 showApp(); renderAll();
@@ -619,6 +620,7 @@
         }
         try {
             appData = await decryptData(pwd, json.encrypted);
+            migrateDiaryPhotos();
             cacheData(JSON.stringify(json));
             if (appData._ghToken && appData._ghRepo) {
                 saveTokenCookie(appData._ghToken, appData._ghRepo);
@@ -685,6 +687,7 @@
             if (remoteTime && remoteTime > localTime) {
                 const newData = await decryptData(pwd, remote.encrypted);
                 appData = newData;
+                migrateDiaryPhotos();
                 cacheData(JSON.stringify(remote));
                 renderAll();
                 const beijing = new Date(new Date(remoteTime).getTime() + 8 * 3600000);
@@ -972,16 +975,40 @@
 
     function delItem(collection, id) {
         if (!confirm('确定删除？')) return;
-        appData[collection] = appData[collection].filter(x => x.id !== id);
-        // Clean up old-format photo ID refs from diary (new format uses data URLs)
+        // Before deleting a photo, inline it into any diary entries that reference it
         if (collection === 'photos') {
-            appData.diary.forEach(d => { d.photos = (d.photos || []).filter(p => typeof p !== 'string' || p.startsWith('data:') || p !== id); });
+            const photo = appData.photos.find(x => x.id === id);
+            if (photo && photo.data) {
+                appData.diary.forEach(d => {
+                    if (!d.photos) return;
+                    d.photos = d.photos.map(p => (p === id) ? photo.data : p);
+                });
+            }
         }
+        appData[collection] = appData[collection].filter(x => x.id !== id);
         dirty = true;
         renderAll();
     }
 
     function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+    // Migrate: convert diary photo ID refs → inline data URLs (prevents data loss on gallery delete)
+    function migrateDiaryPhotos() {
+        if (!appData || !appData.diary) return;
+        let changed = false;
+        appData.diary.forEach(d => {
+            if (!d.photos || !d.photos.length) return;
+            d.photos = d.photos.map(p => {
+                if (typeof p !== 'string') return p;
+                if (p.startsWith('data:')) return p;
+                // It's a photo ID reference - inline the data URL
+                const photo = (appData.photos || []).find(x => x.id === p);
+                if (photo && photo.data) { changed = true; return photo.data; }
+                return p; // orphan ref, leave as-is
+            });
+        });
+        if (changed) dirty = true;
+    }
 
     function pickEmoji(el) {
         document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('selected'));
