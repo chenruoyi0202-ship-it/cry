@@ -549,12 +549,18 @@
         try {
             const savedPwd = getPwd();
             if (savedPwd) {
-                const ok = await tryUnlock(savedPwd, true);
+                // Try 1: with cache
+                let ok = await tryUnlock(savedPwd, true);
                 if (ok) return;
-                clearPwd();
+                // Try 2: clear cache, force network fetch
+                try { localStorage.removeItem('_ld'); } catch(e2) {}
+                ok = await tryUnlock(savedPwd, true);
+                if (ok) return;
+                // Still failed — pre-fill password, don't clear it
+                document.getElementById('pwdInput').value = savedPwd;
             }
         } catch(e) {}
-        // No saved password or failed — show lock screen + hearts
+        // Show lock screen (password may be pre-filled)
         document.getElementById('lockScreen').classList.add('show');
         document.getElementById('floatingHearts').style.display = 'block';
     })();
