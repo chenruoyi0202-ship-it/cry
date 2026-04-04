@@ -311,7 +311,11 @@
         body.editing .gallery-item.no-jiggle { animation: none; }
         .gallery-item img {
             width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
+            -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+            -webkit-user-drag: none;
         }
+        .gallery-item { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        body.editing .gallery-item img { pointer-events: none; }
         .gallery-item:hover img { transform: scale(1.05); }
 
         /* Lightbox */
@@ -1011,95 +1015,66 @@
         dirty = true; closeModal(); renderGallery();
     }
 
-    // ===== AI Auto-Tagging (TensorFlow.js MobileNet) =====
-    let _mobilenet = null;
-    async function loadMobileNet() {
-        if (_mobilenet) return _mobilenet;
-        showToast('加载AI模型中...');
-        // Load TF.js + MobileNet from CDN
-        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
-        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js');
-        _mobilenet = await window.mobilenet.load({ version: 2, alpha: 0.5 });
-        return _mobilenet;
-    }
-
-    function loadScript(src) {
-        return new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = src; s.onload = resolve; s.onerror = reject;
-            document.head.appendChild(s);
+    // ===== AI Auto-Tagging (Qwen-VL-Max via DashScope API) =====
+    async function callQwenVL(dataUrl, apiKey) {
+        const resp = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'qwen-vl-max',
+                input: {
+                    messages: [{
+                        role: 'user',
+                        content: [
+                            { image: dataUrl },
+                            { text: '用2-3个中文短词（每个2-4字）描述这张照片最主要的内容、场景或情绪，多个词用英文逗号分隔。只返回标签本身，不要解释。例如：合影,餐厅,微笑' }
+                        ]
+                    }]
+                }
+            })
         });
-    }
-
-    // English → Chinese tag map for common ImageNet classes
-    const TAG_MAP = {
-        'beach': '海滩', 'seashore': '海滩', 'sand': '沙滩', 'ocean': '海洋',
-        'mountain': '山', 'valley': '山谷', 'lake': '湖', 'river': '河',
-        'cat': '猫', 'dog': '狗', 'bird': '鸟',
-        'food': '美食', 'pizza': '美食', 'cake': '蛋糕', 'coffee': '咖啡', 'ice cream': '冰淇淋',
-        'restaurant': '餐厅', 'dining': '用餐',
-        'flower': '花', 'garden': '花园', 'tree': '树木', 'forest': '森林',
-        'car': '汽车', 'bus': '公交', 'train': '火车', 'airplane': '飞机', 'boat': '船',
-        'building': '建筑', 'tower': '塔', 'castle': '城堡', 'church': '教堂', 'bridge': '桥',
-        'book': '书', 'cup': '杯子', 'umbrella': '雨伞', 'chair': '椅子', 'bed': '床',
-        'clothing': '服装', 'hat': '帽子', 'shoe': '鞋子',
-        'face': '人像', 'portrait': '人像',
-        'night': '夜景', 'sunset': '日落', 'sunrise': '日出', 'sky': '天空', 'cloud': '云',
-        'snow': '雪景', 'rain': '雨', 'beach wagon': '海滩'
-    };
-
-    function translateTag(en) {
-        const lower = en.toLowerCase();
-        // Try exact match first
-        if (TAG_MAP[lower]) return TAG_MAP[lower];
-        // Try word-by-word match
-        const words = lower.split(/[,\s]+/);
-        for (const w of words) {
-            if (TAG_MAP[w]) return TAG_MAP[w];
+        if (!resp.ok) {
+            const errText = await resp.text();
+            throw new Error('API ' + resp.status + ': ' + errText.substring(0, 100));
         }
-        // Check for keywords
-        for (const key in TAG_MAP) {
-            if (lower.includes(key)) return TAG_MAP[key];
-        }
-        return null; // Skip untranslatable tags
+        const data = await resp.json();
+        const content = data.output && data.output.choices && data.output.choices[0] && data.output.choices[0].message.content;
+        if (!content) return [];
+        const text = Array.isArray(content) ? (content[0].text || '') : String(content);
+        return text.split(/[,，、\s]+/).map(s => s.trim()).filter(s => s && s.length <= 10);
     }
 
     async function runAITagging() {
+        const apiKey = (appData && appData._qwenKey) || '';
+        if (!apiKey) return showToast('未配置Qwen API Key');
         if (!appData.photos.length) return showToast('没有照片');
         const untagged = appData.photos.filter(p => !p.tags || !p.tags.length);
-        if (!untagged.length) {
-            if (!confirm('所有照片已有标签，是否重新识别？')) return;
-        }
         const targets = untagged.length ? untagged : appData.photos;
-        try {
-            const model = await loadMobileNet();
-            let done = 0;
-            showToast('识别中 0/' + targets.length);
-            for (const photo of targets) {
-                try {
-                    const img = new Image();
-                    img.src = photo.data;
-                    await new Promise((r, rj) => { img.onload = r; img.onerror = rj; });
-                    const predictions = await model.classify(img, 5);
-                    const tags = new Set();
-                    predictions.forEach(p => {
-                        if (p.probability < 0.1) return;
-                        const zh = translateTag(p.className);
-                        if (zh) tags.add(zh);
-                    });
-                    if (tags.size) photo.tags = Array.from(tags);
-                    done++;
-                    if (done % 3 === 0 || done === targets.length) {
-                        showToast('识别中 ' + done + '/' + targets.length);
-                    }
-                } catch(e) { done++; }
-            }
-            dirty = true;
-            renderGallery();
-            showToast('已识别 ' + done + ' 张，请保存');
-        } catch(e) {
-            showToast('AI加载失败: ' + (e.message || ''));
+        if (!untagged.length) {
+            // All photos have tags; confirm via custom modal? Just re-tag all.
+            showToast('重新识别所有照片');
         }
+        let done = 0, failed = 0;
+        showToast('识别中 0/' + targets.length);
+        for (const photo of targets) {
+            try {
+                const tags = await callQwenVL(photo.data, apiKey);
+                if (tags.length) photo.tags = tags;
+                done++;
+            } catch(e) {
+                failed++;
+                if (failed === 1) showToast('识别失败: ' + (e.message || '').substring(0, 50));
+            }
+            if ((done + failed) % 2 === 0 || (done + failed) === targets.length) {
+                showToast('识别中 ' + (done + failed) + '/' + targets.length);
+            }
+        }
+        dirty = true;
+        renderGallery();
+        showToast('完成: 成功' + done + ' 失败' + failed + '，请保存');
     }
 
     function onPhotoClick(idx) {
@@ -1158,17 +1133,20 @@
             if (!isEditing) return;
             const item = e.target.closest('.gallery-item');
             if (!item || e.target.closest('.item-del') || e.target.closest('.item-cat')) return;
+            // Prevent iOS long-press image menu
+            e.preventDefault();
             const touch = e.touches[0];
             startX = touch.clientX; startY = touch.clientY;
-            const id = item.dataset.idx;
             timer = setTimeout(() => {
                 dragging = true;
-                srcId = +item.dataset.idx; // current index in appData.photos
+                srcId = +item.dataset.idx;
                 item.classList.add('dragging');
                 if (navigator.vibrate) navigator.vibrate(40);
                 ghost = createGhost(item);
             }, 350);
-        }, { passive: true });
+        }, { passive: false });
+        // Suppress iOS context menu entirely on gallery
+        gallery.addEventListener('contextmenu', e => { if (isEditing) e.preventDefault(); });
 
         gallery.addEventListener('touchmove', function(e) {
             if (!dragging) {
