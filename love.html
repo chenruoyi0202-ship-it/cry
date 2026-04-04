@@ -430,7 +430,7 @@
     async function tryUnlock(pwd, isAuto) {
         try {
             // Try sessionStorage cache first (avoids GitHub Pages deploy delay)
-            const cached = sessionStorage.getItem('_ld');
+            const cached = localStorage.getItem('_ld');
             let json = null;
             if (cached) {
                 try { json = JSON.parse(cached); } catch(e) {}
@@ -444,7 +444,7 @@
                         couple: { person1: 'CRY', person2: 'XYX' },
                         anniversaries: [], diary: [], photos: []
                     };
-                    sessionStorage.setItem('_lp', pwd);
+                    localStorage.setItem('_lp', pwd);
                     showApp();
                     renderAll();
                     if (!isAuto) toggleEdit();
@@ -453,7 +453,7 @@
                 json = await resp.json();
             }
             appData = await decryptData(pwd, json.encrypted);
-            sessionStorage.setItem('_lp', pwd);
+            localStorage.setItem('_lp', pwd);
             showApp();
             renderAll();
             return true;
@@ -482,11 +482,11 @@
     // Auto-unlock on refresh, or show lock screen
     (async function autoUnlock() {
         try {
-            const savedPwd = sessionStorage.getItem('_lp');
+            const savedPwd = localStorage.getItem('_lp');
             if (savedPwd) {
                 const ok = await tryUnlock(savedPwd, true);
                 if (ok) return;
-                sessionStorage.removeItem('_lp');
+                localStorage.removeItem('_lp');
             }
         } catch(e) {}
         // No saved password or failed — show lock screen + hearts
@@ -822,7 +822,7 @@
 
     // ===== Push to GitHub =====
     async function pushToGitHub() {
-        const pwd = sessionStorage.getItem('_lp');
+        const pwd = localStorage.getItem('_lp');
         if (!pwd) return alert('密码已过期，请刷新重新登录');
 
         const token = getToken();
@@ -868,7 +868,7 @@
             }
 
             // Cache locally so refresh doesn't need to wait for GitHub Pages deploy
-            sessionStorage.setItem('_ld', output);
+            localStorage.setItem('_ld', output);
             dirty = false;
             return true;
         } catch (e) {
