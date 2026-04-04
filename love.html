@@ -603,8 +603,8 @@
                 if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
                 currentPwd = pwd; savePwd(pwd);
                 showApp(); renderAll();
-                // Background: check GitHub API for newer data
-                syncFromGitHub(pwd);
+                // Always force-sync on every page load/refresh
+                syncFromGitHub(pwd, {force: true, verbose: true});
                 return true;
             } catch(e) {
                 try { localStorage.removeItem('_ld'); } catch(e2) {}
@@ -636,8 +636,8 @@
             cacheData(JSON.stringify(json));
             if (appData._ghToken && appData._ghRepo) {
                 saveTokenCookie(appData._ghToken, appData._ghRepo);
-                // Pages data might be stale — immediately sync from API
-                syncFromGitHub(pwd);
+                // Pages data might be stale — force-sync from API
+                syncFromGitHub(pwd, {force: true, verbose: true});
             }
             currentPwd = pwd; savePwd(pwd);
             showApp(); renderAll();
@@ -699,25 +699,28 @@
     }
 
     // Background sync: only update if remote is strictly newer than local
-    async function syncFromGitHub(pwd) {
+    async function syncFromGitHub(pwd, opts) {
+        opts = opts || {};
         try {
             const remote = await fetchFromGitHubAPI();
-            if (!remote) return;
+            if (!remote) { if (opts.verbose) showToast('同步失败'); return; }
             const localTime = (appData && appData._updatedAt) || '';
             const remoteTime = remote.updatedAt || '';
-            // Only replace local if remote is strictly newer
-            if (remoteTime && remoteTime > localTime) {
+            // Always replace if opts.force, otherwise only if remote is newer
+            if (opts.force || (remoteTime && remoteTime > localTime)) {
                 const newData = await decryptData(pwd, remote.encrypted);
                 appData = newData;
                 migrateDiaryPhotos();
                 cacheData(JSON.stringify(remote));
                 renderAll();
-                const beijing = new Date(new Date(remoteTime).getTime() + 8 * 3600000);
-                const hm = beijing.toISOString().substring(11,16);
-                showToast('已同步最新 ' + hm + ' (北京)');
+                if (opts.verbose) {
+                    const beijing = new Date(new Date(remoteTime).getTime() + 8 * 3600000);
+                    showToast('已同步 ' + beijing.toISOString().substring(11,16) + ' (北京)');
+                }
+            } else if (opts.verbose) {
+                showToast('数据已是最新');
             }
-            // If local is same or newer, silently do nothing (no toast spam)
-        } catch(e) {}
+        } catch(e) { if (opts.verbose) showToast('同步失败'); }
     }
 
     // Auto-sync triggers: visibilitychange + pageshow (iOS fallback) + periodic
@@ -1238,6 +1241,46 @@
             });
         });
     }
+    // Auto-compress any data URL that's larger than 100KB, returns new data URL
+    function compressDataUrl(dataUrl) {
+        return new Promise((resolve) => {
+            if (!dataUrl || !dataUrl.startsWith('data:image') || dataUrl.length < 100000) {
+                resolve(dataUrl); return;
+            }
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+                const MAX = 800;
+                if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+                if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                let result = canvas.toDataURL('image/jpeg', 0.3);
+                if (result.length > 150000) result = canvas.toDataURL('image/jpeg', 0.15);
+                resolve(result);
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    }
+
+    // Compress any oversized photos in appData before save
+    async function autoCompressLargePhotos() {
+        if (!appData) return;
+        for (const p of (appData.photos || [])) {
+            if (p.data) p.data = await compressDataUrl(p.data);
+        }
+        for (const d of (appData.diary || [])) {
+            if (!d.photos) continue;
+            for (let i = 0; i < d.photos.length; i++) {
+                if (typeof d.photos[i] === 'string') {
+                    d.photos[i] = await compressDataUrl(d.photos[i]);
+                }
+            }
+        }
+    }
+
     function compressImage(file, cb) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -1396,6 +1439,9 @@
         }
 
         try {
+            // Auto-compress large photos before save (keeps file size small)
+            await autoCompressLargePhotos();
+
             const now = new Date().toISOString();
             appData._updatedAt = now;
             const encrypted = await encryptData(pwd, appData);
