@@ -210,6 +210,13 @@
             cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .editing .item-cat { display: inline-block; }
+        .item-tags-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 6px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            font-size: 10px; color: #fff; line-height: 1.3;
+            opacity: 0; transition: opacity 0.2s; pointer-events: none;
+        }
+        .gallery-item:hover .item-tags-overlay { opacity: 1; }
         .gallery-item.swap-selected {
             outline: 3px solid var(--accent); outline-offset: -3px;
             transform: scale(0.93);
@@ -261,7 +268,7 @@
         .tl-thumb:hover { transform: scale(1.05); }
 
         /* Photo Gallery */
-        /* Category Bar */
+        /* Tag Bar */
         .category-bar {
             display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px;
             -webkit-overflow-scrolling: touch;
@@ -273,12 +280,8 @@
             background: var(--card); color: var(--text2); transition: all 0.2s; white-space: nowrap;
         }
         .cat-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .cat-chip.add-cat { border-style: dashed; color: var(--accent); background: transparent; display: none; }
-        .editing .cat-chip.add-cat { display: inline-block; }
-        .cat-chip-del {
-            display: none; margin-left: 6px; color: #e74c3c;
-        }
-        .editing .cat-chip .cat-chip-del { display: inline; }
+        .cat-chip.ai-btn { border-style: dashed; color: var(--accent); background: transparent; display: none; }
+        .editing .cat-chip.ai-btn { display: inline-block; }
 
         .gallery {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
@@ -515,7 +518,7 @@
     let appData = null;
     let isEditing = false;
     let currentPwd = null;
-    let currentCategory = 'all';
+    let currentTag = 'all';
     let currentLbIndex = 0;
     let dirty = false;
 
@@ -920,117 +923,166 @@
         }).join('');
     }
 
-    function renderCategoryBar() {
+    // ===== Tag Bar (filter by AI-generated tags) =====
+    function renderTagBar() {
         const bar = document.getElementById('categoryBar');
         if (!bar) return;
-        // Collect all unique categories from photos
-        const cats = new Set();
-        (appData.photos || []).forEach(p => { if (p.category) cats.add(p.category); });
-        const catList = ['all', ...Array.from(cats).sort()];
-        bar.innerHTML = catList.map(c => {
-            const label = c === 'all' ? '全部' : esc(c);
-            const active = c === currentCategory ? ' active' : '';
-            const del = c !== 'all' ? '<span class="cat-chip-del" onclick="event.stopPropagation();deleteCategory(\'' + esc(c).replace(/'/g,"\\'") + '\')">\u00D7</span>' : '';
-            return '<span class="cat-chip' + active + '" onclick="setCategory(\'' + (c === 'all' ? 'all' : esc(c).replace(/'/g,"\\'")) + '\')">' + label + del + '</span>';
-        }).join('') + '<span class="cat-chip add-cat" onclick="addCategory()">+ 添加分类</span>';
+        const tagCounts = {};
+        (appData.photos || []).forEach(p => {
+            (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+        });
+        const tags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+        const list = ['all', ...tags];
+        bar.innerHTML = list.map(t => {
+            const label = t === 'all' ? '全部' : esc(t) + '·' + tagCounts[t];
+            const active = t === currentTag ? ' active' : '';
+            const val = t === 'all' ? 'all' : esc(t).replace(/'/g, "\\'");
+            return '<span class="cat-chip' + active + '" onclick="setTag(\'' + val + '\')">' + label + '</span>';
+        }).join('') + '<span class="cat-chip ai-btn" onclick="runAITagging()">&#x1F916; AI识别</span>';
     }
 
-    function setCategory(c) {
-        currentCategory = c;
-        renderCategoryBar();
+    function setTag(t) {
+        currentTag = t;
+        renderTagBar();
         renderGallery();
-    }
-
-    function addCategory() {
-        const m = document.getElementById('modalContent');
-        const o = document.getElementById('modalOverlay');
-        m.innerHTML = '<h3>添加分类</h3>' +
-            '<label>分类名称</label><input id="mCatName" placeholder="如：旅行、日常">' +
-            '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
-            '<button class="btn-primary" onclick="confirmAddCategory()">确定</button></div>';
-        o.classList.add('open');
-        setTimeout(() => document.getElementById('mCatName').focus(), 100);
-    }
-
-    function confirmAddCategory() {
-        const name = document.getElementById('mCatName').value.trim();
-        if (!name) return;
-        currentCategory = name;
-        closeModal();
-        renderCategoryBar();
-        renderGallery();
-    }
-
-    function deleteCategory(name) {
-        appData.photos.forEach(p => { if (p.category === name) delete p.category; });
-        if (currentCategory === name) currentCategory = 'all';
-        dirty = true;
-        renderCategoryBar();
-        renderGallery();
-        showToast('已删除分类');
     }
 
     function renderGallery() {
-        renderCategoryBar();
+        renderTagBar();
         const c = document.getElementById('gallery');
-        // Filter by current category
         const filtered = [];
         appData.photos.forEach((p, origIdx) => {
-            if (currentCategory === 'all' || p.category === currentCategory) {
+            if (currentTag === 'all' || (p.tags || []).includes(currentTag)) {
                 filtered.push({ p, origIdx });
             }
         });
-        c.innerHTML = filtered.map((item, i) => {
+        c.innerHTML = filtered.map(item => {
             const p = item.p, origIdx = item.origIdx;
+            const tagsText = (p.tags || []).length ? (p.tags || []).slice(0, 3).join(' · ') : '';
+            const tagsOverlay = tagsText ? '<div class="item-tags-overlay">' + esc(tagsText) + '</div>' : '';
             return '<div class="gallery-item skeleton" data-idx="' + origIdx + '" onclick="onPhotoClick(' + origIdx + ')">' +
                 '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
-                '<button class="item-cat" onclick="event.stopPropagation();setPhotoCategory(\'' + p.id + '\')">' + (p.category ? esc(p.category) : '+') + '</button>' +
-                '<img src="' + p.data + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')"></div>';
+                '<button class="item-cat" onclick="event.stopPropagation();editPhotoTags(\'' + p.id + '\')">' + (tagsText ? '&#x270F;' : '+') + '</button>' +
+                '<img src="' + p.data + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')">' +
+                tagsOverlay + '</div>';
         }).join('');
         galleryRendered = true;
     }
 
     let editingPhotoId = null;
-    function setPhotoCategory(id) {
+    function editPhotoTags(id) {
         const photo = appData.photos.find(p => p.id === id);
         if (!photo) return;
         editingPhotoId = id;
-        const cats = new Set();
-        appData.photos.forEach(p => { if (p.category) cats.add(p.category); });
-        const list = Array.from(cats).sort();
-        const chipsHtml = list.map(c =>
-            '<span onclick="pickPhotoCat(\'' + esc(c).replace(/'/g,"\\'") + '\')" style="display:inline-block;padding:6px 12px;margin:4px;border-radius:14px;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;">' + esc(c) + '</span>'
-        ).join('');
         const m = document.getElementById('modalContent');
         const o = document.getElementById('modalOverlay');
-        m.innerHTML = '<h3>设置分类</h3>' +
-            (list.length ? '<label>选择已有分类</label><div style="margin:4px 0 12px;">' + chipsHtml + '</div>' : '') +
-            '<label>或输入新分类</label><input id="mPhotoCat" placeholder="分类名称" value="' + esc(photo.category || '') + '">' +
+        m.innerHTML = '<h3>编辑标签</h3>' +
+            '<label>标签（逗号分隔）</label>' +
+            '<input id="mPhotoTags" placeholder="风景, 合影, 食物" value="' + esc((photo.tags || []).join(', ')) + '">' +
             '<div class="modal-actions">' +
-            '<button class="btn-secondary" onclick="removePhotoCat()">取消分类</button>' +
-            '<button class="btn-primary" onclick="confirmPhotoCat()">确定</button></div>';
+            '<button class="btn-secondary" onclick="closeModal()">取消</button>' +
+            '<button class="btn-primary" onclick="confirmPhotoTags()">保存</button></div>';
         o.classList.add('open');
     }
 
-    function pickPhotoCat(cat) {
+    function confirmPhotoTags() {
+        const val = document.getElementById('mPhotoTags').value.trim();
         const photo = appData.photos.find(p => p.id === editingPhotoId);
         if (!photo) return;
-        photo.category = cat;
+        if (val) photo.tags = val.split(/[,，、]\s*/).map(s => s.trim()).filter(Boolean);
+        else delete photo.tags;
         dirty = true; closeModal(); renderGallery();
     }
-    function confirmPhotoCat() {
-        const name = document.getElementById('mPhotoCat').value.trim();
-        const photo = appData.photos.find(p => p.id === editingPhotoId);
-        if (!photo) return;
-        if (name) photo.category = name;
-        else delete photo.category;
-        dirty = true; closeModal(); renderGallery();
+
+    // ===== AI Auto-Tagging (TensorFlow.js MobileNet) =====
+    let _mobilenet = null;
+    async function loadMobileNet() {
+        if (_mobilenet) return _mobilenet;
+        showToast('加载AI模型中...');
+        // Load TF.js + MobileNet from CDN
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js');
+        _mobilenet = await window.mobilenet.load({ version: 2, alpha: 0.5 });
+        return _mobilenet;
     }
-    function removePhotoCat() {
-        const photo = appData.photos.find(p => p.id === editingPhotoId);
-        if (!photo) return;
-        delete photo.category;
-        dirty = true; closeModal(); renderGallery();
+
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = src; s.onload = resolve; s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    // English → Chinese tag map for common ImageNet classes
+    const TAG_MAP = {
+        'beach': '海滩', 'seashore': '海滩', 'sand': '沙滩', 'ocean': '海洋',
+        'mountain': '山', 'valley': '山谷', 'lake': '湖', 'river': '河',
+        'cat': '猫', 'dog': '狗', 'bird': '鸟',
+        'food': '美食', 'pizza': '美食', 'cake': '蛋糕', 'coffee': '咖啡', 'ice cream': '冰淇淋',
+        'restaurant': '餐厅', 'dining': '用餐',
+        'flower': '花', 'garden': '花园', 'tree': '树木', 'forest': '森林',
+        'car': '汽车', 'bus': '公交', 'train': '火车', 'airplane': '飞机', 'boat': '船',
+        'building': '建筑', 'tower': '塔', 'castle': '城堡', 'church': '教堂', 'bridge': '桥',
+        'book': '书', 'cup': '杯子', 'umbrella': '雨伞', 'chair': '椅子', 'bed': '床',
+        'clothing': '服装', 'hat': '帽子', 'shoe': '鞋子',
+        'face': '人像', 'portrait': '人像',
+        'night': '夜景', 'sunset': '日落', 'sunrise': '日出', 'sky': '天空', 'cloud': '云',
+        'snow': '雪景', 'rain': '雨', 'beach wagon': '海滩'
+    };
+
+    function translateTag(en) {
+        const lower = en.toLowerCase();
+        // Try exact match first
+        if (TAG_MAP[lower]) return TAG_MAP[lower];
+        // Try word-by-word match
+        const words = lower.split(/[,\s]+/);
+        for (const w of words) {
+            if (TAG_MAP[w]) return TAG_MAP[w];
+        }
+        // Check for keywords
+        for (const key in TAG_MAP) {
+            if (lower.includes(key)) return TAG_MAP[key];
+        }
+        return null; // Skip untranslatable tags
+    }
+
+    async function runAITagging() {
+        if (!appData.photos.length) return showToast('没有照片');
+        const untagged = appData.photos.filter(p => !p.tags || !p.tags.length);
+        if (!untagged.length) {
+            if (!confirm('所有照片已有标签，是否重新识别？')) return;
+        }
+        const targets = untagged.length ? untagged : appData.photos;
+        try {
+            const model = await loadMobileNet();
+            let done = 0;
+            showToast('识别中 0/' + targets.length);
+            for (const photo of targets) {
+                try {
+                    const img = new Image();
+                    img.src = photo.data;
+                    await new Promise((r, rj) => { img.onload = r; img.onerror = rj; });
+                    const predictions = await model.classify(img, 5);
+                    const tags = new Set();
+                    predictions.forEach(p => {
+                        if (p.probability < 0.1) return;
+                        const zh = translateTag(p.className);
+                        if (zh) tags.add(zh);
+                    });
+                    if (tags.size) photo.tags = Array.from(tags);
+                    done++;
+                    if (done % 3 === 0 || done === targets.length) {
+                        showToast('识别中 ' + done + '/' + targets.length);
+                    }
+                } catch(e) { done++; }
+            }
+            dirty = true;
+            renderGallery();
+            showToast('已识别 ' + done + ' 张，请保存');
+        } catch(e) {
+            showToast('AI加载失败: ' + (e.message || ''));
+        }
     }
 
     function onPhotoClick(idx) {
@@ -1441,7 +1493,7 @@
             files.forEach(file => {
                 compressImage(file, (dataUrl) => {
                     const photo = { id: genId(), data: dataUrl };
-                    if (currentCategory && currentCategory !== 'all') photo.category = currentCategory;
+                    if (currentTag && currentTag !== 'all') photo.tags = [currentTag];
                     appData.photos.push(photo);
                     done++;
                     if (done === files.length) {
