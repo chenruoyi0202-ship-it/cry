@@ -76,7 +76,7 @@
 
         /* Header */
         .app-header { text-align: center; padding: 24px 0 0; }
-        .couple-names { font-size: 28px; font-weight: 700; color: #e8758f; }
+        .couple-names { font-size: 28px; font-weight: 700; color: #e8758f; text-transform: lowercase; }
 
         /* Tab Bar */
         .tab-bar {
@@ -389,6 +389,11 @@
     </div>
 
     <script>
+    // Disable pinch zoom
+    document.addEventListener('gesturestart', e => e.preventDefault());
+    document.addEventListener('gesturechange', e => e.preventDefault());
+    document.addEventListener('gestureend', e => e.preventDefault());
+
     // ===== State =====
     let appData = null;
     let isEditing = false;
@@ -438,20 +443,24 @@
         return bufToB64(combined);
     }
 
-    // ===== Password storage (triple: localStorage + sessionStorage + cookie) =====
+    // ===== Password storage (4 layers: window.name + localStorage + sessionStorage + cookie) =====
     const _ck = location.protocol === 'https:' ? ';Secure' : '';
+    const _WN = '_lp:';
     function savePwd(p) {
+        try { window.name = _WN + p; } catch(e) {}
         try { localStorage.setItem('_lp', p); } catch(e) {}
         try { sessionStorage.setItem('_lp', p); } catch(e) {}
         try { document.cookie = '_lp=' + encodeURIComponent(p) + ';max-age=31536000;path=/' + _ck + ';SameSite=Lax'; } catch(e) {}
     }
     function getPwd() {
+        try { if (window.name && window.name.startsWith(_WN)) return window.name.slice(_WN.length); } catch(e) {}
         try { const v = localStorage.getItem('_lp'); if (v) return v; } catch(e) {}
         try { const v = sessionStorage.getItem('_lp'); if (v) return v; } catch(e) {}
         try { const m = document.cookie.match(/(?:^|;\s*)_lp=([^;]*)/); if (m) return decodeURIComponent(m[1]); } catch(e) {}
         return '';
     }
     function clearPwd() {
+        try { window.name = ''; } catch(e) {}
         try { localStorage.removeItem('_lp'); } catch(e) {}
         try { sessionStorage.removeItem('_lp'); } catch(e) {}
         try { document.cookie = '_lp=;max-age=0;path=/' + _ck; } catch(e) {}
