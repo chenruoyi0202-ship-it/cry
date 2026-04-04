@@ -442,7 +442,7 @@
 
         </div>
 
-        <footer class="app-footer">Made with &#x2764;&#xFE0F; <span style="opacity:0.5;font-size:11px;">v2026.04.04.15:10</span></footer>
+        <footer class="app-footer">Made with &#x2764;&#xFE0F; <span style="opacity:0.5;font-size:11px;">v2026.04.04.23:35</span></footer>
     </div>
 
     <!-- Lightbox -->
@@ -1364,7 +1364,8 @@
         btn.textContent = '保存';
         btn.disabled = false;
         if (ok) {
-            showToast('已保存');
+            const bj = new Date(Date.now() + 8 * 3600000).toISOString().substring(11,16);
+            showToast('保存成功 ' + bj + ' (北京)');
             toggleEdit();
         }
     }
