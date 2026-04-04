@@ -10,25 +10,47 @@
     <meta http-equiv="Pragma" content="no-cache">
     <title>Our Memory</title>
     <style>
+        :root {
+            --bg: #fef6ff; --card: #ffffff; --text: #2d1b4e; --text2: #8b7a9e;
+            --text3: #5a4a6c; --accent: #c084fc; --accent2: #f9a8d4; --border: #e8daf0;
+            --card-shadow: rgba(192,132,252,0.12); --lock-bg: linear-gradient(135deg, #fef6ff 0%, #f0e6ff 30%, #fce4ec 60%, #e8d5f5 100%);
+            --glow: 0 0 20px rgba(192,132,252,0.15); --sparkle: #ffd700;
+        }
+        [data-theme="dark"] {
+            --bg: #0f0a1a; --card: #1a1030; --text: #e8e0f0; --text2: #a090c0;
+            --text3: #c0b0d8; --accent: #c084fc; --accent2: #f9a8d4; --border: #2a1a4e;
+            --card-shadow: rgba(0,0,0,0.4); --lock-bg: linear-gradient(135deg, #0f0a1a 0%, #1a1030 30%, #261845 60%, #1a0a30 100%);
+            --glow: 0 0 20px rgba(192,132,252,0.25); --sparkle: #ffd700;
+        }
+        [data-theme="dark"] .modal { background: var(--card); }
+        [data-theme="dark"] .modal h3 { color: var(--accent); }
+        [data-theme="dark"] .modal label { color: var(--text2); }
+        [data-theme="dark"] .modal input, [data-theme="dark"] .modal textarea, [data-theme="dark"] .modal select {
+            background: var(--bg); color: var(--text); border-color: var(--border);
+        }
+        [data-theme="dark"] .save-bar { background: var(--card); border-color: var(--border); }
+        [data-theme="dark"] .btn-secondary { background: var(--border); color: var(--text); }
+        [data-theme="dark"] .lock-input { background: rgba(22,33,62,0.8); color: var(--text); border-color: var(--border); }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { touch-action: manipulation; -ms-touch-action: manipulation; background: #fdf6f0; }
-        body { -webkit-text-size-adjust: 100%; }
+        html { touch-action: manipulation; -ms-touch-action: manipulation; background: var(--bg); }
         body {
+            -webkit-text-size-adjust: 100%;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            background: #fdf6f0;
-            color: #3d2c2e;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
         }
         /* Lock Screen */
         #lockScreen {
             position: fixed; inset: 0; z-index: 1000;
-            background: linear-gradient(135deg, #fdf6f0 0%, #fce4ec 50%, #f8bbd0 100%);
+            background: var(--lock-bg);
             display: none; flex-direction: column; align-items: center; justify-content: center;
         }
         #lockScreen.show { display: flex; }
         #lockScreen.hidden { display: none; }
-        .lock-heart { font-size: 64px; margin-bottom: 24px; animation: heartbeat 1.5s ease-in-out infinite; }
+        .lock-heart { font-size: 72px; margin-bottom: 16px; animation: heartbeat 1.5s ease-in-out infinite; filter: drop-shadow(0 0 12px rgba(192,132,252,0.5)); }
+        .lock-sub { font-size: 20px; color: var(--accent); letter-spacing: 6px; margin-bottom: 28px; font-weight: 300; }
         @keyframes heartbeat {
             0%, 100% { transform: scale(1); }
             15% { transform: scale(1.15); }
@@ -39,15 +61,16 @@
             display: flex; flex-direction: column; align-items: center; gap: 16px; width: 300px;
         }
         .lock-input {
-            width: 100%; padding: 14px 20px; border: 2px solid #f0e0d6; border-radius: 30px;
-            background: rgba(255,255,255,0.8); font-size: 16px; text-align: center;
+            width: 100%; padding: 14px 20px; border: 2px solid var(--border); border-radius: 30px;
+            background: rgba(255,255,255,0.8); font-size: 16px; text-align: center; color: var(--text);
             outline: none; transition: border-color 0.3s;
         }
-        .lock-input:focus { border-color: #e8758f; }
+        .lock-input:focus { border-color: var(--accent); }
         .lock-btn {
             width: 100%; padding: 14px; border: none; border-radius: 30px; cursor: pointer;
-            background: linear-gradient(135deg, #e8758f, #f4a261); color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
             font-size: 16px; font-weight: 600; transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 4px 20px rgba(192,132,252,0.4);
         }
         .lock-btn:hover { opacity: 0.9; transform: scale(1.02); }
         .lock-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -62,34 +85,36 @@
             0% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
             100% { transform: translateY(-110vh) rotate(45deg); opacity: 0; }
         }
-        .fh:nth-child(1) { left: 5%; font-size: 16px; animation-duration: 8s; animation-delay: 0s; }
-        .fh:nth-child(2) { left: 20%; font-size: 24px; animation-duration: 10s; animation-delay: 1s; }
-        .fh:nth-child(3) { left: 35%; font-size: 14px; animation-duration: 7s; animation-delay: 3s; }
-        .fh:nth-child(4) { left: 55%; font-size: 28px; animation-duration: 12s; animation-delay: 2s; }
-        .fh:nth-child(5) { left: 70%; font-size: 18px; animation-duration: 9s; animation-delay: 4s; }
-        .fh:nth-child(6) { left: 85%; font-size: 22px; animation-duration: 11s; animation-delay: 0.5s; }
-        .fh:nth-child(7) { left: 45%; font-size: 15px; animation-duration: 8.5s; animation-delay: 5s; }
+        .fh:nth-child(1) { left: 5%; font-size: 14px; animation-duration: 8s; animation-delay: 0s; }
+        .fh:nth-child(2) { left: 18%; font-size: 20px; animation-duration: 10s; animation-delay: 1s; }
+        .fh:nth-child(3) { left: 32%; font-size: 10px; animation-duration: 7s; animation-delay: 3s; }
+        .fh:nth-child(4) { left: 50%; font-size: 24px; animation-duration: 12s; animation-delay: 2s; }
+        .fh:nth-child(5) { left: 65%; font-size: 16px; animation-duration: 9s; animation-delay: 4s; }
+        .fh:nth-child(6) { left: 80%; font-size: 18px; animation-duration: 11s; animation-delay: 0.5s; }
+        .fh:nth-child(7) { left: 42%; font-size: 12px; animation-duration: 8.5s; animation-delay: 5s; }
+        .fh:nth-child(8) { left: 92%; font-size: 14px; animation-duration: 9.5s; animation-delay: 1.5s; }
+        .fh:nth-child(9) { left: 10%; font-size: 22px; animation-duration: 13s; animation-delay: 6s; }
 
         /* Main Content */
         #app { display: none; max-width: 800px; margin: 0 auto; padding: 20px 16px 40px; }
         #app.show { display: block; }
 
         /* Header */
-        .app-header { text-align: center; padding: 24px 0 0; }
-        .couple-names { font-size: 28px; font-weight: 700; color: #e8758f; text-transform: lowercase; }
+        .app-header { text-align: center; padding: 24px 0 0; position: relative; }
+        .couple-names { font-size: 28px; font-weight: 700; color: var(--accent); text-transform: lowercase; position: relative; }
 
         /* Tab Bar */
         .tab-bar {
             display: flex; position: sticky; top: 0; z-index: 50;
-            background: #fff; border-bottom: 1px solid #f0e0d6;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 12px -16px 0;
+            background: var(--card); border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 8px var(--card-shadow); margin: 12px -16px 0;
         }
         .tab-btn {
             flex: 1; padding: 12px 0; border: none; background: none; cursor: pointer;
-            font-size: 14px; font-weight: 600; color: #8c7a7c;
+            font-size: 14px; font-weight: 600; color: var(--text2);
             border-bottom: 3px solid transparent; transition: all 0.3s; font-family: inherit;
         }
-        .tab-btn.active { color: #e8758f; border-bottom-color: #e8758f; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
         .tab-content { overflow: hidden; }
         .tab-panel { display: none; padding: 20px 0; min-height: 50vh; }
         .tab-panel.active { display: block; }
@@ -98,8 +123,8 @@
         .edit-toggle {
             position: fixed; bottom: 24px; right: 20px; z-index: 100;
             width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
-            background: linear-gradient(135deg, #e8758f, #f4a261); color: #fff;
-            box-shadow: 0 4px 16px rgba(232,117,143,0.4);
+            background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+            box-shadow: 0 4px 20px rgba(192,132,252,0.5);
             font-size: 22px; display: none; align-items: center; justify-content: center;
             transition: transform 0.3s;
         }
@@ -109,13 +134,13 @@
         /* Section */
         .section { margin-bottom: 36px; }
         .section-title {
-            font-size: 18px; font-weight: 700; color: #3d2c2e; margin-bottom: 16px;
-            padding-left: 12px; border-left: 4px solid #e8758f;
+            font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 16px;
+            padding-left: 12px; border-left: 4px solid var(--accent);
         }
         .add-btn {
             display: none; margin: 12px 0; padding: 10px 20px;
-            border: 2px dashed #e8758f; border-radius: 12px; background: transparent;
-            color: #e8758f; font-size: 14px; font-weight: 600; cursor: pointer;
+            border: 2px dashed var(--accent); border-radius: 12px; background: transparent;
+            color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer;
             width: 100%; transition: background 0.3s;
         }
         .add-btn:hover { background: rgba(232,117,143,0.08); }
@@ -127,19 +152,19 @@
             scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
         }
         .ann-scroll::-webkit-scrollbar { height: 4px; }
-        .ann-scroll::-webkit-scrollbar-thumb { background: #f0e0d6; border-radius: 2px; }
+        .ann-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
         .ann-card {
             flex: 0 0 160px; scroll-snap-align: start; position: relative;
-            background: #fff; border-radius: 16px; padding: 20px 16px; text-align: center;
-            box-shadow: 0 2px 16px rgba(232,117,143,0.1);
-            border: 1px solid rgba(232,117,143,0.1); transition: transform 0.3s;
+            background: var(--card); border-radius: 20px; padding: 20px 16px; text-align: center;
+            box-shadow: var(--glow), 0 4px 20px var(--card-shadow);
+            border: 1px solid var(--border); transition: transform 0.3s, box-shadow 0.3s;
         }
-        .ann-card:hover { transform: translateY(-2px); }
+        .ann-card:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(192,132,252,0.2), 0 8px 24px var(--card-shadow); }
         .ann-icon { font-size: 32px; margin-bottom: 8px; }
-        .ann-title { font-size: 14px; font-weight: 600; color: #3d2c2e; margin-bottom: 4px; }
-        .ann-date { font-size: 12px; color: #8c7a7c; margin-bottom: 8px; }
-        .ann-days { font-size: 20px; font-weight: 800; color: #e8758f; }
-        .ann-days-label { font-size: 11px; color: #8c7a7c; }
+        .ann-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+        .ann-date { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+        .ann-days { font-size: 20px; font-weight: 800; color: var(--accent); }
+        .ann-days-label { font-size: 11px; color: var(--text2); }
         .item-del {
             display: none; position: absolute; top: 6px; right: 6px;
             width: 24px; height: 24px; border-radius: 50%; border: none;
@@ -161,27 +186,27 @@
         .timeline { position: relative; padding-left: 28px; }
         .timeline::before {
             content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
-            width: 2px; background: linear-gradient(to bottom, #e8758f, #f4a261);
+            width: 2px; background: linear-gradient(to bottom, var(--accent), var(--accent2));
         }
         .tl-entry { position: relative; margin-bottom: 28px; }
         .tl-dot {
             position: absolute; left: -24px; top: 4px;
             width: 16px; height: 16px; border-radius: 50%;
-            background: #e8758f; border: 3px solid #fdf6f0;
+            background: var(--accent); border: 3px solid var(--bg);
             display: flex; align-items: center; justify-content: center;
             font-size: 8px; color: #fff;
         }
         .tl-date {
-            display: inline-block; font-size: 12px; color: #fff; background: #e8758f;
+            display: inline-block; font-size: 12px; color: #fff; background: var(--accent);
             padding: 2px 10px; border-radius: 10px; margin-bottom: 8px;
         }
         .tl-card {
-            background: #fff; border-radius: 14px; padding: 16px; position: relative;
-            box-shadow: 0 2px 12px rgba(232,117,143,0.08);
-            border: 1px solid rgba(232,117,143,0.08);
+            background: var(--card); border-radius: 18px; padding: 16px; position: relative;
+            box-shadow: var(--glow), 0 4px 16px var(--card-shadow);
+            border: 1px solid var(--border);
         }
         .tl-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-        .tl-content { font-size: 14px; color: #5a4a4c; line-height: 1.6; }
+        .tl-content { font-size: 14px; color: var(--text3); line-height: 1.6; }
         .tl-photos { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
         .tl-thumb {
             width: 72px; height: 72px; border-radius: 10px; object-fit: cover; cursor: pointer;
@@ -195,19 +220,14 @@
         }
         @media (min-width: 640px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
         .gallery-item {
-            position: relative; border-radius: 12px; overflow: hidden; cursor: pointer;
-            aspect-ratio: 1; background: #f0e0d6;
+            position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
+            aspect-ratio: 1; background: var(--border);
+            box-shadow: var(--glow), 0 2px 12px var(--card-shadow);
         }
         .gallery-item img {
             width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
         }
         .gallery-item:hover img { transform: scale(1.05); }
-        .gallery-caption {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            padding: 8px 10px; background: linear-gradient(transparent, rgba(0,0,0,0.6));
-            color: #fff; font-size: 12px; opacity: 0; transition: opacity 0.3s;
-        }
-        .gallery-item:hover .gallery-caption { opacity: 1; }
 
         /* Lightbox */
         .lightbox {
@@ -258,7 +278,7 @@
             flex: 1; padding: 12px; border: none; border-radius: 12px;
             font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.3s;
         }
-        .btn-primary { background: linear-gradient(135deg, #e8758f, #f4a261); color: #fff; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
         .btn-secondary { background: #f0e0d6; color: #3d2c2e; }
 
         /* Save Bar */
@@ -271,25 +291,6 @@
         .save-bar button { padding: 12px 32px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
         .save-bar .save-status { font-size: 12px; color: #8c7a7c; align-self: center; }
 
-        /* Settings Tab */
-        .settings-form { padding: 0 4px; }
-        .settings-group { background: #fff; border-radius: 14px; padding: 18px 16px; margin-bottom: 16px;
-            box-shadow: 0 2px 12px rgba(232,117,143,0.06); border: 1px solid rgba(232,117,143,0.08); }
-        .settings-group h4 { font-size: 15px; color: #e8758f; margin-bottom: 12px; }
-        .settings-group label { display: block; font-size: 13px; font-weight: 600; color: #8c7a7c; margin-bottom: 4px; margin-top: 10px; }
-        .settings-group label:first-of-type { margin-top: 0; }
-        .settings-group input {
-            width: 100%; padding: 10px 14px; border: 1.5px solid #f0e0d6; border-radius: 10px;
-            font-size: 16px; outline: none; transition: border-color 0.3s; font-family: inherit;
-        }
-        .settings-group input:focus { border-color: #e8758f; }
-        .settings-group .s-btn {
-            margin-top: 14px; width: 100%; padding: 12px; border: none; border-radius: 12px;
-            font-size: 14px; font-weight: 600; cursor: pointer;
-            background: linear-gradient(135deg, #e8758f, #f4a261); color: #fff;
-        }
-        .token-hint { font-size: 11px; color: #8c7a7c; margin-top: 4px; line-height: 1.4; }
-        .token-ok { color: #4caf50; font-weight: 600; font-size: 13px; margin-top: 8px; }
 
         /* Emoji Picker */
         .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; max-height: 180px; overflow-y: auto; padding: 4px 0; }
@@ -300,6 +301,46 @@
         }
         .emoji-opt:hover { background: rgba(232,117,143,0.15); }
         .emoji-opt.selected { border-color: #e8758f; background: rgba(232,117,143,0.15); }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #4caf50; color: #fff; padding: 10px 28px; border-radius: 30px;
+            font-size: 14px; font-weight: 600; z-index: 3000; opacity: 0;
+            animation: toastIn 0.3s forwards, toastOut 0.3s 1.7s forwards;
+            pointer-events: none;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+        /* Skeleton shimmer for gallery */
+        .gallery-item.skeleton {
+            background: linear-gradient(90deg, #f0e0d6 25%, #fdf6f0 50%, #f0e0d6 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        [data-theme="dark"] .gallery-item.skeleton {
+            background: linear-gradient(90deg, #16213e 25%, #1a1a2e 50%, #16213e 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Pull to refresh */
+        .ptr-indicator {
+            position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+            background: var(--accent); color: #fff; padding: 8px 20px; border-radius: 0 0 12px 12px;
+            font-size: 13px; font-weight: 600; z-index: 200; display: none;
+        }
+        .ptr-indicator.show { display: block; }
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+            background: rgba(232,117,143,0.1); font-size: 18px; display: flex;
+            align-items: center; justify-content: center; transition: background 0.3s;
+        }
+        .theme-toggle:hover { background: rgba(232,117,143,0.2); }
 
         /* Footer */
         .app-footer { text-align: center; padding: 32px 0 20px; color: #c4b0b2; font-size: 13px; }
@@ -312,21 +353,26 @@
 <body>
     <!-- Floating Hearts -->
     <div class="floating-hearts" id="floatingHearts">
-        <div class="fh">&#x1F497;</div><div class="fh">&#x2764;&#xFE0F;</div>
-        <div class="fh">&#x1F495;</div><div class="fh">&#x1F496;</div>
-        <div class="fh">&#x1F497;</div><div class="fh">&#x2764;&#xFE0F;</div>
-        <div class="fh">&#x1F495;</div>
+        <div class="fh">&#x2728;</div><div class="fh">&#x2B50;</div>
+        <div class="fh">&#x1F49C;</div><div class="fh">&#x2728;</div>
+        <div class="fh">&#x1F4AB;</div><div class="fh">&#x2B50;</div>
+        <div class="fh">&#x2728;</div><div class="fh">&#x1F49C;</div>
+        <div class="fh">&#x2B50;</div>
     </div>
 
     <!-- Lock Screen -->
     <div id="lockScreen">
-        <div class="lock-heart">&#x1F512;</div>
+        <div class="lock-heart">&#x1F3F0;</div>
+        <div class="lock-sub">c &#x2728; x</div>
         <div class="lock-input-wrap">
             <input type="password" class="lock-input" id="pwdInput" placeholder="输入密码解锁" autocomplete="off">
             <button class="lock-btn" id="unlockBtn" onclick="doUnlock()">解锁</button>
             <div class="lock-error" id="lockError"></div>
         </div>
     </div>
+
+    <!-- Pull to Refresh Indicator -->
+    <div class="ptr-indicator" id="ptrIndicator">释放刷新</div>
 
     <!-- Edit Toggle (FAB) -->
     <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">&#x270F;&#xFE0F;</button>
@@ -335,6 +381,7 @@
     <div id="app">
         <header class="app-header">
             <div class="couple-names" id="coupleNames"></div>
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
         </header>
 
         <div class="tab-bar">
@@ -627,6 +674,7 @@
         currentTab = idx;
         document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
         document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+        if (idx === 2 && !galleryRendered) renderGallery();
     }
 
     // Swipe detection on tab content
@@ -693,7 +741,7 @@
             }
             return '<div class="tl-entry"><div class="tl-dot">\u2764</div>' +
                 '<div class="tl-date">' + d.date + '</div>' +
-                '<div class="tl-card"><button class="item-del" onclick="delItem(\'diary\',\'' + d.id + '\')">&times;</button>' +
+                '<div class="tl-card" onclick="editDiary(\'' + d.id + '\')"><button class="item-del" onclick="event.stopPropagation();delItem(\'diary\',\'' + d.id + '\')">&times;</button>' +
                 '<div class="tl-title">' + esc(d.title) + '</div>' +
                 '<div class="tl-content">' + esc(d.content) + '</div>' +
                 photoHtml + '</div></div>';
@@ -704,12 +752,13 @@
         const c = document.getElementById('gallery');
         const len = appData.photos.length;
         c.innerHTML = appData.photos.map((p, i) =>
-            '<div class="gallery-item" onclick="openLightbox(' + i + ')">' +
+            '<div class="gallery-item skeleton" onclick="openLightbox(' + i + ')">' +
             '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
             (i > 0 ? '<button class="item-move item-move-l" onclick="event.stopPropagation();movePhoto(' + i + ',-1)">&#x276E;</button>' : '') +
             (i < len - 1 ? '<button class="item-move item-move-r" onclick="event.stopPropagation();movePhoto(' + i + ',1)">&#x276F;</button>' : '') +
-            '<img src="' + p.data + '" alt="" loading="lazy"></div>'
+            '<img src="' + p.data + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')"></div>'
         ).join('');
+        galleryRendered = true;
     }
 
     function movePhoto(idx, dir) {
@@ -799,12 +848,29 @@
                 '<div class="modal-actions"><button class="btn-secondary" onclick="editingAnnId=null;closeModal()">取消</button>' +
                 '<button class="btn-primary" onclick="addAnn()">' + (editing ? '保存' : '添加') + '</button></div>';
         } else if (type === 'diary') {
-            m.innerHTML = '<h3>添加恋爱点滴</h3>' +
-                '<label>日期</label><input id="mDiaryDate" type="date" value="' + todayStr() + '">' +
-                '<label>标题</label><input id="mDiaryTitle" placeholder="今天做了什么...">' +
-                '<label>内容</label><textarea id="mDiaryContent" placeholder="详细描述..."></textarea>' +
-                '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
-                '<button class="btn-primary" onclick="addDiary()">添加</button></div>';
+            const editing = editingDiaryId ? appData.diary.find(x => x.id === editingDiaryId) : null;
+            diaryPendingPhotos = [];
+            let existingPhotoHtml = '';
+            if (editing && editing.photos && editing.photos.length) {
+                existingPhotoHtml = editing.photos.map(pid => {
+                    const p = appData.photos.find(x => x.id === pid);
+                    if (!p) return '';
+                    return '<img src="' + p.data + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
+                }).join('');
+            }
+            m.innerHTML = '<h3>' + (editing ? '编辑恋爱点滴' : '添加恋爱点滴') + '</h3>' +
+                '<label>日期</label><input id="mDiaryDate" type="date" value="' + (editing ? editing.date : todayStr()) + '">' +
+                '<label>标题</label><input id="mDiaryTitle" placeholder="今天做了什么..." value="' + esc(editing ? editing.title : '') + '">' +
+                '<label>内容</label><textarea id="mDiaryContent" placeholder="详细描述...">' + esc(editing ? editing.content : '') + '</textarea>' +
+                '<label>添加照片</label><input id="mDiaryPhoto" type="file" accept="image/*" multiple>' +
+                (existingPhotoHtml ? '<div style="margin-top:8px;">' + existingPhotoHtml + '</div>' : '') +
+                '<div id="mDiaryPhotoPreview" style="margin-top:8px;"></div>' +
+                '<div class="modal-actions"><button class="btn-secondary" onclick="editingDiaryId=null;closeModal()">取消</button>' +
+                '<button class="btn-primary" onclick="addDiary()">' + (editing ? '保存' : '添加') + '</button></div>';
+            setTimeout(() => {
+                const photoInput = document.getElementById('mDiaryPhoto');
+                if (photoInput) photoInput.addEventListener('change', previewDiaryPhoto);
+            }, 50);
         } else if (type === 'photo') {
             m.innerHTML = '<h3>添加照片</h3>' +
                 '<label>选择图片</label><input id="mPhotoFile" type="file" accept="image/*" multiple>' +
@@ -832,11 +898,20 @@
         '🏡','🛌','🛀','🧳','🎠','🎪','🚀','🌍','💎','🔑','📝','🩺','🎭','🧩','🪁'
     ];
     let editingAnnId = null;
+    let editingDiaryId = null;
+    let diaryPendingPhotos = [];
+    let galleryRendered = false;
 
     function editAnn(id) {
         if (!isEditing) return;
         editingAnnId = id;
         openModal('ann');
+    }
+
+    function editDiary(id) {
+        if (!isEditing) return;
+        editingDiaryId = id;
+        openModal('diary');
     }
 
     function addAnn() {
@@ -855,12 +930,43 @@
         dirty = true; closeModal(); renderAll();
     }
 
+    function previewDiaryPhoto(e) {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        diaryPendingPhotos = [];
+        const preview = document.getElementById('mDiaryPhotoPreview');
+        preview.innerHTML = '';
+        files.forEach(file => {
+            compressImage(file, (dataUrl) => {
+                diaryPendingPhotos.push(dataUrl);
+                preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
+            });
+        });
+    }
+
     function addDiary() {
         const date = document.getElementById('mDiaryDate').value;
         const title = document.getElementById('mDiaryTitle').value.trim();
         const content = document.getElementById('mDiaryContent').value.trim();
         if (!title || !date) return alert('请填写标题和日期');
-        appData.diary.push({ id: genId(), date, title, content: content || '', mood: 'happy', photos: [] });
+        // Create photo entries for attached photos
+        const newPhotoIds = [];
+        diaryPendingPhotos.forEach(data => {
+            const pid = genId();
+            appData.photos.push({ id: pid, data });
+            newPhotoIds.push(pid);
+        });
+        diaryPendingPhotos = [];
+        if (editingDiaryId) {
+            const d = appData.diary.find(x => x.id === editingDiaryId);
+            if (d) {
+                d.date = date; d.title = title; d.content = content || '';
+                d.photos = (d.photos || []).concat(newPhotoIds);
+            }
+            editingDiaryId = null;
+        } else {
+            appData.diary.push({ id: genId(), date, title, content: content || '', mood: 'happy', photos: newPhotoIds });
+        }
         dirty = true; closeModal(); renderAll();
     }
 
@@ -886,12 +992,12 @@
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let w = img.width, h = img.height;
-                const MAX = 1200;
+                const MAX = 1000;
                 if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
                 if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
                 canvas.width = w; canvas.height = h;
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                cb(canvas.toDataURL('image/jpeg', 0.7));
+                cb(canvas.toDataURL('image/jpeg', 0.5));
             };
             img.src = e.target.result;
         };
@@ -907,47 +1013,6 @@
         dirty = true; closeModal(); renderAll();
     }
 
-    function saveCouple() {
-        appData.couple.person1 = document.getElementById('mP1').value.trim() || 'CRY';
-        appData.couple.person2 = document.getElementById('mP2').value.trim() || 'XYX';
-        dirty = true; closeModal(); renderAll();
-    }
-
-    async function saveSettings() {
-        const repo = document.getElementById('sRepo').value.trim();
-        const token = document.getElementById('sToken').value.trim();
-        if (!repo || !token) return alert('请填写仓库和 Token');
-        appData._ghRepo = repo;
-        appData._ghToken = token;
-        await pushToGitHub();
-        renderSettings();
-    }
-
-    async function saveNames() {
-        appData.couple.person1 = document.getElementById('sP1').value.trim() || 'CRY';
-        appData.couple.person2 = document.getElementById('sP2').value.trim() || 'XYX';
-        dirty = true;
-        await pushToGitHub();
-        renderAll();
-    }
-
-    function renderSettings() {
-        const curToken = (appData && appData._ghToken) || '';
-        const curRepo = (appData && appData._ghRepo) || GH_REPO;
-        const c = appData.couple;
-        document.getElementById('settingsForm').innerHTML =
-            '<div class="settings-group"><h4>名字设置</h4>' +
-            '<label>你的名字</label><input id="sP1" value="' + esc(c.person1) + '">' +
-            '<label>TA的名字</label><input id="sP2" value="' + esc(c.person2) + '">' +
-            '<button class="s-btn" onclick="saveNames()">保存名字</button></div>' +
-            '<div class="settings-group"><h4>GitHub 设置</h4>' +
-            '<label>仓库（owner/repo）</label><input id="sRepo" value="' + esc(curRepo) + '" placeholder="username/repo">' +
-            '<div class="token-hint">如：chenruoyi0202-ship-it/cry</div>' +
-            '<label>Personal Access Token</label><input id="sToken" type="password" value="' + esc(curToken) + '" placeholder="ghp_xxxxxxxxxxxx">' +
-            '<div class="token-hint">在 GitHub Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens 创建，需要 Contents 读写权限。</div>' +
-            (curToken ? '<div class="token-ok">Token 已配置</div>' : '') +
-            '<button class="s-btn" onclick="saveSettings()">保存设置</button></div>';
-    }
 
     // ===== GitHub Config =====
     const GH_PATH = 'data/love_encrypted.json';
@@ -1035,20 +1100,89 @@
     // ===== Save (called from save bar) =====
     async function saveData() {
         const btn = document.getElementById('saveBtn');
-        const status = document.getElementById('saveStatus');
-        btn.disabled = true; btn.textContent = '保存中...'; status.textContent = '';
+        btn.disabled = true; btn.textContent = '保存中...';
 
         const ok = await pushToGitHub();
+        btn.textContent = '保存';
+        btn.disabled = false;
         if (ok) {
-            status.textContent = '已保存';
-            btn.textContent = '保存';
-            btn.disabled = false;
-            setTimeout(() => { toggleEdit(); status.textContent = ''; }, 1500);
-        } else {
-            btn.textContent = '保存';
-            btn.disabled = false;
+            showToast('已保存');
+            toggleEdit();
         }
     }
+
+    // ===== Toast =====
+    function showToast(msg) {
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => { t.remove(); }, 2000);
+    }
+
+    // ===== Dark Mode =====
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme === 'dark' ? 'dark' : '');
+        if (newTheme === 'light') html.removeAttribute('data-theme');
+        document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        try { localStorage.setItem('_theme', newTheme); } catch(e) {}
+        // Update meta theme-color
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = newTheme === 'dark' ? '#1a1a2e' : '#fdf6f0';
+    }
+    (function initTheme() {
+        let saved = '';
+        try { saved = localStorage.getItem('_theme'); } catch(e) {}
+        if (!saved) {
+            saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.content = '#1a1a2e';
+        }
+    })();
+
+    // ===== Pull to Refresh =====
+    (function initPTR() {
+        const el = document.getElementById('tabContent');
+        if (!el) return;
+        const indicator = document.getElementById('ptrIndicator');
+        let startY = 0, pulling = false;
+        el.addEventListener('touchstart', function(e) {
+            if (window.scrollY === 0) { startY = e.touches[0].clientY; pulling = true; }
+        }, { passive: true });
+        el.addEventListener('touchmove', function(e) {
+            if (!pulling) return;
+            const dy = e.touches[0].clientY - startY;
+            if (dy > 60 && window.scrollY === 0) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }, { passive: true });
+        el.addEventListener('touchend', function(e) {
+            if (!pulling) return;
+            pulling = false;
+            if (indicator.classList.contains('show')) {
+                indicator.textContent = '刷新中...';
+                syncFromGitHub(currentPwd).then(() => {
+                    renderAll();
+                    indicator.classList.remove('show');
+                    indicator.textContent = '释放刷新';
+                    showToast('已刷新');
+                }).catch(() => {
+                    indicator.classList.remove('show');
+                    indicator.textContent = '释放刷新';
+                });
+            }
+        }, { passive: true });
+    })();
 
     </script>
 </body>
