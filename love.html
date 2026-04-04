@@ -942,20 +942,32 @@
     }
 
     function addCategory() {
-        const name = prompt('分类名称');
-        if (!name || !name.trim()) return;
-        currentCategory = name.trim();
+        const m = document.getElementById('modalContent');
+        const o = document.getElementById('modalOverlay');
+        m.innerHTML = '<h3>添加分类</h3>' +
+            '<label>分类名称</label><input id="mCatName" placeholder="如：旅行、日常">' +
+            '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
+            '<button class="btn-primary" onclick="confirmAddCategory()">确定</button></div>';
+        o.classList.add('open');
+        setTimeout(() => document.getElementById('mCatName').focus(), 100);
+    }
+
+    function confirmAddCategory() {
+        const name = document.getElementById('mCatName').value.trim();
+        if (!name) return;
+        currentCategory = name;
+        closeModal();
         renderCategoryBar();
         renderGallery();
     }
 
     function deleteCategory(name) {
-        if (!confirm('删除分类"' + name + '"？分类下的照片不会被删除')) return;
         appData.photos.forEach(p => { if (p.category === name) delete p.category; });
         if (currentCategory === name) currentCategory = 'all';
         dirty = true;
         renderCategoryBar();
         renderGallery();
+        showToast('已删除分类');
     }
 
     function renderGallery() {
@@ -978,20 +990,47 @@
         galleryRendered = true;
     }
 
+    let editingPhotoId = null;
     function setPhotoCategory(id) {
         const photo = appData.photos.find(p => p.id === id);
         if (!photo) return;
+        editingPhotoId = id;
         const cats = new Set();
         appData.photos.forEach(p => { if (p.category) cats.add(p.category); });
-        const list = Array.from(cats);
-        let prompt_text = '输入分类名称';
-        if (list.length) prompt_text += '（已有：' + list.join('、') + '）\n留空=取消分类';
-        const name = prompt(prompt_text, photo.category || '');
-        if (name === null) return;
-        if (name.trim()) photo.category = name.trim();
+        const list = Array.from(cats).sort();
+        const chipsHtml = list.map(c =>
+            '<span onclick="pickPhotoCat(\'' + esc(c).replace(/'/g,"\\'") + '\')" style="display:inline-block;padding:6px 12px;margin:4px;border-radius:14px;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;">' + esc(c) + '</span>'
+        ).join('');
+        const m = document.getElementById('modalContent');
+        const o = document.getElementById('modalOverlay');
+        m.innerHTML = '<h3>设置分类</h3>' +
+            (list.length ? '<label>选择已有分类</label><div style="margin:4px 0 12px;">' + chipsHtml + '</div>' : '') +
+            '<label>或输入新分类</label><input id="mPhotoCat" placeholder="分类名称" value="' + esc(photo.category || '') + '">' +
+            '<div class="modal-actions">' +
+            '<button class="btn-secondary" onclick="removePhotoCat()">取消分类</button>' +
+            '<button class="btn-primary" onclick="confirmPhotoCat()">确定</button></div>';
+        o.classList.add('open');
+    }
+
+    function pickPhotoCat(cat) {
+        const photo = appData.photos.find(p => p.id === editingPhotoId);
+        if (!photo) return;
+        photo.category = cat;
+        dirty = true; closeModal(); renderGallery();
+    }
+    function confirmPhotoCat() {
+        const name = document.getElementById('mPhotoCat').value.trim();
+        const photo = appData.photos.find(p => p.id === editingPhotoId);
+        if (!photo) return;
+        if (name) photo.category = name;
         else delete photo.category;
-        dirty = true;
-        renderGallery();
+        dirty = true; closeModal(); renderGallery();
+    }
+    function removePhotoCat() {
+        const photo = appData.photos.find(p => p.id === editingPhotoId);
+        if (!photo) return;
+        delete photo.category;
+        dirty = true; closeModal(); renderGallery();
     }
 
     function onPhotoClick(idx) {
