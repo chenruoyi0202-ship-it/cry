@@ -651,7 +651,6 @@
         renderAnniversaries();
         renderDiary();
         renderGallery();
-        renderSettings();
     }
 
     function renderHeader() {
@@ -984,8 +983,7 @@
         const repo = getRepo();
 
         if (!token || !repo) {
-            switchTab(3);
-            alert('请先在设置中配置 GitHub Token（只需配置一次，之后所有人输入密码即可编辑保存）');
+            alert('GitHub Token 未配置，无法保存');
             return;
         }
 
