@@ -479,6 +479,14 @@
         document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#e74c3c;font-size:16px;">当前浏览器不支持加密功能，请用 Safari 或 Chrome 打开</div>';
     }
 
+    // Migrate from sessionStorage to localStorage (one-time)
+    if (!localStorage.getItem('_lp') && sessionStorage.getItem('_lp')) {
+        localStorage.setItem('_lp', sessionStorage.getItem('_lp'));
+    }
+    if (!localStorage.getItem('_ld') && sessionStorage.getItem('_ld')) {
+        localStorage.setItem('_ld', sessionStorage.getItem('_ld'));
+    }
+
     // Auto-unlock on refresh, or show lock screen
     (async function autoUnlock() {
         try {
