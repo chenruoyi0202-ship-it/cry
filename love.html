@@ -101,7 +101,7 @@
         .tab-bar {
             display: flex; position: sticky; top: 0; z-index: 50;
             background: var(--card); border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 12px -16px 0;
+            box-shadow: 0 2px 8px var(--card-shadow); margin: 12px -16px 0;
         }
         .tab-btn {
             flex: 1; padding: 12px 0; border: none; background: none; cursor: pointer;
@@ -215,7 +215,7 @@
         @media (min-width: 640px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
         .gallery-item {
             position: relative; border-radius: 12px; overflow: hidden; cursor: pointer;
-            aspect-ratio: 1; background: #f0e0d6;
+            aspect-ratio: 1; background: var(--border);
         }
         .gallery-item img {
             width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
@@ -666,6 +666,7 @@
         currentTab = idx;
         document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
         document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+        if (idx === 2 && !galleryRendered) renderGallery();
     }
 
     // Swipe detection on tab content
@@ -743,12 +744,13 @@
         const c = document.getElementById('gallery');
         const len = appData.photos.length;
         c.innerHTML = appData.photos.map((p, i) =>
-            '<div class="gallery-item" onclick="openLightbox(' + i + ')">' +
+            '<div class="gallery-item skeleton" onclick="openLightbox(' + i + ')">' +
             '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
             (i > 0 ? '<button class="item-move item-move-l" onclick="event.stopPropagation();movePhoto(' + i + ',-1)">&#x276E;</button>' : '') +
             (i < len - 1 ? '<button class="item-move item-move-r" onclick="event.stopPropagation();movePhoto(' + i + ',1)">&#x276F;</button>' : '') +
-            '<img src="' + p.data + '" alt="" loading="lazy"></div>'
+            '<img src="' + p.data + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')"></div>'
         ).join('');
+        galleryRendered = true;
     }
 
     function movePhoto(idx, dir) {
@@ -838,12 +840,29 @@
                 '<div class="modal-actions"><button class="btn-secondary" onclick="editingAnnId=null;closeModal()">取消</button>' +
                 '<button class="btn-primary" onclick="addAnn()">' + (editing ? '保存' : '添加') + '</button></div>';
         } else if (type === 'diary') {
-            m.innerHTML = '<h3>添加恋爱点滴</h3>' +
-                '<label>日期</label><input id="mDiaryDate" type="date" value="' + todayStr() + '">' +
-                '<label>标题</label><input id="mDiaryTitle" placeholder="今天做了什么...">' +
-                '<label>内容</label><textarea id="mDiaryContent" placeholder="详细描述..."></textarea>' +
-                '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
-                '<button class="btn-primary" onclick="addDiary()">添加</button></div>';
+            const editing = editingDiaryId ? appData.diary.find(x => x.id === editingDiaryId) : null;
+            diaryPendingPhotos = [];
+            let existingPhotoHtml = '';
+            if (editing && editing.photos && editing.photos.length) {
+                existingPhotoHtml = editing.photos.map(pid => {
+                    const p = appData.photos.find(x => x.id === pid);
+                    if (!p) return '';
+                    return '<img src="' + p.data + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
+                }).join('');
+            }
+            m.innerHTML = '<h3>' + (editing ? '编辑恋爱点滴' : '添加恋爱点滴') + '</h3>' +
+                '<label>日期</label><input id="mDiaryDate" type="date" value="' + (editing ? editing.date : todayStr()) + '">' +
+                '<label>标题</label><input id="mDiaryTitle" placeholder="今天做了什么..." value="' + esc(editing ? editing.title : '') + '">' +
+                '<label>内容</label><textarea id="mDiaryContent" placeholder="详细描述...">' + esc(editing ? editing.content : '') + '</textarea>' +
+                '<label>添加照片</label><input id="mDiaryPhoto" type="file" accept="image/*" multiple>' +
+                (existingPhotoHtml ? '<div style="margin-top:8px;">' + existingPhotoHtml + '</div>' : '') +
+                '<div id="mDiaryPhotoPreview" style="margin-top:8px;"></div>' +
+                '<div class="modal-actions"><button class="btn-secondary" onclick="editingDiaryId=null;closeModal()">取消</button>' +
+                '<button class="btn-primary" onclick="addDiary()">' + (editing ? '保存' : '添加') + '</button></div>';
+            setTimeout(() => {
+                const photoInput = document.getElementById('mDiaryPhoto');
+                if (photoInput) photoInput.addEventListener('change', previewDiaryPhoto);
+            }, 50);
         } else if (type === 'photo') {
             m.innerHTML = '<h3>添加照片</h3>' +
                 '<label>选择图片</label><input id="mPhotoFile" type="file" accept="image/*" multiple>' +
@@ -903,12 +922,43 @@
         dirty = true; closeModal(); renderAll();
     }
 
+    function previewDiaryPhoto(e) {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        diaryPendingPhotos = [];
+        const preview = document.getElementById('mDiaryPhotoPreview');
+        preview.innerHTML = '';
+        files.forEach(file => {
+            compressImage(file, (dataUrl) => {
+                diaryPendingPhotos.push(dataUrl);
+                preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
+            });
+        });
+    }
+
     function addDiary() {
         const date = document.getElementById('mDiaryDate').value;
         const title = document.getElementById('mDiaryTitle').value.trim();
         const content = document.getElementById('mDiaryContent').value.trim();
         if (!title || !date) return alert('请填写标题和日期');
-        appData.diary.push({ id: genId(), date, title, content: content || '', mood: 'happy', photos: [] });
+        // Create photo entries for attached photos
+        const newPhotoIds = [];
+        diaryPendingPhotos.forEach(data => {
+            const pid = genId();
+            appData.photos.push({ id: pid, data });
+            newPhotoIds.push(pid);
+        });
+        diaryPendingPhotos = [];
+        if (editingDiaryId) {
+            const d = appData.diary.find(x => x.id === editingDiaryId);
+            if (d) {
+                d.date = date; d.title = title; d.content = content || '';
+                d.photos = (d.photos || []).concat(newPhotoIds);
+            }
+            editingDiaryId = null;
+        } else {
+            appData.diary.push({ id: genId(), date, title, content: content || '', mood: 'happy', photos: newPhotoIds });
+        }
         dirty = true; closeModal(); renderAll();
     }
 
@@ -934,12 +984,12 @@
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let w = img.width, h = img.height;
-                const MAX = 1200;
+                const MAX = 1000;
                 if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
                 if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
                 canvas.width = w; canvas.height = h;
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                cb(canvas.toDataURL('image/jpeg', 0.7));
+                cb(canvas.toDataURL('image/jpeg', 0.5));
             };
             img.src = e.target.result;
         };
@@ -955,47 +1005,6 @@
         dirty = true; closeModal(); renderAll();
     }
 
-    function saveCouple() {
-        appData.couple.person1 = document.getElementById('mP1').value.trim() || 'CRY';
-        appData.couple.person2 = document.getElementById('mP2').value.trim() || 'XYX';
-        dirty = true; closeModal(); renderAll();
-    }
-
-    async function saveSettings() {
-        const repo = document.getElementById('sRepo').value.trim();
-        const token = document.getElementById('sToken').value.trim();
-        if (!repo || !token) return alert('请填写仓库和 Token');
-        appData._ghRepo = repo;
-        appData._ghToken = token;
-        await pushToGitHub();
-        renderSettings();
-    }
-
-    async function saveNames() {
-        appData.couple.person1 = document.getElementById('sP1').value.trim() || 'CRY';
-        appData.couple.person2 = document.getElementById('sP2').value.trim() || 'XYX';
-        dirty = true;
-        await pushToGitHub();
-        renderAll();
-    }
-
-    function renderSettings() {
-        const curToken = (appData && appData._ghToken) || '';
-        const curRepo = (appData && appData._ghRepo) || GH_REPO;
-        const c = appData.couple;
-        document.getElementById('settingsForm').innerHTML =
-            '<div class="settings-group"><h4>名字设置</h4>' +
-            '<label>你的名字</label><input id="sP1" value="' + esc(c.person1) + '">' +
-            '<label>TA的名字</label><input id="sP2" value="' + esc(c.person2) + '">' +
-            '<button class="s-btn" onclick="saveNames()">保存名字</button></div>' +
-            '<div class="settings-group"><h4>GitHub 设置</h4>' +
-            '<label>仓库（owner/repo）</label><input id="sRepo" value="' + esc(curRepo) + '" placeholder="username/repo">' +
-            '<div class="token-hint">如：chenruoyi0202-ship-it/cry</div>' +
-            '<label>Personal Access Token</label><input id="sToken" type="password" value="' + esc(curToken) + '" placeholder="ghp_xxxxxxxxxxxx">' +
-            '<div class="token-hint">在 GitHub Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens 创建，需要 Contents 读写权限。</div>' +
-            (curToken ? '<div class="token-ok">Token 已配置</div>' : '') +
-            '<button class="s-btn" onclick="saveSettings()">保存设置</button></div>';
-    }
 
     // ===== GitHub Config =====
     const GH_PATH = 'data/love_encrypted.json';
@@ -1083,20 +1092,89 @@
     // ===== Save (called from save bar) =====
     async function saveData() {
         const btn = document.getElementById('saveBtn');
-        const status = document.getElementById('saveStatus');
-        btn.disabled = true; btn.textContent = '保存中...'; status.textContent = '';
+        btn.disabled = true; btn.textContent = '保存中...';
 
         const ok = await pushToGitHub();
+        btn.textContent = '保存';
+        btn.disabled = false;
         if (ok) {
-            status.textContent = '已保存';
-            btn.textContent = '保存';
-            btn.disabled = false;
-            setTimeout(() => { toggleEdit(); status.textContent = ''; }, 1500);
-        } else {
-            btn.textContent = '保存';
-            btn.disabled = false;
+            showToast('已保存');
+            toggleEdit();
         }
     }
+
+    // ===== Toast =====
+    function showToast(msg) {
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => { t.remove(); }, 2000);
+    }
+
+    // ===== Dark Mode =====
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme === 'dark' ? 'dark' : '');
+        if (newTheme === 'light') html.removeAttribute('data-theme');
+        document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        try { localStorage.setItem('_theme', newTheme); } catch(e) {}
+        // Update meta theme-color
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = newTheme === 'dark' ? '#1a1a2e' : '#fdf6f0';
+    }
+    (function initTheme() {
+        let saved = '';
+        try { saved = localStorage.getItem('_theme'); } catch(e) {}
+        if (!saved) {
+            saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = '☀️';
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.content = '#1a1a2e';
+        }
+    })();
+
+    // ===== Pull to Refresh =====
+    (function initPTR() {
+        const el = document.getElementById('tabContent');
+        if (!el) return;
+        const indicator = document.getElementById('ptrIndicator');
+        let startY = 0, pulling = false;
+        el.addEventListener('touchstart', function(e) {
+            if (window.scrollY === 0) { startY = e.touches[0].clientY; pulling = true; }
+        }, { passive: true });
+        el.addEventListener('touchmove', function(e) {
+            if (!pulling) return;
+            const dy = e.touches[0].clientY - startY;
+            if (dy > 60 && window.scrollY === 0) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }, { passive: true });
+        el.addEventListener('touchend', function(e) {
+            if (!pulling) return;
+            pulling = false;
+            if (indicator.classList.contains('show')) {
+                indicator.textContent = '刷新中...';
+                syncFromGitHub(currentPwd).then(() => {
+                    renderAll();
+                    indicator.classList.remove('show');
+                    indicator.textContent = '释放刷新';
+                    showToast('已刷新');
+                }).catch(() => {
+                    indicator.classList.remove('show');
+                    indicator.textContent = '释放刷新';
+                });
+            }
+        }, { passive: true });
+    })();
 
     </script>
 </body>
