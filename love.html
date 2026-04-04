@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <title>Our Memory</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -458,14 +460,21 @@
         btn.disabled = false; btn.textContent = '解锁';
     }
 
+    // Check crypto support
+    if (!window.crypto || !window.crypto.subtle) {
+        document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#e74c3c;font-size:16px;">当前浏览器不支持加密功能，请用 Safari 或 Chrome 打开</div>';
+    }
+
     // Auto-unlock on refresh, or show lock screen
     (async function autoUnlock() {
-        const savedPwd = sessionStorage.getItem('_lp');
-        if (savedPwd) {
-            const ok = await tryUnlock(savedPwd, true);
-            if (ok) return; // unlocked, no flash
-            sessionStorage.removeItem('_lp');
-        }
+        try {
+            const savedPwd = sessionStorage.getItem('_lp');
+            if (savedPwd) {
+                const ok = await tryUnlock(savedPwd, true);
+                if (ok) return;
+                sessionStorage.removeItem('_lp');
+            }
+        } catch(e) {}
         // No saved password or failed — show lock screen + hearts
         document.getElementById('lockScreen').classList.add('show');
         document.getElementById('floatingHearts').style.display = 'block';
