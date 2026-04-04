@@ -674,25 +674,25 @@
         } catch(e) { return null; }
     }
 
-    // Background sync: always use remote as source of truth
+    // Background sync: only update if remote is strictly newer than local
     async function syncFromGitHub(pwd) {
         try {
-            showToast('同步中...');
             const remote = await fetchFromGitHubAPI();
-            if (!remote) { showToast('无法同步（token不可用）'); return; }
-            // Always replace local with remote (GitHub is source of truth)
-            const newData = await decryptData(pwd, remote.encrypted);
-            appData = newData;
-            cacheData(JSON.stringify(remote));
-            renderAll();
-            const t = remote.updatedAt;
-            let hm = '?';
-            if (t) {
-                const beijing = new Date(new Date(t).getTime() + 8 * 3600000);
-                hm = beijing.toISOString().substring(11,16);
+            if (!remote) return;
+            const localTime = (appData && appData._updatedAt) || '';
+            const remoteTime = remote.updatedAt || '';
+            // Only replace local if remote is strictly newer
+            if (remoteTime && remoteTime > localTime) {
+                const newData = await decryptData(pwd, remote.encrypted);
+                appData = newData;
+                cacheData(JSON.stringify(remote));
+                renderAll();
+                const beijing = new Date(new Date(remoteTime).getTime() + 8 * 3600000);
+                const hm = beijing.toISOString().substring(11,16);
+                showToast('已同步最新 ' + hm + ' (北京)');
             }
-            showToast('同步完成 ' + hm + ' (北京)');
-        } catch(e) { showToast('同步失败: ' + (e.message||'')); }
+            // If local is same or newer, silently do nothing (no toast spam)
+        } catch(e) {}
     }
 
     async function doUnlock() {
