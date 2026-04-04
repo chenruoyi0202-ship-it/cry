@@ -186,6 +186,17 @@
         .item-move-l { left: 8px; }
         .item-move-r { right: 8px; }
         .editing .item-move { display: flex; }
+        .photo-idx {
+            display: none; position: absolute; top: 8px; left: 8px; z-index: 3;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(0,0,0,0.5); color: #fff; font-size: 12px; font-weight: 700;
+            align-items: center; justify-content: center;
+        }
+        .editing .photo-idx { display: flex; }
+        .gallery-item.swap-selected {
+            outline: 3px solid var(--accent); outline-offset: -3px;
+            transform: scale(0.93);
+        }
 
         /* Timeline */
         .timeline { position: relative; padding-left: 28px; }
@@ -227,13 +238,7 @@
             position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
             aspect-ratio: 1; background: var(--border);
             box-shadow: var(--glow), 0 2px 12px var(--card-shadow);
-            transition: transform 0.2s, opacity 0.2s;
-        }
-        .gallery-item.dragging {
-            opacity: 0.5; transform: scale(0.9);
-        }
-        .gallery-item.drag-over {
-            transform: scale(1.05); box-shadow: 0 0 20px var(--accent);
+            transition: transform 0.2s;
         }
         .gallery-item img {
             width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
@@ -767,18 +772,42 @@
         }).join('');
     }
 
+    let swapSrcIdx = -1;
+
     function renderGallery() {
         const c = document.getElementById('gallery');
         const len = appData.photos.length;
         c.innerHTML = appData.photos.map((p, i) =>
-            '<div class="gallery-item skeleton" onclick="openLightbox(' + i + ')">' +
+            '<div class="gallery-item skeleton" data-idx="' + i + '" onclick="onPhotoClick(' + i + ')">' +
             '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
-            (i > 0 ? '<button class="item-move item-move-l" onclick="event.stopPropagation();movePhoto(' + i + ',-1)">&#x276E;</button>' : '') +
-            (i < len - 1 ? '<button class="item-move item-move-r" onclick="event.stopPropagation();movePhoto(' + i + ',1)">&#x276F;</button>' : '') +
+            '<button class="item-move item-move-l" onclick="event.stopPropagation();movePhoto(' + i + ',-1)">&#x276E;</button>' +
+            '<button class="item-move item-move-r" onclick="event.stopPropagation();movePhoto(' + i + ',1)">&#x276F;</button>' +
+            '<div class="photo-idx">' + (i + 1) + '</div>' +
             '<img src="' + p.data + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')"></div>'
         ).join('');
         galleryRendered = true;
-        initGalleryDrag();
+    }
+
+    function onPhotoClick(idx) {
+        if (!isEditing) { openLightbox(idx); return; }
+        if (swapSrcIdx === -1) {
+            // First click: select source
+            swapSrcIdx = idx;
+            document.querySelectorAll('.gallery-item').forEach((el, i) => {
+                el.classList.toggle('swap-selected', i === idx);
+            });
+            showToast('点击另一张照片交换位置');
+        } else if (swapSrcIdx === idx) {
+            // Clicked same photo: deselect
+            swapSrcIdx = -1;
+            document.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('swap-selected'));
+        } else {
+            // Second click: swap
+            const arr = appData.photos;
+            [arr[swapSrcIdx], arr[idx]] = [arr[idx], arr[swapSrcIdx]];
+            swapSrcIdx = -1;
+            dirty = true; renderGallery();
+        }
     }
 
     function movePhoto(idx, dir) {
@@ -786,82 +815,11 @@
         const target = idx + dir;
         if (target < 0 || target >= arr.length) return;
         [arr[idx], arr[target]] = [arr[target], arr[idx]];
+        swapSrcIdx = -1;
         dirty = true; renderGallery();
     }
 
     // ===== Long-press drag to reorder photos =====
-    let dragSrcIdx = -1, longPressTimer = null, isDragging = false, dragGalleryBound = false;
-
-    function initGalleryDrag() {
-        if (dragGalleryBound) return;
-        const gallery = document.getElementById('gallery');
-        if (!gallery) return;
-        dragGalleryBound = true;
-
-        gallery.addEventListener('touchstart', function(e) {
-            if (!isEditing) return;
-            const item = e.target.closest('.gallery-item');
-            if (!item || e.target.closest('.item-del') || e.target.closest('.item-move')) return;
-            const items = [...gallery.querySelectorAll('.gallery-item')];
-            dragSrcIdx = items.indexOf(item);
-            longPressTimer = setTimeout(() => {
-                isDragging = true;
-                item.classList.add('dragging');
-                if (navigator.vibrate) navigator.vibrate(30);
-            }, 400);
-        }, { passive: true });
-
-        gallery.addEventListener('touchmove', function(e) {
-            if (!isDragging) { clearTimeout(longPressTimer); return; }
-            e.preventDefault();
-            const touch = e.touches[0];
-            // Hide dragging element temporarily to find element underneath
-            const srcEl = gallery.querySelectorAll('.gallery-item')[dragSrcIdx];
-            if (srcEl) srcEl.style.pointerEvents = 'none';
-            const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (srcEl) srcEl.style.pointerEvents = '';
-            const target = el ? el.closest('.gallery-item') : null;
-            gallery.querySelectorAll('.gallery-item').forEach(i => i.classList.remove('drag-over'));
-            if (target && !target.classList.contains('dragging')) {
-                target.classList.add('drag-over');
-            }
-        }, { passive: false });
-
-        gallery.addEventListener('touchend', function(e) {
-            clearTimeout(longPressTimer);
-            if (!isDragging) return;
-            isDragging = false;
-            const touch = e.changedTouches[0];
-            const srcEl = gallery.querySelectorAll('.gallery-item')[dragSrcIdx];
-            if (srcEl) srcEl.style.pointerEvents = 'none';
-            const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (srcEl) srcEl.style.pointerEvents = '';
-            const target = el ? el.closest('.gallery-item') : null;
-            gallery.querySelectorAll('.gallery-item').forEach(i => {
-                i.classList.remove('dragging', 'drag-over');
-            });
-            if (target) {
-                const items = [...gallery.querySelectorAll('.gallery-item')];
-                const targetIdx = items.indexOf(target);
-                if (targetIdx >= 0 && targetIdx !== dragSrcIdx) {
-                    const arr = appData.photos;
-                    const [moved] = arr.splice(dragSrcIdx, 1);
-                    arr.splice(targetIdx, 0, moved);
-                    dirty = true;
-                    renderGallery();
-                }
-            }
-            dragSrcIdx = -1;
-        }, { passive: true });
-
-        gallery.addEventListener('touchcancel', function() {
-            clearTimeout(longPressTimer);
-            isDragging = false;
-            gallery.querySelectorAll('.gallery-item').forEach(i => {
-                i.classList.remove('dragging', 'drag-over');
-            });
-        }, { passive: true });
-    }
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
