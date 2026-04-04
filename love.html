@@ -636,7 +636,6 @@
     // Fetch latest data from GitHub API (no deploy delay)
     async function fetchFromGitHubAPI() {
         try {
-            // Try multiple sources for token/repo
             let token = (appData && appData._ghToken) || getTokenCookie() || '';
             let repo = (appData && appData._ghRepo) || getRepoCookie() || GH_REPO || '';
             if (!token || !repo) {
@@ -654,21 +653,22 @@
             }
             if (!token || !repo) return null;
 
-            // Step 1: Get file SHA from Contents API
+            // Get file SHA (cache-bust with timestamp header)
             const metaResp = await fetch('https://api.github.com/repos/' + repo + '/contents/data/love_encrypted.json', {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'If-None-Match': '' },
+                cache: 'no-store'
             });
             if (!metaResp.ok) return null;
             const meta = await metaResp.json();
 
-            // For small files (<1MB), content is available directly
             if (meta.content) {
                 return JSON.parse(atob(meta.content.replace(/\n/g, '')));
             }
 
-            // Step 2: For large files, use raw media type (no base64 decode needed)
+            // Large files: use raw blob
             const rawResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + meta.sha, {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' }
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' },
+                cache: 'no-store'
             });
             if (!rawResp.ok) return null;
             return await rawResp.json();
@@ -680,7 +680,7 @@
         try {
             showToast('同步中...');
             const remote = await fetchFromGitHubAPI();
-            if (!remote) { showToast('同步完成'); return; }
+            if (!remote) { showToast('无法同步（token不可用）'); return; }
             const localTime = appData._updatedAt || '';
             const remoteTime = remote.updatedAt || '';
             if (remoteTime > localTime) {
