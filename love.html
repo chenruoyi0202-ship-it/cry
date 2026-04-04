@@ -1343,7 +1343,7 @@
             const updateRefResp = await fetch('https://api.github.com/repos/' + repo + '/git/refs/heads/main', {
                 method: 'PATCH',
                 headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sha: newCommit.sha })
+                body: JSON.stringify({ sha: newCommit.sha, force: true })
             });
             if (!updateRefResp.ok) throw new Error('Ref update failed');
 
