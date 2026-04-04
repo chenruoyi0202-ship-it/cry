@@ -203,6 +203,13 @@
             align-items: center; justify-content: center;
         }
         .editing .photo-idx { display: flex; }
+        .item-cat {
+            display: none; position: absolute; top: 8px; left: 8px; z-index: 3;
+            max-width: calc(100% - 44px); padding: 4px 8px; border-radius: 10px; border: none;
+            background: rgba(192,132,252,0.85); color: #fff; font-size: 10px; font-weight: 600;
+            cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .editing .item-cat { display: inline-block; }
         .gallery-item.swap-selected {
             outline: 3px solid var(--accent); outline-offset: -3px;
             transform: scale(0.93);
@@ -254,6 +261,25 @@
         .tl-thumb:hover { transform: scale(1.05); }
 
         /* Photo Gallery */
+        /* Category Bar */
+        .category-bar {
+            display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .category-bar::-webkit-scrollbar { display: none; }
+        .cat-chip {
+            flex-shrink: 0; padding: 6px 14px; border-radius: 16px; cursor: pointer;
+            font-size: 13px; font-weight: 600; border: 1.5px solid var(--border);
+            background: var(--card); color: var(--text2); transition: all 0.2s; white-space: nowrap;
+        }
+        .cat-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .cat-chip.add-cat { border-style: dashed; color: var(--accent); background: transparent; display: none; }
+        .editing .cat-chip.add-cat { display: inline-block; }
+        .cat-chip-del {
+            display: none; margin-left: 6px; color: #e74c3c;
+        }
+        .editing .cat-chip .cat-chip-del { display: inline; }
+
         .gallery {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
         }
@@ -446,6 +472,7 @@
 
             <!-- Tab 2: Photos -->
             <div class="tab-panel" id="tabPhoto">
+                <div class="category-bar" id="categoryBar"></div>
                 <div class="gallery" id="gallery"></div>
                 <button class="add-btn" onclick="directAddPhoto()">+ 添加照片</button>
                 <button class="add-btn" onclick="recompressAll()">压缩所有照片</button>
@@ -488,6 +515,7 @@
     let appData = null;
     let isEditing = false;
     let currentPwd = null;
+    let currentCategory = 'all';
     let currentLbIndex = 0;
     let dirty = false;
 
@@ -892,17 +920,78 @@
         }).join('');
     }
 
+    function renderCategoryBar() {
+        const bar = document.getElementById('categoryBar');
+        if (!bar) return;
+        // Collect all unique categories from photos
+        const cats = new Set();
+        (appData.photos || []).forEach(p => { if (p.category) cats.add(p.category); });
+        const catList = ['all', ...Array.from(cats).sort()];
+        bar.innerHTML = catList.map(c => {
+            const label = c === 'all' ? '全部' : esc(c);
+            const active = c === currentCategory ? ' active' : '';
+            const del = c !== 'all' ? '<span class="cat-chip-del" onclick="event.stopPropagation();deleteCategory(\'' + esc(c).replace(/'/g,"\\'") + '\')">\u00D7</span>' : '';
+            return '<span class="cat-chip' + active + '" onclick="setCategory(\'' + (c === 'all' ? 'all' : esc(c).replace(/'/g,"\\'")) + '\')">' + label + del + '</span>';
+        }).join('') + '<span class="cat-chip add-cat" onclick="addCategory()">+ 添加分类</span>';
+    }
+
+    function setCategory(c) {
+        currentCategory = c;
+        renderCategoryBar();
+        renderGallery();
+    }
+
+    function addCategory() {
+        const name = prompt('分类名称');
+        if (!name || !name.trim()) return;
+        currentCategory = name.trim();
+        renderCategoryBar();
+        renderGallery();
+    }
+
+    function deleteCategory(name) {
+        if (!confirm('删除分类"' + name + '"？分类下的照片不会被删除')) return;
+        appData.photos.forEach(p => { if (p.category === name) delete p.category; });
+        if (currentCategory === name) currentCategory = 'all';
+        dirty = true;
+        renderCategoryBar();
+        renderGallery();
+    }
+
     function renderGallery() {
+        renderCategoryBar();
         const c = document.getElementById('gallery');
-        c.innerHTML = appData.photos.map((p, i) =>
-            '<div class="gallery-item skeleton" data-idx="' + i + '" onclick="onPhotoClick(' + i + ')">' +
-            '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
-            '<button class="item-move item-move-l" onclick="event.stopPropagation();movePhoto(' + i + ',-1)">&#x276E;</button>' +
-            '<button class="item-move item-move-r" onclick="event.stopPropagation();movePhoto(' + i + ',1)">&#x276F;</button>' +
-            '<div class="photo-idx">' + (i + 1) + '</div>' +
-            '<img src="' + p.data + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')"></div>'
-        ).join('');
+        // Filter by current category
+        const filtered = [];
+        appData.photos.forEach((p, origIdx) => {
+            if (currentCategory === 'all' || p.category === currentCategory) {
+                filtered.push({ p, origIdx });
+            }
+        });
+        c.innerHTML = filtered.map((item, i) => {
+            const p = item.p, origIdx = item.origIdx;
+            return '<div class="gallery-item skeleton" data-idx="' + origIdx + '" onclick="onPhotoClick(' + origIdx + ')">' +
+                '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
+                '<button class="item-cat" onclick="event.stopPropagation();setPhotoCategory(\'' + p.id + '\')">' + (p.category ? esc(p.category) : '+') + '</button>' +
+                '<img src="' + p.data + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')"></div>';
+        }).join('');
         galleryRendered = true;
+    }
+
+    function setPhotoCategory(id) {
+        const photo = appData.photos.find(p => p.id === id);
+        if (!photo) return;
+        const cats = new Set();
+        appData.photos.forEach(p => { if (p.category) cats.add(p.category); });
+        const list = Array.from(cats);
+        let prompt_text = '输入分类名称';
+        if (list.length) prompt_text += '（已有：' + list.join('、') + '）\n留空=取消分类';
+        const name = prompt(prompt_text, photo.category || '');
+        if (name === null) return;
+        if (name.trim()) photo.category = name.trim();
+        else delete photo.category;
+        dirty = true;
+        renderGallery();
     }
 
     function onPhotoClick(idx) {
@@ -1312,7 +1401,9 @@
             let done = 0;
             files.forEach(file => {
                 compressImage(file, (dataUrl) => {
-                    appData.photos.push({ id: genId(), data: dataUrl });
+                    const photo = { id: genId(), data: dataUrl };
+                    if (currentCategory && currentCategory !== 'all') photo.category = currentCategory;
+                    appData.photos.push(photo);
                     done++;
                     if (done === files.length) {
                         dirty = true; renderGallery(); initGalleryDrag();
