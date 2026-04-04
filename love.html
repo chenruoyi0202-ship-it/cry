@@ -675,25 +675,20 @@
         } catch(e) { return null; }
     }
 
-    // Background sync: always use remote as source of truth (no unsaved changes on unlock)
+    // Background sync: always use remote as source of truth
     async function syncFromGitHub(pwd) {
         try {
             showToast('同步中...');
             const remote = await fetchFromGitHubAPI();
             if (!remote) { showToast('无法同步（token不可用）'); return; }
             // Always replace local with remote (GitHub is source of truth)
-            const cached = getCachedData();
-            const cachedEncrypted = cached ? cached.encrypted : '';
-            if (remote.encrypted !== cachedEncrypted || !appData._synced) {
-                const newData = await decryptData(pwd, remote.encrypted);
-                appData = newData;
-                appData._synced = true;
-                cacheData(JSON.stringify(remote));
-                renderAll();
-                showToast('已同步最新数据');
-            } else {
-                showToast('数据已是最新');
-            }
+            const newData = await decryptData(pwd, remote.encrypted);
+            appData = newData;
+            cacheData(JSON.stringify(remote));
+            renderAll();
+            const t = remote.updatedAt || '';
+            const hm = t ? t.substring(11,16) : '?';
+            showToast('同步完成 ' + hm);
         } catch(e) { showToast('同步失败: ' + (e.message||'')); }
     }
 
