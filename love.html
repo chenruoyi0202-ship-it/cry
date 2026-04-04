@@ -251,7 +251,7 @@
         .token-ok { color: #4caf50; font-weight: 600; font-size: 13px; margin-top: 8px; }
 
         /* Emoji Picker */
-        .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; max-height: 180px; overflow-y: auto; padding: 4px 0; }
         .emoji-opt {
             width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
             font-size: 22px; border-radius: 10px; cursor: pointer; border: 2px solid transparent;
@@ -563,7 +563,15 @@
         const m = document.getElementById('modalContent');
         const o = document.getElementById('modalOverlay');
         if (type === 'ann') {
-            const emojis = ['❤️','💕','💍','🎂','🎉','🌹','✈️','🏠','🎓','📅','💌','🥂','👶','🐾','⭐','🎄'];
+            const emojis = [
+                '❤️','💕','💗','💖','💘','💝','💞','🥰','😘','🫶',
+                '💍','💒','👫','👩‍❤️‍👨','💑','🤝','🫂','👶','🤰','👨‍👩‍👧',
+                '🌹','🌸','🌺','💐','🌷','🪻','🌻','🍀','🌙','⭐',
+                '🎂','🎉','🎊','🥂','🍰','🎁','🎈','🪄','✨','🎆',
+                '✈️','🏖️','🗼','🎡','🏔️','🚗','🛳️','🏠','🌅','🌈',
+                '🎓','📅','💌','📸','🎬','🎵','🎮','📖','🍽️','☕',
+                '🐾','🐶','🐱','🐰','🦋','🕊️','🎄','🧸','🪴','🫧'
+            ];
             const emojiGrid = emojis.map(e =>
                 '<span class="emoji-opt" onclick="pickEmoji(this)" data-emoji="' + e + '">' + e + '</span>'
             ).join('');
