@@ -250,6 +250,16 @@
         .token-hint { font-size: 11px; color: #8c7a7c; margin-top: 4px; line-height: 1.4; }
         .token-ok { color: #4caf50; font-weight: 600; font-size: 13px; margin-top: 8px; }
 
+        /* Emoji Picker */
+        .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .emoji-opt {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; border-radius: 10px; cursor: pointer; border: 2px solid transparent;
+            background: rgba(232,117,143,0.06); transition: all 0.2s;
+        }
+        .emoji-opt:hover { background: rgba(232,117,143,0.15); }
+        .emoji-opt.selected { border-color: #e8758f; background: rgba(232,117,143,0.15); }
+
         /* Footer */
         .app-footer { text-align: center; padding: 32px 0 20px; color: #c4b0b2; font-size: 13px; }
 
@@ -325,7 +335,7 @@
     <!-- Save Bar -->
     <div class="save-bar" id="saveBar">
         <button class="btn-secondary" onclick="toggleEdit()">取消</button>
-        <button class="btn-primary" id="saveBtn" onclick="saveData()">保存到 GitHub</button>
+        <button class="btn-primary" id="saveBtn" onclick="saveData()">保存</button>
         <span class="save-status" id="saveStatus"></span>
     </div>
 
@@ -542,18 +552,31 @@
 
     function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
+    function pickEmoji(el) {
+        document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('mAnnIcon').value = el.dataset.emoji;
+    }
+
     // ===== Modals =====
     function openModal(type) {
         const m = document.getElementById('modalContent');
         const o = document.getElementById('modalOverlay');
         if (type === 'ann') {
+            const emojis = ['❤️','💕','💍','🎂','🎉','🌹','✈️','🏠','🎓','📅','💌','🥂','👶','🐾','⭐','🎄'];
+            const emojiGrid = emojis.map(e =>
+                '<span class="emoji-opt" onclick="pickEmoji(this)" data-emoji="' + e + '">' + e + '</span>'
+            ).join('');
             m.innerHTML = '<h3>添加纪念日</h3>' +
                 '<label>标题</label><input id="mAnnTitle" placeholder="如：在一起">' +
                 '<label>日期</label><input id="mAnnDate" type="date">' +
-                '<label>图标（emoji）</label><input id="mAnnIcon" placeholder="❤️" value="❤️">' +
+                '<label>选择图标</label><div class="emoji-picker" id="emojiPicker">' + emojiGrid + '</div>' +
+                '<input type="hidden" id="mAnnIcon" value="❤️">' +
                 '<label>类型</label><select id="mAnnType"><option value="countup">已过天数</option><option value="countdown">倒计时</option></select>' +
                 '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
                 '<button class="btn-primary" onclick="addAnn()">添加</button></div>';
+            // Default select first
+            m.querySelector('.emoji-opt').classList.add('selected');
         } else if (type === 'diary') {
             m.innerHTML = '<h3>添加恋爱点滴</h3>' +
                 '<label>日期</label><input id="mDiaryDate" type="date" value="' + todayStr() + '">' +
@@ -667,7 +690,7 @@
         if (token) appData._ghToken = token;
         dirty = true;
         closeModal();
-        alert('设置已保存，请点击"保存到 GitHub"使其生效');
+        alert('设置已保存，请点击"保存"使其生效');
     }
 
     // ===== GitHub Config =====
@@ -752,11 +775,11 @@
 
             dirty = false;
             status.textContent = '已保存';
-            btn.textContent = '保存到 GitHub';
+            btn.textContent = '保存';
             btn.disabled = false;
             setTimeout(() => { toggleEdit(); status.textContent = ''; }, 1500);
         } catch (e) {
-            btn.textContent = '保存到 GitHub';
+            btn.textContent = '保存';
             btn.disabled = false;
             status.textContent = '';
             alert('保存失败: ' + e.message);
