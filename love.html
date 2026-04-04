@@ -424,36 +424,64 @@
         return bufToB64(combined);
     }
 
+    // ===== Password storage (cookie for WeChat compat) =====
+    function savePwd(p) {
+        try { localStorage.setItem('_lp', p); } catch(e) {}
+        document.cookie = '_lp=' + encodeURIComponent(p) + ';max-age=31536000;path=/;SameSite=Lax';
+    }
+    function getPwd() {
+        try { const v = localStorage.getItem('_lp'); if (v) return v; } catch(e) {}
+        const m = document.cookie.match(/(?:^|;\s*)_lp=([^;]*)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+    function clearPwd() {
+        try { localStorage.removeItem('_lp'); } catch(e) {}
+        document.cookie = '_lp=;max-age=0;path=/';
+    }
+
     // ===== Unlock =====
     document.getElementById('pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') doUnlock(); });
 
+    // Data URL: fetch from GitHub raw (instant) with fallback to Pages
+    const RAW_URL = 'https://raw.githubusercontent.com/chenruoyi0202-ship-it/cry/main/data/love_encrypted.json';
+
+    async function fetchData() {
+        // Try localStorage cache first
+        const cached = localStorage.getItem('_ld');
+        if (cached) {
+            try { return JSON.parse(cached); } catch(e) {}
+        }
+        // Try GitHub raw (instant update, no deploy delay)
+        try {
+            const resp = await fetch(RAW_URL + '?v=' + Date.now());
+            if (resp.ok) return await resp.json();
+        } catch(e) {}
+        // Fallback to Pages
+        try {
+            const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
+            if (resp.ok) return await resp.json();
+        } catch(e) {}
+        return null;
+    }
+
     async function tryUnlock(pwd, isAuto) {
         try {
-            // Try sessionStorage cache first (avoids GitHub Pages deploy delay)
-            const cached = localStorage.getItem('_ld');
-            let json = null;
-            if (cached) {
-                try { json = JSON.parse(cached); } catch(e) {}
-            }
+            const json = await fetchData();
             if (!json) {
-                const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-                if (!resp.ok) {
-                    // No data file — first time use
-                    appData = {
-                        version: 1,
-                        couple: { person1: 'CRY', person2: 'XYX' },
-                        anniversaries: [], diary: [], photos: []
-                    };
-                    localStorage.setItem('_lp', pwd);
-                    showApp();
-                    renderAll();
-                    if (!isAuto) toggleEdit();
-                    return true;
-                }
-                json = await resp.json();
+                // No data file — first time use
+                appData = {
+                    version: 1,
+                    couple: { person1: 'CRY', person2: 'XYX' },
+                    anniversaries: [], diary: [], photos: []
+                };
+                savePwd(pwd);
+                showApp();
+                renderAll();
+                if (!isAuto) toggleEdit();
+                return true;
             }
             appData = await decryptData(pwd, json.encrypted);
-            localStorage.setItem('_lp', pwd);
+            savePwd(pwd);
             showApp();
             renderAll();
             return true;
@@ -479,22 +507,20 @@
         document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#e74c3c;font-size:16px;">当前浏览器不支持加密功能，请用 Safari 或 Chrome 打开</div>';
     }
 
-    // Migrate from sessionStorage to localStorage (one-time)
-    if (!localStorage.getItem('_lp') && sessionStorage.getItem('_lp')) {
-        localStorage.setItem('_lp', sessionStorage.getItem('_lp'));
-    }
-    if (!localStorage.getItem('_ld') && sessionStorage.getItem('_ld')) {
-        localStorage.setItem('_ld', sessionStorage.getItem('_ld'));
-    }
+    // Migrate from sessionStorage (one-time)
+    try {
+        if (sessionStorage.getItem('_lp')) savePwd(sessionStorage.getItem('_lp'));
+        if (sessionStorage.getItem('_ld')) localStorage.setItem('_ld', sessionStorage.getItem('_ld'));
+    } catch(e) {}
 
     // Auto-unlock on refresh, or show lock screen
     (async function autoUnlock() {
         try {
-            const savedPwd = localStorage.getItem('_lp');
+            const savedPwd = getPwd();
             if (savedPwd) {
                 const ok = await tryUnlock(savedPwd, true);
                 if (ok) return;
-                localStorage.removeItem('_lp');
+                clearPwd();
             }
         } catch(e) {}
         // No saved password or failed — show lock screen + hearts
@@ -830,7 +856,7 @@
 
     // ===== Push to GitHub =====
     async function pushToGitHub() {
-        const pwd = localStorage.getItem('_lp');
+        const pwd = getPwd();
         if (!pwd) return alert('密码已过期，请刷新重新登录');
 
         const token = getToken();
