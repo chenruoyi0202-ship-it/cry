@@ -197,6 +197,17 @@
             outline: 3px solid var(--accent); outline-offset: -3px;
             transform: scale(0.93);
         }
+        .gallery-item.drag-over {
+            outline: 3px solid var(--accent); outline-offset: -3px;
+            transform: scale(1.05);
+        }
+        .gallery-item.dragging { opacity: 0.4; }
+        .drag-ghost {
+            position: fixed; z-index: 9999; pointer-events: none;
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            opacity: 0.9; transition: none;
+        }
 
         /* Timeline */
         .timeline { position: relative; padding-left: 28px; }
@@ -772,11 +783,8 @@
         }).join('');
     }
 
-    let swapSrcIdx = -1;
-
     function renderGallery() {
         const c = document.getElementById('gallery');
-        const len = appData.photos.length;
         c.innerHTML = appData.photos.map((p, i) =>
             '<div class="gallery-item skeleton" data-idx="' + i + '" onclick="onPhotoClick(' + i + ')">' +
             '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
@@ -789,25 +797,7 @@
     }
 
     function onPhotoClick(idx) {
-        if (!isEditing) { openLightbox(idx); return; }
-        if (swapSrcIdx === -1) {
-            // First click: select source
-            swapSrcIdx = idx;
-            document.querySelectorAll('.gallery-item').forEach((el, i) => {
-                el.classList.toggle('swap-selected', i === idx);
-            });
-            showToast('点击另一张照片交换位置');
-        } else if (swapSrcIdx === idx) {
-            // Clicked same photo: deselect
-            swapSrcIdx = -1;
-            document.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('swap-selected'));
-        } else {
-            // Second click: swap
-            const arr = appData.photos;
-            [arr[swapSrcIdx], arr[idx]] = [arr[idx], arr[swapSrcIdx]];
-            swapSrcIdx = -1;
-            dirty = true; renderGallery();
-        }
+        if (!isEditing) openLightbox(idx);
     }
 
     function movePhoto(idx, dir) {
@@ -815,9 +805,95 @@
         const target = idx + dir;
         if (target < 0 || target >= arr.length) return;
         [arr[idx], arr[target]] = [arr[target], arr[idx]];
-        swapSrcIdx = -1;
         dirty = true; renderGallery();
     }
+
+    // ===== Long-press drag to reorder photos =====
+    (function() {
+        let srcIdx = -1, ghost = null, timer = null, dragging = false;
+        const gallery = document.getElementById('gallery');
+        if (!gallery) return;
+
+        function getItemAt(x, y) {
+            const els = gallery.querySelectorAll('.gallery-item');
+            for (const el of els) {
+                const r = el.getBoundingClientRect();
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return el;
+            }
+            return null;
+        }
+
+        gallery.addEventListener('touchstart', function(e) {
+            if (!isEditing) return;
+            const item = e.target.closest('.gallery-item');
+            if (!item || e.target.closest('.item-del') || e.target.closest('.item-move')) return;
+            srcIdx = +item.dataset.idx;
+            const touch = e.touches[0];
+            const startX = touch.clientX, startY = touch.clientY;
+            timer = setTimeout(() => {
+                dragging = true;
+                item.classList.add('dragging');
+                if (navigator.vibrate) navigator.vibrate(30);
+                // Create floating ghost
+                ghost = document.createElement('div');
+                ghost.className = 'drag-ghost';
+                const r = item.getBoundingClientRect();
+                ghost.style.width = r.width + 'px';
+                ghost.style.height = r.height + 'px';
+                const img = item.querySelector('img');
+                if (img) {
+                    const gi = document.createElement('img');
+                    gi.src = img.src;
+                    gi.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                    ghost.appendChild(gi);
+                }
+                ghost.style.left = (startX - r.width/2) + 'px';
+                ghost.style.top = (startY - r.height/2) + 'px';
+                document.body.appendChild(ghost);
+            }, 400);
+        }, { passive: true });
+
+        gallery.addEventListener('touchmove', function(e) {
+            if (!dragging) { clearTimeout(timer); return; }
+            e.preventDefault();
+            const t = e.touches[0];
+            if (ghost) {
+                const w = ghost.offsetWidth, h = ghost.offsetHeight;
+                ghost.style.left = (t.clientX - w/2) + 'px';
+                ghost.style.top = (t.clientY - h/2) + 'px';
+            }
+            gallery.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('drag-over'));
+            const target = getItemAt(t.clientX, t.clientY);
+            if (target && +target.dataset.idx !== srcIdx) target.classList.add('drag-over');
+        }, { passive: false });
+
+        gallery.addEventListener('touchend', function(e) {
+            clearTimeout(timer);
+            if (!dragging) return;
+            dragging = false;
+            if (ghost) { ghost.remove(); ghost = null; }
+            const t = e.changedTouches[0];
+            const target = getItemAt(t.clientX, t.clientY);
+            gallery.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+            if (target) {
+                const targetIdx = +target.dataset.idx;
+                if (targetIdx !== srcIdx && !isNaN(targetIdx)) {
+                    const arr = appData.photos;
+                    const [moved] = arr.splice(srcIdx, 1);
+                    arr.splice(targetIdx, 0, moved);
+                    dirty = true;
+                    renderGallery();
+                }
+            }
+            srcIdx = -1;
+        }, { passive: true });
+
+        gallery.addEventListener('touchcancel', function() {
+            clearTimeout(timer); dragging = false;
+            if (ghost) { ghost.remove(); ghost = null; }
+            gallery.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+        }, { passive: true });
+    })();
 
     // ===== Long-press drag to reorder photos =====
 
