@@ -595,11 +595,9 @@
     // Fetch latest data from GitHub API (no deploy delay)
     async function fetchFromGitHubAPI() {
         try {
-            // Use token from appData if available, otherwise try from cached data
             let token = (appData && appData._ghToken) || '';
             let repo = (appData && appData._ghRepo) || '';
             if (!token || !repo) {
-                // Try to extract from cached data by reading raw
                 const cached = getCachedData();
                 if (cached) {
                     const pwd = currentPwd || getPwd();
@@ -613,14 +611,23 @@
                 }
             }
             if (!token || !repo) return null;
+            // Get file metadata (includes download_url for large files)
             const resp = await fetch('https://api.github.com/repos/' + repo + '/contents/data/love_encrypted.json', {
                 headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
             });
             if (!resp.ok) return null;
             const fileInfo = await resp.json();
-            // GitHub API returns base64-encoded content
-            const raw = atob(fileInfo.content.replace(/\n/g, ''));
-            return JSON.parse(raw);
+            // For files > 1MB, content is null, use download_url instead
+            if (fileInfo.content) {
+                const raw = atob(fileInfo.content.replace(/\n/g, ''));
+                return JSON.parse(raw);
+            } else if (fileInfo.download_url) {
+                const dlResp = await fetch(fileInfo.download_url, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (dlResp.ok) return await dlResp.json();
+            }
+            return null;
         } catch(e) { return null; }
     }
 
