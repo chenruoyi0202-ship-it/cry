@@ -136,6 +136,16 @@
         }
         .edit-toggle.show { display: flex; }
         .edit-toggle.active { transform: rotate(45deg); background: #e74c3c; }
+        .sync-toggle {
+            position: fixed; bottom: 88px; right: 20px; z-index: 100;
+            width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+            background: var(--card); color: var(--accent);
+            box-shadow: 0 4px 12px var(--card-shadow);
+            font-size: 18px; display: none; align-items: center; justify-content: center;
+            transition: transform 0.5s;
+        }
+        .sync-toggle.show { display: flex; }
+        .sync-toggle.spinning { transform: rotate(360deg); }
 
         /* Section */
         .section { margin-bottom: 36px; }
@@ -403,6 +413,8 @@
     <!-- Pull to Refresh Indicator -->
     <div class="ptr-indicator" id="ptrIndicator">释放刷新</div>
 
+    <!-- Sync Button (FAB) -->
+    <button class="sync-toggle" id="syncToggle" onclick="manualSync()">&#x1F504;</button>
     <!-- Edit Toggle (FAB) -->
     <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">&#x270F;&#xFE0F;</button>
 
@@ -698,12 +710,42 @@
         } catch(e) {}
     }
 
-    // Sync when tab becomes visible again (e.g., switching back from another app)
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && currentPwd && !isEditing) {
+    // Auto-sync triggers: visibilitychange + pageshow (iOS fallback) + periodic
+    async function manualSync() {
+        if (!currentPwd) return alert('请先解锁');
+        const btn = document.getElementById('syncToggle');
+        btn.classList.add('spinning');
+        showToast('同步中...');
+        try {
+            const remote = await fetchFromGitHubAPI();
+            if (!remote) { showToast('同步失败'); btn.classList.remove('spinning'); return; }
+            const localTime = (appData && appData._updatedAt) || '';
+            const remoteTime = remote.updatedAt || '';
+            if (remoteTime > localTime) {
+                const newData = await decryptData(currentPwd, remote.encrypted);
+                appData = newData;
+                migrateDiaryPhotos();
+                cacheData(JSON.stringify(remote));
+                renderAll();
+                const beijing = new Date(new Date(remoteTime).getTime() + 8 * 3600000);
+                showToast('已同步最新 ' + beijing.toISOString().substring(11,16) + ' (北京)');
+            } else {
+                showToast('数据已是最新');
+            }
+        } catch(e) { showToast('同步失败'); }
+        setTimeout(() => btn.classList.remove('spinning'), 500);
+    }
+
+    function tryAutoSync() {
+        if (currentPwd && !isEditing && document.visibilityState === 'visible') {
             syncFromGitHub(currentPwd);
         }
-    });
+    }
+    document.addEventListener('visibilitychange', tryAutoSync);
+    window.addEventListener('pageshow', tryAutoSync);
+    window.addEventListener('focus', tryAutoSync);
+    // Periodic sync every 30 seconds when tab is visible
+    setInterval(tryAutoSync, 30000);
 
     async function doUnlock() {
         const pwd = document.getElementById('pwdInput').value;
@@ -1325,6 +1367,7 @@
         document.getElementById('lockScreen').classList.add('hidden');
         document.getElementById('floatingHearts').style.display = 'none';
         document.getElementById('editToggle').classList.add('show');
+        document.getElementById('syncToggle').classList.add('show');
         document.getElementById('app').classList.add('show');
     }
 
