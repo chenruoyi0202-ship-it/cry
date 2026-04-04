@@ -666,22 +666,21 @@
                 return JSON.parse(atob(meta.content.replace(/\n/g, '')));
             }
 
-            // Step 2: For large files, use Blob API (no size limit, returns base64)
-            const blobResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + meta.sha, {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
+            // Step 2: For large files, use raw media type (no base64 decode needed)
+            const rawResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + meta.sha, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' }
             });
-            if (!blobResp.ok) return null;
-            const blob = await blobResp.json();
-            return JSON.parse(atob(blob.content.replace(/\n/g, '')));
+            if (!rawResp.ok) return null;
+            return await rawResp.json();
         } catch(e) { return null; }
     }
 
     // Background sync: check GitHub for newer data after unlock
     async function syncFromGitHub(pwd) {
         try {
+            showToast('同步中...');
             const remote = await fetchFromGitHubAPI();
-            if (!remote) return;
-            // Compare timestamps
+            if (!remote) { showToast('同步完成'); return; }
             const localTime = appData._updatedAt || '';
             const remoteTime = remote.updatedAt || '';
             if (remoteTime > localTime) {
@@ -690,8 +689,11 @@
                 appData._updatedAt = remoteTime;
                 cacheData(JSON.stringify(remote));
                 renderAll();
+                showToast('已同步最新数据');
+            } else {
+                showToast('数据已是最新');
             }
-        } catch(e) {}
+        } catch(e) { showToast('同步失败'); }
     }
 
     async function doUnlock() {
