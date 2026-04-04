@@ -154,13 +154,10 @@
 
         /* Anniversary Cards */
         .ann-scroll {
-            display: flex; gap: 14px; overflow-x: auto; padding: 4px 0 12px;
-            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 4px 0 12px;
         }
-        .ann-scroll::-webkit-scrollbar { height: 4px; }
-        .ann-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
         .ann-card {
-            flex: 0 0 160px; scroll-snap-align: start; position: relative;
+            position: relative;
             background: var(--card); border-radius: 20px; padding: 20px 16px; text-align: center;
             box-shadow: var(--glow), 0 4px 20px var(--card-shadow);
             border: 1px solid var(--border); transition: transform 0.3s, box-shadow 0.3s;
@@ -224,9 +221,8 @@
 
         /* Photo Gallery */
         .gallery {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
         }
-        @media (min-width: 640px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
         .gallery-item {
             position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
             aspect-ratio: 1; background: var(--border);
