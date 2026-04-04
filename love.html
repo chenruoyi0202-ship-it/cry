@@ -379,6 +379,7 @@
     // ===== State =====
     let appData = null;
     let isEditing = false;
+    let currentPwd = null;
     let currentLbIndex = 0;
     let dirty = false;
 
@@ -474,14 +475,14 @@
                     couple: { person1: 'CRY', person2: 'XYX' },
                     anniversaries: [], diary: [], photos: []
                 };
-                savePwd(pwd);
+                currentPwd = pwd; savePwd(pwd);
                 showApp();
                 renderAll();
                 if (!isAuto) toggleEdit();
                 return true;
             }
             appData = await decryptData(pwd, json.encrypted);
-            savePwd(pwd);
+            currentPwd = pwd; savePwd(pwd);
             showApp();
             renderAll();
             return true;
@@ -856,7 +857,7 @@
 
     // ===== Push to GitHub =====
     async function pushToGitHub() {
-        const pwd = getPwd();
+        const pwd = currentPwd || getPwd();
         if (!pwd) return alert('密码已过期，请刷新重新登录');
 
         const token = getToken();
