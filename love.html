@@ -11,7 +11,7 @@
     <title>Our Memory</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { touch-action: manipulation; -ms-touch-action: manipulation; }
+        html { touch-action: manipulation; -ms-touch-action: manipulation; background: #fdf6f0; }
         body { -webkit-text-size-adjust: 100%; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -495,28 +495,34 @@
                 appData = await decryptData(pwd, json.encrypted);
                 currentPwd = pwd; savePwd(pwd);
                 showApp(); renderAll();
+                // Background: check GitHub API for newer data
+                syncFromGitHub(pwd);
                 return true;
             } catch(e) {
-                // Cache might be stale (encrypted with old password) — clear and try network
                 try { localStorage.removeItem('_ld'); } catch(e2) {}
             }
         }
-        // Fetch from network
+        // Fetch from GitHub API first (always latest), then Pages as fallback
+        json = await fetchFromGitHubAPI();
+        if (!json) {
+            try {
+                const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
+                if (resp.ok) json = await resp.json();
+            } catch(e) {}
+        }
+        if (!json) {
+            // No data anywhere — first time use
+            appData = {
+                version: 1,
+                couple: { person1: 'CRY', person2: 'XYX' },
+                anniversaries: [], diary: [], photos: []
+            };
+            currentPwd = pwd; savePwd(pwd);
+            showApp(); renderAll();
+            if (!isAuto) toggleEdit();
+            return true;
+        }
         try {
-            const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-            if (!resp.ok) {
-                // No data file — first time use
-                appData = {
-                    version: 1,
-                    couple: { person1: 'CRY', person2: 'XYX' },
-                    anniversaries: [], diary: [], photos: []
-                };
-                currentPwd = pwd; savePwd(pwd);
-                showApp(); renderAll();
-                if (!isAuto) toggleEdit();
-                return true;
-            }
-            json = await resp.json();
             appData = await decryptData(pwd, json.encrypted);
             cacheData(JSON.stringify(json));
             currentPwd = pwd; savePwd(pwd);
@@ -525,6 +531,56 @@
         } catch(e) {
             return false;
         }
+    }
+
+    // Fetch latest data from GitHub API (no deploy delay)
+    async function fetchFromGitHubAPI() {
+        try {
+            // Use token from appData if available, otherwise try from cached data
+            let token = (appData && appData._ghToken) || '';
+            let repo = (appData && appData._ghRepo) || '';
+            if (!token || !repo) {
+                // Try to extract from cached data by reading raw
+                const cached = getCachedData();
+                if (cached) {
+                    const pwd = currentPwd || getPwd();
+                    if (pwd) {
+                        try {
+                            const tmp = await decryptData(pwd, cached.encrypted);
+                            token = tmp._ghToken || '';
+                            repo = tmp._ghRepo || '';
+                        } catch(e) {}
+                    }
+                }
+            }
+            if (!token || !repo) return null;
+            const resp = await fetch('https://api.github.com/repos/' + repo + '/contents/data/love_encrypted.json', {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!resp.ok) return null;
+            const fileInfo = await resp.json();
+            // GitHub API returns base64-encoded content
+            const raw = atob(fileInfo.content.replace(/\n/g, ''));
+            return JSON.parse(raw);
+        } catch(e) { return null; }
+    }
+
+    // Background sync: check GitHub for newer data after unlock
+    async function syncFromGitHub(pwd) {
+        try {
+            const remote = await fetchFromGitHubAPI();
+            if (!remote) return;
+            // Compare timestamps
+            const localTime = appData._updatedAt || '';
+            const remoteTime = remote.updatedAt || '';
+            if (remoteTime > localTime) {
+                const newData = await decryptData(pwd, remote.encrypted);
+                appData = newData;
+                appData._updatedAt = remoteTime;
+                cacheData(JSON.stringify(remote));
+                renderAll();
+            }
+        } catch(e) {}
     }
 
     async function doUnlock() {
@@ -934,8 +990,10 @@
         }
 
         try {
+            const now = new Date().toISOString();
+            appData._updatedAt = now;
             const encrypted = await encryptData(pwd, appData);
-            const output = JSON.stringify({ encrypted, updatedAt: new Date().toISOString() });
+            const output = JSON.stringify({ encrypted, updatedAt: now });
             const content = bufToB64(new TextEncoder().encode(output));
 
             // Get current file SHA (needed for update)
