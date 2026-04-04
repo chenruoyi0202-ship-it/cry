@@ -1245,11 +1245,23 @@
 
     // ===== Recompress existing photos =====
     function recompressAll() {
-        if (!appData || !appData.photos.length) return alert('没有照片');
-        if (!confirm('压缩所有照片？照片质量会降低但体积更小。')) return;
-        let done = 0, total = appData.photos.length;
+        // Collect all photos: gallery + inline diary photos
+        const targets = [];
+        appData.photos.forEach(p => targets.push({ obj: p, key: 'data' }));
+        appData.diary.forEach(d => {
+            if (!d.photos) return;
+            d.photos.forEach((ref, i) => {
+                if (typeof ref === 'string' && ref.startsWith('data:')) {
+                    targets.push({ obj: d.photos, key: i });
+                }
+            });
+        });
+        if (!targets.length) return alert('没有照片');
+        if (!confirm('压缩所有照片（包括相册和点滴）？')) return;
+        let done = 0, total = targets.length;
         showToast('压缩中... 0/' + total);
-        appData.photos.forEach((p, i) => {
+        targets.forEach(t => {
+            const src = t.obj[t.key];
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
@@ -1261,15 +1273,15 @@
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                 let result = canvas.toDataURL('image/jpeg', 0.3);
                 if (result.length > 200000) result = canvas.toDataURL('image/jpeg', 0.15);
-                p.data = result;
+                t.obj[t.key] = result;
                 done++;
                 if (done === total) {
                     dirty = true;
-                    renderGallery();
+                    renderAll();
                     showToast('已压缩 ' + total + ' 张照片，请保存');
                 }
             };
-            img.src = p.data;
+            img.src = src;
         });
     }
 
