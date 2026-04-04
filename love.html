@@ -382,23 +382,11 @@
     // ===== Unlock =====
     document.getElementById('pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') doUnlock(); });
 
-    async function doUnlock() {
-        const pwd = document.getElementById('pwdInput').value;
-        if (!pwd) return;
-        const btn = document.getElementById('unlockBtn');
-        const err = document.getElementById('lockError');
-        btn.disabled = true; btn.textContent = '解锁中...'; err.textContent = '';
-
+    async function tryUnlock(pwd, isAuto) {
         try {
             const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-            if (!resp.ok) throw new Error('NO_DATA');
-            const json = await resp.json();
-            appData = await decryptData(pwd, json.encrypted);
-            sessionStorage.setItem('_lp', pwd);
-            showApp();
-            renderAll();
-        } catch (e) {
-            if (e.message === 'NO_DATA') {
+            if (!resp.ok) {
+                // No data file — first time use
                 appData = {
                     version: 1,
                     couple: { person1: 'TA', person2: 'TA' },
@@ -407,13 +395,40 @@
                 sessionStorage.setItem('_lp', pwd);
                 showApp();
                 renderAll();
-                toggleEdit();
-            } else {
-                err.textContent = '密码错误，请重试';
+                if (!isAuto) toggleEdit();
+                return true;
             }
+            const json = await resp.json();
+            appData = await decryptData(pwd, json.encrypted);
+            sessionStorage.setItem('_lp', pwd);
+            showApp();
+            renderAll();
+            return true;
+        } catch (e) {
+            return false;
         }
+    }
+
+    async function doUnlock() {
+        const pwd = document.getElementById('pwdInput').value;
+        if (!pwd) return;
+        const btn = document.getElementById('unlockBtn');
+        const err = document.getElementById('lockError');
+        btn.disabled = true; btn.textContent = '解锁中...'; err.textContent = '';
+
+        const ok = await tryUnlock(pwd, false);
+        if (!ok) err.textContent = '密码错误，请重试';
         btn.disabled = false; btn.textContent = '解锁';
     }
+
+    // Auto-unlock on refresh if password is in sessionStorage
+    (async function autoUnlock() {
+        const savedPwd = sessionStorage.getItem('_lp');
+        if (savedPwd) {
+            const ok = await tryUnlock(savedPwd, true);
+            if (!ok) sessionStorage.removeItem('_lp');
+        }
+    })();
 
     // ===== Render =====
     function renderAll() {
