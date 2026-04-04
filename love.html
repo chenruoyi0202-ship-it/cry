@@ -579,14 +579,14 @@
                 '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
                 '<button class="btn-primary" onclick="saveCouple()">保存</button></div>';
         } else if (type === 'settings') {
-            const curToken = getToken();
-            const curRepo = localStorage.getItem('_gh_repo') || GH_REPO;
+            const curToken = (appData && appData._ghToken) || '';
+            const curRepo = (appData && appData._ghRepo) || GH_REPO;
             m.innerHTML = '<h3>GitHub 设置</h3>' +
                 '<label>仓库（owner/repo）</label><input id="mRepo" value="' + esc(curRepo) + '" placeholder="username/repo">' +
                 '<div class="token-hint">如：chenruoyi0202-ship-it/cry</div>' +
                 '<label>Personal Access Token</label><input id="mToken" type="password" value="' + esc(curToken) + '" placeholder="ghp_xxxxxxxxxxxx">' +
-                '<div class="token-hint">在 GitHub Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens 创建，需要 Contents 读写权限。Token 保存在本地浏览器中，只需设置一次。</div>' +
-                (curToken ? '<div class="token-ok">Token 已配置</div>' : '') +
+                '<div class="token-hint">在 GitHub Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens 创建，需要 Contents 读写权限。Token 会加密保存在数据中，所有知道密码的人都能直接编辑保存。</div>' +
+                (curToken ? '<div class="token-ok">Token 已配置，所有人输入密码即可编辑</div>' : '') +
                 '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
                 '<button class="btn-primary" onclick="saveSettings()">保存设置</button></div>';
         }
@@ -663,31 +663,29 @@
     function saveSettings() {
         const repo = document.getElementById('mRepo').value.trim();
         const token = document.getElementById('mToken').value.trim();
-        if (repo) setRepo(repo);
-        if (token) setToken(token);
+        if (repo) appData._ghRepo = repo;
+        if (token) appData._ghToken = token;
+        dirty = true;
         closeModal();
-        alert('设置已保存（仅在当前标签页有效）');
+        alert('设置已保存，请点击"保存到 GitHub"使其生效');
     }
 
     // ===== GitHub Config =====
-    const GH_REPO = detectRepo();
     const GH_PATH = 'data/love_encrypted.json';
 
     function detectRepo() {
-        // Auto-detect from current URL if on github.io
         const host = location.hostname;
         if (host.endsWith('.github.io')) {
             const owner = host.replace('.github.io', '');
             const repo = location.pathname.split('/')[1] || '';
             if (repo) return owner + '/' + repo;
         }
-        // Fallback: stored value
-        return sessionStorage.getItem('_gh_repo') || '';
+        return '';
     }
+    const GH_REPO = detectRepo();
 
-    function getToken() { return localStorage.getItem('_gh_token') || ''; }
-    function setToken(t) { localStorage.setItem('_gh_token', t); }
-    function setRepo(r) { localStorage.setItem('_gh_repo', r); }
+    function getToken() { return (appData && appData._ghToken) || ''; }
+    function getRepo() { return (appData && appData._ghRepo) || GH_REPO; }
 
     function showApp() {
         document.getElementById('lockScreen').classList.add('hidden');
@@ -703,11 +701,11 @@
         if (!pwd) return alert('密码已过期，请刷新重新登录');
 
         const token = getToken();
-        const repo = localStorage.getItem('_gh_repo') || GH_REPO;
+        const repo = getRepo();
 
         if (!token || !repo) {
             openModal('settings');
-            alert('请先设置 GitHub Token 和仓库信息');
+            alert('请先在设置中配置 GitHub Token（只需配置一次，之后所有人输入密码即可编辑保存）');
             return;
         }
 
