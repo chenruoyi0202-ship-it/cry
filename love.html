@@ -137,15 +137,15 @@
         .edit-toggle.show { display: flex; }
         .edit-toggle.active { transform: rotate(45deg); background: #e74c3c; }
         .sync-toggle {
-            position: fixed; bottom: 88px; right: 20px; z-index: 100;
-            width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-            background: var(--card); color: var(--accent);
-            box-shadow: 0 4px 12px var(--card-shadow);
-            font-size: 18px; display: none; align-items: center; justify-content: center;
-            transition: transform 0.5s;
+            position: fixed; bottom: 92px; right: 20px; z-index: 100;
+            width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+            background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+            box-shadow: 0 4px 20px rgba(192,132,252,0.5);
+            font-size: 22px; display: none; align-items: center; justify-content: center;
+            transition: transform 0.8s;
         }
         .sync-toggle.show { display: flex; }
-        .sync-toggle.spinning { transform: rotate(360deg); }
+        .sync-toggle.spinning { transform: rotate(720deg); }
 
         /* Section */
         .section { margin-bottom: 36px; }
