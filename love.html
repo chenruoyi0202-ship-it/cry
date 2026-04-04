@@ -667,24 +667,34 @@
             }
             if (!token || !repo) return null;
 
-            // Get file SHA (cache-bust with timestamp in URL)
             const ts = Date.now();
-            const metaResp = await fetch('https://api.github.com/repos/' + repo + '/contents/data/love_encrypted.json?t=' + ts, {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
-            });
-            if (!metaResp.ok) return null;
-            const meta = await metaResp.json();
+            const hdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' };
 
-            if (meta.content) {
-                return JSON.parse(atob(meta.content.replace(/\n/g, '')));
-            }
+            // Step 1: Get latest commit SHA from ref (content-addressed, not cached by CDN)
+            const refResp = await fetch('https://api.github.com/repos/' + repo + '/git/ref/heads/main?t=' + ts, { headers: hdrs });
+            if (!refResp.ok) return null;
+            const refData = await refResp.json();
+            const commitSha = refData.object.sha;
 
-            // Large files: use raw blob
-            const rawResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + meta.sha + '?t=' + ts, {
+            // Step 2: Get commit's tree SHA
+            const commitResp = await fetch('https://api.github.com/repos/' + repo + '/git/commits/' + commitSha, { headers: hdrs });
+            if (!commitResp.ok) return null;
+            const commitData = await commitResp.json();
+            const treeSha = commitData.tree.sha;
+
+            // Step 3: Get tree, find data/love_encrypted.json blob SHA
+            const treeResp = await fetch('https://api.github.com/repos/' + repo + '/git/trees/' + treeSha + '?recursive=1', { headers: hdrs });
+            if (!treeResp.ok) return null;
+            const treeData = await treeResp.json();
+            const fileEntry = treeData.tree.find(e => e.path === 'data/love_encrypted.json');
+            if (!fileEntry) return null;
+
+            // Step 4: Get blob content via raw media type
+            const blobResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + fileEntry.sha, {
                 headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' }
             });
-            if (!rawResp.ok) return null;
-            return await rawResp.json();
+            if (!blobResp.ok) return null;
+            return await blobResp.json();
         } catch(e) { return null; }
     }
 
