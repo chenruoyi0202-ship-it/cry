@@ -237,6 +237,18 @@
         }
         .save-bar.show { display: flex; gap: 10px; justify-content: center; }
         .save-bar button { padding: 12px 32px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .save-bar .save-status { font-size: 12px; color: #8c7a7c; align-self: center; }
+
+        /* Settings button */
+        .settings-toggle {
+            position: fixed; top: 16px; left: 16px; z-index: 100;
+            width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+            background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            font-size: 20px; display: none; align-items: center; justify-content: center;
+        }
+        .settings-toggle.show { display: flex; }
+        .token-hint { font-size: 11px; color: #8c7a7c; margin-top: 4px; line-height: 1.4; }
+        .token-ok { color: #4caf50; font-weight: 600; font-size: 13px; margin-top: 8px; }
 
         /* Footer */
         .app-footer { text-align: center; padding: 32px 0 20px; color: #c4b0b2; font-size: 13px; }
@@ -265,6 +277,8 @@
         </div>
     </div>
 
+    <!-- Settings Toggle -->
+    <button class="settings-toggle" id="settingsToggle" onclick="openModal('settings')">&#x2699;&#xFE0F;</button>
     <!-- Edit Toggle -->
     <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">&#x270F;&#xFE0F;</button>
 
@@ -311,7 +325,8 @@
     <!-- Save Bar -->
     <div class="save-bar" id="saveBar">
         <button class="btn-secondary" onclick="toggleEdit()">取消</button>
-        <button class="btn-primary" onclick="saveData()">保存并下载</button>
+        <button class="btn-primary" id="saveBtn" onclick="saveData()">保存到 GitHub</button>
+        <span class="save-status" id="saveStatus"></span>
     </div>
 
     <!-- Modal -->
@@ -370,26 +385,18 @@
             const json = await resp.json();
             appData = await decryptData(pwd, json.encrypted);
             sessionStorage.setItem('_lp', pwd);
-            document.getElementById('lockScreen').classList.add('hidden');
-            document.getElementById('floatingHearts').style.display = 'none';
-            document.getElementById('editToggle').classList.add('show');
-            document.getElementById('app').classList.add('show');
+            showApp();
             renderAll();
         } catch (e) {
             if (e.message === 'NO_DATA') {
-                // No data file yet - initialize with empty data
                 appData = {
                     version: 1,
                     couple: { person1: 'TA', person2: 'TA' },
                     anniversaries: [], diary: [], photos: []
                 };
                 sessionStorage.setItem('_lp', pwd);
-                document.getElementById('lockScreen').classList.add('hidden');
-                document.getElementById('floatingHearts').style.display = 'none';
-                document.getElementById('editToggle').classList.add('show');
-                document.getElementById('app').classList.add('show');
+                showApp();
                 renderAll();
-                // Auto enter edit mode for first time
                 toggleEdit();
             } else {
                 err.textContent = '密码错误，请重试';
@@ -571,6 +578,17 @@
                 '<label>TA的名字</label><input id="mP2" value="' + esc(appData.couple.person2) + '">' +
                 '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
                 '<button class="btn-primary" onclick="saveCouple()">保存</button></div>';
+        } else if (type === 'settings') {
+            const curToken = getToken();
+            const curRepo = sessionStorage.getItem('_gh_repo') || GH_REPO;
+            m.innerHTML = '<h3>GitHub 设置</h3>' +
+                '<label>仓库（owner/repo）</label><input id="mRepo" value="' + esc(curRepo) + '" placeholder="username/repo">' +
+                '<div class="token-hint">如：chenruoyi0202-ship-it/cry</div>' +
+                '<label>Personal Access Token</label><input id="mToken" type="password" value="' + esc(curToken) + '" placeholder="ghp_xxxxxxxxxxxx">' +
+                '<div class="token-hint">在 GitHub Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens 创建，需要 Contents 读写权限。Token 仅保存在当前标签页，关闭即清除。</div>' +
+                (curToken ? '<div class="token-ok">Token 已配置</div>' : '') +
+                '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
+                '<button class="btn-primary" onclick="saveSettings()">保存设置</button></div>';
         }
         o.classList.add('open');
     }
@@ -642,24 +660,108 @@
         dirty = true; closeModal(); renderAll();
     }
 
-    // ===== Save & Download =====
+    function saveSettings() {
+        const repo = document.getElementById('mRepo').value.trim();
+        const token = document.getElementById('mToken').value.trim();
+        if (repo) setRepo(repo);
+        if (token) setToken(token);
+        closeModal();
+        alert('设置已保存（仅在当前标签页有效）');
+    }
+
+    // ===== GitHub Config =====
+    const GH_REPO = detectRepo();
+    const GH_PATH = 'data/love_encrypted.json';
+
+    function detectRepo() {
+        // Auto-detect from current URL if on github.io
+        const host = location.hostname;
+        if (host.endsWith('.github.io')) {
+            const owner = host.replace('.github.io', '');
+            const repo = location.pathname.split('/')[1] || '';
+            if (repo) return owner + '/' + repo;
+        }
+        // Fallback: stored value
+        return sessionStorage.getItem('_gh_repo') || '';
+    }
+
+    function getToken() { return sessionStorage.getItem('_gh_token') || ''; }
+    function setToken(t) { sessionStorage.setItem('_gh_token', t); }
+    function setRepo(r) { sessionStorage.setItem('_gh_repo', r); }
+
+    function showApp() {
+        document.getElementById('lockScreen').classList.add('hidden');
+        document.getElementById('floatingHearts').style.display = 'none';
+        document.getElementById('editToggle').classList.add('show');
+        document.getElementById('settingsToggle').classList.add('show');
+        document.getElementById('app').classList.add('show');
+    }
+
+    // ===== Save to GitHub =====
     async function saveData() {
         const pwd = sessionStorage.getItem('_lp');
         if (!pwd) return alert('密码已过期，请刷新重新登录');
+
+        const token = getToken();
+        const repo = sessionStorage.getItem('_gh_repo') || GH_REPO;
+
+        if (!token || !repo) {
+            openModal('settings');
+            alert('请先设置 GitHub Token 和仓库信息');
+            return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        const status = document.getElementById('saveStatus');
+        btn.disabled = true; btn.textContent = '保存中...'; status.textContent = '';
+
         try {
             const encrypted = await encryptData(pwd, appData);
             const output = JSON.stringify({ encrypted, updatedAt: new Date().toISOString() });
-            const blob = new Blob([output], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'love_encrypted.json';
-            a.click();
-            URL.revokeObjectURL(a.href);
+            const content = btoa(unescape(encodeURIComponent(output)));
+
+            // Get current file SHA (needed for update)
+            const getResp = await fetch('https://api.github.com/repos/' + repo + '/contents/' + GH_PATH, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            let sha = '';
+            if (getResp.ok) {
+                const fileInfo = await getResp.json();
+                sha = fileInfo.sha;
+            }
+
+            // Update file
+            const body = {
+                message: 'Update love data',
+                content: content
+            };
+            if (sha) body.sha = sha;
+
+            const putResp = await fetch('https://api.github.com/repos/' + repo + '/contents/' + GH_PATH, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!putResp.ok) {
+                const err = await putResp.json();
+                throw new Error(err.message || 'GitHub API error');
+            }
+
             dirty = false;
-            toggleEdit();
-            alert('已下载 love_encrypted.json，请将它替换到 data/ 目录并提交到 GitHub');
+            status.textContent = '已保存';
+            btn.textContent = '保存到 GitHub';
+            btn.disabled = false;
+            setTimeout(() => { toggleEdit(); status.textContent = ''; }, 1500);
         } catch (e) {
-            alert('加密失败: ' + e.message);
+            btn.textContent = '保存到 GitHub';
+            btn.disabled = false;
+            status.textContent = '';
+            alert('保存失败: ' + e.message);
         }
     }
 
