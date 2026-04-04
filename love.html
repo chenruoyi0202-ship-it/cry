@@ -796,11 +796,12 @@
         c.innerHTML = sorted.map(d => {
             let photoHtml = '';
             if (d.photos && d.photos.length) {
-                const thumbs = d.photos.map(pid => {
-                    const p = appData.photos.find(x => x.id === pid);
-                    if (!p) return '';
-                    const idx = appData.photos.indexOf(p);
-                    return '<img class="tl-thumb" src="' + p.data + '" onclick="openLightbox(' + idx + ')" alt="">';
+                const thumbs = d.photos.map(p => {
+                    // Support both old format (photo ID string) and new format (data URL)
+                    const src = (typeof p === 'string' && p.startsWith('data:')) ? p :
+                                ((appData.photos.find(x => x.id === p) || {}).data || '');
+                    if (!src) return '';
+                    return '<img class="tl-thumb" src="' + src + '" alt="">';
                 }).join('');
                 photoHtml = '<div class="tl-photos">' + thumbs + '</div>';
             }
@@ -972,9 +973,9 @@
     function delItem(collection, id) {
         if (!confirm('确定删除？')) return;
         appData[collection] = appData[collection].filter(x => x.id !== id);
-        // Also remove photo refs from diary
+        // Clean up old-format photo ID refs from diary (new format uses data URLs)
         if (collection === 'photos') {
-            appData.diary.forEach(d => { d.photos = (d.photos || []).filter(pid => pid !== id); });
+            appData.diary.forEach(d => { d.photos = (d.photos || []).filter(p => typeof p !== 'string' || p.startsWith('data:') || p !== id); });
         }
         dirty = true;
         renderAll();
@@ -1011,10 +1012,11 @@
             diaryPendingPhotos = [];
             let existingPhotoHtml = '';
             if (editing && editing.photos && editing.photos.length) {
-                existingPhotoHtml = editing.photos.map(pid => {
-                    const p = appData.photos.find(x => x.id === pid);
-                    if (!p) return '';
-                    return '<img src="' + p.data + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
+                existingPhotoHtml = editing.photos.map(p => {
+                    const src = (typeof p === 'string' && p.startsWith('data:')) ? p :
+                                ((appData.photos.find(x => x.id === p) || {}).data || '');
+                    if (!src) return '';
+                    return '<img src="' + src + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
                 }).join('');
             }
             m.innerHTML = '<h3>' + (editing ? '编辑恋爱点滴' : '添加恋爱点滴') + '</h3>' +
@@ -1107,23 +1109,18 @@
         const title = document.getElementById('mDiaryTitle').value.trim();
         const content = document.getElementById('mDiaryContent').value.trim();
         if (!title || !date) return alert('请填写标题和日期');
-        // Create photo entries for attached photos
-        const newPhotoIds = [];
-        diaryPendingPhotos.forEach(data => {
-            const pid = genId();
-            appData.photos.push({ id: pid, data });
-            newPhotoIds.push(pid);
-        });
+        // Diary photos stored as inline data URLs (not in main gallery)
+        const newPhotos = diaryPendingPhotos.slice();
         diaryPendingPhotos = [];
         if (editingDiaryId) {
             const d = appData.diary.find(x => x.id === editingDiaryId);
             if (d) {
                 d.date = date; d.title = title; d.content = content || '';
-                d.photos = (d.photos || []).concat(newPhotoIds);
+                d.photos = (d.photos || []).concat(newPhotos);
             }
             editingDiaryId = null;
         } else {
-            appData.diary.push({ id: genId(), date, title, content: content || '', mood: 'happy', photos: newPhotoIds });
+            appData.diary.push({ id: genId(), date, title, content: content || '', mood: 'happy', photos: newPhotos });
         }
         dirty = true; closeModal(); renderAll();
     }
