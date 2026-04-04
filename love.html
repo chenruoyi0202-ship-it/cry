@@ -442,7 +442,7 @@
 
         </div>
 
-        <footer class="app-footer">Made with &#x2764;&#xFE0F;</footer>
+        <footer class="app-footer">Made with &#x2764;&#xFE0F; <span style="opacity:0.5;font-size:11px;">v2026.04.04.15:10</span></footer>
     </div>
 
     <!-- Lightbox -->
@@ -653,9 +653,10 @@
             }
             if (!token || !repo) return null;
 
-            // Get file SHA (cache-bust with timestamp header)
-            const metaResp = await fetch('https://api.github.com/repos/' + repo + '/contents/data/love_encrypted.json', {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'If-None-Match': '' },
+            // Get file SHA (aggressive cache-busting for WeChat WebView)
+            const ts = Date.now();
+            const metaResp = await fetch('https://api.github.com/repos/' + repo + '/contents/data/love_encrypted.json?t=' + ts, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' },
                 cache: 'no-store'
             });
             if (!metaResp.ok) return null;
@@ -666,8 +667,8 @@
             }
 
             // Large files: use raw blob
-            const rawResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + meta.sha, {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' },
+            const rawResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + meta.sha + '?t=' + ts, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw', 'Cache-Control': 'no-cache' },
                 cache: 'no-store'
             });
             if (!rawResp.ok) return null;
@@ -686,9 +687,13 @@
             appData = newData;
             cacheData(JSON.stringify(remote));
             renderAll();
-            const t = remote.updatedAt || '';
-            const hm = t ? t.substring(11,16) : '?';
-            showToast('同步完成 ' + hm);
+            const t = remote.updatedAt;
+            let hm = '?';
+            if (t) {
+                const beijing = new Date(new Date(t).getTime() + 8 * 3600000);
+                hm = beijing.toISOString().substring(11,16);
+            }
+            showToast('同步完成 ' + hm + ' (北京)');
         } catch(e) { showToast('同步失败: ' + (e.message||'')); }
     }
 
