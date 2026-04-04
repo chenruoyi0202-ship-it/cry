@@ -706,14 +706,15 @@
         dirty = true; closeModal(); renderAll();
     }
 
-    function saveSettings() {
+    async function saveSettings() {
         const repo = document.getElementById('mRepo').value.trim();
         const token = document.getElementById('mToken').value.trim();
-        if (repo) appData._ghRepo = repo;
-        if (token) appData._ghToken = token;
-        dirty = true;
+        if (!repo || !token) return alert('请填写仓库和 Token');
+        appData._ghRepo = repo;
+        appData._ghToken = token;
         closeModal();
-        alert('设置已保存，请点击"保存"使其生效');
+        // Directly save to GitHub so token persists
+        await pushToGitHub();
     }
 
     // ===== GitHub Config =====
@@ -741,8 +742,8 @@
         document.getElementById('app').classList.add('show');
     }
 
-    // ===== Save to GitHub =====
-    async function saveData() {
+    // ===== Push to GitHub =====
+    async function pushToGitHub() {
         const pwd = sessionStorage.getItem('_lp');
         if (!pwd) return alert('密码已过期，请刷新重新登录');
 
@@ -754,10 +755,6 @@
             alert('请先在设置中配置 GitHub Token（只需配置一次，之后所有人输入密码即可编辑保存）');
             return;
         }
-
-        const btn = document.getElementById('saveBtn');
-        const status = document.getElementById('saveStatus');
-        btn.disabled = true; btn.textContent = '保存中...'; status.textContent = '';
 
         try {
             const encrypted = await encryptData(pwd, appData);
@@ -774,11 +771,7 @@
                 sha = fileInfo.sha;
             }
 
-            // Update file
-            const body = {
-                message: 'Update love data',
-                content: content
-            };
+            const body = { message: 'Update love data', content };
             if (sha) body.sha = sha;
 
             const putResp = await fetch('https://api.github.com/repos/' + repo + '/contents/' + GH_PATH, {
@@ -797,15 +790,28 @@
             }
 
             dirty = false;
+            return true;
+        } catch (e) {
+            alert('保存失败: ' + e.message);
+            return false;
+        }
+    }
+
+    // ===== Save (called from save bar) =====
+    async function saveData() {
+        const btn = document.getElementById('saveBtn');
+        const status = document.getElementById('saveStatus');
+        btn.disabled = true; btn.textContent = '保存中...'; status.textContent = '';
+
+        const ok = await pushToGitHub();
+        if (ok) {
             status.textContent = '已保存';
             btn.textContent = '保存';
             btn.disabled = false;
             setTimeout(() => { toggleEdit(); status.textContent = ''; }, 1500);
-        } catch (e) {
+        } else {
             btn.textContent = '保存';
             btn.disabled = false;
-            status.textContent = '';
-            alert('保存失败: ' + e.message);
         }
     }
 
