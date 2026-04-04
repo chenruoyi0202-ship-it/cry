@@ -236,8 +236,9 @@
         .modal h3 { font-size: 18px; color: #e8758f; margin-bottom: 16px; }
         .modal label { display: block; font-size: 13px; font-weight: 600; color: #8c7a7c; margin-bottom: 4px; margin-top: 12px; }
         .modal input, .modal textarea, .modal select {
-            width: 100%; padding: 10px 14px; border: 1.5px solid #f0e0d6; border-radius: 10px;
+            width: 100%; max-width: 100%; padding: 10px 14px; border: 1.5px solid #f0e0d6; border-radius: 10px;
             font-size: 16px; outline: none; transition: border-color 0.3s; font-family: inherit;
+            box-sizing: border-box; -webkit-appearance: none; appearance: none;
         }
         .modal input:focus, .modal textarea:focus { border-color: #e8758f; }
         .modal textarea { resize: vertical; min-height: 80px; }
@@ -585,7 +586,8 @@
             let days, label;
             if (a.type === 'countup') { days = daysBetween(d, now); label = '已经'; }
             else { days = daysBetween(now, d); label = days >= 0 ? '还有' : '已过'; days = Math.abs(days); }
-            return '<div class="ann-card"><button class="item-del" onclick="delItem(\'anniversaries\',\'' + a.id + '\')">&times;</button>' +
+            return '<div class="ann-card" onclick="editAnn(\'' + a.id + '\')">' +
+                '<button class="item-del" onclick="event.stopPropagation();delItem(\'anniversaries\',\'' + a.id + '\')">&times;</button>' +
                 '<div class="ann-icon">' + a.icon + '</div>' +
                 '<div class="ann-title">' + esc(a.title) + '</div>' +
                 '<div class="ann-date">' + a.date + '</div>' +
@@ -692,28 +694,19 @@
         const m = document.getElementById('modalContent');
         const o = document.getElementById('modalOverlay');
         if (type === 'ann') {
-            const emojis = [
-                '❤️','💕','💗','💖','💘','💝','💞','🥰','😘','🫶',
-                '💍','💒','👫','👩‍❤️‍👨','💑','🤝','🫂','👶','🤰','👨‍👩‍👧',
-                '🌹','🌸','🌺','💐','🌷','🪻','🌻','🍀','🌙','⭐',
-                '🎂','🎉','🎊','🥂','🍰','🎁','🎈','🪄','✨','🎆',
-                '✈️','🏖️','🗼','🎡','🏔️','🚗','🛳️','🏠','🌅','🌈',
-                '🎓','📅','💌','📸','🎬','🎵','🎮','📖','🍽️','☕',
-                '🐾','🐶','🐱','🐰','🦋','🕊️','🎄','🧸','🪴','🫧'
-            ];
-            const emojiGrid = emojis.map(e =>
-                '<span class="emoji-opt" onclick="pickEmoji(this)" data-emoji="' + e + '">' + e + '</span>'
+            const editing = editingAnnId ? appData.anniversaries.find(x => x.id === editingAnnId) : null;
+            const selIcon = editing ? editing.icon : '❤️';
+            const emojiGrid = EMOJIS.map(e =>
+                '<span class="emoji-opt' + (e === selIcon ? ' selected' : '') + '" onclick="pickEmoji(this)" data-emoji="' + e + '">' + e + '</span>'
             ).join('');
-            m.innerHTML = '<h3>添加纪念日</h3>' +
-                '<label>标题</label><input id="mAnnTitle" placeholder="如：在一起">' +
-                '<label>日期</label><input id="mAnnDate" type="date">' +
+            m.innerHTML = '<h3>' + (editing ? '编辑纪念日' : '添加纪念日') + '</h3>' +
+                '<label>标题</label><input id="mAnnTitle" placeholder="如：在一起" value="' + esc(editing ? editing.title : '') + '">' +
+                '<label>日期</label><input id="mAnnDate" type="date" value="' + (editing ? editing.date : '') + '">' +
                 '<label>选择图标</label><div class="emoji-picker" id="emojiPicker">' + emojiGrid + '</div>' +
-                '<input type="hidden" id="mAnnIcon" value="❤️">' +
-                '<label>类型</label><select id="mAnnType"><option value="countup">已过天数</option><option value="countdown">倒计时</option></select>' +
-                '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
-                '<button class="btn-primary" onclick="addAnn()">添加</button></div>';
-            // Default select first
-            m.querySelector('.emoji-opt').classList.add('selected');
+                '<input type="hidden" id="mAnnIcon" value="' + esc(selIcon) + '">' +
+                '<label>类型</label><select id="mAnnType"><option value="countup"' + (editing && editing.type === 'countup' ? ' selected' : '') + '>已过天数</option><option value="countdown"' + (editing && editing.type === 'countdown' ? ' selected' : '') + '>倒计时</option></select>' +
+                '<div class="modal-actions"><button class="btn-secondary" onclick="editingAnnId=null;closeModal()">取消</button>' +
+                '<button class="btn-primary" onclick="addAnn()">' + (editing ? '保存' : '添加') + '</button></div>';
         } else if (type === 'diary') {
             m.innerHTML = '<h3>添加恋爱点滴</h3>' +
                 '<label>日期</label><input id="mDiaryDate" type="date" value="' + todayStr() + '">' +
@@ -739,13 +732,37 @@
     function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
     function todayStr() { return new Date().toISOString().slice(0, 10); }
 
+    const EMOJIS = [
+        '❤️','💕','💗','💖','💘','💝','💞','🥰','😘','🫶','💏','💋','😍','🤗','😊',
+        '💍','💒','👫','👩‍❤️‍👨','💑','🤝','🫂','👶','🤰','👨‍👩‍👧','👨‍👩‍👦','👪','🧑‍🤝‍🧑',
+        '🌹','🌸','🌺','💐','🌷','🪻','🌻','🍀','🌙','⭐','🌟','🪷','🌼','🌿','🍁',
+        '🎂','🎉','🎊','🥂','🍰','🎁','🎈','🪄','✨','🎆','🎇','🧧','🎀','🎗️','🏆',
+        '✈️','🏖️','🗼','🎡','🏔️','🚗','🛳️','🏠','🌅','🌈','🗺️','🏕️','🎢','🌄','🌆',
+        '🎓','📅','💌','📸','🎬','🎵','🎮','📖','🍽️','☕','🧁','🍫','🍷','🫖','🎤',
+        '🐾','🐶','🐱','🐰','🦋','🕊️','🎄','🧸','🪴','🫧','🐠','🦄','🐈','🐕','🦊',
+        '🏡','🛌','🛀','🧳','🎠','🎪','🚀','🌍','💎','🔑','📝','🩺','🎭','🧩','🪁'
+    ];
+    let editingAnnId = null;
+
+    function editAnn(id) {
+        if (!isEditing) return;
+        editingAnnId = id;
+        openModal('ann');
+    }
+
     function addAnn() {
         const title = document.getElementById('mAnnTitle').value.trim();
         const date = document.getElementById('mAnnDate').value;
         const icon = document.getElementById('mAnnIcon').value || '\u2764\uFE0F';
         const type = document.getElementById('mAnnType').value;
         if (!title || !date) return alert('请填写标题和日期');
-        appData.anniversaries.push({ id: genId(), title, date, icon, type });
+        if (editingAnnId) {
+            const a = appData.anniversaries.find(x => x.id === editingAnnId);
+            if (a) { a.title = title; a.date = date; a.icon = icon; a.type = type; }
+            editingAnnId = null;
+        } else {
+            appData.anniversaries.push({ id: genId(), title, date, icon, type });
+        }
         dirty = true; closeModal(); renderAll();
     }
 
