@@ -326,7 +326,6 @@
             <button class="tab-btn active" onclick="switchTab(0)">纪念日</button>
             <button class="tab-btn" onclick="switchTab(1)">点滴</button>
             <button class="tab-btn" onclick="switchTab(2)">相册</button>
-            <button class="tab-btn" onclick="switchTab(3)">设置</button>
         </div>
 
         <div class="tab-content" id="tabContent">
@@ -348,10 +347,6 @@
                 <button class="add-btn" onclick="openModal('photo')">+ 添加照片</button>
             </div>
 
-            <!-- Tab 3: Settings -->
-            <div class="tab-panel" id="tabSettings">
-                <div class="settings-form" id="settingsForm"></div>
-            </div>
         </div>
 
         <footer class="app-footer">Made with &#x2764;&#xFE0F;</footer>
@@ -494,7 +489,7 @@
             const dx = e.changedTouches[0].clientX - startX;
             const dy = e.changedTouches[0].clientY - startY;
             if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-                if (dx < 0 && currentTab < 3) switchTab(currentTab + 1);
+                if (dx < 0 && currentTab < 2) switchTab(currentTab + 1);
                 else if (dx > 0 && currentTab > 0) switchTab(currentTab - 1);
             }
         }, { passive: true });
