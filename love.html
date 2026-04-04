@@ -391,8 +391,22 @@
             km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
         );
     }
+    // Safe base64 encode/decode for large data
+    function bufToB64(buf) {
+        const arr = new Uint8Array(buf);
+        let s = '';
+        for (let i = 0; i < arr.length; i++) s += String.fromCharCode(arr[i]);
+        return btoa(s);
+    }
+    function b64ToBuf(b64) {
+        const s = atob(b64);
+        const buf = new Uint8Array(s.length);
+        for (let i = 0; i < s.length; i++) buf[i] = s.charCodeAt(i);
+        return buf;
+    }
+
     async function decryptData(password, b64) {
-        const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        const buf = b64ToBuf(b64);
         const salt = buf.slice(0, 16), iv = buf.slice(16, 28), ct = buf.slice(28);
         const key = await deriveKey(password, salt);
         const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
@@ -407,7 +421,7 @@
         );
         const combined = new Uint8Array(28 + ct.byteLength);
         combined.set(salt, 0); combined.set(iv, 16); combined.set(new Uint8Array(ct), 28);
-        return btoa(String.fromCharCode(...combined));
+        return bufToB64(combined);
     }
 
     // ===== Unlock =====
@@ -823,7 +837,7 @@
         try {
             const encrypted = await encryptData(pwd, appData);
             const output = JSON.stringify({ encrypted, updatedAt: new Date().toISOString() });
-            const content = btoa(unescape(encodeURIComponent(output)));
+            const content = bufToB64(new TextEncoder().encode(output));
 
             // Get current file SHA (needed for update)
             const getResp = await fetch('https://api.github.com/repos/' + repo + '/contents/' + GH_PATH, {
