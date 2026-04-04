@@ -421,7 +421,8 @@
             <!-- Tab 2: Photos -->
             <div class="tab-panel" id="tabPhoto">
                 <div class="gallery" id="gallery"></div>
-                <button class="add-btn" onclick="openModal('photo')">+ 添加照片</button>
+                <button class="add-btn" onclick="directAddPhoto()">+ 添加照片</button>
+                <input type="file" id="directPhotoInput" accept="image/*" multiple style="display:none">
             </div>
 
         </div>
@@ -1084,6 +1085,27 @@
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+    }
+
+    function directAddPhoto() {
+        const input = document.getElementById('directPhotoInput');
+        input.value = '';
+        input.onchange = function() {
+            const files = Array.from(input.files);
+            if (!files.length) return;
+            let done = 0;
+            files.forEach(file => {
+                compressImage(file, (dataUrl) => {
+                    appData.photos.push({ id: genId(), data: dataUrl });
+                    done++;
+                    if (done === files.length) {
+                        dirty = true; renderGallery(); initGalleryDrag();
+                        showToast('已添加 ' + files.length + ' 张照片');
+                    }
+                });
+            });
+        };
+        input.click();
     }
 
     function autoAddPhotos(e) {
