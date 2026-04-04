@@ -70,21 +70,36 @@
         #app.show { display: block; }
 
         /* Header */
-        .app-header { text-align: center; padding: 40px 0 30px; }
-        .couple-names { font-size: 28px; font-weight: 700; color: #e8758f; margin-bottom: 8px; }
-        .day-counter { font-size: 16px; color: #8c7a7c; }
-        .day-counter .num { font-size: 48px; font-weight: 800; color: #e8758f; display: inline-block; min-width: 60px; }
+        .app-header { text-align: center; padding: 24px 0 0; }
+        .couple-names { font-size: 28px; font-weight: 700; color: #e8758f; }
 
-        /* Edit toggle - hidden by default, shown via long press on header */
+        /* Tab Bar */
+        .tab-bar {
+            display: flex; position: sticky; top: 0; z-index: 50;
+            background: #fff; border-bottom: 1px solid #f0e0d6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 12px -16px 0;
+        }
+        .tab-btn {
+            flex: 1; padding: 12px 0; border: none; background: none; cursor: pointer;
+            font-size: 14px; font-weight: 600; color: #8c7a7c;
+            border-bottom: 3px solid transparent; transition: all 0.3s; font-family: inherit;
+        }
+        .tab-btn.active { color: #e8758f; border-bottom-color: #e8758f; }
+        .tab-content { overflow: hidden; }
+        .tab-panel { display: none; padding: 20px 0; min-height: 50vh; }
+        .tab-panel.active { display: block; }
+
+        /* Edit toggle */
         .edit-toggle {
-            position: fixed; top: 16px; right: 16px; z-index: 100;
-            width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-            background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-            font-size: 20px; display: none; align-items: center; justify-content: center;
-            transition: background 0.3s, opacity 0.3s;
+            position: fixed; bottom: 24px; right: 20px; z-index: 100;
+            width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #e8758f, #f4a261); color: #fff;
+            box-shadow: 0 4px 16px rgba(232,117,143,0.4);
+            font-size: 22px; display: none; align-items: center; justify-content: center;
+            transition: transform 0.3s;
         }
         .edit-toggle.show { display: flex; }
-        .edit-toggle.active { background: #e8758f; color: #fff; }
+        .edit-toggle.active { transform: rotate(45deg); background: #e74c3c; }
 
         /* Section */
         .section { margin-bottom: 36px; }
@@ -241,14 +256,23 @@
         .save-bar button { padding: 12px 32px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
         .save-bar .save-status { font-size: 12px; color: #8c7a7c; align-self: center; }
 
-        /* Settings button */
-        .settings-toggle {
-            position: fixed; top: 16px; left: 16px; z-index: 100;
-            width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-            background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-            font-size: 20px; display: none; align-items: center; justify-content: center;
+        /* Settings Tab */
+        .settings-form { padding: 0 4px; }
+        .settings-group { background: #fff; border-radius: 14px; padding: 18px 16px; margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(232,117,143,0.06); border: 1px solid rgba(232,117,143,0.08); }
+        .settings-group h4 { font-size: 15px; color: #e8758f; margin-bottom: 12px; }
+        .settings-group label { display: block; font-size: 13px; font-weight: 600; color: #8c7a7c; margin-bottom: 4px; margin-top: 10px; }
+        .settings-group label:first-of-type { margin-top: 0; }
+        .settings-group input {
+            width: 100%; padding: 10px 14px; border: 1.5px solid #f0e0d6; border-radius: 10px;
+            font-size: 16px; outline: none; transition: border-color 0.3s; font-family: inherit;
         }
-        .settings-toggle.show { display: flex; }
+        .settings-group input:focus { border-color: #e8758f; }
+        .settings-group .s-btn {
+            margin-top: 14px; width: 100%; padding: 12px; border: none; border-radius: 12px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            background: linear-gradient(135deg, #e8758f, #f4a261); color: #fff;
+        }
         .token-hint { font-size: 11px; color: #8c7a7c; margin-top: 4px; line-height: 1.4; }
         .token-ok { color: #4caf50; font-weight: 600; font-size: 13px; margin-top: 8px; }
 
@@ -289,37 +313,45 @@
         </div>
     </div>
 
-    <!-- Settings Toggle -->
-    <button class="settings-toggle" id="settingsToggle" onclick="openModal('settings')">&#x2699;&#xFE0F;</button>
-    <!-- Edit Toggle -->
+    <!-- Edit Toggle (FAB) -->
     <button class="edit-toggle" id="editToggle" onclick="toggleEdit()">&#x270F;&#xFE0F;</button>
 
     <!-- Main App -->
     <div id="app">
         <header class="app-header">
             <div class="couple-names" id="coupleNames"></div>
-            <div class="day-counter">在一起 <span class="num" id="dayNum">0</span> 天</div>
         </header>
 
-        <!-- Anniversaries -->
-        <div class="section" id="annSection">
-            <div class="section-title">纪念日</div>
-            <div class="ann-scroll" id="annScroll"></div>
-            <button class="add-btn" onclick="openModal('ann')">+ 添加纪念日</button>
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab(0)">纪念日</button>
+            <button class="tab-btn" onclick="switchTab(1)">点滴</button>
+            <button class="tab-btn" onclick="switchTab(2)">相册</button>
+            <button class="tab-btn" onclick="switchTab(3)">设置</button>
         </div>
 
-        <!-- Diary -->
-        <div class="section" id="diarySection">
-            <div class="section-title">恋爱点滴</div>
-            <div class="timeline" id="timeline"></div>
-            <button class="add-btn" onclick="openModal('diary')">+ 添加记录</button>
-        </div>
+        <div class="tab-content" id="tabContent">
+            <!-- Tab 0: Anniversaries -->
+            <div class="tab-panel active" id="tabAnn">
+                <div class="ann-scroll" id="annScroll"></div>
+                <button class="add-btn" onclick="openModal('ann')">+ 添加纪念日</button>
+            </div>
 
-        <!-- Photos -->
-        <div class="section" id="photoSection">
-            <div class="section-title">合照相册</div>
-            <div class="gallery" id="gallery"></div>
-            <button class="add-btn" onclick="openModal('photo')">+ 添加照片</button>
+            <!-- Tab 1: Diary -->
+            <div class="tab-panel" id="tabDiary">
+                <div class="timeline" id="timeline"></div>
+                <button class="add-btn" onclick="openModal('diary')">+ 添加记录</button>
+            </div>
+
+            <!-- Tab 2: Photos -->
+            <div class="tab-panel" id="tabPhoto">
+                <div class="gallery" id="gallery"></div>
+                <button class="add-btn" onclick="openModal('photo')">+ 添加照片</button>
+            </div>
+
+            <!-- Tab 3: Settings -->
+            <div class="tab-panel" id="tabSettings">
+                <div class="settings-form" id="settingsForm"></div>
+            </div>
         </div>
 
         <footer class="app-footer">Made with &#x2764;&#xFE0F;</footer>
@@ -398,7 +430,7 @@
                     // No data file — first time use
                     appData = {
                         version: 1,
-                        couple: { person1: 'TA', person2: 'TA' },
+                        couple: { person1: 'CRY', person2: 'XYX' },
                         anniversaries: [], diary: [], photos: []
                     };
                     sessionStorage.setItem('_lp', pwd);
@@ -444,39 +476,45 @@
         document.getElementById('floatingHearts').style.display = 'block';
     })();
 
+    // ===== Tabs =====
+    let currentTab = 0;
+    function switchTab(idx) {
+        currentTab = idx;
+        document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+        document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+    }
+
+    // Swipe detection on tab content
+    (function() {
+        const el = document.getElementById('tabContent');
+        if (!el) return;
+        let startX = 0, startY = 0;
+        el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }, { passive: true });
+        el.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                if (dx < 0 && currentTab < 3) switchTab(currentTab + 1);
+                else if (dx > 0 && currentTab > 0) switchTab(currentTab - 1);
+            }
+        }, { passive: true });
+    })();
+
     // ===== Render =====
     function renderAll() {
         renderHeader();
         renderAnniversaries();
         renderDiary();
         renderGallery();
+        renderSettings();
     }
 
     function renderHeader() {
         const c = appData.couple;
         document.getElementById('coupleNames').textContent = c.person1 + ' \u2764\uFE0F ' + c.person2;
-        // Find main "together" anniversary
-        const main = appData.anniversaries.find(a => a.type === 'countup');
-        if (main) {
-            const days = daysBetween(new Date(main.date), new Date());
-            animateNumber('dayNum', days);
-        }
     }
 
     function daysBetween(a, b) { return Math.floor((b - a) / 86400000); }
-
-    function animateNumber(elId, target) {
-        const el = document.getElementById(elId);
-        const duration = 1500;
-        const start = performance.now();
-        function tick(now) {
-            const p = Math.min((now - start) / duration, 1);
-            const ease = 1 - Math.pow(1 - p, 3);
-            el.textContent = Math.floor(ease * target);
-            if (p < 1) requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-    }
 
     function renderAnniversaries() {
         const c = document.getElementById('annScroll');
@@ -632,23 +670,6 @@
             setTimeout(() => {
                 document.getElementById('mPhotoFile').addEventListener('change', previewPhoto);
             }, 50);
-        } else if (type === 'couple') {
-            m.innerHTML = '<h3>设置名字</h3>' +
-                '<label>你的名字</label><input id="mP1" value="' + esc(appData.couple.person1) + '">' +
-                '<label>TA的名字</label><input id="mP2" value="' + esc(appData.couple.person2) + '">' +
-                '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
-                '<button class="btn-primary" onclick="saveCouple()">保存</button></div>';
-        } else if (type === 'settings') {
-            const curToken = (appData && appData._ghToken) || '';
-            const curRepo = (appData && appData._ghRepo) || GH_REPO;
-            m.innerHTML = '<h3>GitHub 设置</h3>' +
-                '<label>仓库（owner/repo）</label><input id="mRepo" value="' + esc(curRepo) + '" placeholder="username/repo">' +
-                '<div class="token-hint">如：chenruoyi0202-ship-it/cry</div>' +
-                '<label>Personal Access Token</label><input id="mToken" type="password" value="' + esc(curToken) + '" placeholder="ghp_xxxxxxxxxxxx">' +
-                '<div class="token-hint">在 GitHub Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens 创建，需要 Contents 读写权限。Token 会加密保存在数据中，所有知道密码的人都能直接编辑保存。</div>' +
-                (curToken ? '<div class="token-ok">Token 已配置，所有人输入密码即可编辑</div>' : '') +
-                '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
-                '<button class="btn-primary" onclick="saveSettings()">保存设置</button></div>';
         }
         o.classList.add('open');
     }
@@ -715,20 +736,45 @@
     }
 
     function saveCouple() {
-        appData.couple.person1 = document.getElementById('mP1').value.trim() || 'TA';
-        appData.couple.person2 = document.getElementById('mP2').value.trim() || 'TA';
+        appData.couple.person1 = document.getElementById('mP1').value.trim() || 'CRY';
+        appData.couple.person2 = document.getElementById('mP2').value.trim() || 'XYX';
         dirty = true; closeModal(); renderAll();
     }
 
     async function saveSettings() {
-        const repo = document.getElementById('mRepo').value.trim();
-        const token = document.getElementById('mToken').value.trim();
+        const repo = document.getElementById('sRepo').value.trim();
+        const token = document.getElementById('sToken').value.trim();
         if (!repo || !token) return alert('请填写仓库和 Token');
         appData._ghRepo = repo;
         appData._ghToken = token;
-        closeModal();
-        // Directly save to GitHub so token persists
         await pushToGitHub();
+        renderSettings();
+    }
+
+    async function saveNames() {
+        appData.couple.person1 = document.getElementById('sP1').value.trim() || 'CRY';
+        appData.couple.person2 = document.getElementById('sP2').value.trim() || 'XYX';
+        dirty = true;
+        await pushToGitHub();
+        renderAll();
+    }
+
+    function renderSettings() {
+        const curToken = (appData && appData._ghToken) || '';
+        const curRepo = (appData && appData._ghRepo) || GH_REPO;
+        const c = appData.couple;
+        document.getElementById('settingsForm').innerHTML =
+            '<div class="settings-group"><h4>名字设置</h4>' +
+            '<label>你的名字</label><input id="sP1" value="' + esc(c.person1) + '">' +
+            '<label>TA的名字</label><input id="sP2" value="' + esc(c.person2) + '">' +
+            '<button class="s-btn" onclick="saveNames()">保存名字</button></div>' +
+            '<div class="settings-group"><h4>GitHub 设置</h4>' +
+            '<label>仓库（owner/repo）</label><input id="sRepo" value="' + esc(curRepo) + '" placeholder="username/repo">' +
+            '<div class="token-hint">如：chenruoyi0202-ship-it/cry</div>' +
+            '<label>Personal Access Token</label><input id="sToken" type="password" value="' + esc(curToken) + '" placeholder="ghp_xxxxxxxxxxxx">' +
+            '<div class="token-hint">在 GitHub Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens 创建，需要 Contents 读写权限。</div>' +
+            (curToken ? '<div class="token-ok">Token 已配置</div>' : '') +
+            '<button class="s-btn" onclick="saveSettings()">保存设置</button></div>';
     }
 
     // ===== GitHub Config =====
@@ -753,7 +799,6 @@
         document.getElementById('lockScreen').classList.add('hidden');
         document.getElementById('floatingHearts').style.display = 'none';
         document.getElementById('editToggle').classList.add('show');
-        document.getElementById('settingsToggle').classList.add('show');
         document.getElementById('app').classList.add('show');
     }
 
@@ -766,7 +811,7 @@
         const repo = getRepo();
 
         if (!token || !repo) {
-            openModal('settings');
+            switchTab(3);
             alert('请先在设置中配置 GitHub Token（只需配置一次，之后所有人输入密码即可编辑保存）');
             return;
         }
@@ -832,8 +877,6 @@
         }
     }
 
-    // Header click to edit couple names
-    document.getElementById('coupleNames').addEventListener('click', () => { if (isEditing) openModal('couple'); });
     </script>
 </body>
 </html>
