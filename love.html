@@ -442,7 +442,7 @@
 
         </div>
 
-        <footer class="app-footer">Made with &#x2764;&#xFE0F; <span style="opacity:0.5;font-size:11px;">v2026.04.04.23:35</span></footer>
+        <footer class="app-footer">Made with &#x2764;&#xFE0F; <span style="opacity:0.5;font-size:11px;">v2026.04.04.23:45</span></footer>
     </div>
 
     <!-- Lightbox -->
@@ -1350,7 +1350,10 @@
             dirty = false;
             return true;
         } catch (e) {
-            alert('保存失败: ' + e.message);
+            const errBanner = document.createElement('div');
+            errBanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#e74c3c;color:#fff;padding:20px;text-align:center;z-index:99999;font-size:14px;';
+            errBanner.innerHTML = '❌ 保存失败: ' + (e.message || '未知错误') + ' <button onclick="this.parentElement.remove()" style="margin-left:10px;padding:4px 10px;background:#fff;color:#e74c3c;border:none;border-radius:4px;">关闭</button>';
+            document.body.appendChild(errBanner);
             return false;
         }
     }
