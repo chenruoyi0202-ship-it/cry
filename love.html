@@ -1171,7 +1171,14 @@
         }, { passive: true });
 
         gallery.addEventListener('touchmove', function(e) {
-            if (!dragging) { clearTimeout(timer); return; }
+            if (!dragging) {
+                // Allow small finger jitter during long-press without canceling
+                const t = e.touches[0];
+                if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) {
+                    clearTimeout(timer);
+                }
+                return;
+            }
             e.preventDefault();
             const t = e.touches[0];
             if (ghost) {
