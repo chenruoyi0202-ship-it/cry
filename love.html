@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#fdf6f0">
+    <meta name="theme-color" content="#fef6ff">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta property="og:title" content="Our Memory">
+    <meta property="og:description" content="c ✨ x">
+    <meta property="og:image" content="https://chenruoyi0202-ship-it.github.io/cry/castle-icon.svg">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="castle-icon.svg">
+    <link rel="apple-touch-icon" href="castle-icon.svg">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <title>Our Memory</title>
@@ -872,13 +878,12 @@
                 if (photoInput) photoInput.addEventListener('change', previewDiaryPhoto);
             }, 50);
         } else if (type === 'photo') {
-            m.innerHTML = '<h3>添加照片</h3>' +
-                '<label>选择图片</label><input id="mPhotoFile" type="file" accept="image/*" multiple>' +
+            m.innerHTML = '<h3>选择照片</h3>' +
+                '<label>点击选择图片（支持多选）</label><input id="mPhotoFile" type="file" accept="image/*" multiple>' +
                 '<div id="mPhotoPreview" style="margin-top:12px;text-align:center;"></div>' +
-                '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
-                '<button class="btn-primary" onclick="addPhoto()">添加</button></div>';
+                '<div id="mPhotoStatus" style="margin-top:8px;text-align:center;color:var(--text2);font-size:13px;"></div>';
             setTimeout(() => {
-                document.getElementById('mPhotoFile').addEventListener('change', previewPhoto);
+                document.getElementById('mPhotoFile').addEventListener('change', autoAddPhotos);
             }, 50);
         }
         o.classList.add('open');
@@ -1002,6 +1007,29 @@
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+    }
+
+    function autoAddPhotos(e) {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const status = document.getElementById('mPhotoStatus');
+        const preview = document.getElementById('mPhotoPreview');
+        let done = 0;
+        status.textContent = '处理中... 0/' + files.length;
+        preview.innerHTML = '';
+        files.forEach(file => {
+            compressImage(file, (dataUrl) => {
+                appData.photos.push({ id: genId(), data: dataUrl });
+                done++;
+                preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
+                status.textContent = '处理中... ' + done + '/' + files.length;
+                if (done === files.length) {
+                    dirty = true;
+                    status.textContent = '已添加 ' + files.length + ' 张照片';
+                    setTimeout(() => { closeModal(); renderAll(); }, 500);
+                }
+            });
+        });
     }
 
     function addPhoto() {
