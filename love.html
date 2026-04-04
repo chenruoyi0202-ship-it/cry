@@ -225,6 +225,11 @@
             outline: 3px solid var(--accent); outline-offset: -3px;
             transform: scale(1.05);
         }
+        .gallery-item.picked-up {
+            animation: none; opacity: 0.9; transform: scale(1.08);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.4), 0 0 0 3px var(--accent);
+            z-index: 10;
+        }
         .gallery-item.dragging { opacity: 0.4; }
         .drag-ghost {
             position: fixed; z-index: 9999; pointer-events: none;
@@ -290,8 +295,20 @@
             position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
             aspect-ratio: 1; background: var(--border);
             box-shadow: var(--glow), 0 2px 12px var(--card-shadow);
-            transition: transform 0.2s;
+            transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.2s, box-shadow 0.2s;
         }
+        @keyframes jiggle {
+            0%, 100% { transform: rotate(-0.8deg); }
+            50% { transform: rotate(0.8deg); }
+        }
+        @keyframes jiggle-alt {
+            0%, 100% { transform: rotate(0.8deg); }
+            50% { transform: rotate(-0.8deg); }
+        }
+        body.editing .gallery-item { animation: jiggle 0.18s ease-in-out infinite; transform-origin: center; }
+        body.editing .gallery-item:nth-child(2n) { animation: jiggle-alt 0.18s ease-in-out infinite; }
+        body.editing .gallery-item.dragging { animation: none; opacity: 0; }
+        body.editing .gallery-item.no-jiggle { animation: none; }
         .gallery-item img {
             width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
         }
@@ -1097,14 +1114,16 @@
         dirty = true; renderGallery();
     }
 
-    // ===== Long-press drag to reorder photos =====
+    // ===== iOS-style drag to reorder photos (real-time reflow) =====
     (function() {
-        let srcIdx = -1, ghost = null, timer = null, dragging = false;
         const gallery = document.getElementById('gallery');
         if (!gallery) return;
 
+        let srcId = null, ghost = null, timer = null, dragging = false;
+        let startX = 0, startY = 0, offsetX = 0, offsetY = 0;
+
         function getItemAt(x, y) {
-            const els = gallery.querySelectorAll('.gallery-item');
+            const els = gallery.querySelectorAll('.gallery-item:not(.dragging)');
             for (const el of els) {
                 const r = el.getBoundingClientRect();
                 if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return el;
@@ -1112,34 +1131,43 @@
             return null;
         }
 
+        function createGhost(item) {
+            const g = document.createElement('div');
+            g.className = 'drag-ghost';
+            const r = item.getBoundingClientRect();
+            g.style.width = r.width + 'px';
+            g.style.height = r.height + 'px';
+            const img = item.querySelector('img');
+            if (img) {
+                const gi = document.createElement('img');
+                gi.src = img.src;
+                gi.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                g.appendChild(gi);
+            }
+            offsetX = r.width / 2;
+            offsetY = r.height / 2;
+            g.style.left = (startX - offsetX) + 'px';
+            g.style.top = (startY - offsetY) + 'px';
+            g.style.transform = 'scale(1.08)';
+            g.style.boxShadow = '0 12px 36px rgba(0,0,0,0.4)';
+            document.body.appendChild(g);
+            return g;
+        }
+
         gallery.addEventListener('touchstart', function(e) {
             if (!isEditing) return;
             const item = e.target.closest('.gallery-item');
-            if (!item || e.target.closest('.item-del') || e.target.closest('.item-move')) return;
-            srcIdx = +item.dataset.idx;
+            if (!item || e.target.closest('.item-del') || e.target.closest('.item-cat')) return;
             const touch = e.touches[0];
-            const startX = touch.clientX, startY = touch.clientY;
+            startX = touch.clientX; startY = touch.clientY;
+            const id = item.dataset.idx;
             timer = setTimeout(() => {
                 dragging = true;
+                srcId = +item.dataset.idx; // current index in appData.photos
                 item.classList.add('dragging');
-                if (navigator.vibrate) navigator.vibrate(30);
-                // Create floating ghost
-                ghost = document.createElement('div');
-                ghost.className = 'drag-ghost';
-                const r = item.getBoundingClientRect();
-                ghost.style.width = r.width + 'px';
-                ghost.style.height = r.height + 'px';
-                const img = item.querySelector('img');
-                if (img) {
-                    const gi = document.createElement('img');
-                    gi.src = img.src;
-                    gi.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-                    ghost.appendChild(gi);
-                }
-                ghost.style.left = (startX - r.width/2) + 'px';
-                ghost.style.top = (startY - r.height/2) + 'px';
-                document.body.appendChild(ghost);
-            }, 400);
+                if (navigator.vibrate) navigator.vibrate(40);
+                ghost = createGhost(item);
+            }, 350);
         }, { passive: true });
 
         gallery.addEventListener('touchmove', function(e) {
@@ -1147,41 +1175,38 @@
             e.preventDefault();
             const t = e.touches[0];
             if (ghost) {
-                const w = ghost.offsetWidth, h = ghost.offsetHeight;
-                ghost.style.left = (t.clientX - w/2) + 'px';
-                ghost.style.top = (t.clientY - h/2) + 'px';
+                ghost.style.left = (t.clientX - offsetX) + 'px';
+                ghost.style.top = (t.clientY - offsetY) + 'px';
             }
-            gallery.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('drag-over'));
             const target = getItemAt(t.clientX, t.clientY);
-            if (target && +target.dataset.idx !== srcIdx) target.classList.add('drag-over');
-        }, { passive: false });
-
-        gallery.addEventListener('touchend', function(e) {
-            clearTimeout(timer);
-            if (!dragging) return;
-            dragging = false;
-            if (ghost) { ghost.remove(); ghost = null; }
-            const t = e.changedTouches[0];
-            const target = getItemAt(t.clientX, t.clientY);
-            gallery.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
             if (target) {
                 const targetIdx = +target.dataset.idx;
-                if (targetIdx !== srcIdx && !isNaN(targetIdx)) {
+                if (targetIdx !== srcId && !isNaN(targetIdx)) {
+                    // Real-time reorder: move source to target position
                     const arr = appData.photos;
-                    const [moved] = arr.splice(srcIdx, 1);
+                    const [moved] = arr.splice(srcId, 1);
                     arr.splice(targetIdx, 0, moved);
-                    dirty = true;
+                    srcId = targetIdx;
+                    // Re-render with CSS transitions for smooth shift
                     renderGallery();
+                    // Re-mark the dragging item
+                    const newItem = gallery.querySelector('.gallery-item[data-idx="' + targetIdx + '"]');
+                    if (newItem) newItem.classList.add('dragging');
                 }
             }
-            srcIdx = -1;
-        }, { passive: true });
+        }, { passive: false });
 
-        gallery.addEventListener('touchcancel', function() {
-            clearTimeout(timer); dragging = false;
+        function cleanup() {
+            clearTimeout(timer);
+            dragging = false;
             if (ghost) { ghost.remove(); ghost = null; }
-            gallery.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
-        }, { passive: true });
+            gallery.querySelectorAll('.gallery-item').forEach(el => el.classList.remove('dragging'));
+            if (srcId !== null) dirty = true;
+            srcId = null;
+        }
+
+        gallery.addEventListener('touchend', cleanup, { passive: true });
+        gallery.addEventListener('touchcancel', cleanup, { passive: true });
     })();
 
     // ===== Long-press drag to reorder photos =====
