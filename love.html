@@ -228,15 +228,17 @@
             padding: 2px 10px; border-radius: 10px; margin-bottom: 8px;
         }
         .tl-card {
-            background: var(--card); border-radius: 18px; padding: 16px; position: relative;
+            background: var(--card); border-radius: 18px; padding: 14px; position: relative;
             box-shadow: var(--glow), 0 4px 16px var(--card-shadow);
             border: 1px solid var(--border);
+            display: flex; gap: 12px; align-items: flex-start;
         }
-        .tl-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-        .tl-content { font-size: 14px; color: var(--text3); line-height: 1.6; }
-        .tl-photos { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .tl-body { flex: 1; min-width: 0; }
+        .tl-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .tl-content { font-size: 13px; color: var(--text3); line-height: 1.5; }
+        .tl-photos { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
         .tl-thumb {
-            width: 72px; height: 72px; border-radius: 10px; object-fit: cover; cursor: pointer;
+            width: 90px; height: 90px; border-radius: 12px; object-fit: cover; cursor: pointer;
             transition: transform 0.3s;
         }
         .tl-thumb:hover { transform: scale(1.05); }
@@ -434,6 +436,7 @@
             <div class="tab-panel" id="tabPhoto">
                 <div class="gallery" id="gallery"></div>
                 <button class="add-btn" onclick="directAddPhoto()">+ 添加照片</button>
+                <button class="add-btn" onclick="recompressAll()">压缩所有照片</button>
                 <input type="file" id="directPhotoInput" accept="image/*" multiple style="display:none">
             </div>
 
@@ -802,9 +805,10 @@
             }
             return '<div class="tl-entry"><div class="tl-dot">\u2764</div>' +
                 '<div class="tl-date">' + d.date + '</div>' +
-                '<div class="tl-card" onclick="editDiary(\'' + d.id + '\')"><button class="item-del" onclick="event.stopPropagation();delItem(\'diary\',\'' + d.id + '\')">&times;</button>' +
-                '<div class="tl-title">' + esc(d.title) + '</div>' +
-                '<div class="tl-content">' + esc(d.content) + '</div>' +
+                '<div class="tl-card" onclick="editDiary(\'' + d.id + '\')">' +
+                '<button class="item-del" onclick="event.stopPropagation();delItem(\'diary\',\'' + d.id + '\')">&times;</button>' +
+                '<div class="tl-body"><div class="tl-title">' + esc(d.title) + '</div>' +
+                '<div class="tl-content">' + esc(d.content) + '</div></div>' +
                 photoHtml + '</div></div>';
         }).join('');
     }
@@ -1213,6 +1217,36 @@
         dirty = true; closeModal(); renderAll();
     }
 
+
+    // ===== Recompress existing photos =====
+    function recompressAll() {
+        if (!appData || !appData.photos.length) return alert('没有照片');
+        if (!confirm('压缩所有照片？照片质量会降低但体积更小。')) return;
+        let done = 0, total = appData.photos.length;
+        showToast('压缩中... 0/' + total);
+        appData.photos.forEach((p, i) => {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+                const MAX = 800;
+                if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+                if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                let result = canvas.toDataURL('image/jpeg', 0.3);
+                if (result.length > 200000) result = canvas.toDataURL('image/jpeg', 0.15);
+                p.data = result;
+                done++;
+                if (done === total) {
+                    dirty = true;
+                    renderGallery();
+                    showToast('已压缩 ' + total + ' 张照片，请保存');
+                }
+            };
+            img.src = p.data;
+        });
+    }
 
     // ===== GitHub Config =====
     const GH_PATH = 'data/love_encrypted.json';
