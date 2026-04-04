@@ -145,6 +145,15 @@
             align-items: center; justify-content: center;
         }
         .editing .item-del { display: flex; }
+        .item-move {
+            display: none; position: absolute; bottom: 6px; z-index: 2;
+            width: 28px; height: 28px; border-radius: 50%; border: none;
+            background: rgba(0,0,0,0.5); color: #fff; font-size: 14px; cursor: pointer;
+            align-items: center; justify-content: center;
+        }
+        .item-move-l { left: 6px; }
+        .item-move-r { right: 6px; }
+        .editing .item-move { display: flex; }
 
         /* Timeline */
         .timeline { position: relative; padding-left: 28px; }
@@ -621,12 +630,22 @@
 
     function renderGallery() {
         const c = document.getElementById('gallery');
+        const len = appData.photos.length;
         c.innerHTML = appData.photos.map((p, i) =>
             '<div class="gallery-item" onclick="openLightbox(' + i + ')">' +
             '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
-            '<img src="' + p.data + '" alt="" loading="lazy">' +
-            '<div class="gallery-caption">' + esc(p.caption || '') + '</div></div>'
+            (i > 0 ? '<button class="item-move item-move-l" onclick="event.stopPropagation();movePhoto(' + i + ',-1)">&#x276E;</button>' : '') +
+            (i < len - 1 ? '<button class="item-move item-move-r" onclick="event.stopPropagation();movePhoto(' + i + ',1)">&#x276F;</button>' : '') +
+            '<img src="' + p.data + '" alt="" loading="lazy"></div>'
         ).join('');
+    }
+
+    function movePhoto(idx, dir) {
+        const arr = appData.photos;
+        const target = idx + dir;
+        if (target < 0 || target >= arr.length) return;
+        [arr[idx], arr[target]] = [arr[target], arr[idx]];
+        dirty = true; renderGallery();
     }
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -652,8 +671,8 @@
         const p = appData.photos[currentLbIndex];
         if (!p) return;
         document.getElementById('lbImg').src = p.data;
-        document.getElementById('lbCap').textContent = p.caption || '';
-        document.getElementById('lbDate').textContent = p.date || '';
+        document.getElementById('lbCap').textContent = p.caption || p.date || '';
+        document.getElementById('lbDate').textContent = '';
     }
     document.addEventListener('keydown', e => {
         if (!document.getElementById('lightbox').classList.contains('open')) return;
@@ -716,9 +735,7 @@
                 '<button class="btn-primary" onclick="addDiary()">添加</button></div>';
         } else if (type === 'photo') {
             m.innerHTML = '<h3>添加照片</h3>' +
-                '<label>选择图片</label><input id="mPhotoFile" type="file" accept="image/*">' +
-                '<label>说明</label><input id="mPhotoCap" placeholder="这张照片的故事...">' +
-                '<label>日期</label><input id="mPhotoDate" type="date" value="' + todayStr() + '">' +
+                '<label>选择图片</label><input id="mPhotoFile" type="file" accept="image/*" multiple>' +
                 '<div id="mPhotoPreview" style="margin-top:12px;text-align:center;"></div>' +
                 '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
                 '<button class="btn-primary" onclick="addPhoto()">添加</button></div>';
@@ -776,14 +793,18 @@
     }
 
     // ===== Photo Compression =====
-    let pendingPhotoData = null;
+    let pendingPhotos = [];
     function previewPhoto(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        compressImage(file, (dataUrl) => {
-            pendingPhotoData = dataUrl;
-            document.getElementById('mPhotoPreview').innerHTML =
-                '<img src="' + dataUrl + '" style="max-width:200px;max-height:200px;border-radius:10px;">';
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        pendingPhotos = [];
+        const preview = document.getElementById('mPhotoPreview');
+        preview.innerHTML = '';
+        files.forEach(file => {
+            compressImage(file, (dataUrl) => {
+                pendingPhotos.push(dataUrl);
+                preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:80px;max-height:80px;border-radius:8px;margin:4px;">';
+            });
         });
     }
     function compressImage(file, cb) {
@@ -806,11 +827,11 @@
     }
 
     function addPhoto() {
-        if (!pendingPhotoData) return alert('请先选择图片');
-        const caption = document.getElementById('mPhotoCap').value.trim();
-        const date = document.getElementById('mPhotoDate').value;
-        appData.photos.push({ id: genId(), data: pendingPhotoData, caption, date });
-        pendingPhotoData = null;
+        if (!pendingPhotos.length) return alert('请先选择图片');
+        pendingPhotos.forEach(data => {
+            appData.photos.push({ id: genId(), data });
+        });
+        pendingPhotos = [];
         dirty = true; closeModal(); renderAll();
     }
 
