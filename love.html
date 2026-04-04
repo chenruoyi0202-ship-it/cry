@@ -18,8 +18,9 @@
         #lockScreen {
             position: fixed; inset: 0; z-index: 1000;
             background: linear-gradient(135deg, #fdf6f0 0%, #fce4ec 50%, #f8bbd0 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
         }
+        #lockScreen.show { display: flex; }
         #lockScreen.hidden { display: none; }
         .lock-heart { font-size: 64px; margin-bottom: 24px; animation: heartbeat 1.5s ease-in-out infinite; }
         @keyframes heartbeat {
@@ -46,7 +47,7 @@
         .lock-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .lock-error { color: #e74c3c; font-size: 14px; min-height: 20px; }
         /* Floating Hearts */
-        .floating-hearts { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 999; }
+        .floating-hearts { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 999; display: none; }
         .fh {
             position: absolute; bottom: -40px; font-size: 20px; opacity: 0.6;
             animation: floatUp linear infinite;
@@ -429,13 +430,17 @@
         btn.disabled = false; btn.textContent = '解锁';
     }
 
-    // Auto-unlock on refresh if password is in sessionStorage
+    // Auto-unlock on refresh, or show lock screen
     (async function autoUnlock() {
         const savedPwd = sessionStorage.getItem('_lp');
         if (savedPwd) {
             const ok = await tryUnlock(savedPwd, true);
-            if (!ok) sessionStorage.removeItem('_lp');
+            if (ok) return; // unlocked, no flash
+            sessionStorage.removeItem('_lp');
         }
+        // No saved password or failed — show lock screen + hearts
+        document.getElementById('lockScreen').classList.add('show');
+        document.getElementById('floatingHearts').style.display = 'block';
     })();
 
     // ===== Render =====
@@ -743,6 +748,7 @@
     function getRepo() { return (appData && appData._ghRepo) || GH_REPO; }
 
     function showApp() {
+        document.getElementById('lockScreen').classList.remove('show');
         document.getElementById('lockScreen').classList.add('hidden');
         document.getElementById('floatingHearts').style.display = 'none';
         document.getElementById('editToggle').classList.add('show');
