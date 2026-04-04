@@ -541,6 +541,20 @@
         try { document.cookie = '_lp=;max-age=0;path=/' + _ck; } catch(e) {}
     }
 
+    // ===== Token/Repo persistence (cookie, so available without localStorage) =====
+    function saveTokenCookie(token, repo) {
+        try { document.cookie = '_gt=' + encodeURIComponent(token) + ';max-age=31536000;path=/' + _ck + ';SameSite=Lax'; } catch(e) {}
+        try { document.cookie = '_gr=' + encodeURIComponent(repo) + ';max-age=31536000;path=/' + _ck + ';SameSite=Lax'; } catch(e) {}
+    }
+    function getTokenCookie() {
+        try { const m = document.cookie.match(/(?:^|;\s*)_gt=([^;]*)/); if (m) return decodeURIComponent(m[1]); } catch(e) {}
+        return '';
+    }
+    function getRepoCookie() {
+        try { const m = document.cookie.match(/(?:^|;\s*)_gr=([^;]*)/); if (m) return decodeURIComponent(m[1]); } catch(e) {}
+        return '';
+    }
+
     // ===== Data cache (localStorage, with quota handling) =====
     function cacheData(jsonStr) {
         try {
@@ -568,6 +582,7 @@
         if (json) {
             try {
                 appData = await decryptData(pwd, json.encrypted);
+                if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
                 currentPwd = pwd; savePwd(pwd);
                 showApp(); renderAll();
                 // Background: check GitHub API for newer data
@@ -600,6 +615,11 @@
         try {
             appData = await decryptData(pwd, json.encrypted);
             cacheData(JSON.stringify(json));
+            if (appData._ghToken && appData._ghRepo) {
+                saveTokenCookie(appData._ghToken, appData._ghRepo);
+                // Pages data might be stale — immediately sync from API
+                syncFromGitHub(pwd);
+            }
             currentPwd = pwd; savePwd(pwd);
             showApp(); renderAll();
             return true;
@@ -611,8 +631,9 @@
     // Fetch latest data from GitHub API (no deploy delay)
     async function fetchFromGitHubAPI() {
         try {
-            let token = (appData && appData._ghToken) || '';
-            let repo = (appData && appData._ghRepo) || '';
+            // Try multiple sources for token/repo
+            let token = (appData && appData._ghToken) || getTokenCookie() || '';
+            let repo = (appData && appData._ghRepo) || getRepoCookie() || GH_REPO || '';
             if (!token || !repo) {
                 const cached = getCachedData();
                 if (cached) {
