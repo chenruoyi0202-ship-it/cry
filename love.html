@@ -627,23 +627,26 @@
                 }
             }
             if (!token || !repo) return null;
-            // Get file metadata (includes download_url for large files)
-            const resp = await fetch('https://api.github.com/repos/' + repo + '/contents/data/love_encrypted.json', {
+
+            // Step 1: Get file SHA from Contents API
+            const metaResp = await fetch('https://api.github.com/repos/' + repo + '/contents/data/love_encrypted.json', {
                 headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
             });
-            if (!resp.ok) return null;
-            const fileInfo = await resp.json();
-            // For files > 1MB, content is null, use download_url instead
-            if (fileInfo.content) {
-                const raw = atob(fileInfo.content.replace(/\n/g, ''));
-                return JSON.parse(raw);
-            } else if (fileInfo.download_url) {
-                const dlResp = await fetch(fileInfo.download_url, {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (dlResp.ok) return await dlResp.json();
+            if (!metaResp.ok) return null;
+            const meta = await metaResp.json();
+
+            // For small files (<1MB), content is available directly
+            if (meta.content) {
+                return JSON.parse(atob(meta.content.replace(/\n/g, '')));
             }
-            return null;
+
+            // Step 2: For large files, use Blob API (no size limit, returns base64)
+            const blobResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + meta.sha, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!blobResp.ok) return null;
+            const blob = await blobResp.json();
+            return JSON.parse(atob(blob.content.replace(/\n/g, '')));
         } catch(e) { return null; }
     }
 
