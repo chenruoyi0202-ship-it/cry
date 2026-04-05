@@ -513,13 +513,13 @@
             <!-- Tab 0: Anniversaries -->
             <div class="tab-panel active" id="tabAnn">
                 <div class="ann-scroll" id="annScroll"></div>
-                <button class="add-btn" onclick="openModal('ann')">+ 添加纪念日</button>
+                <button class="add-btn" onclick="editingAnnId=null;openModal('ann')">+ 添加纪念日</button>
             </div>
 
             <!-- Tab 1: Diary -->
             <div class="tab-panel" id="tabDiary">
                 <div class="timeline" id="timeline"></div>
-                <button class="add-btn" onclick="openModal('diary')">+ 添加记录</button>
+                <button class="add-btn" onclick="editingDiaryId=null;openModal('diary')">+ 添加记录</button>
             </div>
 
             <!-- Tab 2: Photos -->
@@ -1520,7 +1520,10 @@
         o.classList.add('open');
     }
 
-    function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('open');
+        editingAnnId = null; editingDiaryId = null;
+    }
     function todayStr() { return new Date().toISOString().slice(0, 10); }
 
     const EMOJIS = [
