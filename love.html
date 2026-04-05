@@ -162,21 +162,23 @@
         .add-btn:hover { background: rgba(232,117,143,0.08); }
         .editing .add-btn { display: block; }
 
-        /* Anniversary Cards */
+        /* Anniversary Cards (vertical list) */
         .ann-scroll {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 4px 0 12px;
+            display: flex; flex-direction: column; gap: 10px; padding: 4px 0 12px;
         }
         .ann-card {
-            position: relative;
-            background: var(--card); border-radius: 20px; padding: 20px 16px; text-align: center;
-            box-shadow: var(--glow), 0 4px 20px var(--card-shadow);
-            border: 1px solid var(--border); transition: transform 0.3s, box-shadow 0.3s;
+            position: relative; display: flex; align-items: center; gap: 14px;
+            background: var(--card); border-radius: 16px; padding: 14px 18px;
+            box-shadow: var(--glow), 0 4px 16px var(--card-shadow);
+            border: 1px solid var(--border); transition: transform 0.2s, box-shadow 0.2s;
         }
-        .ann-card:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(192,132,252,0.2), 0 8px 24px var(--card-shadow); }
-        .ann-icon { font-size: 32px; margin-bottom: 8px; }
-        .ann-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-        .ann-date { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
-        .ann-days { font-size: 20px; font-weight: 800; color: var(--accent); }
+        .ann-card:hover { transform: translateX(3px); box-shadow: 0 0 24px rgba(192,132,252,0.2), 0 6px 20px var(--card-shadow); }
+        .ann-icon { font-size: 36px; flex-shrink: 0; }
+        .ann-info { flex: 1; min-width: 0; }
+        .ann-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+        .ann-date { font-size: 12px; color: var(--text2); }
+        .ann-days-wrap { flex-shrink: 0; text-align: right; }
+        .ann-days { font-size: 24px; font-weight: 800; color: var(--accent); line-height: 1; }
         .ann-days-label { font-size: 11px; color: var(--text2); }
         .item-del {
             display: none; position: absolute; top: 8px; right: 8px; z-index: 3;
@@ -912,11 +914,14 @@
             return '<div class="ann-card" onclick="editAnn(\'' + a.id + '\')">' +
                 '<button class="item-del" onclick="event.stopPropagation();delItem(\'anniversaries\',\'' + a.id + '\')">&times;</button>' +
                 '<div class="ann-icon">' + a.icon + '</div>' +
-                '<div class="ann-title">' + esc(a.title) + '</div>' +
-                '<div class="ann-date">' + a.date + '</div>' +
-                '<div class="ann-days">' + days + '</div>' +
-                '<div class="ann-days-label">' + label + ' 天</div></div>';
+                '<div class="ann-info"><div class="ann-title">' + esc(a.title) + '</div>' +
+                '<div class="ann-date">' + a.date + '</div></div>' +
+                '<div class="ann-days-wrap"><div class="ann-days">' + days + '</div>' +
+                '<div class="ann-days-label">' + label + ' 天</div></div></div>';
         }).join('');
+        // Hide add button if at 20 limit
+        const addBtn = document.querySelector('#tabAnn .add-btn');
+        if (addBtn) addBtn.style.display = appData.anniversaries.length >= 20 ? 'none' : '';
     }
 
     function renderDiary() {
@@ -1380,6 +1385,9 @@
             if (a) { a.title = title; a.date = date; a.icon = icon; a.type = type; }
             editingAnnId = null;
         } else {
+            if (appData.anniversaries.length >= 20) {
+                return alert('最多只能添加 20 个纪念日');
+            }
             appData.anniversaries.push({ id: genId(), title, date, icon, type });
         }
         dirty = true; closeModal(); renderAll();
