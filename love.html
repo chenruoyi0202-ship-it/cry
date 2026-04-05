@@ -1774,7 +1774,7 @@
                 compressImage(file, (dataUrl) => {
                     const photo = { id: genId(), data: dataUrl };
                     if (currentTag && currentTag !== 'all') photo.tags = [currentTag];
-                    appData.photos.push(photo);
+                    appData.photos.unshift(photo);
                     newPhotos.push(photo);
                     done++;
                     if (done === files.length) {
@@ -1824,7 +1824,7 @@
         preview.innerHTML = '';
         files.forEach(file => {
             compressImage(file, (dataUrl) => {
-                appData.photos.push({ id: genId(), data: dataUrl });
+                appData.photos.unshift({ id: genId(), data: dataUrl });
                 done++;
                 preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
                 status.textContent = '处理中... ' + done + '/' + files.length;
@@ -1840,7 +1840,7 @@
     function addPhoto() {
         if (!pendingPhotos.length) return alert('请先选择图片');
         pendingPhotos.forEach(data => {
-            appData.photos.push({ id: genId(), data });
+            appData.photos.unshift({ id: genId(), data });
         });
         pendingPhotos = [];
         dirty = true; closeModal(); renderAll();
