@@ -1150,19 +1150,43 @@
     function editPlace(id) {
         const p = (appData.places || []).find(x => x.id === id);
         if (!p) return;
+        if (_map) _map.closePopup();
         editingPlaceId = id;
         const m = document.getElementById('modalContent');
         const o = document.getElementById('modalOverlay');
         m.innerHTML = '<h3>编辑地点</h3>' +
             '<label>地点名称</label><input id="mPlaceName" value="' + esc(p.name) + '">' +
             '<label>备注</label><input id="mPlaceNote" value="' + esc(p.note || '') + '">' +
-            '<div class="modal-actions"><button class="btn-secondary" onclick="editingPlaceId=null;closeModal()">取消</button>' +
-            '<button class="btn-primary" onclick="searchAndAddPlace()">保存</button></div>';
+            '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
+            '<button class="btn-primary" onclick="updatePlace()">保存</button></div>';
         o.classList.add('open');
+    }
+
+    async function updatePlace() {
+        const p = (appData.places || []).find(x => x.id === editingPlaceId);
+        if (!p) { closeModal(); return; }
+        const newName = document.getElementById('mPlaceName').value.trim();
+        const newNote = document.getElementById('mPlaceNote').value.trim();
+        if (!newName) return alert('请输入地点名称');
+        // Only re-geocode if name changed
+        if (newName !== p.name) {
+            showToast('更新坐标中...');
+            try {
+                const coords = await geocodeViaQwen(newName).catch(() => geocodeViaNominatim(newName));
+                p.lat = coords.lat; p.lng = coords.lng;
+            } catch(e) { /* keep old coords */ }
+        }
+        p.name = newName;
+        p.note = newNote;
+        dirty = true;
+        closeModal();
+        renderPlaces();
+        showToast('已更新');
     }
 
     function deletePlace(id) {
         appData.places = (appData.places || []).filter(p => p.id !== id);
+        if (_map) _map.closePopup();
         dirty = true; renderPlaces();
         showToast('已删除地点');
     }
