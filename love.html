@@ -1974,20 +1974,20 @@
     // Auto-compress any data URL that's larger than 100KB, returns new data URL
     function compressDataUrl(dataUrl) {
         return new Promise((resolve) => {
-            if (!dataUrl || !dataUrl.startsWith('data:image') || dataUrl.length < 80000) {
+            if (!dataUrl || !dataUrl.startsWith('data:image') || dataUrl.length < 150000) {
                 resolve(dataUrl); return;
             }
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let w = img.width, h = img.height;
-                const MAX = 600;
+                const MAX = 1000;
                 if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
                 if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
                 canvas.width = w; canvas.height = h;
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                let result = canvas.toDataURL('image/jpeg', 0.25);
-                if (result.length > 80000) result = canvas.toDataURL('image/jpeg', 0.15);
+                let result = canvas.toDataURL('image/jpeg', 0.65);
+                if (result.length > 300000) result = canvas.toDataURL('image/jpeg', 0.5);
                 resolve(result);
             };
             img.onerror = () => resolve(dataUrl);
@@ -2018,14 +2018,13 @@
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let w = img.width, h = img.height;
-                const MAX = 800;
+                const MAX = 1000;
                 if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
                 if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
                 canvas.width = w; canvas.height = h;
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                // Try quality 0.3 first, if still > 150KB try 0.15
-                let result = canvas.toDataURL('image/jpeg', 0.3);
-                if (result.length > 200000) result = canvas.toDataURL('image/jpeg', 0.15);
+                let result = canvas.toDataURL('image/jpeg', 0.65);
+                if (result.length > 300000) result = canvas.toDataURL('image/jpeg', 0.5);
                 cb(result);
             };
             img.src = e.target.result;
@@ -2141,13 +2140,13 @@
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let w = img.width, h = img.height;
-                const MAX = 800;
+                const MAX = 1000;
                 if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
                 if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
                 canvas.width = w; canvas.height = h;
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                let result = canvas.toDataURL('image/jpeg', 0.3);
-                if (result.length > 200000) result = canvas.toDataURL('image/jpeg', 0.15);
+                let result = canvas.toDataURL('image/jpeg', 0.65);
+                if (result.length > 300000) result = canvas.toDataURL('image/jpeg', 0.5);
                 t.obj[t.key] = result;
                 done++;
                 if (done === total) {
