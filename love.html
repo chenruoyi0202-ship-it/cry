@@ -563,7 +563,7 @@
     </div>
 
     <!-- Modal -->
-    <div class="modal-overlay" id="modalOverlay" onclick="event.target===this&&closeModal()">
+    <div class="modal-overlay" id="modalOverlay">
         <div class="modal" id="modalContent"></div>
     </div>
 
@@ -1837,6 +1837,18 @@
         document.getElementById('modalOverlay').classList.remove('open');
         editingAnnId = null; editingDiaryId = null; editingPlaceId = null;
     }
+
+    // Robust overlay-click-to-close: only close if pointerdown AND click were on overlay
+    (function() {
+        const overlay = document.getElementById('modalOverlay');
+        if (!overlay) return;
+        let downOnOverlay = false;
+        overlay.addEventListener('pointerdown', e => { downOnOverlay = (e.target === overlay); });
+        overlay.addEventListener('click', e => {
+            if (downOnOverlay && e.target === overlay) closeModal();
+            downOnOverlay = false;
+        });
+    })();
     function todayStr() { return new Date().toISOString().slice(0, 10); }
 
     const EMOJIS = [
