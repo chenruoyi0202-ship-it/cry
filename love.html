@@ -1141,6 +1141,22 @@
         return text.split(/[,，、\s]+/).map(s => s.trim()).filter(s => s && s.length <= 10);
     }
 
+    // Remove tags that only appear on 1 photo (keep photos, just clean unique tags)
+    function cleanupSingleUseTags() {
+        const counts = {};
+        (appData.photos || []).forEach(p => {
+            (p.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+        });
+        const singleUse = new Set(Object.keys(counts).filter(t => counts[t] === 1));
+        if (!singleUse.size) return 0;
+        appData.photos.forEach(p => {
+            if (!p.tags) return;
+            p.tags = p.tags.filter(t => !singleUse.has(t));
+            if (!p.tags.length) delete p.tags;
+        });
+        return singleUse.size;
+    }
+
     async function runAITagging() {
         const apiKey = (appData && appData._qwenKey) || '';
         if (!apiKey) return showToast('未配置Qwen API Key');
@@ -1173,9 +1189,10 @@
             banner.innerHTML = '<strong>AI识别错误 (' + failed + '张失败):</strong><br>' + firstError + '<br><button onclick="this.parentElement.remove()" style="margin-top:8px;padding:6px 14px;background:#fff;color:#e74c3c;border:none;border-radius:4px;">关闭</button>';
             document.body.appendChild(banner);
         }
+        const removed = cleanupSingleUseTags();
         dirty = true;
         renderGallery();
-        showToast('完成: 成功' + done + ' 失败' + failed + '，请保存');
+        showToast('完成: 成功' + done + ' 失败' + failed + (removed ? ' 清理' + removed + '个单次标签' : '') + '，请保存');
     }
 
     function onPhotoClick(idx) {
@@ -1642,7 +1659,9 @@
             } catch(e) { /* silently skip on error */ }
         }
         if (done > 0) {
+            cleanupSingleUseTags();
             dirty = true;
+            renderGallery();
             showToast('已为 ' + done + ' 张照片打标签');
         }
     }
