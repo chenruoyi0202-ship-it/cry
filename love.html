@@ -1228,15 +1228,13 @@
         const apiKey = (appData && appData._qwenKey) || '';
         if (!apiKey) return showToast('未配置Qwen API Key');
         if (!appData.photos.length) return showToast('没有照片');
-        const untagged = appData.photos.filter(p => !p.tags || !p.tags.length);
-        const targets = untagged.length ? untagged : appData.photos;
-        if (!untagged.length) {
-            // All photos have tags; confirm via custom modal? Just re-tag all.
-            showToast('重新识别所有照片');
-        }
+        // Always re-tag all photos (user explicitly clicked the button)
+        const targets = appData.photos;
+        showToast('识别所有 ' + targets.length + ' 张照片');
         let done = 0, failed = 0;
-        showToast('识别中 0/' + targets.length);
         let firstError = '';
+        // Clear existing tags first so new prompt applies fresh
+        targets.forEach(p => { delete p.tags; });
         for (const photo of targets) {
             try {
                 const tags = await callQwenVL(photo.data, apiKey);
