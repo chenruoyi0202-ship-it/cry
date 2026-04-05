@@ -1061,6 +1061,39 @@
         setTimeout(() => document.getElementById('mPlaceName').focus(), 100);
     }
 
+    async function geocodeViaQwen(name) {
+        const apiKey = (appData && appData._qwenKey) || '';
+        if (!apiKey) throw new Error('no api key');
+        const resp = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'qwen-turbo',
+                messages: [{
+                    role: 'user',
+                    content: '地点"' + name + '"的经纬度是多少？只返回JSON格式，不要任何解释：{"lat":数字,"lng":数字}。如果不知道就返回{"lat":0,"lng":0}'
+                }]
+            })
+        });
+        if (!resp.ok) throw new Error('Qwen API ' + resp.status);
+        const data = await resp.json();
+        const text = data.choices[0].message.content;
+        const match = text.match(/\{[^{}]*"lat"[^{}]*\}/);
+        if (!match) throw new Error('parse failed');
+        const obj = JSON.parse(match[0]);
+        if (!obj.lat || !obj.lng) throw new Error('not found');
+        return { lat: +obj.lat, lng: +obj.lng };
+    }
+
+    async function geocodeViaNominatim(name) {
+        const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(name);
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Nominatim ' + resp.status);
+        const data = await resp.json();
+        if (!data || !data.length) throw new Error('not found');
+        return { lat: +data[0].lat, lng: +data[0].lon };
+    }
+
     async function searchAndAddPlace() {
         const name = document.getElementById('mPlaceName').value.trim();
         const dateEl = document.getElementById('mPlaceDate');
@@ -1068,31 +1101,36 @@
         const note = document.getElementById('mPlaceNote').value.trim();
         if (!name) return alert('请输入地点名称');
         showToast('搜索中...');
+        let coords = null;
+        let errMsg = '';
+        // Try Qwen first (reliable, no CORS issues)
         try {
-            // Nominatim requires Accept-Language for better Chinese results
-            const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-CN&q=' + encodeURIComponent(name);
-            const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const data = await resp.json();
-            if (!data || !data.length) {
-                showToast('未找到"' + name + '"，试试英文或更具体的名称');
-                return;
-            }
-            const lat = +data[0].lat, lon = +data[0].lon;
-            if (!appData.places) appData.places = [];
-            if (editingPlaceId) {
-                const existing = appData.places.find(p => p.id === editingPlaceId);
-                if (existing) { existing.name = name; existing.date = date; existing.note = note; existing.lat = lat; existing.lng = lon; }
-                editingPlaceId = null;
-            } else {
-                appData.places.push({ id: genId(), name, date, note, lat, lng: lon });
-            }
-            dirty = true; closeModal(); renderPlaces();
-            if (_map) _map.setView([lat, lon], 8);
-            showToast('已添加: ' + name);
+            coords = await geocodeViaQwen(name);
         } catch(e) {
-            alert('搜索失败: ' + (e.message || '网络错误') + '\n可尝试手动点击地图添加');
+            errMsg = 'Qwen: ' + e.message;
+            // Fallback to Nominatim
+            try {
+                coords = await geocodeViaNominatim(name);
+            } catch(e2) {
+                errMsg += ' | Nominatim: ' + e2.message;
+            }
         }
+        if (!coords) {
+            alert('搜索失败: ' + errMsg + '\n\n可尝试：\n1. 用更具体的名称（如"北京市"）\n2. 在编辑模式下直接点击地图添加');
+            return;
+        }
+        const { lat, lng } = coords;
+        if (!appData.places) appData.places = [];
+        if (editingPlaceId) {
+            const existing = appData.places.find(p => p.id === editingPlaceId);
+            if (existing) { existing.name = name; existing.date = date; existing.note = note; existing.lat = lat; existing.lng = lng; }
+            editingPlaceId = null;
+        } else {
+            appData.places.push({ id: genId(), name, date, note, lat, lng });
+        }
+        dirty = true; closeModal(); renderPlaces();
+        if (_map) _map.setView([lat, lng], 8);
+        showToast('已添加: ' + name);
     }
 
     function addPlaceAtLatLng(lat, lng) {
