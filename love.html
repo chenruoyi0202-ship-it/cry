@@ -966,10 +966,8 @@
         setTimeout(() => {
             const v = MAP_VIEWS[_mapView];
             _map = L.map('travelMap', { zoomControl: true, attributionControl: false }).setView(v.center, v.zoom);
-            // Use AutoNavi (AMap) tiles - works in China + globally
-            L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
-                subdomains: ['1','2','3','4'], maxZoom: 18
-            }).addTo(_map);
+            _tileLayer = buildTileLayer(_mapView);
+            _tileLayer.addTo(_map);
             _map.on('click', (e) => {
                 if (!isEditing) return;
                 addPlaceAtLatLng(e.latlng.lat, e.latlng.lng);
@@ -979,12 +977,32 @@
         }, 150);
     }
 
+    let _tileLayer = null;
+    function buildTileLayer(view) {
+        if (view === 'world') {
+            // CartoDB Voyager tiles - global coverage, fast, no API key needed
+            return L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd', maxZoom: 19
+            });
+        }
+        // AMap: works best in China with Chinese labels
+        return L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+            subdomains: ['1','2','3','4'], maxZoom: 18
+        });
+    }
+
     function setMapView(view) {
         _mapView = view;
         document.getElementById('mapViewCN').classList.toggle('active', view === 'china');
         document.getElementById('mapViewWorld').classList.toggle('active', view === 'world');
         const v = MAP_VIEWS[view];
-        if (_map) _map.setView(v.center, v.zoom);
+        if (_map) {
+            _map.setView(v.center, v.zoom);
+            // Swap tile layer
+            if (_tileLayer) _map.removeLayer(_tileLayer);
+            _tileLayer = buildTileLayer(view);
+            _tileLayer.addTo(_map);
+        }
     }
 
     function renderPlaces() {
@@ -1035,7 +1053,6 @@
         editingPlaceId = null;
         m.innerHTML = '<h3>添加地点</h3>' +
             '<label>地点名称</label><input id="mPlaceName" placeholder="如：杭州、东京">' +
-            '<label>日期</label><input id="mPlaceDate" type="date" value="' + todayStr() + '">' +
             '<label>备注</label><input id="mPlaceNote" placeholder="选填">' +
             '<div class="token-hint">搜索后自动定位；或在编辑模式下点击地图添加</div>' +
             '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
@@ -1046,7 +1063,8 @@
 
     async function searchAndAddPlace() {
         const name = document.getElementById('mPlaceName').value.trim();
-        const date = document.getElementById('mPlaceDate').value;
+        const dateEl = document.getElementById('mPlaceDate');
+        const date = dateEl ? dateEl.value : '';
         const note = document.getElementById('mPlaceNote').value.trim();
         if (!name) return alert('请输入地点名称');
         showToast('搜索中...');
@@ -1083,7 +1101,6 @@
         editingPlaceId = null;
         m.innerHTML = '<h3>添加地点</h3>' +
             '<label>地点名称</label><input id="mPlaceName" placeholder="如：海边咖啡馆">' +
-            '<label>日期</label><input id="mPlaceDate" type="date" value="' + todayStr() + '">' +
             '<label>备注</label><input id="mPlaceNote" placeholder="选填">' +
             '<input type="hidden" id="mPlaceLat" value="' + lat + '">' +
             '<input type="hidden" id="mPlaceLng" value="' + lng + '">' +
@@ -1095,7 +1112,7 @@
 
     function confirmAddPlaceAtLatLng() {
         const name = document.getElementById('mPlaceName').value.trim();
-        const date = document.getElementById('mPlaceDate').value;
+        const date = '';
         const note = document.getElementById('mPlaceNote').value.trim();
         const lat = +document.getElementById('mPlaceLat').value;
         const lng = +document.getElementById('mPlaceLng').value;
@@ -1113,7 +1130,6 @@
         const o = document.getElementById('modalOverlay');
         m.innerHTML = '<h3>编辑地点</h3>' +
             '<label>地点名称</label><input id="mPlaceName" value="' + esc(p.name) + '">' +
-            '<label>日期</label><input id="mPlaceDate" type="date" value="' + (p.date || '') + '">' +
             '<label>备注</label><input id="mPlaceNote" value="' + esc(p.note || '') + '">' +
             '<div class="modal-actions"><button class="btn-secondary" onclick="editingPlaceId=null;closeModal()">取消</button>' +
             '<button class="btn-primary" onclick="searchAndAddPlace()">保存</button></div>';
