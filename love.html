@@ -509,7 +509,7 @@
             <button class="tab-btn active" onclick="switchTab(0)">纪念日</button>
             <button class="tab-btn" onclick="switchTab(1)">点滴</button>
             <button class="tab-btn" onclick="switchTab(2)">相册</button>
-            <button class="tab-btn" onclick="switchTab(3)">地图</button>
+            <button class="tab-btn" onclick="switchTab(3)">足迹</button>
         </div>
 
         <div class="tab-content" id="tabContent">
@@ -944,8 +944,8 @@
     // ===== Travel Map =====
     let _map = null, _markers = [], _mapView = 'china';
     const MAP_VIEWS = {
-        china: { center: [35.8617, 104.1954], zoom: 4 },
-        world: { center: [20, 0], zoom: 2 }
+        china: { center: [35.8617, 104.1954], zoom: 3 },
+        world: { center: [20, 30], zoom: 2 }
     };
 
     function initMap() {
@@ -1041,23 +1041,31 @@
         const date = document.getElementById('mPlaceDate').value;
         const note = document.getElementById('mPlaceNote').value.trim();
         if (!name) return alert('请输入地点名称');
+        showToast('搜索中...');
         try {
-            const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(name));
+            // Nominatim requires Accept-Language for better Chinese results
+            const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=zh-CN&q=' + encodeURIComponent(name);
+            const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
-            if (!data.length) return alert('未找到该地点');
-            const { lat, lon } = data[0];
+            if (!data || !data.length) {
+                showToast('未找到"' + name + '"，试试英文或更具体的名称');
+                return;
+            }
+            const lat = +data[0].lat, lon = +data[0].lon;
             if (!appData.places) appData.places = [];
             if (editingPlaceId) {
                 const existing = appData.places.find(p => p.id === editingPlaceId);
-                if (existing) { existing.name = name; existing.date = date; existing.note = note; existing.lat = +lat; existing.lng = +lon; }
+                if (existing) { existing.name = name; existing.date = date; existing.note = note; existing.lat = lat; existing.lng = lon; }
                 editingPlaceId = null;
             } else {
-                appData.places.push({ id: genId(), name, date, note, lat: +lat, lng: +lon });
+                appData.places.push({ id: genId(), name, date, note, lat, lng: lon });
             }
             dirty = true; closeModal(); renderPlaces();
-            if (_map) _map.setView([+lat, +lon], 10);
+            if (_map) _map.setView([lat, lon], 8);
+            showToast('已添加: ' + name);
         } catch(e) {
-            alert('搜索失败: ' + e.message);
+            alert('搜索失败: ' + (e.message || '网络错误') + '\n可尝试手动点击地图添加');
         }
     }
 
