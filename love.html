@@ -278,10 +278,7 @@
         /* Tag Bar */
         .category-bar {
             display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 12px;
-            max-height: 40px; overflow: hidden; transition: max-height 0.3s;
-            position: relative;
         }
-        .category-bar.expanded { max-height: 500px; }
         .cat-chip {
             flex-shrink: 0; padding: 6px 14px; border-radius: 16px; cursor: pointer;
             font-size: 13px; font-weight: 600; border: 1.5px solid var(--border);
@@ -959,8 +956,11 @@
         (appData.photos || []).forEach(p => {
             (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
         });
-        const tags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]).slice(0, 20);
-        const list = ['all', ...tags];
+        const allTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]).slice(0, 20);
+        const expanded = bar.classList.contains('expanded');
+        // Collapsed: show top 5 tags + 全部 + expand btn; Expanded: show all
+        const visibleTags = expanded ? allTags : allTags.slice(0, 5);
+        const list = ['all', ...visibleTags];
         const chipsHtml = list.map(t => {
             const label = t === 'all' ? '全部' : esc(t) + '·' + tagCounts[t];
             const active = t === currentTag ? ' active' : '';
@@ -968,7 +968,13 @@
             return '<span class="cat-chip' + active + '" onclick="setTag(\'' + val + '\')">' + label + '</span>';
         }).join('');
         const aiBtn = '<span class="cat-chip ai-btn" onclick="runAITagging()">&#x1F916; AI识别</span>';
-        const expandBtn = tags.length > 3 ? '<span class="cat-chip expand-chip" onclick="toggleTagBar(event)">' + (bar.classList.contains('expanded') ? '收起' : '展开...') + '</span>' : '';
+        const hiddenCount = allTags.length - visibleTags.length;
+        let expandBtn = '';
+        if (expanded) {
+            expandBtn = '<span class="cat-chip expand-chip" onclick="toggleTagBar(event)">收起</span>';
+        } else if (hiddenCount > 0) {
+            expandBtn = '<span class="cat-chip expand-chip" onclick="toggleTagBar(event)">+' + hiddenCount + ' 展开</span>';
+        }
         bar.innerHTML = chipsHtml + aiBtn + expandBtn;
     }
 
