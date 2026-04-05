@@ -15,8 +15,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <title>Our Memory</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
             --bg: #fef6ff; --card: #ffffff; --text: #2d1b4e; --text2: #8b7a9e;
@@ -949,26 +949,34 @@
     };
 
     function initMap() {
-        if (_map) { setTimeout(() => _map.invalidateSize(), 100); return; }
+        if (_map) { setTimeout(() => _map.invalidateSize(), 200); return; }
         const mapEl = document.getElementById('travelMap');
-        if (!mapEl || !window.L) return;
-        // Add view switcher
-        mapEl.insertAdjacentHTML('beforebegin', '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
-            '<button class="cat-chip active" id="mapViewCN" onclick="setMapView(\'china\')">🇨🇳 国内</button>' +
-            '<button class="cat-chip" id="mapViewWorld" onclick="setMapView(\'world\')">🌍 全球</button>' +
-            '</div>');
-        const v = MAP_VIEWS[_mapView];
-        _map = L.map('travelMap', { zoomControl: true }).setView(v.center, v.zoom);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18, attribution: '© OpenStreetMap'
-        }).addTo(_map);
-        // Click to add place in edit mode
-        _map.on('click', (e) => {
-            if (!isEditing) return;
-            addPlaceAtLatLng(e.latlng.lat, e.latlng.lng);
-        });
-        renderPlaces();
-        setTimeout(() => _map.invalidateSize(), 100);
+        if (!mapEl || !window.L) {
+            mapEl && (mapEl.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2);">地图库加载失败，请刷新页面</div>');
+            return;
+        }
+        // Add view switcher (once)
+        if (!document.getElementById('mapViewCN')) {
+            mapEl.insertAdjacentHTML('beforebegin', '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
+                '<button class="cat-chip active" id="mapViewCN" onclick="setMapView(\'china\')">🇨🇳 国内</button>' +
+                '<button class="cat-chip" id="mapViewWorld" onclick="setMapView(\'world\')">🌍 全球</button>' +
+                '</div>');
+        }
+        // Wait for panel to become visible before init
+        setTimeout(() => {
+            const v = MAP_VIEWS[_mapView];
+            _map = L.map('travelMap', { zoomControl: true, attributionControl: false }).setView(v.center, v.zoom);
+            // Use AutoNavi (AMap) tiles - works in China + globally
+            L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+                subdomains: ['1','2','3','4'], maxZoom: 18
+            }).addTo(_map);
+            _map.on('click', (e) => {
+                if (!isEditing) return;
+                addPlaceAtLatLng(e.latlng.lat, e.latlng.lng);
+            });
+            renderPlaces();
+            _map.invalidateSize();
+        }, 150);
     }
 
     function setMapView(view) {
