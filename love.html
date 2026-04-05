@@ -1017,7 +1017,8 @@
 
     // ===== AI Auto-Tagging (Qwen-VL-Max via DashScope API) =====
     async function callQwenVL(dataUrl, apiKey) {
-        const resp = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation', {
+        // Use OpenAI-compatible endpoint (better CORS support)
+        const resp = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + apiKey,
@@ -1025,25 +1026,21 @@
             },
             body: JSON.stringify({
                 model: 'qwen-vl-max',
-                input: {
-                    messages: [{
-                        role: 'user',
-                        content: [
-                            { image: dataUrl },
-                            { text: '用2-3个中文短词（每个2-4字）描述这张照片最主要的内容、场景或情绪，多个词用英文逗号分隔。只返回标签本身，不要解释。例如：合影,餐厅,微笑' }
-                        ]
-                    }]
-                }
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'image_url', image_url: { url: dataUrl } },
+                        { type: 'text', text: '用2-3个中文短词（每个2-4字）描述这张照片最主要的内容、场景或情绪，多个词用英文逗号分隔。只返回标签本身，不要解释。例如：合影,餐厅,微笑' }
+                    ]
+                }]
             })
         });
         if (!resp.ok) {
             const errText = await resp.text();
-            throw new Error('API ' + resp.status + ': ' + errText.substring(0, 100));
+            throw new Error('API ' + resp.status + ': ' + errText.substring(0, 150));
         }
         const data = await resp.json();
-        const content = data.output && data.output.choices && data.output.choices[0] && data.output.choices[0].message.content;
-        if (!content) return [];
-        const text = Array.isArray(content) ? (content[0].text || '') : String(content);
+        const text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
         return text.split(/[,，、\s]+/).map(s => s.trim()).filter(s => s && s.length <= 10);
     }
 
