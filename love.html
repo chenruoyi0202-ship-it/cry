@@ -15,6 +15,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <title>Our Memory</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
             --bg: #fef6ff; --card: #ffffff; --text: #2d1b4e; --text2: #8b7a9e;
@@ -507,6 +509,7 @@
             <button class="tab-btn active" onclick="switchTab(0)">纪念日</button>
             <button class="tab-btn" onclick="switchTab(1)">点滴</button>
             <button class="tab-btn" onclick="switchTab(2)">相册</button>
+            <button class="tab-btn" onclick="switchTab(3)">地图</button>
         </div>
 
         <div class="tab-content" id="tabContent">
@@ -529,6 +532,13 @@
                 <button class="add-btn" onclick="directAddPhoto()">+ 添加照片</button>
                 <button class="add-btn" onclick="recompressAll()">压缩所有照片</button>
                 <input type="file" id="directPhotoInput" accept="image/*" multiple style="display:none">
+            </div>
+
+            <!-- Tab 3: Travel Map -->
+            <div class="tab-panel" id="tabMap">
+                <div id="travelMap" style="width:100%;height:400px;border-radius:16px;overflow:hidden;background:var(--border);margin-bottom:12px;"></div>
+                <div id="placesList"></div>
+                <button class="add-btn" onclick="addPlace()">+ 添加地点</button>
             </div>
 
         </div>
@@ -886,6 +896,7 @@
         document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
         document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
         if (idx === 2 && !galleryRendered) renderGallery();
+        if (idx === 3) initMap();
     }
 
     // Swipe detection on tab content
@@ -898,7 +909,7 @@
             const dx = e.changedTouches[0].clientX - startX;
             const dy = e.changedTouches[0].clientY - startY;
             if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-                if (dx < 0 && currentTab < 2) switchTab(currentTab + 1);
+                if (dx < 0 && currentTab < 3) switchTab(currentTab + 1);
                 else if (dx > 0 && currentTab > 0) switchTab(currentTab - 1);
             }
         }, { passive: true });
@@ -929,6 +940,175 @@
     }
 
     function daysBetween(a, b) { return Math.floor((b - a) / 86400000); }
+
+    // ===== Travel Map =====
+    let _map = null, _markers = [], _mapView = 'china';
+    const MAP_VIEWS = {
+        china: { center: [35.8617, 104.1954], zoom: 4 },
+        world: { center: [20, 0], zoom: 2 }
+    };
+
+    function initMap() {
+        if (_map) { setTimeout(() => _map.invalidateSize(), 100); return; }
+        const mapEl = document.getElementById('travelMap');
+        if (!mapEl || !window.L) return;
+        // Add view switcher
+        mapEl.insertAdjacentHTML('beforebegin', '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
+            '<button class="cat-chip active" id="mapViewCN" onclick="setMapView(\'china\')">🇨🇳 国内</button>' +
+            '<button class="cat-chip" id="mapViewWorld" onclick="setMapView(\'world\')">🌍 全球</button>' +
+            '</div>');
+        const v = MAP_VIEWS[_mapView];
+        _map = L.map('travelMap', { zoomControl: true }).setView(v.center, v.zoom);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18, attribution: '© OpenStreetMap'
+        }).addTo(_map);
+        // Click to add place in edit mode
+        _map.on('click', (e) => {
+            if (!isEditing) return;
+            addPlaceAtLatLng(e.latlng.lat, e.latlng.lng);
+        });
+        renderPlaces();
+        setTimeout(() => _map.invalidateSize(), 100);
+    }
+
+    function setMapView(view) {
+        _mapView = view;
+        document.getElementById('mapViewCN').classList.toggle('active', view === 'china');
+        document.getElementById('mapViewWorld').classList.toggle('active', view === 'world');
+        const v = MAP_VIEWS[view];
+        if (_map) _map.setView(v.center, v.zoom);
+    }
+
+    function renderPlaces() {
+        if (!_map) return;
+        // Clear old markers
+        _markers.forEach(m => m.remove());
+        _markers = [];
+        const places = appData.places || [];
+        places.forEach(p => {
+            const icon = L.divIcon({
+                className: '', html: '<div style="background:var(--accent);width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+                iconSize: [20, 20], iconAnchor: [10, 20]
+            });
+            const m = L.marker([p.lat, p.lng], { icon }).addTo(_map);
+            const html = '<div style="min-width:120px;"><strong>' + esc(p.name) + '</strong>' +
+                (p.date ? '<br><span style="color:#888;font-size:11px;">' + p.date + '</span>' : '') +
+                (p.note ? '<br>' + esc(p.note) : '') +
+                (isEditing ? '<br><button onclick="editPlace(\'' + p.id + '\')" style="margin-top:6px;padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;">编辑</button> ' +
+                '<button onclick="deletePlace(\'' + p.id + '\')" style="padding:4px 10px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;">删除</button>' : '') + '</div>';
+            m.bindPopup(html);
+            _markers.push(m);
+        });
+        // Render list below map
+        const list = document.getElementById('placesList');
+        if (list) {
+            list.innerHTML = places.length ? places.map(p =>
+                '<div style="padding:10px 14px;background:var(--card);border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);" onclick="focusPlace(\'' + p.id + '\')">' +
+                '<strong style="color:var(--text);font-size:14px;">📍 ' + esc(p.name) + '</strong>' +
+                (p.date ? '<span style="color:var(--text2);font-size:11px;margin-left:8px;">' + p.date + '</span>' : '') +
+                (p.note ? '<div style="color:var(--text3);font-size:12px;margin-top:2px;">' + esc(p.note) + '</div>' : '') +
+                '</div>'
+            ).join('') : '<div style="text-align:center;color:var(--text2);padding:20px;font-size:13px;">还没有去过的地方，编辑模式下点击地图添加</div>';
+        }
+    }
+
+    function focusPlace(id) {
+        const p = (appData.places || []).find(x => x.id === id);
+        if (!p || !_map) return;
+        _map.setView([p.lat, p.lng], 10);
+        const m = _markers.find(mk => mk.getLatLng().lat === p.lat && mk.getLatLng().lng === p.lng);
+        if (m) m.openPopup();
+    }
+
+    let editingPlaceId = null;
+    function addPlace() {
+        const m = document.getElementById('modalContent');
+        const o = document.getElementById('modalOverlay');
+        editingPlaceId = null;
+        m.innerHTML = '<h3>添加地点</h3>' +
+            '<label>地点名称</label><input id="mPlaceName" placeholder="如：杭州、东京">' +
+            '<label>日期</label><input id="mPlaceDate" type="date" value="' + todayStr() + '">' +
+            '<label>备注</label><input id="mPlaceNote" placeholder="选填">' +
+            '<div class="token-hint">搜索后自动定位；或在编辑模式下点击地图添加</div>' +
+            '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
+            '<button class="btn-primary" onclick="searchAndAddPlace()">搜索并添加</button></div>';
+        o.classList.add('open');
+        setTimeout(() => document.getElementById('mPlaceName').focus(), 100);
+    }
+
+    async function searchAndAddPlace() {
+        const name = document.getElementById('mPlaceName').value.trim();
+        const date = document.getElementById('mPlaceDate').value;
+        const note = document.getElementById('mPlaceNote').value.trim();
+        if (!name) return alert('请输入地点名称');
+        try {
+            const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(name));
+            const data = await resp.json();
+            if (!data.length) return alert('未找到该地点');
+            const { lat, lon } = data[0];
+            if (!appData.places) appData.places = [];
+            if (editingPlaceId) {
+                const existing = appData.places.find(p => p.id === editingPlaceId);
+                if (existing) { existing.name = name; existing.date = date; existing.note = note; existing.lat = +lat; existing.lng = +lon; }
+                editingPlaceId = null;
+            } else {
+                appData.places.push({ id: genId(), name, date, note, lat: +lat, lng: +lon });
+            }
+            dirty = true; closeModal(); renderPlaces();
+            if (_map) _map.setView([+lat, +lon], 10);
+        } catch(e) {
+            alert('搜索失败: ' + e.message);
+        }
+    }
+
+    function addPlaceAtLatLng(lat, lng) {
+        const m = document.getElementById('modalContent');
+        const o = document.getElementById('modalOverlay');
+        editingPlaceId = null;
+        m.innerHTML = '<h3>添加地点</h3>' +
+            '<label>地点名称</label><input id="mPlaceName" placeholder="如：海边咖啡馆">' +
+            '<label>日期</label><input id="mPlaceDate" type="date" value="' + todayStr() + '">' +
+            '<label>备注</label><input id="mPlaceNote" placeholder="选填">' +
+            '<input type="hidden" id="mPlaceLat" value="' + lat + '">' +
+            '<input type="hidden" id="mPlaceLng" value="' + lng + '">' +
+            '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">取消</button>' +
+            '<button class="btn-primary" onclick="confirmAddPlaceAtLatLng()">添加</button></div>';
+        o.classList.add('open');
+        setTimeout(() => document.getElementById('mPlaceName').focus(), 100);
+    }
+
+    function confirmAddPlaceAtLatLng() {
+        const name = document.getElementById('mPlaceName').value.trim();
+        const date = document.getElementById('mPlaceDate').value;
+        const note = document.getElementById('mPlaceNote').value.trim();
+        const lat = +document.getElementById('mPlaceLat').value;
+        const lng = +document.getElementById('mPlaceLng').value;
+        if (!name) return alert('请输入地点名称');
+        if (!appData.places) appData.places = [];
+        appData.places.push({ id: genId(), name, date, note, lat, lng });
+        dirty = true; closeModal(); renderPlaces();
+    }
+
+    function editPlace(id) {
+        const p = (appData.places || []).find(x => x.id === id);
+        if (!p) return;
+        editingPlaceId = id;
+        const m = document.getElementById('modalContent');
+        const o = document.getElementById('modalOverlay');
+        m.innerHTML = '<h3>编辑地点</h3>' +
+            '<label>地点名称</label><input id="mPlaceName" value="' + esc(p.name) + '">' +
+            '<label>日期</label><input id="mPlaceDate" type="date" value="' + (p.date || '') + '">' +
+            '<label>备注</label><input id="mPlaceNote" value="' + esc(p.note || '') + '">' +
+            '<div class="modal-actions"><button class="btn-secondary" onclick="editingPlaceId=null;closeModal()">取消</button>' +
+            '<button class="btn-primary" onclick="searchAndAddPlace()">保存</button></div>';
+        o.classList.add('open');
+    }
+
+    function deletePlace(id) {
+        appData.places = (appData.places || []).filter(p => p.id !== id);
+        dirty = true; renderPlaces();
+        showToast('已删除地点');
+    }
 
     function renderAnniversaries() {
         const c = document.getElementById('annScroll');
@@ -1598,7 +1778,7 @@
 
     function closeModal() {
         document.getElementById('modalOverlay').classList.remove('open');
-        editingAnnId = null; editingDiaryId = null;
+        editingAnnId = null; editingDiaryId = null; editingPlaceId = null;
     }
     function todayStr() { return new Date().toISOString().slice(0, 10); }
 
