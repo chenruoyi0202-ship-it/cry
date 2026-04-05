@@ -238,58 +238,68 @@
             opacity: 0.9; transition: none;
         }
 
-        /* Timeline (2-col snake layout with connecting line) */
+        /* Timeline (2-col snake with photo-hero cards) */
         .timeline {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px;
-            position: relative; padding: 8px 0;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 28px 16px;
+            position: relative; padding: 16px 6px;
         }
-        .tl-entry { position: relative; }
-        /* Horizontal connector between pairs */
+        .tl-entry { position: relative; cursor: pointer; }
+        /* Horizontal connector with glowing hearts */
         .tl-entry.link-right::after {
-            content: ''; position: absolute; top: 50%; right: -12px; width: 12px;
-            height: 2px; background: linear-gradient(to right, var(--accent), var(--accent2));
+            content: '♥'; position: absolute; top: 50%; right: -18px;
+            transform: translateY(-50%); color: var(--accent); font-size: 10px;
+            text-shadow: 0 0 8px rgba(192,132,252,0.6);
+            width: 20px; text-align: center; z-index: 2;
+        }
+        .tl-entry.link-right::before {
+            content: ''; position: absolute; top: 50%; right: -16px; width: 16px;
+            height: 1.5px; background: linear-gradient(to right, var(--accent), transparent);
             z-index: 0;
         }
-        .tl-entry.link-left::after {
-            content: ''; position: absolute; top: 50%; left: -12px; width: 12px;
-            height: 2px; background: linear-gradient(to left, var(--accent), var(--accent2));
-            z-index: 0;
-        }
-        /* Vertical connector to next row */
-        .tl-entry.link-down::before {
-            content: ''; position: absolute; bottom: -14px; height: 14px; width: 2px;
+        /* Vertical connector */
+        .tl-entry.link-down .drop-line {
+            position: absolute; bottom: -28px; height: 28px; width: 1.5px;
             background: linear-gradient(to bottom, var(--accent2), var(--accent));
             z-index: 0;
         }
-        .tl-entry.link-down.at-right::before { right: 20px; }
-        .tl-entry.link-down.at-left::before { left: 20px; }
-        .tl-dot {
-            position: absolute; top: 10px; width: 12px; height: 12px; border-radius: 50%;
-            background: var(--accent); border: 2px solid var(--bg);
-            z-index: 2;
+        .tl-entry.at-left .drop-line { left: 24px; }
+        .tl-entry.at-right .drop-line { right: 24px; }
+        .tl-entry.link-down .drop-heart {
+            position: absolute; bottom: -18px; color: var(--accent); font-size: 10px;
+            text-shadow: 0 0 8px rgba(192,132,252,0.6); z-index: 2;
         }
-        .tl-dot.dot-left { left: -6px; }
-        .tl-dot.dot-right { right: -6px; }
-        .tl-date {
-            display: inline-block; font-size: 11px; color: #fff; background: var(--accent);
-            padding: 2px 8px; border-radius: 8px; margin-bottom: 6px;
-        }
+        .tl-entry.at-left .drop-heart { left: 19px; }
+        .tl-entry.at-right .drop-heart { right: 19px; }
         .tl-card {
-            background: var(--card); border-radius: 16px; padding: 12px; position: relative;
-            box-shadow: var(--glow), 0 4px 16px var(--card-shadow);
-            border: 1px solid var(--border); z-index: 1;
+            background: var(--card); border-radius: 20px; position: relative; overflow: hidden;
+            box-shadow: var(--glow), 0 6px 24px var(--card-shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.3s, box-shadow 0.3s;
         }
-        .tl-body { min-width: 0; }
-        .tl-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; color: var(--text); }
-        .tl-content { font-size: 12px; color: var(--text3); line-height: 1.4;
+        .tl-card:hover { transform: translateY(-4px); box-shadow: 0 0 30px rgba(192,132,252,0.3), 0 10px 30px var(--card-shadow); }
+        .tl-photo-hero {
+            width: 100%; height: 120px; object-fit: cover; display: block;
+            background: var(--border);
+        }
+        .tl-body { padding: 10px 12px 12px; }
+        .tl-date {
+            position: absolute; top: 8px; left: 8px; z-index: 2;
+            font-size: 10px; color: #fff; background: rgba(192,132,252,0.92);
+            padding: 3px 8px; border-radius: 8px; font-weight: 600;
+            backdrop-filter: blur(4px);
+        }
+        .tl-card.no-photo .tl-date { position: static; display: inline-block; margin-bottom: 6px; background: var(--accent); }
+        .tl-card.no-photo .tl-body { padding: 12px; }
+        .tl-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; line-height: 1.3; }
+        .tl-content { font-size: 11px; color: var(--text3); line-height: 1.4;
             overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
-            -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-        .tl-photos { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
-        .tl-thumb {
-            width: 56px; height: 56px; border-radius: 8px; object-fit: cover; cursor: pointer;
-            transition: transform 0.3s;
+            -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .tl-more-photos { display: flex; gap: 3px; margin-top: 6px; }
+        .tl-mini-thumb {
+            width: 20px; height: 20px; border-radius: 4px; object-fit: cover;
+            border: 1.5px solid var(--card); margin-left: -6px;
         }
-        .tl-thumb:hover { transform: scale(1.05); }
+        .tl-mini-thumb:first-child { margin-left: 0; }
 
         /* Photo Gallery */
         /* Tag Bar */
@@ -960,39 +970,48 @@
             }
         }
         c.innerHTML = layout.map((d, pos) => {
-            let photoHtml = '';
-            if (d.photos && d.photos.length) {
-                const thumbs = d.photos.map(p => {
-                    const src = (typeof p === 'string' && p.startsWith('data:')) ? p :
-                                ((appData.photos.find(x => x.id === p) || {}).data || '');
-                    if (!src) return '';
-                    return '<img class="tl-thumb" src="' + src + '" alt="">';
-                }).join('');
-                photoHtml = '<div class="tl-photos">' + thumbs + '</div>';
+            // Resolve photos to data URLs
+            const photoSrcs = (d.photos || []).map(p => {
+                if (typeof p === 'string' && p.startsWith('data:')) return p;
+                const found = appData.photos.find(x => x.id === p);
+                return found ? found.data : '';
+            }).filter(Boolean);
+            const hasPhoto = photoSrcs.length > 0;
+            // Hero photo + mini thumbs for extras
+            let heroHtml = '';
+            if (hasPhoto) {
+                heroHtml = '<img class="tl-photo-hero" src="' + photoSrcs[0] + '" alt="">';
+            }
+            let extrasHtml = '';
+            if (photoSrcs.length > 1) {
+                const extras = photoSrcs.slice(1, 4).map(s =>
+                    '<img class="tl-mini-thumb" src="' + s + '" alt="">'
+                ).join('');
+                extrasHtml = '<div class="tl-more-photos">' + extras + (photoSrcs.length > 4 ? '<span class="tl-mini-thumb" style="background:var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text2);">+' + (photoSrcs.length - 4) + '</span>' : '') + '</div>';
             }
             // Compute connector classes based on position in the snake
-            const col = pos % 2; // 0=left, 1=right
+            const col = pos % 2;
             const rowIdx = Math.floor(pos / 2);
-            const isLastRow = pos >= layout.length - 2 || (pos === layout.length - 1);
             const reversed = rowIdx % 2 === 1;
             const classes = ['tl-entry'];
-            // Horizontal connector within row (except last item in each row)
             if (col === 0 && pos + 1 < layout.length) classes.push('link-right');
-            // Vertical connector to next row (only on the "end" of current row which links to next)
             const isRowEnd = (reversed && col === 0) || (!reversed && col === 1);
             if (isRowEnd && pos + 1 < layout.length) {
                 classes.push('link-down');
                 classes.push(col === 0 ? 'at-left' : 'at-right');
             }
-            const dotSide = col === 0 ? 'dot-left' : 'dot-right';
-            return '<div class="' + classes.join(' ') + '">' +
-                '<div class="tl-dot ' + dotSide + '"></div>' +
-                '<div class="tl-card" onclick="editDiary(\'' + d.id + '\')">' +
+            const dropDeco = (isRowEnd && pos + 1 < layout.length)
+                ? '<div class="drop-line"></div><div class="drop-heart">♥</div>' : '';
+            return '<div class="' + classes.join(' ') + '" onclick="editDiary(\'' + d.id + '\')">' +
+                '<div class="tl-card' + (hasPhoto ? '' : ' no-photo') + '">' +
                 '<button class="item-del" onclick="event.stopPropagation();delItem(\'diary\',\'' + d.id + '\')">&times;</button>' +
                 '<div class="tl-date">' + d.date + '</div>' +
+                heroHtml +
+                '<div class="tl-body">' +
                 '<div class="tl-title">' + esc(d.title) + '</div>' +
-                '<div class="tl-content">' + esc(d.content) + '</div>' +
-                photoHtml + '</div></div>';
+                (d.content ? '<div class="tl-content">' + esc(d.content) + '</div>' : '') +
+                extrasHtml +
+                '</div></div>' + dropDeco + '</div>';
         }).join('');
     }
 
