@@ -1059,6 +1059,7 @@
         }
         let done = 0, failed = 0;
         showToast('识别中 0/' + targets.length);
+        let firstError = '';
         for (const photo of targets) {
             try {
                 const tags = await callQwenVL(photo.data, apiKey);
@@ -1066,11 +1067,17 @@
                 done++;
             } catch(e) {
                 failed++;
-                if (failed === 1) showToast('识别失败: ' + (e.message || '').substring(0, 50));
+                if (!firstError) firstError = e.message || 'Unknown error';
             }
             if ((done + failed) % 2 === 0 || (done + failed) === targets.length) {
                 showToast('识别中 ' + (done + failed) + '/' + targets.length);
             }
+        }
+        if (failed > 0 && firstError) {
+            const banner = document.createElement('div');
+            banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#e74c3c;color:#fff;padding:16px;text-align:left;z-index:99999;font-size:13px;word-break:break-all;max-height:50vh;overflow-y:auto;';
+            banner.innerHTML = '<strong>AI识别错误 (' + failed + '张失败):</strong><br>' + firstError + '<br><button onclick="this.parentElement.remove()" style="margin-top:8px;padding:6px 14px;background:#fff;color:#e74c3c;border:none;border-radius:4px;">关闭</button>';
+            document.body.appendChild(banner);
         }
         dirty = true;
         renderGallery();
@@ -1500,20 +1507,47 @@
             const files = Array.from(input.files);
             if (!files.length) return;
             let done = 0;
+            const newPhotos = [];
             files.forEach(file => {
                 compressImage(file, (dataUrl) => {
                     const photo = { id: genId(), data: dataUrl };
                     if (currentTag && currentTag !== 'all') photo.tags = [currentTag];
                     appData.photos.push(photo);
+                    newPhotos.push(photo);
                     done++;
                     if (done === files.length) {
                         dirty = true; renderGallery(); initGalleryDrag();
-                        showToast('已添加 ' + files.length + ' 张照片');
+                        showToast('已添加 ' + files.length + ' 张照片，AI识别中...');
+                        // Auto AI tag new photos in background
+                        autoTagPhotos(newPhotos);
                     }
                 });
             });
         };
         input.click();
+    }
+
+    async function autoTagPhotos(photos) {
+        const apiKey = (appData && appData._qwenKey) || '';
+        if (!apiKey) return;
+        let done = 0;
+        for (const photo of photos) {
+            if (photo.tags && photo.tags.length && currentTag === 'all') continue;
+            try {
+                const tags = await callQwenVL(photo.data, apiKey);
+                if (tags.length) {
+                    // Preserve manual tag from currentTag filter if set
+                    const manual = (photo.tags || []).filter(t => !tags.includes(t));
+                    photo.tags = [...tags, ...manual];
+                    done++;
+                    renderGallery();
+                }
+            } catch(e) { /* silently skip on error */ }
+        }
+        if (done > 0) {
+            dirty = true;
+            showToast('已为 ' + done + ' 张照片打标签');
+        }
     }
 
     function autoAddPhotos(e) {
