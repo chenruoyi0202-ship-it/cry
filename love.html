@@ -333,9 +333,9 @@
             0%, 100% { transform: rotate(0.8deg); }
             50% { transform: rotate(-0.8deg); }
         }
-        body.editing .gallery-item { animation: jiggle 0.18s ease-in-out infinite; transform-origin: center; }
-        body.editing .gallery-item:nth-child(2n) { animation: jiggle-alt 0.18s ease-in-out infinite; }
-        body.editing .gallery-item.dragging { animation: none; opacity: 0; }
+        body.editing .gallery-item, body.editing .ann-card { animation: jiggle 0.18s ease-in-out infinite; transform-origin: center; }
+        body.editing .gallery-item:nth-child(2n), body.editing .ann-card:nth-child(2n) { animation: jiggle-alt 0.18s ease-in-out infinite; }
+        body.editing .gallery-item.dragging, body.editing .ann-card.dragging { animation: none; opacity: 0; }
         body.editing .gallery-item.no-jiggle { animation: none; }
         .gallery-item img {
             width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
@@ -932,12 +932,12 @@
 
     function renderAnniversaries() {
         const c = document.getElementById('annScroll');
-        c.innerHTML = appData.anniversaries.map(a => {
+        c.innerHTML = appData.anniversaries.map((a, i) => {
             const now = new Date(), d = new Date(a.date);
             let days, label;
             if (a.type === 'countup') { days = daysBetween(d, now); label = '已经'; }
             else { days = daysBetween(now, d); label = days >= 0 ? '还有' : '已过'; days = Math.abs(days); }
-            return '<div class="ann-card" onclick="editAnn(\'' + a.id + '\')">' +
+            return '<div class="ann-card" data-idx="' + i + '" onclick="editAnn(\'' + a.id + '\')">' +
                 '<button class="item-del" onclick="event.stopPropagation();delItem(\'anniversaries\',\'' + a.id + '\')">&times;</button>' +
                 '<div class="ann-icon">' + a.icon + '</div>' +
                 '<div class="ann-title">' + esc(a.title) + '</div>' +
@@ -1377,6 +1377,84 @@
 
         gallery.addEventListener('touchend', cleanup, { passive: true });
         gallery.addEventListener('touchcancel', cleanup, { passive: true });
+    })();
+
+    // ===== Drag to reorder anniversaries =====
+    (function() {
+        const container = document.getElementById('annScroll');
+        if (!container) return;
+        let srcId = null, ghost = null, timer = null, dragging = false;
+        let startX = 0, startY = 0, offsetX = 0, offsetY = 0;
+
+        function getItemAt(x, y) {
+            const els = container.querySelectorAll('.ann-card:not(.dragging)');
+            for (const el of els) {
+                const r = el.getBoundingClientRect();
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return el;
+            }
+            return null;
+        }
+
+        container.addEventListener('touchstart', function(e) {
+            if (!isEditing) return;
+            const item = e.target.closest('.ann-card');
+            if (!item || e.target.closest('.item-del')) return;
+            e.preventDefault();
+            const t = e.touches[0];
+            startX = t.clientX; startY = t.clientY;
+            timer = setTimeout(() => {
+                dragging = true;
+                srcId = +item.dataset.idx;
+                item.classList.add('dragging');
+                if (navigator.vibrate) navigator.vibrate(40);
+                const g = item.cloneNode(true);
+                g.className = 'drag-ghost ann-card';
+                const r = item.getBoundingClientRect();
+                g.style.cssText = 'position:fixed;z-index:9999;pointer-events:none;width:' + r.width + 'px;height:' + r.height + 'px;transform:scale(1.08);box-shadow:0 12px 36px rgba(0,0,0,0.4);opacity:0.9;';
+                offsetX = r.width / 2; offsetY = r.height / 2;
+                g.style.left = (startX - offsetX) + 'px';
+                g.style.top = (startY - offsetY) + 'px';
+                document.body.appendChild(g);
+                ghost = g;
+            }, 350);
+        }, { passive: false });
+
+        container.addEventListener('touchmove', function(e) {
+            if (!dragging) {
+                const t = e.touches[0];
+                if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) clearTimeout(timer);
+                return;
+            }
+            e.preventDefault();
+            const t = e.touches[0];
+            if (ghost) {
+                ghost.style.left = (t.clientX - offsetX) + 'px';
+                ghost.style.top = (t.clientY - offsetY) + 'px';
+            }
+            const target = getItemAt(t.clientX, t.clientY);
+            if (target) {
+                const targetIdx = +target.dataset.idx;
+                if (targetIdx !== srcId && !isNaN(targetIdx)) {
+                    const arr = appData.anniversaries;
+                    const [moved] = arr.splice(srcId, 1);
+                    arr.splice(targetIdx, 0, moved);
+                    srcId = targetIdx;
+                    renderAnniversaries();
+                    const newItem = container.querySelector('.ann-card[data-idx="' + targetIdx + '"]');
+                    if (newItem) newItem.classList.add('dragging');
+                }
+            }
+        }, { passive: false });
+
+        function cleanup() {
+            clearTimeout(timer); dragging = false;
+            if (ghost) { ghost.remove(); ghost = null; }
+            container.querySelectorAll('.ann-card').forEach(el => el.classList.remove('dragging'));
+            if (srcId !== null) dirty = true;
+            srcId = null;
+        }
+        container.addEventListener('touchend', cleanup, { passive: true });
+        container.addEventListener('touchcancel', cleanup, { passive: true });
     })();
 
     // ===== Long-press drag to reorder photos =====
