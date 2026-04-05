@@ -957,7 +957,8 @@
         (appData.photos || []).forEach(p => {
             (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
         });
-        const tags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+        // Show top 20 most-used tags
+        const tags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]).slice(0, 20);
         const list = ['all', ...tags];
         bar.innerHTML = list.map(t => {
             const label = t === 'all' ? '全部' : esc(t) + '·' + tagCounts[t];
