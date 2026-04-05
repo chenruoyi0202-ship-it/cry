@@ -2150,6 +2150,21 @@
     }
 
     // ===== Push to GitHub =====
+    async function fetchRetry(url, opts, label) {
+        let lastErr = null;
+        for (let i = 0; i < 3; i++) {
+            try {
+                const resp = await fetch(url, opts);
+                if (!resp.ok) throw new Error(label + ' ' + resp.status);
+                return resp;
+            } catch(e) {
+                lastErr = e;
+                if (i < 2) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+            }
+        }
+        throw lastErr || new Error(label + ' failed');
+    }
+
     async function pushToGitHub() {
         const pwd = currentPwd || getPwd();
         if (!pwd) return alert('密码已过期，请刷新重新登录');
@@ -2163,7 +2178,6 @@
         }
 
         try {
-            // Auto-compress large photos before save (keeps file size small)
             await autoCompressLargePhotos();
 
             const now = new Date().toISOString();
@@ -2172,59 +2186,41 @@
             const output = JSON.stringify({ encrypted, updatedAt: now });
             const content = bufToB64(new TextEncoder().encode(output));
 
-            // Use Git Data API for large files (more reliable than Contents API)
-            // Step 1: Create blob
-            const blobResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: content, encoding: 'base64' })
-            });
-            if (!blobResp.ok) throw new Error('Blob create failed');
+            const hdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' };
+            const postHdrs = { ...hdrs, 'Content-Type': 'application/json' };
+            const api = 'https://api.github.com/repos/' + repo + '/git';
+
+            const blobResp = await fetchRetry(api + '/blobs', {
+                method: 'POST', headers: postHdrs,
+                body: JSON.stringify({ content, encoding: 'base64' })
+            }, 'Blob create failed');
             const blobData = await blobResp.json();
 
-            // Step 2: Get current commit SHA (HEAD of main)
-            const refResp = await fetch('https://api.github.com/repos/' + repo + '/git/ref/heads/main', {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
-            });
-            if (!refResp.ok) throw new Error('Ref fetch failed');
-            const refData = await refResp.json();
-            const parentSha = refData.object.sha;
+            const refResp = await fetchRetry(api + '/ref/heads/main', { headers: hdrs }, 'Ref fetch failed');
+            const parentSha = (await refResp.json()).object.sha;
 
-            // Step 3: Get current tree
-            const commitResp = await fetch('https://api.github.com/repos/' + repo + '/git/commits/' + parentSha, {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
-            });
-            if (!commitResp.ok) throw new Error('Commit fetch failed');
-            const commitData = await commitResp.json();
+            const commitResp = await fetchRetry(api + '/commits/' + parentSha, { headers: hdrs }, 'Commit fetch failed');
+            const treeSha = (await commitResp.json()).tree.sha;
 
-            // Step 4: Create new tree with updated file
-            const treeResp = await fetch('https://api.github.com/repos/' + repo + '/git/trees', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+            const treeResp = await fetchRetry(api + '/trees', {
+                method: 'POST', headers: postHdrs,
                 body: JSON.stringify({
-                    base_tree: commitData.tree.sha,
+                    base_tree: treeSha,
                     tree: [{ path: GH_PATH, mode: '100644', type: 'blob', sha: blobData.sha }]
                 })
-            });
-            if (!treeResp.ok) throw new Error('Tree create failed');
-            const treeData = await treeResp.json();
+            }, 'Tree create failed');
+            const newTreeSha = (await treeResp.json()).sha;
 
-            // Step 5: Create commit
-            const newCommitResp = await fetch('https://api.github.com/repos/' + repo + '/git/commits', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: 'Update love data', tree: treeData.sha, parents: [parentSha] })
-            });
-            if (!newCommitResp.ok) throw new Error('Commit create failed');
-            const newCommit = await newCommitResp.json();
+            const newCommitResp = await fetchRetry(api + '/commits', {
+                method: 'POST', headers: postHdrs,
+                body: JSON.stringify({ message: 'Update love data', tree: newTreeSha, parents: [parentSha] })
+            }, 'Commit create failed');
+            const newCommitSha = (await newCommitResp.json()).sha;
 
-            // Step 6: Update ref
-            const updateRefResp = await fetch('https://api.github.com/repos/' + repo + '/git/refs/heads/main', {
-                method: 'PATCH',
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sha: newCommit.sha, force: true })
-            });
-            if (!updateRefResp.ok) throw new Error('Ref update failed');
+            await fetchRetry(api + '/refs/heads/main', {
+                method: 'PATCH', headers: postHdrs,
+                body: JSON.stringify({ sha: newCommitSha, force: true })
+            }, 'Ref update failed');
 
             // Cache locally so refresh doesn't need to wait for GitHub Pages deploy
             cacheData(output);
