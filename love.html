@@ -277,10 +277,11 @@
         /* Photo Gallery */
         /* Tag Bar */
         .category-bar {
-            display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px;
-            -webkit-overflow-scrolling: touch;
+            display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 12px;
+            max-height: 40px; overflow: hidden; transition: max-height 0.3s;
+            position: relative;
         }
-        .category-bar::-webkit-scrollbar { display: none; }
+        .category-bar.expanded { max-height: 500px; }
         .cat-chip {
             flex-shrink: 0; padding: 6px 14px; border-radius: 16px; cursor: pointer;
             font-size: 13px; font-weight: 600; border: 1.5px solid var(--border);
@@ -289,6 +290,7 @@
         .cat-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         .cat-chip.ai-btn { border-style: dashed; color: var(--accent); background: transparent; display: none; }
         .editing .cat-chip.ai-btn { display: inline-block; }
+        .cat-chip.expand-chip { color: var(--accent); background: transparent; border-style: dashed; }
 
         .gallery {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
@@ -957,15 +959,24 @@
         (appData.photos || []).forEach(p => {
             (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
         });
-        // Show top 20 most-used tags
         const tags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]).slice(0, 20);
         const list = ['all', ...tags];
-        bar.innerHTML = list.map(t => {
+        const chipsHtml = list.map(t => {
             const label = t === 'all' ? '全部' : esc(t) + '·' + tagCounts[t];
             const active = t === currentTag ? ' active' : '';
             const val = t === 'all' ? 'all' : esc(t).replace(/'/g, "\\'");
             return '<span class="cat-chip' + active + '" onclick="setTag(\'' + val + '\')">' + label + '</span>';
-        }).join('') + '<span class="cat-chip ai-btn" onclick="runAITagging()">&#x1F916; AI识别</span>';
+        }).join('');
+        const aiBtn = '<span class="cat-chip ai-btn" onclick="runAITagging()">&#x1F916; AI识别</span>';
+        const expandBtn = tags.length > 3 ? '<span class="cat-chip expand-chip" onclick="toggleTagBar(event)">' + (bar.classList.contains('expanded') ? '收起' : '展开...') + '</span>' : '';
+        bar.innerHTML = chipsHtml + aiBtn + expandBtn;
+    }
+
+    function toggleTagBar(e) {
+        if (e) e.stopPropagation();
+        const bar = document.getElementById('categoryBar');
+        bar.classList.toggle('expanded');
+        renderTagBar();
     }
 
     function setTag(t) {
