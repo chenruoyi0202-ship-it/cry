@@ -2178,49 +2178,57 @@
         }
 
         try {
+            showToast('压缩照片中...');
             await autoCompressLargePhotos();
 
             const now = new Date().toISOString();
             appData._updatedAt = now;
             const encrypted = await encryptData(pwd, appData);
             const output = JSON.stringify({ encrypted, updatedAt: now });
+            const sizeKB = Math.round(output.length / 1024);
             const content = bufToB64(new TextEncoder().encode(output));
+            showToast('加密完成 ' + sizeKB + 'KB，上传中...');
 
             const hdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' };
             const postHdrs = { ...hdrs, 'Content-Type': 'application/json' };
             const api = 'https://api.github.com/repos/' + repo + '/git';
 
+            showToast('1/5 上传文件 (' + sizeKB + 'KB)...');
             const blobResp = await fetchRetry(api + '/blobs', {
                 method: 'POST', headers: postHdrs,
                 body: JSON.stringify({ content, encoding: 'base64' })
-            }, 'Blob create failed');
+            }, '上传文件失败');
             const blobData = await blobResp.json();
 
-            const refResp = await fetchRetry(api + '/ref/heads/main', { headers: hdrs }, 'Ref fetch failed');
+            showToast('2/5 读取分支...');
+            const refResp = await fetchRetry(api + '/ref/heads/main', { headers: hdrs }, '读取分支失败');
             const parentSha = (await refResp.json()).object.sha;
 
-            const commitResp = await fetchRetry(api + '/commits/' + parentSha, { headers: hdrs }, 'Commit fetch failed');
+            showToast('3/5 读取提交...');
+            const commitResp = await fetchRetry(api + '/commits/' + parentSha, { headers: hdrs }, '读取提交失败');
             const treeSha = (await commitResp.json()).tree.sha;
 
+            showToast('4/5 创建提交...');
             const treeResp = await fetchRetry(api + '/trees', {
                 method: 'POST', headers: postHdrs,
                 body: JSON.stringify({
                     base_tree: treeSha,
                     tree: [{ path: GH_PATH, mode: '100644', type: 'blob', sha: blobData.sha }]
                 })
-            }, 'Tree create failed');
+            }, '创建树失败');
             const newTreeSha = (await treeResp.json()).sha;
 
             const newCommitResp = await fetchRetry(api + '/commits', {
                 method: 'POST', headers: postHdrs,
                 body: JSON.stringify({ message: 'Update love data', tree: newTreeSha, parents: [parentSha] })
-            }, 'Commit create failed');
+            }, '创建提交失败');
             const newCommitSha = (await newCommitResp.json()).sha;
 
+            showToast('5/5 更新分支...');
             await fetchRetry(api + '/refs/heads/main', {
                 method: 'PATCH', headers: postHdrs,
                 body: JSON.stringify({ sha: newCommitSha, force: true })
-            }, 'Ref update failed');
+            }, '更新分支失败');
 
             // Cache locally so refresh doesn't need to wait for GitHub Pages deploy
             cacheData(output);
