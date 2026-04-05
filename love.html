@@ -968,6 +968,7 @@
             return '<span class="cat-chip' + active + '" onclick="setTag(\'' + val + '\')">' + label + '</span>';
         }).join('');
         const aiBtn = '<span class="cat-chip ai-btn" onclick="runAITagging()">&#x1F916; AI识别</span>';
+        const manageBtn = '<span class="cat-chip ai-btn" onclick="manageTagsModal()">&#x1F527; 管理标签</span>';
         const hiddenCount = allTags.length - visibleTags.length;
         let expandBtn = '';
         if (expanded) {
@@ -975,7 +976,80 @@
         } else if (hiddenCount > 0) {
             expandBtn = '<span class="cat-chip expand-chip" onclick="toggleTagBar(event)">+' + hiddenCount + ' 展开</span>';
         }
-        bar.innerHTML = chipsHtml + aiBtn + expandBtn;
+        bar.innerHTML = chipsHtml + aiBtn + manageBtn + expandBtn;
+    }
+
+    function manageTagsModal() {
+        const tagCounts = {};
+        (appData.photos || []).forEach(p => {
+            (p.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+        });
+        const tags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+        if (!tags.length) return alert('没有标签');
+        const rows = tags.map(t => {
+            const safeT = esc(t).replace(/'/g, "\\'");
+            return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">' +
+                '<span style="flex:1;font-size:14px;">' + esc(t) + ' <span style="color:var(--text2);font-size:12px;">(' + tagCounts[t] + ')</span></span>' +
+                '<button onclick="renameTag(\'' + safeT + '\')" style="padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;">重命名</button>' +
+                '<button onclick="deleteTag(\'' + safeT + '\')" style="padding:4px 10px;background:#e74c3c;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;">删除</button>' +
+                '</div>';
+        }).join('');
+        const m = document.getElementById('modalContent');
+        const o = document.getElementById('modalOverlay');
+        m.innerHTML = '<h3>管理标签 (' + tags.length + ')</h3>' +
+            '<div style="max-height:50vh;overflow-y:auto;">' + rows + '</div>' +
+            '<div class="modal-actions"><button class="btn-secondary" onclick="closeModal()">关闭</button></div>';
+        o.classList.add('open');
+    }
+
+    function renameTag(oldName) {
+        const m = document.getElementById('modalContent');
+        const o = document.getElementById('modalOverlay');
+        m.innerHTML = '<h3>重命名标签</h3>' +
+            '<label>原名</label><input value="' + esc(oldName) + '" disabled>' +
+            '<label>新名称</label><input id="mNewTag" value="' + esc(oldName) + '">' +
+            '<div class="modal-actions"><button class="btn-secondary" onclick="manageTagsModal()">返回</button>' +
+            '<button class="btn-primary" onclick="confirmRenameTag(\'' + esc(oldName).replace(/'/g, "\\'") + '\')">确定</button></div>';
+        o.classList.add('open');
+        setTimeout(() => document.getElementById('mNewTag').focus(), 100);
+    }
+
+    function confirmRenameTag(oldName) {
+        const newName = document.getElementById('mNewTag').value.trim();
+        if (!newName || newName === oldName) { manageTagsModal(); return; }
+        appData.photos.forEach(p => {
+            if (!p.tags) return;
+            p.tags = p.tags.map(t => t === oldName ? newName : t);
+            // Deduplicate
+            p.tags = [...new Set(p.tags)];
+        });
+        dirty = true;
+        showToast('已重命名为 ' + newName);
+        manageTagsModal();
+        renderGallery();
+    }
+
+    function deleteTag(name) {
+        const m = document.getElementById('modalContent');
+        const o = document.getElementById('modalOverlay');
+        m.innerHTML = '<h3>删除标签</h3>' +
+            '<p style="color:var(--text2);font-size:14px;line-height:1.6;">确认从所有照片中删除标签"<strong style="color:var(--text)">' + esc(name) + '</strong>"？<br>照片本身不会被删除。</p>' +
+            '<div class="modal-actions"><button class="btn-secondary" onclick="manageTagsModal()">取消</button>' +
+            '<button class="btn-primary" onclick="confirmDeleteTag(\'' + esc(name).replace(/'/g, "\\'") + '\')" style="background:#e74c3c;">删除</button></div>';
+        o.classList.add('open');
+    }
+
+    function confirmDeleteTag(name) {
+        appData.photos.forEach(p => {
+            if (!p.tags) return;
+            p.tags = p.tags.filter(t => t !== name);
+            if (!p.tags.length) delete p.tags;
+        });
+        if (currentTag === name) currentTag = 'all';
+        dirty = true;
+        showToast('已删除标签');
+        manageTagsModal();
+        renderGallery();
     }
 
     function toggleTagBar(e) {
