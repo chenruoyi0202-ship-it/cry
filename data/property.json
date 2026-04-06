@@ -1,0 +1,187 @@
+{
+  "scrape_time": "2026-04-06T04:00:00",
+  "data_sources": [
+    {"name": "中国房价行情", "id": "creprice", "url": "https://m.creprice.cn/community/0046012606.html?city=sz"},
+    {"name": "安居客", "id": "anjuke", "url": "https://m.anjuke.com/sz/trendency/baoan-q-bhwsz/"},
+    {"name": "乐有家", "id": "leyoujia", "url": "https://shenzhen.leyoujia.com/ysl/70886.html"},
+    {"name": "贝壳找房", "id": "ke", "url": "https://sz.ke.com/xiaoqu/"},
+    {"name": "深圳房地产信息网", "id": "szhome", "url": "https://bol.szhome.com/housedetail/4056.html"},
+    {"name": "中原地产", "id": "centanet", "url": "https://sz.centanet.com/"},
+    {"name": "深圳住建局", "id": "zjj", "url": "https://zjj.sz.gov.cn/"}
+  ],
+  "communities": [
+    {
+      "name": "幸福港湾尚品居",
+      "alias": ["幸福港湾二期", "尚品居"],
+      "area": "碧海片区",
+      "district": "宝安区",
+      "street": "西乡街道",
+      "address": "碧海西乡大道308号（前海中心与碧海中心双核交汇处）",
+      "build_year": 2016,
+      "total_units": 959,
+      "buildings": 5,
+      "property_type": "住宅+商业",
+      "developer": "深圳市鸿荣源投资发展有限公司",
+      "land_area_sqm": 10903,
+      "total_building_area_sqm": 103887,
+      "commercial_area_sqm": 24000,
+      "parking": "三层地下停车库",
+      "property_fee": 3.8,
+      "green_rate": 30,
+      "volume_rate": 6.8,
+      "prices": {
+        "avg_unit_price": 72000,
+        "gov_reference_price": 68000,
+        "source_prices": {
+          "creprice": {"price": 74546, "date": "2024-12", "note": "中国房价行情网均价"},
+          "centanet": {"price": 73500, "date": "2025", "note": "中原地产参考售价"},
+          "leyoujia": {"price": 70886, "date": "2025", "note": "乐有家挂牌均价"},
+          "gov": {"price": 68000, "date": "2024", "note": "深圳住建局二手房成交参考价"}
+        },
+        "price_range": [60000, 82000],
+        "launch_price": 54000,
+        "launch_year": 2016
+      },
+      "rental": {
+        "avg_rent": 5800,
+        "rent_per_sqm": 68,
+        "rent_range": [3800, 9500],
+        "source_rents": {
+          "estimated_2room": {"rent": 4500, "area": "63㎡", "type": "2室1厅"},
+          "estimated_3room": {"rent": 6200, "area": "89㎡", "type": "3室2厅"},
+          "estimated_4room": {"rent": 8500, "area": "133㎡", "type": "4室2厅"}
+        },
+        "note": "基于深圳全市商品房均租74.2元/㎡/月及片区调整系数估算"
+      },
+      "rent_yield": 1.13,
+      "rent_yield_note": "年租售比 = 年租金 / 房屋总价 × 100%",
+      "floor_plans": [
+        {"type": "2室1厅1卫", "area_sqm": 63, "count": 192, "avg_price": 68000, "total_price_range": "428-504万"},
+        {"type": "2室2厅1卫", "area_sqm": 75, "count": 168, "avg_price": 70000, "total_price_range": "525-600万"},
+        {"type": "3室2厅1卫", "area_sqm": 89, "count": 288, "avg_price": 72000, "total_price_range": "641-712万"},
+        {"type": "3室2厅2卫", "area_sqm": 105, "count": 192, "avg_price": 74000, "total_price_range": "777-840万"},
+        {"type": "4室2厅2卫", "area_sqm": 133, "count": 119, "avg_price": 76000, "total_price_range": "1011-1064万"}
+      ],
+      "price_trend": [
+        {"month": "2024-01", "price": 71200},
+        {"month": "2024-02", "price": 70800},
+        {"month": "2024-03", "price": 71500},
+        {"month": "2024-04", "price": 72100},
+        {"month": "2024-05", "price": 71800},
+        {"month": "2024-06", "price": 72500},
+        {"month": "2024-07", "price": 73000},
+        {"month": "2024-08", "price": 72800},
+        {"month": "2024-09", "price": 73200},
+        {"month": "2024-10", "price": 73800},
+        {"month": "2024-11", "price": 74200},
+        {"month": "2024-12", "price": 74546},
+        {"month": "2025-01", "price": 74100},
+        {"month": "2025-02", "price": 73500},
+        {"month": "2025-03", "price": 73800},
+        {"month": "2025-04", "price": 72800},
+        {"month": "2025-05", "price": 72200},
+        {"month": "2025-06", "price": 71500},
+        {"month": "2025-07", "price": 71000},
+        {"month": "2025-08", "price": 71200},
+        {"month": "2025-09", "price": 71800},
+        {"month": "2025-10", "price": 72000},
+        {"month": "2025-11", "price": 72300},
+        {"month": "2025-12", "price": 72500},
+        {"month": "2026-01", "price": 72100},
+        {"month": "2026-02", "price": 71800},
+        {"month": "2026-03", "price": 72000}
+      ],
+      "amenities": {
+        "metro": [
+          {"line": "地铁1号线", "station": "西乡站", "distance_m": 800},
+          {"line": "地铁11号线", "station": "碧海湾站", "distance_m": 600}
+        ],
+        "schools": [
+          "宝安中学(集团)外国语学校",
+          "碧海小学",
+          "西乡中心小学",
+          "文汇学校"
+        ],
+        "shopping": [
+          "壹方城购物中心",
+          "海雅缤纷城",
+          "天虹商场(西乡店)",
+          "碧海湾公园商业街"
+        ],
+        "parks": [
+          "碧海湾公园",
+          "西乡公园",
+          "铁仔山公园"
+        ],
+        "hospitals": [
+          "宝安区人民医院",
+          "西乡人民医院"
+        ]
+      },
+      "transport": {
+        "highways": ["沿江高速西乡出入口"],
+        "description": "海、陆、空、铁四维立体交通体系"
+      }
+    }
+  ],
+  "bihai_overview": {
+    "area_name": "碧海片区",
+    "district": "宝安区",
+    "street": "西乡街道",
+    "avg_price": 67500,
+    "price_range": [45000, 90000],
+    "communities_count": 18,
+    "description": "碧海片区位于宝安中心区西侧，属填海区域，配套成熟，以改善型住宅为主",
+    "price_trend": [
+      {"month": "2024-01", "price": 65000},
+      {"month": "2024-03", "price": 65800},
+      {"month": "2024-06", "price": 67200},
+      {"month": "2024-09", "price": 68500},
+      {"month": "2024-12", "price": 69000},
+      {"month": "2025-03", "price": 68200},
+      {"month": "2025-06", "price": 67000},
+      {"month": "2025-09", "price": 67500},
+      {"month": "2025-12", "price": 67800},
+      {"month": "2026-01", "price": 67500},
+      {"month": "2026-03", "price": 67500}
+    ],
+    "top_communities": [
+      {"name": "宝安中心区(宝中)", "price": 92000, "type": "改善", "note": "宝中片区挂牌均价9万+"},
+      {"name": "阳光海湾花园", "price": 79115, "type": "改善", "buildings": 30, "units": 600, "note": "含22栋别墅式小洋房+7-9栋高层"},
+      {"name": "京地海樾府", "price": 74300, "type": "新盘", "note": "近地铁11号线碧海湾A出口，建面55-105㎡"},
+      {"name": "幸福港湾尚品居", "price": 72000, "type": "改善", "buildings": 5, "units": 959},
+      {"name": "碧海玖号花园", "price": 70000, "type": "新盘", "note": "2026年3月开盘，容积率2.2"},
+      {"name": "碧海名园三期", "price": 64557, "type": "刚改", "buildings": 8, "units": 320},
+      {"name": "富通城三期", "price": 63745, "type": "刚改"},
+      {"name": "碧海名园一期", "price": 60500, "type": "刚需", "buildings": 13, "units": 262},
+      {"name": "碧海名园", "price": 58901, "type": "刚需", "note": "链家参考均价"},
+      {"name": "碧海新苑", "price": 55000, "type": "刚需"},
+      {"name": "碧海天", "price": 52000, "type": "刚需"},
+      {"name": "碧海湾花园", "price": 51511, "type": "刚需", "buildings": 5, "units": 400, "note": "近地铁1号线西乡站364米"}
+    ],
+    "new_projects": [
+      {
+        "name": "京地海樾府",
+        "price": 74300,
+        "area_range": "55-105㎡",
+        "rooms": "2-4房",
+        "metro": "地铁11号线碧海湾A出口",
+        "status": "在售"
+      },
+      {
+        "name": "碧海玖号花园",
+        "price": 70000,
+        "volume_rate": 2.2,
+        "status": "2026年3月开盘",
+        "note": "山海美居概念"
+      }
+    ]
+  },
+  "market_context": {
+    "shenzhen_avg_rent": 5609.7,
+    "shenzhen_rent_per_sqm": 74.2,
+    "shenzhen_rent_note": "2025年深圳套均租金同比上涨1.1%",
+    "market_trend": "2026年深圳楼市延续总量平稳、结构分化格局",
+    "baoan_overview": "宝中碧海为填海区域，宝中片区以改善为主挂牌均价9万+，碧海片区价格梯度明显"
+  }
+}
