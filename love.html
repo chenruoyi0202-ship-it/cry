@@ -177,8 +177,9 @@
         }
         .ann-timeline::-webkit-scrollbar { display: none; }
         .ann-tl-track {
-            display: flex; align-items: flex-start; position: relative;
-            min-width: max-content; padding: 0 20px;
+            display: flex; align-items: flex-start; justify-content: center;
+            position: relative; min-width: max-content; padding: 0 20px;
+            margin: 0 auto;
         }
         .ann-tl-line {
             position: absolute; top: 58px; left: 20px; right: 20px; height: 2px;
@@ -1475,7 +1476,7 @@
                 ? daysBetween(d, now)
                 : (daysBetween(now, d) >= 0 ? daysBetween(now, d) : -daysBetween(now, d));
             const label = a.type === 'countup' ? days + '天' : (daysBetween(now, d) >= 0 ? '还有' + days + '天' : '已过' + days + '天');
-            const dateStr = a.date.substring(5).replace('-', '/');
+            const dateStr = a.date.replace(/-/g, '/');
             return '<div class="ann-tl-node' + (isPast ? '' : ' future') + '" onclick="editAnn(\'' + a.id + '\')">' +
                 '<div class="ann-tl-icon">' + a.icon + '</div>' +
                 '<div class="ann-tl-dot"></div>' +
