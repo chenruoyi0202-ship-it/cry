@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>偏头痛记录 - 自动化测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: #f8f9fa; padding: 20px; }
+        h1 { font-size: 20px; margin-bottom: 16px; }
+        .summary { padding: 16px; border-radius: 12px; margin-bottom: 20px; font-size: 15px; font-weight: 600; }
+        .summary.running { background: #fff3cd; color: #856404; }
+        .summary.pass { background: #d4edda; color: #155724; }
+        .summary.fail { background: #f8d7da; color: #721c24; }
+        .test-group { margin-bottom: 16px; }
+        .test-group h2 { font-size: 15px; color: #495057; margin-bottom: 8px; padding-left: 4px; }
+        .test-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fff; border-radius: 8px; margin-bottom: 4px; font-size: 14px; border: 1px solid #eee; }
+        .test-item.pass { border-left: 3px solid #28a745; }
+        .test-item.fail { border-left: 3px solid #dc3545; }
+        .test-item.skip { border-left: 3px solid #ffc107; opacity: 0.7; }
+        .icon { font-size: 16px; flex-shrink: 0; }
+        .name { flex: 1; }
+        .time { font-size: 12px; color: #999; }
+        .error { font-size: 12px; color: #dc3545; margin-top: 4px; padding: 6px 10px; background: #fff5f5; border-radius: 4px; word-break: break-all; }
+        .btn-rerun { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; background: #43b89c; color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-rerun:active { transform: scale(0.96); }
+        iframe { display: none; }
+    </style>
+</head>
+<body>
+    <h1>偏头痛记录 - 自动化测试</h1>
+    <div class="summary running" id="summary">测试运行中...</div>
+    <div id="results"></div>
+    <button class="btn-rerun" onclick="location.reload()">重新运行</button>
+    <iframe id="appFrame" src="migraine.html"></iframe>
+
+    <script>
+        const results = [];
+        let doc, win;
+
+        // ==================== Test Runner ====================
+        function assert(condition, msg) {
+            if (!condition) throw new Error(msg || 'Assertion failed');
+        }
+        function assertEqual(a, b, msg) {
+            if (a !== b) throw new Error(msg || `Expected "${b}" but got "${a}"`);
+        }
+        function assertIncludes(arr, val, msg) {
+            if (!arr.includes(val)) throw new Error(msg || `Expected array to include "${val}"`);
+        }
+
+        async function runTest(group, name, fn) {
+            const start = performance.now();
+            try {
+                await fn();
+                results.push({ group, name, pass: true, time: performance.now() - start });
+            } catch (e) {
+                results.push({ group, name, pass: false, error: e.message, time: performance.now() - start });
+            }
+        }
+
+        function renderResults() {
+            const el = document.getElementById('results');
+            const groups = {};
+            results.forEach(r => {
+                if (!groups[r.group]) groups[r.group] = [];
+                groups[r.group].push(r);
+            });
+            const passed = results.filter(r => r.pass).length;
+            const failed = results.filter(r => !r.pass).length;
+            const total = results.length;
+
+            const summary = document.getElementById('summary');
+            summary.textContent = `${passed}/${total} 通过` + (failed ? ` | ${failed} 失败` : ' | 全部通过');
+            summary.className = 'summary ' + (failed ? 'fail' : 'pass');
+
+            let html = '';
+            for (const [group, tests] of Object.entries(groups)) {
+                html += `<div class="test-group"><h2>${group}</h2>`;
+                tests.forEach(t => {
+                    const icon = t.pass ? '&#10004;' : '&#10008;';
+                    const cls = t.pass ? 'pass' : 'fail';
+                    html += `<div class="test-item ${cls}">
+                        <span class="icon">${icon}</span>
+                        <span class="name">${t.name}</span>
+                        <span class="time">${t.time.toFixed(0)}ms</span>
+                    </div>`;
+                    if (t.error) html += `<div class="error">${t.error}</div>`;
+                });
+                html += '</div>';
+            }
+            el.innerHTML = html;
+        }
+
+        // ==================== Helper ====================
+        function resetApp() {
+            win.records = [];
+            win.saveRecords();
+            win.editingId = null;
+            win.initForm();
+            localStorage.removeItem('migraine_dark');
+            localStorage.removeItem('migraine_sync_config');
+        }
+
+        function fillAndSave(overrides = {}) {
+            const defaults = {
+                datetime: '2025-03-15T10:30',
+                intensity: 7,
+                duration: 2.5,
+                medication: '布洛芬 400mg',
+                notes: '午饭后发作',
+            };
+            const data = { ...defaults, ...overrides };
+            doc.getElementById('inputDatetime').value = data.datetime;
+            doc.getElementById('inputIntensity').value = data.intensity;
+            win.updateIntensity();
+            doc.getElementById('inputDuration').value = data.duration;
+            doc.getElementById('inputMedication').value = data.medication;
+            doc.getElementById('inputNotes').value = data.notes;
+        }
+
+        function clickTag(groupId, value) {
+            const tag = doc.querySelector(`#${groupId} .tag-toggle[data-value="${value}"]`);
+            if (tag) tag.click();
+        }
+
+        function injectRecord(r) {
+            const defaults = { id: Date.now() + Math.random(), datetime: '2025-03-15T10:00', intensity: 5, duration: 1, location: [], symptoms: [], triggers: [], medication: '', notes: '', weather: '' };
+            win.records.push({ ...defaults, ...r });
+            win.saveRecords();
+        }
+
+        // ==================== Tests ====================
+        async function runAllTests() {
+            const frame = document.getElementById('appFrame');
+            await new Promise(resolve => {
+                if (frame.contentDocument.readyState === 'complete') resolve();
+                else frame.onload = resolve;
+            });
+            // Wait for app init
+            await new Promise(r => setTimeout(r, 300));
+            doc = frame.contentDocument;
+            win = frame.contentWindow;
+
+            // ---- Page Load ----
+            await runTest('页面加载', '页面标题正确', () => {
+                assertEqual(doc.title, '偏头痛记录');
+            });
+            await runTest('页面加载', '主卡片存在', () => {
+                assert(doc.querySelector('.card'), '找不到 .card 元素');
+            });
+            await runTest('页面加载', 'Header 标题正确', () => {
+                assertEqual(doc.querySelector('.header h1').textContent, '偏头痛记录');
+            });
+            await runTest('页面加载', 'SVG 图标存在', () => {
+                assert(doc.querySelector('.header-icon svg'), '找不到 SVG 图标');
+            });
+            await runTest('页面加载', '5 个 Tab 按钮', () => {
+                assertEqual(doc.querySelectorAll('.tab').length, 5);
+            });
+            await runTest('页面加载', '记录 Tab 默认激活', () => {
+                assert(doc.querySelectorAll('.tab')[0].classList.contains('active'));
+            });
+
+            // ---- Dark Mode ----
+            await runTest('深色模式', '切换深色模式', () => {
+                resetApp();
+                win.toggleDarkMode();
+                assert(doc.body.classList.contains('dark'), '没有添加 dark class');
+                assertEqual(localStorage.getItem('migraine_dark'), '1');
+            });
+            await runTest('深色模式', '切换回浅色模式', () => {
+                win.toggleDarkMode();
+                assert(!doc.body.classList.contains('dark'), 'dark class 没有移除');
+                assertEqual(localStorage.getItem('migraine_dark'), '0');
+            });
+
+            // ---- Tab Switching ----
+            await runTest('Tab 切换', '切换到历史', () => {
+                win.switchTab('history');
+                assertEqual(doc.getElementById('tabHistory').style.display, '');
+                assertEqual(doc.getElementById('tabRecord').style.display, 'none');
+            });
+            await runTest('Tab 切换', '切换到日历', () => {
+                win.switchTab('calendar');
+                assertEqual(doc.getElementById('tabCalendar').style.display, '');
+            });
+            await runTest('Tab 切换', '切换到统计', () => {
+                win.switchTab('stats');
+                assertEqual(doc.getElementById('tabStats').style.display, '');
+            });
+            await runTest('Tab 切换', '切换到同步', () => {
+                win.switchTab('sync');
+                assertEqual(doc.getElementById('tabSync').style.display, '');
+            });
+            await runTest('Tab 切换', '切换回记录', () => {
+                win.switchTab('record');
+                assertEqual(doc.getElementById('tabRecord').style.display, '');
+            });
+
+            // ---- Intensity ----
+            await runTest('疼痛强度', '轻度颜色 (1-3)', () => {
+                assertEqual(win.getIntensityColor(1), '#43b89c');
+                assertEqual(win.getIntensityColor(3), '#43b89c');
+            });
+            await runTest('疼痛强度', '中度颜色 (4-6)', () => {
+                assertEqual(win.getIntensityColor(4), '#e6a23c');
+                assertEqual(win.getIntensityColor(6), '#e6a23c');
+            });
+            await runTest('疼痛强度', '重度颜色 (7-10)', () => {
+                assertEqual(win.getIntensityColor(7), '#d9636a');
+                assertEqual(win.getIntensityColor(10), '#d9636a');
+            });
+            await runTest('疼痛强度', '标签文字', () => {
+                assertEqual(win.getIntensityLabel(2), '轻度');
+                assertEqual(win.getIntensityLabel(5), '中度');
+                assertEqual(win.getIntensityLabel(8), '重度');
+            });
+            await runTest('疼痛强度', '滑块更新显示', () => {
+                doc.getElementById('inputIntensity').value = 8;
+                win.updateIntensity();
+                assertEqual(doc.getElementById('intensityVal').textContent, '8');
+            });
+
+            // ---- Tag Toggles ----
+            await runTest('标签选择', '点击选中标签', () => {
+                resetApp();
+                clickTag('groupLocation', '左侧');
+                const tag = doc.querySelector('#groupLocation .tag-toggle[data-value="左侧"]');
+                assert(tag.classList.contains('active'), '标签没有激活');
+            });
+            await runTest('标签选择', '再次点击取消', () => {
+                clickTag('groupLocation', '左侧');
+                const tag = doc.querySelector('#groupLocation .tag-toggle[data-value="左侧"]');
+                assert(!tag.classList.contains('active'), '标签没有取消');
+            });
+            await runTest('标签选择', '获取选中值', () => {
+                clickTag('groupSymptoms', '恶心');
+                clickTag('groupSymptoms', '畏光');
+                const vals = win.getTagValues('groupSymptoms');
+                assertIncludes(vals, '恶心');
+                assertIncludes(vals, '畏光');
+                assertEqual(vals.length, 2);
+            });
+            await runTest('标签选择', '其他诱因显示输入框', () => {
+                resetApp();
+                clickTag('groupTriggers', '其他');
+                const input = doc.getElementById('inputOtherTrigger');
+                assert(input.style.display !== 'none', '输入框没有显示');
+            });
+
+            // ---- Save Record ----
+            await runTest('保存记录', '空时间不保存', async () => {
+                resetApp();
+                doc.getElementById('inputDatetime').value = '';
+                await win.addEpisode();
+                assertEqual(win.records.length, 0);
+            });
+            await runTest('保存记录', '填写并保存', async () => {
+                resetApp();
+                fillAndSave();
+                // Mock fetchWeather to speed up
+                const origFetch = win.fetchWeather;
+                win.fetchWeather = async () => null;
+                await win.addEpisode();
+                win.fetchWeather = origFetch;
+                assertEqual(win.records.length, 1);
+                assertEqual(win.records[0].intensity, 7);
+                assertEqual(win.records[0].duration, 2.5);
+                assertEqual(win.records[0].medication, '布洛芬 400mg');
+            });
+            await runTest('保存记录', 'localStorage 持久化', () => {
+                const saved = JSON.parse(localStorage.getItem('migraine_records'));
+                assert(saved && saved.length >= 1, 'localStorage 没有保存');
+            });
+            await runTest('保存记录', '保存后表单重置', () => {
+                assertEqual(doc.getElementById('inputIntensity').value, '5');
+                assertEqual(doc.getElementById('inputMedication').value, '');
+            });
+            await runTest('保存记录', '按钮显示加载状态', async () => {
+                resetApp();
+                fillAndSave();
+                const btn = doc.querySelector('#tabRecord .btn-primary');
+                let sawDisabled = false;
+                const origFetch = win.fetchWeather;
+                win.fetchWeather = async () => {
+                    sawDisabled = btn.disabled;
+                    return null;
+                };
+                await win.addEpisode();
+                win.fetchWeather = origFetch;
+                assert(sawDisabled, '保存期间按钮没有被禁用');
+                assert(!btn.disabled, '保存后按钮没有恢复');
+            });
+
+            // ---- Edit Record ----
+            await runTest('编辑记录', '加载记录到表单', () => {
+                resetApp();
+                injectRecord({ id: 99901, datetime: '2025-04-01T14:00', intensity: 8, location: ['左侧'], symptoms: ['恶心'], medication: '对乙酰氨基酚' });
+                win.editEpisode(99901);
+                assertEqual(doc.getElementById('inputDatetime').value, '2025-04-01T14:00');
+                assertEqual(doc.getElementById('inputIntensity').value, '8');
+                assertEqual(doc.getElementById('inputMedication').value, '对乙酰氨基酚');
+                assertEqual(win.editingId, 99901);
+            });
+            await runTest('编辑记录', '标题变为编辑', () => {
+                assertEqual(doc.querySelector('#tabRecord .section-title').textContent, '编辑记录');
+                assertEqual(doc.querySelector('#tabRecord .btn-primary').textContent, '更新记录');
+            });
+            await runTest('编辑记录', '更新保存', async () => {
+                doc.getElementById('inputMedication').value = '布洛芬 600mg';
+                const origFetch = win.fetchWeather;
+                win.fetchWeather = async () => null;
+                await win.addEpisode();
+                win.fetchWeather = origFetch;
+                const r = win.records.find(r => r.id === 99901);
+                assertEqual(r.medication, '布洛芬 600mg');
+            });
+
+            // ---- Delete Record ----
+            await runTest('删除记录', '删除指定记录', () => {
+                resetApp();
+                injectRecord({ id: 88801 });
+                injectRecord({ id: 88802 });
+                assertEqual(win.records.length, 2);
+                // Mock confirm
+                const origConfirm = win.confirm;
+                win.confirm = () => true;
+                win.deleteEpisode(88801);
+                win.confirm = origConfirm;
+                assertEqual(win.records.length, 1);
+                assertEqual(win.records[0].id, 88802);
+            });
+            await runTest('删除记录', '取消删除不执行', () => {
+                const origConfirm = win.confirm;
+                win.confirm = () => false;
+                win.deleteEpisode(88802);
+                win.confirm = origConfirm;
+                assertEqual(win.records.length, 1);
+            });
+
+            // ---- History Rendering ----
+            await runTest('历史列表', '空状态显示', () => {
+                resetApp();
+                win.switchTab('history');
+                assert(doc.querySelector('#historyList .empty-state'), '没有显示空状态');
+            });
+            await runTest('历史列表', '有记录时渲染', () => {
+                injectRecord({ datetime: '2025-03-10T09:00', intensity: 3, location: ['前额'] });
+                injectRecord({ datetime: '2025-03-12T15:00', intensity: 7 });
+                win.renderHistory();
+                const items = doc.querySelectorAll('.history-item');
+                assertEqual(items.length, 2);
+            });
+            await runTest('历史列表', '按时间倒序', () => {
+                const dates = Array.from(doc.querySelectorAll('.hi-date')).map(el => el.textContent);
+                assert(dates.length === 2, '记录数量不对');
+                // 3月12日应在3月10日前面
+                assert(dates[0].includes('12'), '排序不正确: ' + dates.join(', '));
+            });
+
+            // ---- Stats ----
+            await runTest('统计分析', '空状态', () => {
+                resetApp();
+                win.renderStats();
+                assert(doc.querySelector('#statsArea .empty-state'));
+            });
+            await runTest('统计分析', '计算平均强度', () => {
+                resetApp();
+                injectRecord({ intensity: 4 });
+                injectRecord({ intensity: 8 });
+                win.renderStats();
+                const vals = doc.querySelectorAll('.sc-val');
+                assertEqual(vals[0].textContent, '2'); // 总次数
+                assertEqual(vals[1].textContent, '6.0'); // 平均强度
+            });
+            await runTest('统计分析', '诱因频率统计', () => {
+                resetApp();
+                injectRecord({ triggers: ['压力', '睡眠不足'] });
+                injectRecord({ triggers: ['压力'] });
+                injectRecord({ triggers: ['饮食'] });
+                win.renderStats();
+                const freq = win.getFieldFrequency('triggers');
+                assertEqual(freq[0].value, '压力');
+                assertEqual(freq[0].count, 2);
+            });
+
+            // ---- Calendar ----
+            await runTest('日历', '渲染当月', () => {
+                win.switchTab('calendar');
+                const title = doc.getElementById('calTitle').textContent;
+                const now = new Date();
+                assert(title.includes(`${now.getFullYear()}年`), '年份不对');
+                assert(title.includes(`${now.getMonth() + 1}月`), '月份不对');
+            });
+            await runTest('日历', '上月/下月切换', () => {
+                const origTitle = doc.getElementById('calTitle').textContent;
+                win.nextMonth();
+                const newTitle = doc.getElementById('calTitle').textContent;
+                assert(newTitle !== origTitle, '月份没有变化');
+                win.prevMonth();
+                assertEqual(doc.getElementById('calTitle').textContent, origTitle);
+            });
+            await runTest('日历', '有记录的日期显示圆点', () => {
+                resetApp();
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const d = String(now.getDate()).padStart(2, '0');
+                injectRecord({ datetime: `${y}-${m}-${d}T10:00`, intensity: 5 });
+                win.initCalendar();
+                win.renderCalendar();
+                const dots = doc.querySelectorAll('.cal-dot');
+                assert(dots.length >= 1, '没有显示圆点');
+            });
+
+            // ---- Weather Code ----
+            await runTest('天气', 'weatherCodeToText 映射', () => {
+                assertEqual(win.weatherCodeToText(0), '晴');
+                assertEqual(win.weatherCodeToText(3), '阴天');
+                assertEqual(win.weatherCodeToText(61), '小雨');
+                assertEqual(win.weatherCodeToText(75), '大雪');
+                assertEqual(win.weatherCodeToText(95), '雷暴');
+                assertEqual(win.weatherCodeToText(999), '未知');
+            });
+
+            // ---- Format Date ----
+            await runTest('工具函数', 'formatDate 格式化', () => {
+                const result = win.formatDate('2025-03-15T10:30');
+                assert(result.includes('2025年'), '年份不对: ' + result);
+                assert(result.includes('3月'), '月份不对: ' + result);
+                assert(result.includes('15日'), '日期不对: ' + result);
+                assert(result.includes('10:30'), '时间不对: ' + result);
+            });
+            await runTest('工具函数', 'formatDate 空值', () => {
+                assertEqual(win.formatDate(''), '');
+                assertEqual(win.formatDate(null), '');
+            });
+
+            // ---- Toast ----
+            await runTest('Toast 提示', '显示 toast', () => {
+                win.showToast('测试消息');
+                const toast = doc.getElementById('toast');
+                assert(toast.classList.contains('show'), 'toast 没有显示');
+                assertEqual(toast.textContent, '测试消息');
+            });
+            await runTest('Toast 提示', '错误 toast', () => {
+                win.showToast('错误', true);
+                const toast = doc.getElementById('toast');
+                assert(toast.classList.contains('error'), 'toast 没有 error 样式');
+            });
+
+            // ---- Sync Config ----
+            await runTest('同步配置', '保存配置', () => {
+                resetApp();
+                doc.getElementById('inputToken').value = 'ghp_test123';
+                doc.getElementById('inputRepo').value = 'user/repo';
+                doc.getElementById('inputPassword').value = 'secret';
+                // Mock manualSync to prevent actual API call
+                const origSync = win.manualSync;
+                win.manualSync = () => {};
+                win.saveSyncConfig();
+                win.manualSync = origSync;
+                const saved = JSON.parse(localStorage.getItem('migraine_sync_config'));
+                assertEqual(saved.token, 'ghp_test123');
+                assertEqual(saved.repo, 'user/repo');
+            });
+            await runTest('同步配置', '清除配置', () => {
+                const origConfirm = win.confirm;
+                win.confirm = () => true;
+                win.clearSyncConfig();
+                win.confirm = origConfirm;
+                assertEqual(localStorage.getItem('migraine_sync_config'), null);
+                assertEqual(win.syncConfig, null);
+            });
+
+            // ---- Encryption ----
+            await runTest('AES-256 加密', '加密再解密数据一致', async () => {
+                const testData = [{ id: 1, intensity: 5 }, { id: 2, intensity: 8 }];
+                const password = 'test_password_123';
+                const encrypted = await win.encryptData(testData, password);
+                assert(typeof encrypted === 'string' && encrypted.length > 0, '加密结果为空');
+                const decrypted = await win.decryptData(encrypted, password);
+                assertEqual(JSON.stringify(decrypted), JSON.stringify(testData));
+            });
+            await runTest('AES-256 加密', '错误密码无法解密', async () => {
+                const encrypted = await win.encryptData({ test: 1 }, 'correct');
+                try {
+                    await win.decryptData(encrypted, 'wrong');
+                    throw new Error('应该抛出错误但没有');
+                } catch (e) {
+                    assert(!e.message.includes('应该抛出'), e.message);
+                }
+            });
+
+            // ---- Accessibility ----
+            await runTest('无障碍', 'Dark toggle 有 aria-label', () => {
+                const btn = doc.getElementById('darkToggle');
+                assert(btn.getAttribute('aria-label'), '缺少 aria-label');
+            });
+            await runTest('无障碍', '表单 input 有 label', () => {
+                const inputs = doc.querySelectorAll('#tabRecord .field input, #tabRecord .field textarea');
+                inputs.forEach(input => {
+                    const field = input.closest('.field');
+                    const label = field ? field.querySelector('label') : null;
+                    assert(label, `输入框 ${input.id} 缺少 label`);
+                });
+            });
+            await runTest('无障碍', 'prefers-reduced-motion 支持', () => {
+                const styles = doc.querySelector('style').textContent;
+                assert(styles.includes('prefers-reduced-motion'), '缺少 reduced-motion 媒体查询');
+            });
+
+            // ---- CSS Variables ----
+            await runTest('样式系统', 'CSS 变量已定义', () => {
+                const root = win.getComputedStyle(doc.documentElement);
+                assert(root.getPropertyValue('--accent').trim(), '--accent 未定义');
+                assert(root.getPropertyValue('--card-bg').trim(), '--card-bg 未定义');
+                assert(root.getPropertyValue('--text').trim(), '--text 未定义');
+            });
+            await runTest('样式系统', '深色模式变量覆盖', () => {
+                doc.body.classList.add('dark');
+                const root = win.getComputedStyle(doc.documentElement);
+                const cardBg = root.getPropertyValue('--card-bg').trim();
+                assert(cardBg !== '#fff' && cardBg !== '#ffffff', '深色模式 card-bg 没有变化');
+                doc.body.classList.remove('dark');
+            });
+
+            // ---- Cleanup & Render ----
+            resetApp();
+            renderResults();
+        }
+
+        runAllTests();
+    </script>
+</body>
+</html>
