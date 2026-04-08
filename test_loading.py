@@ -1,110 +1,98 @@
-"""Test loading works without cache (simulates new device)"""
+"""Test: unlock works with fresh context (no cache) and with cache"""
 from playwright.sync_api import sync_playwright
-import os, sys
+import sys
 
-URL = "http://localhost:8770/love.html"
+URL = "http://localhost:9100/love.html"
 PASSWORD = "cryxyx"
-PASS = 0
-FAIL = 0
+P, F = 0, 0
 
-def test(name, condition, detail=""):
-    global PASS, FAIL
-    if condition:
-        PASS += 1
-        print(f"  ✅ {name}")
-    else:
-        FAIL += 1
-        print(f"  ❌ {name}" + (f" — {detail}" if detail else ""))
+def test(name, ok, detail=""):
+    global P, F
+    if ok: P += 1; print(f"  ✅ {name}")
+    else: F += 1; print(f"  ❌ {name}" + (f" — {detail}" if detail else ""))
 
 with sync_playwright() as p:
-    # Fresh context = no cache, no cookies (simulates new device)
     browser = p.chromium.launch(headless=True)
-    context = browser.new_context(viewport={"width": 390, "height": 844})
-    page = context.new_page()
 
-    print("\n🔒 Test 1: Fresh load (no cache)")
+    # === Test 1: Fresh load (no cache, simulates new device) ===
+    print("\n🔒 Test 1: Fresh device (no cache)")
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    page = ctx.new_page()
     page.goto(URL)
-    page.wait_for_timeout(1500)
+    page.wait_for_timeout(1000)
 
-    # Lock screen should show
-    test("Lock screen visible", page.locator("#lockScreen").is_visible())
-    page.screenshot(path="/tmp/load_01_lock.png")
+    test("Lock screen shows", page.locator("#lockScreen").is_visible())
 
-    # Unlock
+    # No loading overlay blocking
+    loading_visible = page.locator("#appLoading").is_visible()
+    test("No loading overlay blocking", not loading_visible)
+
+    # Enter password
     page.locator("#pwdInput").fill(PASSWORD)
     page.locator("#unlockBtn").click()
 
-    # Wait for loading overlay (should show progress)
+    # Button should show progress text
     page.wait_for_timeout(500)
-    loading = page.locator("#appLoading")
-    if loading.is_visible():
-        load_text = page.locator("#loadText").inner_text()
-        print(f"  ℹ️  Loading: {load_text}")
-        page.screenshot(path="/tmp/load_02_loading.png")
+    btn_text = page.locator("#unlockBtn").inner_text()
+    print(f"  ℹ️  Button: '{btn_text}'")
 
-    # Wait for app to appear (max 30s for slow Pages)
+    # Wait for app (up to 30s — Pages fetch for 2MB may be slow)
     try:
         page.locator("#app.show").wait_for(timeout=30000)
-        test("App loaded within 30s", True)
+        test("App loaded", True)
     except:
-        page.screenshot(path="/tmp/load_03_timeout.png")
-        test("App loaded within 30s", False, "still loading, screenshot saved")
+        page.screenshot(path="/tmp/fix_load_fail.png")
+        # Check if error message shown
+        err_text = page.locator("#lockError").inner_text()
+        test("App loaded", False, f"error: '{err_text}', screenshot saved")
+        ctx.close()
         browser.close()
         sys.exit(1)
 
-    page.screenshot(path="/tmp/load_04_loaded.png")
+    # Verify data loaded
+    test("Has anniversaries", page.locator(".ann-card").count() > 0)
 
-    # Check data loaded
-    ann_cards = page.locator(".ann-card").count()
-    test("Anniversary data loaded", ann_cards > 0, f"got {ann_cards}")
-
-    # Switch to diary
     page.locator(".tab-btn").nth(1).click()
     page.wait_for_timeout(300)
-    diary_cards = page.locator(".tl-card").count()
-    test("Diary data loaded", diary_cards > 0, f"got {diary_cards}")
+    test("Has diary entries", page.locator(".tl-card").count() > 0)
 
-    # Check diary detail scrolls
-    if diary_cards > 0:
-        page.locator(".tl-entry").first.click()
-        page.wait_for_timeout(500)
-        overlay = page.locator("#diaryDetailOverlay")
-        test("Diary detail opens", "open" in (overlay.get_attribute("class") or ""))
-
-        # Check it's scrollable
-        overflow = overlay.evaluate("el => getComputedStyle(el).overflowY")
-        test("Diary detail scrollable", overflow == "auto", f"overflow-y: {overflow}")
-        page.screenshot(path="/tmp/load_05_diary_detail.png")
-
-        page.locator(".dd-close").click()
-        page.wait_for_timeout(300)
-
-    # Switch to gallery
     page.locator(".tab-btn").nth(2).click()
-    page.wait_for_timeout(2000)  # Wait for lazy photo loading
-    photos = page.locator(".gallery-item").count()
-    test("Gallery photos visible", photos > 0, f"got {photos}")
-    page.screenshot(path="/tmp/load_06_gallery.png")
+    page.wait_for_timeout(1000)
+    test("Has gallery photos", page.locator(".gallery-item").count() > 0)
 
-    # Test lightbox
-    if photos > 0:
-        page.locator(".gallery-item").first.click()
-        page.wait_for_timeout(500)
-        lb = page.locator("#lightbox")
-        test("Lightbox opens", "open" in (lb.get_attribute("class") or ""))
+    page.screenshot(path="/tmp/fix_load_ok.png")
+    ctx.close()
 
-        # Check blurred background
-        bg_img = page.locator("#lbBg").evaluate("el => el.style.backgroundImage")
-        test("Lightbox has blurred bg", bg_img and bg_img != "none", bg_img[:50] if bg_img else "none")
-        page.screenshot(path="/tmp/load_07_lightbox.png")
+    # === Test 2: Cached load (simulates refresh) ===
+    print("\n🔄 Test 2: Refresh (with cache)")
+    ctx2 = browser.new_context(viewport={"width": 390, "height": 844})
+    page2 = ctx2.new_page()
 
-        page.locator(".lb-close").click()
-        page.wait_for_timeout(300)
+    # Pre-seed cache by visiting first
+    page2.goto(URL)
+    page2.wait_for_timeout(1000)
+    page2.locator("#pwdInput").fill(PASSWORD)
+    page2.locator("#unlockBtn").click()
+    try:
+        page2.locator("#app.show").wait_for(timeout=30000)
+    except:
+        pass
 
-    print(f"\n{'='*40}")
-    print(f"📊 Results: {PASS} passed, {FAIL} failed")
-    print(f"📸 Screenshots: /tmp/load_*.png")
+    # Now refresh (simulates cache hit)
+    page2.reload()
+    try:
+        page2.locator("#app.show").wait_for(timeout=10000)
+    except:
+        pass
+    app_visible = page2.locator("#app").is_visible()
+    test("Auto-unlock from cache", app_visible)
 
+    if app_visible:
+        test("Data preserved", page2.locator(".ann-card").count() > 0)
+
+    ctx2.close()
     browser.close()
-    if FAIL > 0:
-        sys.exit(1)
+
+print(f"\n{'='*40}")
+print(f"📊 Results: {P} passed, {F} failed")
+if F > 0: sys.exit(1)

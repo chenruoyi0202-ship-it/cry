@@ -664,10 +664,10 @@
         </div>
     </div>
 
-    <!-- App Loading Overlay -->
+    <!-- App Loading Overlay (hidden, kept for compatibility) -->
     <div class="app-loading" id="appLoading" style="display:none;">
         <div class="spinner"></div>
-        <div class="load-text" id="loadText">解密数据中...</div>
+        <div class="load-text" id="loadText"></div>
         <div class="progress-bar"><div class="progress-fill" id="loadProgress"></div></div>
     </div>
 
@@ -927,95 +927,83 @@
     }
 
     async function tryUnlock(pwd, isAuto) {
-        showLoading('解密数据中...', 5);
-        // === Fast path: cached data ===
+        const err = document.getElementById('lockError');
+        const btn = document.getElementById('unlockBtn');
+        function status(msg) { if (err) err.textContent = msg; if (btn) btn.textContent = msg; }
+
+        // === 1. Try cache (instant) ===
         let json = getCachedData();
         if (json) {
             try {
-                showLoading('解密缓存...', 20);
+                status('解密缓存...');
                 appData = await decryptData(pwd, json.encrypted);
-                // Load cached photos (non-blocking if missing)
                 let cachedPhotos = null;
                 try { const cp = localStorage.getItem('_lp2'); if (cp) cachedPhotos = JSON.parse(cp); } catch(e) {}
                 await loadPhotoStore(pwd, cachedPhotos);
                 migrateDiaryPhotos();
                 if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
                 currentPwd = pwd; savePwd(pwd);
-                hideLoading(); showApp(); renderAll();
-                // Background sync (non-blocking)
+                showApp(); renderAll();
                 syncFromGitHub(pwd, {force: true, verbose: true});
                 return true;
             } catch(e) {
-                try { localStorage.removeItem('_ld'); } catch(e2) {}
+                try { localStorage.removeItem('_ld'); localStorage.removeItem('_lp2'); } catch(e2) {}
             }
         }
-        // === Network path: race GitHub API vs Pages for fastest response ===
-        const progress = (text, pct) => showLoading(text, pct);
-        progress('加载中...', 10);
 
-        let metaJson = null, photosSha = null, ghToken = '', ghRepo = '';
+        // === 2. Fetch from network (try all sources sequentially with fallback) ===
+        let metaJson = null;
 
-        // Helper: fetch with timeout
-        function fetchWithTimeout(url, opts, ms) {
-            return Promise.race([
-                fetch(url, opts),
-                new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
-            ]);
+        // 2a. jsDelivr CDN (fastest in China)
+        if (!metaJson && GH_REPO) {
+            try {
+                status('从 CDN 加载...');
+                const resp = await Promise.race([
+                    fetch('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_encrypted.json'),
+                    new Promise((_, r) => setTimeout(() => r('timeout'), 8000))
+                ]);
+                if (resp.ok) metaJson = await resp.json();
+            } catch(e) {}
         }
 
-        // Race: 3 sources + 20s hard timeout, first success wins
-        const detectedRepo = GH_REPO || '';
-        const winner = await new Promise(resolve => {
-            let done = false, pending = 3;
-            function finish(result) {
-                if (result && !done) { done = true; resolve(result); }
-                if (--pending <= 0 && !done) { done = true; resolve(null); }
-            }
-            // Hard timeout: never hang longer than 20s
-            setTimeout(() => { if (!done) { done = true; resolve(null); } }, 20000);
-            // 1. GitHub API (works without token for public repos)
-            fetchMetaFromGitHub(progress).then(finish).catch(() => finish(null));
-            // 2. jsDelivr CDN (fast in China, skip if no repo detected)
-            if (detectedRepo) {
-                fetchFromCDN(detectedRepo, progress).then(finish).catch(() => finish(null));
-            } else { pending--; }
-            // 3. Pages (same origin, reliable but slow for large files)
-            (async () => {
-                try {
-                    const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-                    if (resp.ok) return { meta: await resp.json(), photosSha: null, token: '', repo: '' };
-                } catch(e) {}
-                return null;
-            })().then(finish);
-        });
-
-        if (winner) {
-            metaJson = winner.meta;
-            photosSha = winner.photosSha;
-            ghToken = winner.token || '';
-            ghRepo = winner.repo || '';
+        // 2b. GitHub API (no token needed for public repos)
+        if (!metaJson && GH_REPO) {
+            try {
+                status('从 GitHub 加载...');
+                const result = await Promise.race([
+                    fetchMetaFromGitHub(),
+                    new Promise((_, r) => setTimeout(() => r('timeout'), 10000))
+                ]);
+                if (result) metaJson = result.meta;
+            } catch(e) {}
         }
-        progress('解密中...', 80);
+
+        // 2c. Pages (same origin, always works, might be slow)
         if (!metaJson) {
-            hideLoading();
-            showToast('加载失败，请检查网络后重试');
+            try {
+                status('从 Pages 加载...');
+                const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
+                if (resp.ok) metaJson = await resp.json();
+            } catch(e) {}
+        }
+
+        if (!metaJson) {
+            status('加载失败，请刷新重试');
             return false;
         }
+
+        // === 3. Decrypt and show ===
         try {
-            progress('解密数据...', 85);
+            status('解密中...');
             appData = await decryptData(pwd, metaJson.encrypted);
-            // Extract inline photo data to photoStore (old format migration)
             await loadPhotoStore(pwd, null);
             migrateDiaryPhotos();
             cacheData(JSON.stringify(metaJson));
             if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
             currentPwd = pwd; savePwd(pwd);
-            hideLoading(); showApp(); renderAll();
-            // Lazy-load separated photos if available
-            if (photosSha) lazyLoadPhotos(pwd, photosSha, ghToken || getToken(), ghRepo || getRepo());
+            showApp(); renderAll();
             return true;
         } catch(e) {
-            hideLoading();
             return false;
         }
     }
@@ -1212,7 +1200,7 @@
         btn.disabled = true; btn.textContent = '解锁中...'; err.textContent = '';
 
         const ok = await tryUnlock(pwd, false);
-        if (!ok) err.textContent = '密码错误，请重试';
+        if (!ok && !err.textContent) err.textContent = '密码错误，请重试';
         btn.disabled = false; btn.textContent = '解锁';
     }
 
