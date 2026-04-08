@@ -358,15 +358,26 @@
         /* Diary Detail View */
         .diary-detail-overlay {
             display: none; position: fixed; inset: 0; z-index: 2000;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
-            align-items: center; justify-content: center;
+            background: #000; align-items: center; justify-content: center;
             overflow-y: auto; padding: 20px 16px;
+            touch-action: none;
         }
-        .diary-detail-overlay.open { display: flex; }
+        .diary-detail-overlay.open { display: flex; animation: lbFadeIn 0.25s ease; }
+        .diary-detail-overlay.closing { opacity: 0; transition: opacity 0.2s ease; }
+        .dd-bg {
+            position: fixed; inset: -40px; z-index: 0;
+            background-size: cover; background-position: center;
+            filter: blur(40px) brightness(0.35) saturate(1.3);
+            transform: scale(1.1);
+            transition: background-image 0.3s;
+        }
         .diary-detail {
-            background: var(--card); border-radius: 20px; max-width: 520px; width: 100%;
+            background: rgba(255,255,255,0.92); border-radius: 20px; max-width: 520px; width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; position: relative;
+            z-index: 1; transition: transform 0.25s ease, opacity 0.25s ease;
         }
+        .diary-detail.dragging { transition: none; }
+        [data-theme="dark"] .diary-detail { background: rgba(26,26,46,0.92); }
         .dd-close {
             position: fixed; top: 16px; right: 16px; z-index: 2010;
             background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 22px;
@@ -716,6 +727,7 @@
 
     <!-- Diary Detail View -->
     <div class="diary-detail-overlay" id="diaryDetailOverlay">
+        <div class="dd-bg" id="ddBg"></div>
         <div class="diary-detail" id="diaryDetail"></div>
     </div>
 
@@ -2368,21 +2380,40 @@
     }
 
     // Diary detail view (browse mode)
-    let diaryDetailPhotos = []; // for lightbox navigation within detail
+    let diaryDetailPhotos = [];
+    let ddSortedDiary = [];
+    let ddCurrentIdx = 0;
+
     function viewDiary(id) {
-        const d = appData.diary.find(x => x.id === id);
+        ddSortedDiary = [...appData.diary].sort((a, b) => new Date(b.date) - new Date(a.date));
+        ddCurrentIdx = ddSortedDiary.findIndex(x => x.id === id);
+        if (ddCurrentIdx < 0) ddCurrentIdx = 0;
+        renderDiaryDetail();
+        const overlay = document.getElementById('diaryDetailOverlay');
+        overlay.classList.remove('closing');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function renderDiaryDetail() {
+        const d = ddSortedDiary[ddCurrentIdx];
         if (!d) return;
         const photoSrcs = (d.photos || []).map(p => {
             if (typeof p === 'string' && p.startsWith('data:')) return p;
             return getPhotoSrc(p);
         }).filter(Boolean);
         diaryDetailPhotos = photoSrcs;
-        const heroHtml = photoSrcs.length > 0
-            ? '<img class="dd-hero" src="' + photoSrcs[d.coverIdx || 0] + '" alt="">' : '';
+        const coverSrc = photoSrcs.length > 0 ? photoSrcs[d.coverIdx || 0] : '';
+        const heroHtml = coverSrc ? '<img class="dd-hero" src="' + coverSrc + '" alt="">' : '';
         const otherPhotos = photoSrcs.length > 1
             ? '<div class="dd-photos">' + photoSrcs.map((s, i) =>
                 '<img src="' + s + '" alt="" onclick="openDiaryLightbox(' + i + ')">'
             ).join('') + '</div>' : '';
+        // Blurred background
+        document.getElementById('ddBg').style.backgroundImage = coverSrc ? 'url(' + coverSrc + ')' : 'none';
+        // Counter
+        const counter = '<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:12px;">' +
+            (ddCurrentIdx + 1) + ' / ' + ddSortedDiary.length + '</div>';
         const detail = document.getElementById('diaryDetail');
         detail.innerHTML =
             '<button class="dd-close" onclick="closeDiaryDetail()">&times;</button>' +
@@ -2391,15 +2422,26 @@
             '<div class="dd-date">' + d.date + '</div>' +
             '<div class="dd-title">' + esc(d.title) + '</div>' +
             (d.content ? '<div class="dd-content">' + esc(d.content) + '</div>' : '') +
-            otherPhotos +
+            otherPhotos + counter +
             '</div>';
-        document.getElementById('diaryDetailOverlay').classList.add('open');
-        document.body.style.overflow = 'hidden';
     }
+
+    function navDiaryDetail(dir) {
+        const next = ddCurrentIdx + dir;
+        if (next < 0 || next >= ddSortedDiary.length) return;
+        ddCurrentIdx = next;
+        renderDiaryDetail();
+    }
+
     function closeDiaryDetail() {
-        document.getElementById('diaryDetailOverlay').classList.remove('open');
-        document.body.style.overflow = '';
+        const overlay = document.getElementById('diaryDetailOverlay');
+        overlay.classList.add('closing');
+        setTimeout(() => {
+            overlay.classList.remove('open', 'closing');
+            document.body.style.overflow = '';
+        }, 200);
     }
+
     function openDiaryLightbox(idx) {
         closeDiaryDetail();
         lbSourcePhotos = diaryDetailPhotos.map((data, i) => ({ id: 'tmp' + i, data }));
@@ -2410,13 +2452,65 @@
         document.getElementById('lightbox').classList.add('open');
         document.body.style.overflow = 'hidden';
     }
-    // Close diary detail on overlay click
+
+    // Diary detail gestures: swipe left/right + swipe down
     (function() {
         const overlay = document.getElementById('diaryDetailOverlay');
         if (!overlay) return;
+        const detail = document.getElementById('diaryDetail');
+        let startX = 0, startY = 0, dx = 0, dy = 0;
+        let swiping = false, dismissing = false;
+        const SWIPE_T = 60, DISMISS_T = 120;
+
         overlay.addEventListener('click', function(e) {
-            if (e.target === overlay) closeDiaryDetail();
+            if (e.target === overlay || e.target.classList.contains('dd-bg')) closeDiaryDetail();
         });
+
+        overlay.addEventListener('touchstart', function(e) {
+            if (e.touches.length !== 1) return;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            dx = 0; dy = 0; swiping = false; dismissing = false;
+            detail.classList.add('dragging');
+        }, { passive: true });
+
+        overlay.addEventListener('touchmove', function(e) {
+            if (e.touches.length !== 1) return;
+            dx = e.touches[0].clientX - startX;
+            dy = e.touches[0].clientY - startY;
+            if (!swiping && !dismissing) {
+                if (Math.abs(dy) > Math.abs(dx) && dy > 10) dismissing = true;
+                else if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) swiping = true;
+            }
+            if (dismissing) {
+                e.preventDefault();
+                const d = Math.max(0, dy);
+                detail.style.transform = 'translateY(' + d + 'px)';
+                detail.style.opacity = String(1 - d / 300);
+                overlay.style.background = 'rgba(0,0,0,' + Math.max(0, 1 - d / 250) + ')';
+            } else if (swiping) {
+                e.preventDefault();
+                detail.style.transform = 'translateX(' + dx + 'px)';
+                detail.style.opacity = String(1 - Math.abs(dx) / 500);
+            }
+        }, { passive: false });
+
+        overlay.addEventListener('touchend', function(e) {
+            detail.classList.remove('dragging');
+            if (dismissing) {
+                if (dy > DISMISS_T) { closeDiaryDetail(); }
+                else { detail.style.transform = ''; detail.style.opacity = ''; overlay.style.background = ''; }
+                dismissing = false; return;
+            }
+            if (swiping) {
+                if (Math.abs(dx) > SWIPE_T) {
+                    navDiaryDetail(dx < 0 ? 1 : -1);
+                }
+                detail.style.transform = ''; detail.style.opacity = '';
+                swiping = false; return;
+            }
+            detail.style.transform = ''; detail.style.opacity = ''; overlay.style.background = '';
+        }, { passive: true });
     })();
 
     function addAnn() {
