@@ -1211,15 +1211,21 @@
 
     // Auto-unlock on refresh, or show lock screen
     (async function autoUnlock() {
-        try {
-            const savedPwd = getPwd();
-            if (savedPwd) {
+        const savedPwd = getPwd();
+        if (savedPwd) {
+            // Try cache first (instant)
+            try {
                 let ok = await tryUnlock(savedPwd, true);
                 if (ok) return;
-                // Cache failed — pre-fill password so user just taps unlock
-                document.getElementById('pwdInput').value = savedPwd;
-            }
-        } catch(e) {}
+            } catch(e) {}
+            // Cache failed — show lock screen with password pre-filled, auto-click unlock
+            document.getElementById('pwdInput').value = savedPwd;
+            document.getElementById('lockScreen').classList.add('show');
+            document.getElementById('floatingHearts').style.display = 'block';
+            // Auto-retry via network (user sees lock screen briefly with progress on button)
+            setTimeout(() => doUnlock(), 100);
+            return;
+        }
         document.getElementById('lockScreen').classList.add('show');
         document.getElementById('floatingHearts').style.display = 'block';
     })();
