@@ -316,10 +316,11 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; position: relative;
         }
         .dd-close {
-            position: absolute; top: 12px; right: 12px; z-index: 10;
-            background: rgba(0,0,0,0.4); border: none; color: #fff; font-size: 22px;
-            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            position: fixed; top: 16px; right: 16px; z-index: 2010;
+            background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 22px;
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px);
         }
         .dd-hero { width: 100%; max-height: 320px; object-fit: cover; display: block; }
         .dd-body { padding: 20px; }
