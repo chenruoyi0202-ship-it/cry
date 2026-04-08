@@ -303,6 +303,61 @@
         }
         .tl-mini-thumb:first-child { margin-left: 0; }
 
+        /* Diary Detail View */
+        .diary-detail-overlay {
+            display: none; position: fixed; inset: 0; z-index: 2000;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+            align-items: flex-start; justify-content: center;
+            overflow-y: auto; padding: 40px 16px;
+        }
+        .diary-detail-overlay.open { display: flex; }
+        .diary-detail {
+            background: var(--card); border-radius: 20px; max-width: 520px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; position: relative;
+        }
+        .dd-close {
+            position: absolute; top: 12px; right: 12px; z-index: 10;
+            background: rgba(0,0,0,0.4); border: none; color: #fff; font-size: 22px;
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .dd-hero { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+        .dd-body { padding: 20px; }
+        .dd-date {
+            font-size: 12px; color: #fff; background: var(--accent);
+            padding: 4px 12px; border-radius: 10px; display: inline-block;
+            font-weight: 600; margin-bottom: 10px;
+        }
+        .dd-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+        .dd-content { font-size: 14px; color: var(--text2); line-height: 1.8; white-space: pre-wrap; margin-bottom: 16px; }
+        .dd-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .dd-photos img {
+            width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .dd-photos img:hover { transform: scale(1.04); }
+
+        /* Cover photo selection in diary modal */
+        .diary-photo-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .diary-photo-thumb {
+            position: relative; width: 60px; height: 60px; border-radius: 8px;
+            overflow: hidden; cursor: pointer; border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .diary-photo-thumb.cover { border-color: var(--accent); }
+        .diary-photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .diary-photo-thumb .cover-badge {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: var(--accent); color: #fff; font-size: 9px;
+            text-align: center; padding: 1px 0; font-weight: 600;
+        }
+        .diary-photo-thumb .del-photo {
+            position: absolute; top: 1px; right: 1px; background: rgba(0,0,0,0.5);
+            color: #fff; border: none; font-size: 12px; width: 16px; height: 16px;
+            border-radius: 50%; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; line-height: 1;
+        }
+
         /* Photo Gallery */
         /* Tag Bar */
         .category-bar {
@@ -546,6 +601,11 @@
         <footer class="app-footer">Made with &#x2764;&#xFE0F; <span id="dataTime" style="opacity:0.7;font-size:12px;">数据更新：--</span></footer>
     </div>
 
+    <!-- Diary Detail View -->
+    <div class="diary-detail-overlay" id="diaryDetailOverlay">
+        <div class="diary-detail" id="diaryDetail"></div>
+    </div>
+
     <!-- Lightbox -->
     <div class="lightbox" id="lightbox">
         <button class="lb-close" onclick="closeLightbox()">&times;</button>
@@ -579,6 +639,7 @@
     let currentPwd = null;
     let currentTag = 'all';
     let currentLbIndex = 0;
+    let lbSourcePhotos = null; // null = use appData.photos, array = custom source
     let dirty = false;
 
     // ===== Crypto =====
@@ -1238,10 +1299,11 @@
                 return found ? found.data : '';
             }).filter(Boolean);
             const hasPhoto = photoSrcs.length > 0;
+            const coverI = d.coverIdx || 0;
             // Hero photo + mini thumbs for extras
             let heroHtml = '';
             if (hasPhoto) {
-                heroHtml = '<img class="tl-photo-hero" src="' + photoSrcs[0] + '" alt="">';
+                heroHtml = '<img class="tl-photo-hero" src="' + photoSrcs[coverI < photoSrcs.length ? coverI : 0] + '" alt="">';
             }
             let extrasHtml = '';
             if (photoSrcs.length > 1) {
@@ -1731,14 +1793,17 @@
     function closeLightbox() {
         document.getElementById('lightbox').classList.remove('open');
         document.body.style.overflow = '';
+        lbSourcePhotos = null;
     }
     function navLightbox(dir) {
-        const len = appData.photos.length;
+        const photos = lbSourcePhotos || appData.photos;
+        const len = photos.length;
         currentLbIndex = (currentLbIndex + dir + len) % len;
         showLbPhoto();
     }
     function showLbPhoto() {
-        const p = appData.photos[currentLbIndex];
+        const photos = lbSourcePhotos || appData.photos;
+        const p = photos[currentLbIndex];
         if (!p) return;
         document.getElementById('lbImg').src = p.data;
         document.getElementById('lbCap').textContent = p.caption || p.date || '';
@@ -1780,17 +1845,23 @@
 
     // Migrate: convert diary photo ID refs → inline data URLs (prevents data loss on gallery delete)
     function migrateDiaryPhotos() {
+        // Sync diary inline photos → gallery (deduplicated)
         if (!appData || !appData.diary) return;
+        if (!appData.photos) appData.photos = [];
         let changed = false;
         appData.diary.forEach(d => {
             if (!d.photos || !d.photos.length) return;
             d.photos = d.photos.map(p => {
                 if (typeof p !== 'string') return p;
-                if (p.startsWith('data:')) return p;
-                // It's a photo ID reference - inline the data URL
-                const photo = (appData.photos || []).find(x => x.id === p);
-                if (photo && photo.data) { changed = true; return photo.data; }
-                return p; // orphan ref, leave as-is
+                if (!p.startsWith('data:')) return p; // already an ID ref
+                // Check if this exact data already exists in gallery
+                const existing = appData.photos.find(x => x.data === p);
+                if (existing) { changed = true; return existing.id; }
+                // Create new gallery entry
+                const photoId = genId();
+                appData.photos.unshift({ id: photoId, data: p, tags: [d.title || '点滴'] });
+                changed = true;
+                return photoId;
             });
         });
         if (changed) dirty = true;
@@ -1823,27 +1894,28 @@
         } else if (type === 'diary') {
             const editing = editingDiaryId ? appData.diary.find(x => x.id === editingDiaryId) : null;
             diaryPendingPhotos = [];
-            let existingPhotoHtml = '';
+            diaryCoverIdx = editing ? (editing.coverIdx || 0) : 0;
+            diaryExistingPhotos = []; // [{ref, src}]
             if (editing && editing.photos && editing.photos.length) {
-                existingPhotoHtml = editing.photos.map(p => {
+                diaryExistingPhotos = editing.photos.map(p => {
                     const src = (typeof p === 'string' && p.startsWith('data:')) ? p :
                                 ((appData.photos.find(x => x.id === p) || {}).data || '');
-                    if (!src) return '';
-                    return '<img src="' + src + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
-                }).join('');
+                    return src ? { ref: p, src } : null;
+                }).filter(Boolean);
             }
             m.innerHTML = '<h3>' + (editing ? '编辑恋爱点滴' : '添加恋爱点滴') + '</h3>' +
                 '<label>日期</label><input id="mDiaryDate" type="date" value="' + (editing ? editing.date : todayStr()) + '">' +
                 '<label>标题</label><input id="mDiaryTitle" placeholder="今天做了什么..." value="' + esc(editing ? editing.title : '') + '">' +
                 '<label>内容</label><textarea id="mDiaryContent" placeholder="详细描述...">' + esc(editing ? editing.content : '') + '</textarea>' +
                 '<label>添加照片</label><input id="mDiaryPhoto" type="file" accept="image/*" multiple>' +
-                (existingPhotoHtml ? '<div style="margin-top:8px;">' + existingPhotoHtml + '</div>' : '') +
-                '<div id="mDiaryPhotoPreview" style="margin-top:8px;"></div>' +
+                '<div class="diary-photo-grid" id="mDiaryPhotoGrid"></div>' +
+                '<p style="font-size:11px;color:var(--text3);margin-top:4px;">点击照片设为封面</p>' +
                 '<div class="modal-actions"><button class="btn-secondary" onclick="editingDiaryId=null;closeModal()">取消</button>' +
                 '<button class="btn-primary" onclick="addDiary()">' + (editing ? '保存' : '添加') + '</button></div>';
             setTimeout(() => {
                 const photoInput = document.getElementById('mDiaryPhoto');
                 if (photoInput) photoInput.addEventListener('change', previewDiaryPhoto);
+                renderDiaryPhotoGrid();
             }, 50);
         } else if (type === 'photo') {
             m.innerHTML = '<h3>选择照片</h3>' +
@@ -1888,6 +1960,8 @@
     let editingAnnId = null;
     let editingDiaryId = null;
     let diaryPendingPhotos = [];
+    let diaryCoverIdx = 0;
+    let diaryExistingPhotos = []; // track existing photos during edit
     let galleryRendered = false;
 
     function editAnn(id) {
@@ -1897,10 +1971,61 @@
     }
 
     function editDiary(id) {
-        if (!isEditing) return;
+        if (!isEditing) { viewDiary(id); return; }
         editingDiaryId = id;
         openModal('diary');
     }
+
+    // Diary detail view (browse mode)
+    let diaryDetailPhotos = []; // for lightbox navigation within detail
+    function viewDiary(id) {
+        const d = appData.diary.find(x => x.id === id);
+        if (!d) return;
+        const photoSrcs = (d.photos || []).map(p => {
+            if (typeof p === 'string' && p.startsWith('data:')) return p;
+            const found = appData.photos.find(x => x.id === p);
+            return found ? found.data : '';
+        }).filter(Boolean);
+        diaryDetailPhotos = photoSrcs;
+        const heroHtml = photoSrcs.length > 0
+            ? '<img class="dd-hero" src="' + photoSrcs[d.coverIdx || 0] + '" alt="">' : '';
+        const otherPhotos = photoSrcs.length > 1
+            ? '<div class="dd-photos">' + photoSrcs.map((s, i) =>
+                '<img src="' + s + '" alt="" onclick="openDiaryLightbox(' + i + ')">'
+            ).join('') + '</div>' : '';
+        const detail = document.getElementById('diaryDetail');
+        detail.innerHTML =
+            '<button class="dd-close" onclick="closeDiaryDetail()">&times;</button>' +
+            heroHtml +
+            '<div class="dd-body">' +
+            '<div class="dd-date">' + d.date + '</div>' +
+            '<div class="dd-title">' + esc(d.title) + '</div>' +
+            (d.content ? '<div class="dd-content">' + esc(d.content) + '</div>' : '') +
+            otherPhotos +
+            '</div>';
+        document.getElementById('diaryDetailOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeDiaryDetail() {
+        document.getElementById('diaryDetailOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    function openDiaryLightbox(idx) {
+        closeDiaryDetail();
+        lbSourcePhotos = diaryDetailPhotos.map((data, i) => ({ id: 'tmp' + i, data }));
+        currentLbIndex = idx;
+        showLbPhoto();
+        document.getElementById('lightbox').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    // Close diary detail on overlay click
+    (function() {
+        const overlay = document.getElementById('diaryDetailOverlay');
+        if (!overlay) return;
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeDiaryDetail();
+        });
+    })();
 
     function addAnn() {
         const title = document.getElementById('mAnnTitle').value.trim();
@@ -1924,15 +2049,47 @@
     function previewDiaryPhoto(e) {
         const files = Array.from(e.target.files);
         if (!files.length) return;
-        diaryPendingPhotos = [];
-        const preview = document.getElementById('mDiaryPhotoPreview');
-        preview.innerHTML = '';
+        let loaded = 0;
         files.forEach(file => {
             compressImage(file, (dataUrl) => {
                 diaryPendingPhotos.push(dataUrl);
-                preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
+                loaded++;
+                if (loaded === files.length) renderDiaryPhotoGrid();
             });
         });
+    }
+
+    function renderDiaryPhotoGrid() {
+        const grid = document.getElementById('mDiaryPhotoGrid');
+        if (!grid) return;
+        const existingSrcs = diaryExistingPhotos.map(x => x.src);
+        const all = existingSrcs.concat(diaryPendingPhotos);
+        if (diaryCoverIdx >= all.length) diaryCoverIdx = 0;
+        grid.innerHTML = all.map((src, i) => {
+            const isCover = (i === diaryCoverIdx);
+            const isExisting = i < diaryExistingPhotos.length;
+            return '<div class="diary-photo-thumb' + (isCover ? ' cover' : '') + '" onclick="setDiaryCover(' + i + ')">' +
+                '<img src="' + src + '" alt="">' +
+                (isCover ? '<span class="cover-badge">封面</span>' : '') +
+                '<button class="del-photo" onclick="event.stopPropagation();delDiaryPhoto(' + i + ',' + isExisting + ')">&times;</button>' +
+                '</div>';
+        }).join('');
+    }
+
+    function setDiaryCover(idx) {
+        diaryCoverIdx = idx;
+        renderDiaryPhotoGrid();
+    }
+
+    function delDiaryPhoto(idx, isExisting) {
+        if (isExisting) {
+            diaryExistingPhotos.splice(idx, 1);
+        } else {
+            diaryPendingPhotos.splice(idx - diaryExistingPhotos.length, 1);
+        }
+        const total = diaryExistingPhotos.length + diaryPendingPhotos.length;
+        if (diaryCoverIdx >= total) diaryCoverIdx = Math.max(0, total - 1);
+        renderDiaryPhotoGrid();
     }
 
     function addDiary() {
@@ -1940,19 +2097,23 @@
         const title = document.getElementById('mDiaryTitle').value.trim();
         const content = document.getElementById('mDiaryContent').value.trim();
         if (!title || !date) return alert('请填写标题和日期');
-        // Diary photos stored as inline data URLs (not in main gallery)
-        const newPhotos = diaryPendingPhotos.slice();
+        // Combine existing refs + new data URLs
+        const allPhotos = diaryExistingPhotos.map(x => x.ref).concat(diaryPendingPhotos);
         diaryPendingPhotos = [];
+        diaryExistingPhotos = [];
         if (editingDiaryId) {
             const d = appData.diary.find(x => x.id === editingDiaryId);
             if (d) {
                 d.date = date; d.title = title; d.content = content || '';
-                d.photos = (d.photos || []).concat(newPhotos);
+                d.photos = allPhotos;
+                d.coverIdx = diaryCoverIdx;
             }
             editingDiaryId = null;
         } else {
-            appData.diary.push({ id: genId(), date, title, content: content || '', mood: 'happy', photos: newPhotos });
+            appData.diary.push({ id: genId(), date, title, content: content || '', mood: 'happy', photos: allPhotos, coverIdx: diaryCoverIdx });
         }
+        // Sync diary photos to gallery
+        migrateDiaryPhotos();
         dirty = true; closeModal(); renderAll();
     }
 
