@@ -972,11 +972,15 @@
             }
             // GitHub API path
             fetchMetaFromGitHub(progress).then(finish).catch(() => finish(null));
-            // Pages path (with 10s timeout)
+            // Pages path (no timeout — page loaded so Pages is reachable, file may be large)
             (async () => {
                 try {
-                    const resp = await fetchWithTimeout('data/love_encrypted.json?v=' + Date.now(), {}, 10000);
-                    if (resp.ok) return { meta: await resp.json(), photosSha: null, token: '', repo: '' };
+                    progress('从 Pages 加载...', 30);
+                    const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
+                    if (resp.ok) {
+                        progress('解析数据...', 60);
+                        return { meta: await resp.json(), photosSha: null, token: '', repo: '' };
+                    }
                 } catch(e) {}
                 return null;
             })().then(finish);
