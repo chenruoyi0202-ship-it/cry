@@ -428,6 +428,7 @@
 
         .gallery {
             columns: 3; column-gap: 8px;
+            transform: translateZ(0); /* compositing layer to prevent column reflow flicker */
         }
         .gallery-item {
             position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
@@ -2562,25 +2563,86 @@
         }
     }
 
-    function compressImage(file, cb) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                let w = img.width, h = img.height;
-                const MAX = 1000;
-                if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-                if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
-                canvas.width = w; canvas.height = h;
-                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                let result = canvas.toDataURL('image/jpeg', 0.65);
-                if (result.length > 300000) result = canvas.toDataURL('image/jpeg', 0.5);
-                cb(result);
+    // Extract EXIF DateTimeOriginal from JPEG file
+    function getExifDate(file) {
+        return new Promise(resolve => {
+            if (!file || !file.type || !file.type.match(/image\/jpe?g/i)) { resolve(null); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const view = new DataView(e.target.result);
+                    if (view.getUint16(0) !== 0xFFD8) { resolve(null); return; } // not JPEG
+                    let offset = 2;
+                    while (offset < view.byteLength - 4) {
+                        const marker = view.getUint16(offset);
+                        if (marker === 0xFFE1) { // APP1 = EXIF
+                            const len = view.getUint16(offset + 2);
+                            const exifStart = offset + 4;
+                            // Check "Exif\0\0"
+                            if (view.getUint32(exifStart) === 0x45786966 && view.getUint16(exifStart + 4) === 0) {
+                                const tiffStart = exifStart + 6;
+                                const bigEndian = view.getUint16(tiffStart) === 0x4D4D;
+                                const g16 = (o) => bigEndian ? view.getUint16(o) : view.getUint16(o, true);
+                                const g32 = (o) => bigEndian ? view.getUint32(o) : view.getUint32(o, true);
+                                // Read IFD0
+                                let ifdOffset = tiffStart + g32(tiffStart + 4);
+                                const count = g16(ifdOffset);
+                                let exifIFDOffset = 0;
+                                for (let i = 0; i < count; i++) {
+                                    const tag = g16(ifdOffset + 2 + i * 12);
+                                    if (tag === 0x8769) { exifIFDOffset = tiffStart + g32(ifdOffset + 2 + i * 12 + 8); break; }
+                                }
+                                if (exifIFDOffset) {
+                                    const eCount = g16(exifIFDOffset);
+                                    for (let i = 0; i < eCount; i++) {
+                                        const tag = g16(exifIFDOffset + 2 + i * 12);
+                                        if (tag === 0x9003 || tag === 0x9004) { // DateTimeOriginal or DateTimeDigitized
+                                            const strOffset = tiffStart + g32(exifIFDOffset + 2 + i * 12 + 8);
+                                            let str = '';
+                                            for (let j = 0; j < 19; j++) str += String.fromCharCode(view.getUint8(strOffset + j));
+                                            // "2025:11:22 14:30:00" → "2025-11-22T14:30:00"
+                                            const iso = str.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3').replace(' ', 'T');
+                                            resolve(iso);
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                            resolve(null); return;
+                        }
+                        if ((marker & 0xFF00) !== 0xFF00) break;
+                        offset += 2 + view.getUint16(offset + 2);
+                    }
+                    resolve(null);
+                } catch(e) { resolve(null); }
             };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+            reader.onerror = () => resolve(null);
+            reader.readAsArrayBuffer(file.slice(0, 128 * 1024)); // only read first 128KB for EXIF
+        });
+    }
+
+    function compressImage(file, cb) {
+        // Extract EXIF date first, then compress
+        getExifDate(file).then(exifDate => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    const MAX = 1000;
+                    if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+                    if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    let result = canvas.toDataURL('image/jpeg', 0.65);
+                    if (result.length > 300000) result = canvas.toDataURL('image/jpeg', 0.5);
+                    cb(result, exifDate);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
     }
 
     function directAddPhoto() {
@@ -2592,10 +2654,10 @@
             let done = 0;
             const newPhotos = [];
             files.forEach(file => {
-                compressImage(file, (dataUrl) => {
+                compressImage(file, (dataUrl, exifDate) => {
                     const pid = genId();
                     photoStore[pid] = dataUrl;
-                    const photo = { id: pid, createdAt: new Date().toISOString() };
+                    const photo = { id: pid, createdAt: exifDate || new Date().toISOString() };
                     if (currentTag && currentTag !== 'all') photo.tags = [currentTag];
                     appData.photos.unshift(photo);
                     newPhotos.push({ ...photo, data: dataUrl });
@@ -2603,7 +2665,6 @@
                     if (done === files.length) {
                         dirty = true; renderGallery(); initGalleryDrag();
                         showToast('已添加 ' + files.length + ' 张照片，AI识别中...');
-                        // Auto AI tag new photos in background
                         autoTagPhotos(newPhotos);
                     }
                 });
@@ -2648,10 +2709,10 @@
         status.textContent = '处理中... 0/' + files.length;
         preview.innerHTML = '';
         files.forEach(file => {
-            compressImage(file, (dataUrl) => {
+            compressImage(file, (dataUrl, exifDate) => {
                 const pid = genId();
                 photoStore[pid] = dataUrl;
-                appData.photos.unshift({ id: pid, createdAt: new Date().toISOString() });
+                appData.photos.unshift({ id: pid, createdAt: exifDate || new Date().toISOString() });
                 done++;
                 preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
                 status.textContent = '处理中... ' + done + '/' + files.length;
