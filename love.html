@@ -963,24 +963,23 @@
             ]);
         }
 
-        // Race: first successful response wins immediately
+        // Race: 3 sources, first success wins
+        const detectedRepo = GH_REPO || '';
         const winner = await new Promise(resolve => {
-            let done = false, pending = 2;
+            let done = false, pending = 3;
             function finish(result) {
                 if (result && !done) { done = true; resolve(result); }
                 if (--pending <= 0 && !done) { done = true; resolve(null); }
             }
-            // GitHub API path
+            // 1. GitHub API (works without token for public repos)
             fetchMetaFromGitHub(progress).then(finish).catch(() => finish(null));
-            // Pages path (no timeout — page loaded so Pages is reachable, file may be large)
+            // 2. jsDelivr CDN (fast in China)
+            fetchFromCDN(detectedRepo, progress).then(finish).catch(() => finish(null));
+            // 3. Pages (same origin, reliable but slow for large files)
             (async () => {
                 try {
-                    progress('从 Pages 加载...', 30);
                     const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-                    if (resp.ok) {
-                        progress('解析数据...', 60);
-                        return { meta: await resp.json(), photosSha: null, token: '', repo: '' };
-                    }
+                    if (resp.ok) return { meta: await resp.json(), photosSha: null, token: '', repo: '' };
                 } catch(e) {}
                 return null;
             })().then(finish);
@@ -1064,16 +1063,19 @@
         return { token, repo };
     }
 
-    // Fetch metadata only (fast, for initial unlock)
+    // Fetch metadata via GitHub API (works without token for public repos)
     async function fetchMetaFromGitHub(onProgress) {
         try {
             const { token, repo } = await resolveGitHub();
-            if (!token || !repo) return null;
+            if (!repo) return null;
 
-            const hdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' };
+            // Public repos work without auth (60 req/hour limit)
+            const hdrs = token
+                ? { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' }
+                : { 'Accept': 'application/vnd.github.v3+json' };
             const api = 'https://api.github.com/repos/' + repo + '/git';
 
-            if (onProgress) onProgress('连接服务器...', 10);
+            if (onProgress) onProgress('连接 GitHub...', 15);
             const refResp = await fetch(api + '/ref/heads/main?t=' + Date.now(), { headers: hdrs });
             if (!refResp.ok) return null;
             const commitSha = (await refResp.json()).object.sha;
@@ -1092,25 +1094,41 @@
             const photosEntry = treeData.tree.find(e => e.path === 'data/love_photos.json');
 
             if (onProgress) onProgress('下载数据...', 65);
-            const rawHdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' };
+            const rawHdrs = token
+                ? { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' }
+                : { 'Accept': 'application/vnd.github.v3.raw' };
             const metaJson = await (await fetch(api + '/blobs/' + fileEntry.sha, { headers: rawHdrs })).json();
 
-            if (onProgress) onProgress('解密中...', 80);
-            return { meta: metaJson, photosSha: photosEntry ? photosEntry.sha : null, token, repo };
+            if (onProgress) onProgress('准备就绪...', 80);
+            return { meta: metaJson, photosSha: photosEntry ? photosEntry.sha : null, token: token || '', repo };
+        } catch(e) { return null; }
+    }
+
+    // Fetch via jsDelivr CDN (fast in China, cached)
+    async function fetchFromCDN(repo, onProgress) {
+        try {
+            if (onProgress) onProgress('从 CDN 加载...', 20);
+            const cdnBase = 'https://cdn.jsdelivr.net/gh/' + repo + '@main/';
+            const resp = await fetch(cdnBase + 'data/love_encrypted.json');
+            if (!resp.ok) return null;
+            if (onProgress) onProgress('解析数据...', 60);
+            return { meta: await resp.json(), photosSha: null, token: '', repo };
         } catch(e) { return null; }
     }
 
     // Fetch photos blob separately (can be lazy)
     async function fetchPhotosBlob(token, repo, sha) {
         try {
-            const rawHdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' };
-            const resp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + sha, { headers: rawHdrs });
+            const hdrs = token
+                ? { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' }
+                : { 'Accept': 'application/vnd.github.v3.raw' };
+            const resp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + sha, { headers: hdrs });
             if (resp.ok) return await resp.json();
         } catch(e) {}
         return null;
     }
 
-    // Legacy wrapper for syncFromGitHub
+    // Full fetch for syncFromGitHub
     async function fetchFromGitHubAPI() {
         const result = await fetchMetaFromGitHub();
         if (!result) return null;
