@@ -609,6 +609,14 @@
         .app-loading .load-text {
             margin-top: 16px; font-size: 14px; color: var(--text2); font-weight: 500;
         }
+        .app-loading .progress-bar {
+            width: 200px; height: 4px; background: var(--border); border-radius: 2px;
+            margin-top: 12px; overflow: hidden;
+        }
+        .app-loading .progress-fill {
+            height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 2px; transition: width 0.3s ease; width: 0%;
+        }
 
         /* Pull to refresh */
         .ptr-indicator {
@@ -660,6 +668,7 @@
     <div class="app-loading" id="appLoading" style="display:none;">
         <div class="spinner"></div>
         <div class="load-text" id="loadText">解密数据中...</div>
+        <div class="progress-bar"><div class="progress-fill" id="loadProgress"></div></div>
     </div>
 
     <!-- Pull to Refresh Indicator -->
@@ -878,15 +887,21 @@
     // ===== Unlock =====
     document.getElementById('pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') doUnlock(); });
 
-    function showLoading(text) {
+    function showLoading(text, pct) {
         const el = document.getElementById('appLoading');
         if (el) { el.style.display = 'flex'; el.classList.remove('hide'); }
         const t = document.getElementById('loadText');
         if (t && text) t.textContent = text;
+        const bar = document.getElementById('loadProgress');
+        if (bar && pct !== undefined) bar.style.width = Math.min(100, pct) + '%';
     }
     function hideLoading() {
         const el = document.getElementById('appLoading');
-        if (el) { el.classList.add('hide'); setTimeout(() => { el.style.display = 'none'; }, 400); }
+        const bar = document.getElementById('loadProgress');
+        if (bar) bar.style.width = '100%';
+        setTimeout(() => {
+            if (el) { el.classList.add('hide'); setTimeout(() => { el.style.display = 'none'; }, 400); }
+        }, 200);
     }
 
     // Load photo data from separated storage or inline migration
@@ -912,13 +927,14 @@
     }
 
     async function tryUnlock(pwd, isAuto) {
-        showLoading('解密数据中...');
-        // Try cached data first
+        showLoading('解密数据中...', 5);
+        // === Fast path: cached data ===
         let json = getCachedData();
         if (json) {
             try {
+                showLoading('解密缓存...', 20);
                 appData = await decryptData(pwd, json.encrypted);
-                // Load cached photos
+                // Load cached photos (non-blocking if missing)
                 let cachedPhotos = null;
                 try { const cp = localStorage.getItem('_lp2'); if (cp) cachedPhotos = JSON.parse(cp); } catch(e) {}
                 await loadPhotoStore(pwd, cachedPhotos);
@@ -926,61 +942,76 @@
                 if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
                 currentPwd = pwd; savePwd(pwd);
                 hideLoading(); showApp(); renderAll();
+                // Background sync (non-blocking)
                 syncFromGitHub(pwd, {force: true, verbose: true});
                 return true;
             } catch(e) {
                 try { localStorage.removeItem('_ld'); } catch(e2) {}
             }
         }
-        showLoading('从服务器加载...');
-        // Fetch from GitHub API first (always latest), then Pages as fallback
-        let result = await fetchFromGitHubAPI();
-        let metaJson = null, photosJson = null;
+        // === Network path: fetch metadata first, show UI, then lazy-load photos ===
+        const progress = (text, pct) => showLoading(text, pct);
+        progress('连接服务器...', 10);
+        let result = await fetchMetaFromGitHub(progress);
+        let metaJson = null, photosSha = null, ghToken = '', ghRepo = '';
         if (result) {
             metaJson = result.meta;
-            photosJson = result.photos;
+            photosSha = result.photosSha;
+            ghToken = result.token;
+            ghRepo = result.repo;
         }
+        // Pages fallback
         if (!metaJson) {
+            progress('从 Pages 加载...', 40);
             try {
                 const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
                 if (resp.ok) metaJson = await resp.json();
             } catch(e) {}
-            // Also try photos file from Pages
-            if (!photosJson) {
-                try {
-                    const resp = await fetch('data/love_photos.json?v=' + Date.now());
-                    if (resp.ok) photosJson = await resp.json();
-                } catch(e) {}
-            }
         }
         if (!metaJson) {
-            appData = {
-                version: 1,
-                couple: { person1: 'CRY', person2: 'XYX' },
-                anniversaries: [], diary: [], photos: []
-            };
+            appData = { version: 1, couple: { person1: 'CRY', person2: 'XYX' }, anniversaries: [], diary: [], photos: [] };
             currentPwd = pwd; savePwd(pwd);
             hideLoading(); showApp(); renderAll();
             if (!isAuto) toggleEdit();
             return true;
         }
         try {
-            showLoading('解密中...');
+            progress('解密数据...', 85);
             appData = await decryptData(pwd, metaJson.encrypted);
-            await loadPhotoStore(pwd, photosJson);
             migrateDiaryPhotos();
             cacheData(JSON.stringify(metaJson));
-            cachePhotos(photosJson);
-            if (appData._ghToken && appData._ghRepo) {
-                saveTokenCookie(appData._ghToken, appData._ghRepo);
-                syncFromGitHub(pwd, {force: true, verbose: true});
-            }
+            if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
             currentPwd = pwd; savePwd(pwd);
+            // Show UI immediately WITHOUT waiting for photos
             hideLoading(); showApp(); renderAll();
+            // Lazy-load photos in background
+            lazyLoadPhotos(pwd, photosSha, ghToken || getToken(), ghRepo || getRepo());
             return true;
         } catch(e) {
             hideLoading();
             return false;
+        }
+    }
+
+    // Load photos in background after UI is shown
+    async function lazyLoadPhotos(pwd, photosSha, token, repo) {
+        let photosJson = null;
+        // Try from GitHub API
+        if (photosSha && token && repo) {
+            photosJson = await fetchPhotosBlob(token, repo, photosSha);
+        }
+        // Fallback to Pages
+        if (!photosJson) {
+            try {
+                const resp = await fetch('data/love_photos.json?v=' + Date.now());
+                if (resp.ok) photosJson = await resp.json();
+            } catch(e) {}
+        }
+        if (photosJson) {
+            await loadPhotoStore(pwd, photosJson);
+            cachePhotos(photosJson);
+            renderAll(); // Re-render with photos now loaded
+            showToast('照片加载完成');
         }
     }
 
@@ -991,65 +1022,75 @@
         }
     }
 
-    // Fetch latest data from GitHub API (no deploy delay)
-    async function fetchFromGitHubAPI() {
-        try {
-            let token = (appData && appData._ghToken) || getTokenCookie() || '';
-            let repo = (appData && appData._ghRepo) || getRepoCookie() || GH_REPO || '';
-            if (!token || !repo) {
-                const cached = getCachedData();
-                if (cached) {
-                    const pwd = currentPwd || getPwd();
-                    if (pwd) {
-                        try {
-                            const tmp = await decryptData(pwd, cached.encrypted);
-                            token = tmp._ghToken || '';
-                            repo = tmp._ghRepo || '';
-                        } catch(e) {}
-                    }
+    // Resolve GitHub token/repo from all sources
+    async function resolveGitHub() {
+        let token = (appData && appData._ghToken) || getTokenCookie() || '';
+        let repo = (appData && appData._ghRepo) || getRepoCookie() || GH_REPO || '';
+        if (!token || !repo) {
+            const cached = getCachedData();
+            if (cached) {
+                const pwd = currentPwd || getPwd();
+                if (pwd) {
+                    try { const tmp = await decryptData(pwd, cached.encrypted); token = tmp._ghToken || ''; repo = tmp._ghRepo || ''; } catch(e) {}
                 }
             }
+        }
+        return { token, repo };
+    }
+
+    // Fetch metadata only (fast, for initial unlock)
+    async function fetchMetaFromGitHub(onProgress) {
+        try {
+            const { token, repo } = await resolveGitHub();
             if (!token || !repo) return null;
 
-            const ts = Date.now();
             const hdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' };
+            const api = 'https://api.github.com/repos/' + repo + '/git';
 
-            // Step 1: Get latest commit SHA from ref (content-addressed, not cached by CDN)
-            const refResp = await fetch('https://api.github.com/repos/' + repo + '/git/ref/heads/main?t=' + ts, { headers: hdrs });
+            if (onProgress) onProgress('连接服务器...', 10);
+            const refResp = await fetch(api + '/ref/heads/main?t=' + Date.now(), { headers: hdrs });
             if (!refResp.ok) return null;
-            const refData = await refResp.json();
-            const commitSha = refData.object.sha;
+            const commitSha = (await refResp.json()).object.sha;
 
-            // Step 2: Get commit's tree SHA
-            const commitResp = await fetch('https://api.github.com/repos/' + repo + '/git/commits/' + commitSha, { headers: hdrs });
+            if (onProgress) onProgress('读取版本...', 30);
+            const commitResp = await fetch(api + '/commits/' + commitSha, { headers: hdrs });
             if (!commitResp.ok) return null;
-            const commitData = await commitResp.json();
-            const treeSha = commitData.tree.sha;
+            const treeSha = (await commitResp.json()).tree.sha;
 
-            // Step 3: Get tree, find data files
-            const treeResp = await fetch('https://api.github.com/repos/' + repo + '/git/trees/' + treeSha + '?recursive=1', { headers: hdrs });
+            if (onProgress) onProgress('查找文件...', 50);
+            const treeResp = await fetch(api + '/trees/' + treeSha + '?recursive=1', { headers: hdrs });
             if (!treeResp.ok) return null;
             const treeData = await treeResp.json();
             const fileEntry = treeData.tree.find(e => e.path === 'data/love_encrypted.json');
             if (!fileEntry) return null;
             const photosEntry = treeData.tree.find(e => e.path === 'data/love_photos.json');
 
-            // Step 4: Get blob content via raw media type
+            if (onProgress) onProgress('下载数据...', 65);
             const rawHdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' };
-            const blobResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + fileEntry.sha, { headers: rawHdrs });
-            if (!blobResp.ok) return null;
-            const metaJson = await blobResp.json();
+            const metaJson = await (await fetch(api + '/blobs/' + fileEntry.sha, { headers: rawHdrs })).json();
 
-            // Also fetch photos file if it exists
-            let photosJson = null;
-            if (photosEntry) {
-                try {
-                    const pResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + photosEntry.sha, { headers: rawHdrs });
-                    if (pResp.ok) photosJson = await pResp.json();
-                } catch(e) {}
-            }
-            return { meta: metaJson, photos: photosJson };
+            if (onProgress) onProgress('解密中...', 80);
+            return { meta: metaJson, photosSha: photosEntry ? photosEntry.sha : null, token, repo };
         } catch(e) { return null; }
+    }
+
+    // Fetch photos blob separately (can be lazy)
+    async function fetchPhotosBlob(token, repo, sha) {
+        try {
+            const rawHdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' };
+            const resp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + sha, { headers: rawHdrs });
+            if (resp.ok) return await resp.json();
+        } catch(e) {}
+        return null;
+    }
+
+    // Legacy wrapper for syncFromGitHub
+    async function fetchFromGitHubAPI() {
+        const result = await fetchMetaFromGitHub();
+        if (!result) return null;
+        let photosJson = null;
+        if (result.photosSha) photosJson = await fetchPhotosBlob(result.token, result.repo, result.photosSha);
+        return { meta: result.meta, photos: photosJson };
     }
 
     // Background sync: only update if remote is strictly newer than local
