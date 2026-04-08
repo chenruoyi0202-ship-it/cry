@@ -460,10 +460,17 @@
         /* Lightbox */
         .lightbox {
             display: none; position: fixed; inset: 0; z-index: 2000;
-            background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+            background: #000; align-items: center; justify-content: center;
             flex-direction: column; padding: 20px;
-            touch-action: none; /* we handle all touches */
+            touch-action: none;
             transition: background 0.2s;
+        }
+        .lb-bg {
+            position: absolute; inset: -40px; z-index: 0;
+            background-size: cover; background-position: center;
+            filter: blur(40px) brightness(0.4) saturate(1.3);
+            transform: scale(1.1);
+            transition: background-image 0.3s;
         }
         .lightbox.open { display: flex; animation: lbFadeIn 0.2s ease; }
         @keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -714,6 +721,7 @@
 
     <!-- Lightbox -->
     <div class="lightbox" id="lightbox">
+        <div class="lb-bg" id="lbBg"></div>
         <button class="lb-close" onclick="closeLightbox()">&times;</button>
         <button class="lb-nav lb-prev" onclick="navLightbox(-1)">&#x276E;</button>
         <button class="lb-nav lb-next" onclick="navLightbox(1)">&#x276F;</button>
@@ -2049,7 +2057,9 @@
         const photos = lbSourcePhotos || appData.photos;
         const p = photos[currentLbIndex];
         if (!p) return;
-        document.getElementById('lbImg').src = p.data || getPhotoSrc(p.id) || '';
+        const src = p.data || getPhotoSrc(p.id) || '';
+        document.getElementById('lbImg').src = src;
+        document.getElementById('lbBg').style.backgroundImage = src ? 'url(' + src + ')' : 'none';
         document.getElementById('lbCap').textContent = p.caption || p.date || '';
         document.getElementById('lbDate').textContent = '';
         const counter = document.getElementById('lbCounter');
