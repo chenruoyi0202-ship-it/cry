@@ -464,7 +464,9 @@
             touch-action: none; /* we handle all touches */
             transition: background 0.2s;
         }
-        .lightbox.open { display: flex; }
+        .lightbox.open { display: flex; animation: lbFadeIn 0.2s ease; }
+        @keyframes lbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .lightbox.closing { opacity: 0; transition: opacity 0.2s ease; }
         .lightbox.dismissing { background: rgba(0,0,0,0); }
         .lb-close {
             position: absolute; top: 16px; right: 16px; z-index: 10;
@@ -1674,12 +1676,14 @@
         renderTagBar();
         const c = document.getElementById('gallery');
         const filtered = [];
-        // Sort by createdAt descending (newest first)
-        const sorted = [...appData.photos].sort((a, b) => {
-            const ta = a.createdAt || a.id || '';
-            const tb = b.createdAt || b.id || '';
-            return tb > ta ? 1 : tb < ta ? -1 : 0;
-        });
+        // Sort by time descending (newest first)
+        function photoTime(p) {
+            if (p.createdAt) return new Date(p.createdAt).getTime() || 0;
+            // Extract timestamp from ID (format: Date.now().toString(36) + 4 random chars)
+            if (p.id) return parseInt(p.id.slice(0, -4), 36) || 0;
+            return 0;
+        }
+        const sorted = [...appData.photos].sort((a, b) => photoTime(b) - photoTime(a));
         sorted.forEach((p, i) => {
             const origIdx = appData.photos.indexOf(p);
             if (currentTag === 'all' || (p.tags || []).includes(currentTag)) {
@@ -2022,11 +2026,14 @@
     }
     function closeLightbox() {
         const lb = document.getElementById('lightbox');
-        lb.classList.remove('open', 'dismissing');
-        document.body.style.overflow = '';
-        lbSourcePhotos = null;
-        lbZoom = 1;
-        resetLbTransform();
+        lb.classList.add('closing');
+        setTimeout(() => {
+            lb.classList.remove('open', 'dismissing', 'closing');
+            document.body.style.overflow = '';
+            lbSourcePhotos = null;
+            lbZoom = 1;
+            resetLbTransform();
+        }, 200);
     }
     function navLightbox(dir) {
         const photos = lbSourcePhotos || appData.photos;
