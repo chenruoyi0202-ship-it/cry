@@ -375,11 +375,11 @@
         .cat-chip.expand-chip { color: var(--accent); background: transparent; border-style: dashed; }
 
         .gallery {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+            columns: 3; column-gap: 8px;
         }
         .gallery-item {
             position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
-            aspect-ratio: 1; background: var(--border);
+            background: var(--border); break-inside: avoid; margin-bottom: 8px;
             box-shadow: var(--glow), 0 2px 12px var(--card-shadow);
             transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.2s, box-shadow 0.2s;
         }
@@ -396,7 +396,7 @@
         body.editing .gallery-item.dragging, body.editing .ann-card.dragging { animation: none; opacity: 0; }
         body.editing .gallery-item.no-jiggle { animation: none; }
         .gallery-item img {
-            width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
+            width: 100%; height: auto; display: block; transition: transform 0.4s;
             -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
             -webkit-user-drag: none;
         }
@@ -488,17 +488,42 @@
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
 
-        /* Skeleton shimmer for gallery */
+        /* Skeleton shimmer */
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton-box {
+            background: linear-gradient(90deg, #f0e0d6 25%, #fdf6f0 50%, #f0e0d6 75%);
+            background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 12px;
+        }
+        [data-theme="dark"] .skeleton-box {
+            background: linear-gradient(90deg, #16213e 25%, #1a1a2e 50%, #16213e 75%);
+            background-size: 200% 100%;
+        }
         .gallery-item.skeleton {
             background: linear-gradient(90deg, #f0e0d6 25%, #fdf6f0 50%, #f0e0d6 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
+            background-size: 200% 100%; animation: shimmer 1.5s infinite;
         }
+        .gallery-item.skeleton img { opacity: 0; }
         [data-theme="dark"] .gallery-item.skeleton {
             background: linear-gradient(90deg, #16213e 25%, #1a1a2e 50%, #16213e 75%);
             background-size: 200% 100%;
         }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* App loading overlay */
+        .app-loading {
+            position: fixed; inset: 0; z-index: 5000; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            background: var(--bg); transition: opacity 0.4s;
+        }
+        .app-loading.hide { opacity: 0; pointer-events: none; }
+        .app-loading .spinner {
+            width: 40px; height: 40px; border: 3px solid var(--border);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .app-loading .load-text {
+            margin-top: 16px; font-size: 14px; color: var(--text2); font-weight: 500;
+        }
 
         /* Pull to refresh */
         .ptr-indicator {
@@ -544,6 +569,12 @@
             <button class="lock-btn" id="unlockBtn" onclick="doUnlock()">解锁</button>
             <div class="lock-error" id="lockError"></div>
         </div>
+    </div>
+
+    <!-- App Loading Overlay -->
+    <div class="app-loading" id="appLoading" style="display:none;">
+        <div class="spinner"></div>
+        <div class="load-text" id="loadText">解密数据中...</div>
     </div>
 
     <!-- Pull to Refresh Indicator -->
@@ -642,6 +673,14 @@
     let currentLbIndex = 0;
     let lbSourcePhotos = null; // null = use appData.photos, array = custom source
     let dirty = false;
+    let photoStore = {}; // {photoId: base64DataUrl} — separated from metadata
+    let photosLoaded = false;
+
+    function getPhotoSrc(idOrData) {
+        if (!idOrData) return '';
+        if (typeof idOrData === 'string' && idOrData.startsWith('data:')) return idOrData;
+        return photoStore[idOrData] || '';
+    }
 
     // ===== Crypto =====
     async function deriveKey(password, salt) {
@@ -745,57 +784,116 @@
     // ===== Unlock =====
     document.getElementById('pwdInput').addEventListener('keydown', e => { if (e.key === 'Enter') doUnlock(); });
 
+    function showLoading(text) {
+        const el = document.getElementById('appLoading');
+        if (el) { el.style.display = 'flex'; el.classList.remove('hide'); }
+        const t = document.getElementById('loadText');
+        if (t && text) t.textContent = text;
+    }
+    function hideLoading() {
+        const el = document.getElementById('appLoading');
+        if (el) { el.classList.add('hide'); setTimeout(() => { el.style.display = 'none'; }, 400); }
+    }
+
+    // Load photo data from separated storage or inline migration
+    async function loadPhotoStore(pwd, photosJson) {
+        if (photosJson && photosJson.encrypted) {
+            try {
+                const store = await decryptData(pwd, photosJson.encrypted);
+                Object.assign(photoStore, store);
+                photosLoaded = true;
+                return;
+            } catch(e) {}
+        }
+        // Migration: if photos still have inline .data, extract to photoStore
+        if (appData && appData.photos) {
+            appData.photos.forEach(p => {
+                if (p.data) {
+                    photoStore[p.id] = p.data;
+                    delete p.data;
+                }
+            });
+        }
+        photosLoaded = true;
+    }
+
     async function tryUnlock(pwd, isAuto) {
+        showLoading('解密数据中...');
         // Try cached data first
         let json = getCachedData();
         if (json) {
             try {
                 appData = await decryptData(pwd, json.encrypted);
+                // Load cached photos
+                let cachedPhotos = null;
+                try { const cp = localStorage.getItem('_lp2'); if (cp) cachedPhotos = JSON.parse(cp); } catch(e) {}
+                await loadPhotoStore(pwd, cachedPhotos);
                 migrateDiaryPhotos();
                 if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
                 currentPwd = pwd; savePwd(pwd);
-                showApp(); renderAll();
-                // Always force-sync on every page load/refresh
+                hideLoading(); showApp(); renderAll();
                 syncFromGitHub(pwd, {force: true, verbose: true});
                 return true;
             } catch(e) {
                 try { localStorage.removeItem('_ld'); } catch(e2) {}
             }
         }
+        showLoading('从服务器加载...');
         // Fetch from GitHub API first (always latest), then Pages as fallback
-        json = await fetchFromGitHubAPI();
-        if (!json) {
+        let result = await fetchFromGitHubAPI();
+        let metaJson = null, photosJson = null;
+        if (result) {
+            metaJson = result.meta;
+            photosJson = result.photos;
+        }
+        if (!metaJson) {
             try {
                 const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-                if (resp.ok) json = await resp.json();
+                if (resp.ok) metaJson = await resp.json();
             } catch(e) {}
+            // Also try photos file from Pages
+            if (!photosJson) {
+                try {
+                    const resp = await fetch('data/love_photos.json?v=' + Date.now());
+                    if (resp.ok) photosJson = await resp.json();
+                } catch(e) {}
+            }
         }
-        if (!json) {
-            // No data anywhere — first time use
+        if (!metaJson) {
             appData = {
                 version: 1,
                 couple: { person1: 'CRY', person2: 'XYX' },
                 anniversaries: [], diary: [], photos: []
             };
             currentPwd = pwd; savePwd(pwd);
-            showApp(); renderAll();
+            hideLoading(); showApp(); renderAll();
             if (!isAuto) toggleEdit();
             return true;
         }
         try {
-            appData = await decryptData(pwd, json.encrypted);
+            showLoading('解密中...');
+            appData = await decryptData(pwd, metaJson.encrypted);
+            await loadPhotoStore(pwd, photosJson);
             migrateDiaryPhotos();
-            cacheData(JSON.stringify(json));
+            cacheData(JSON.stringify(metaJson));
+            cachePhotos(photosJson);
             if (appData._ghToken && appData._ghRepo) {
                 saveTokenCookie(appData._ghToken, appData._ghRepo);
-                // Pages data might be stale — force-sync from API
                 syncFromGitHub(pwd, {force: true, verbose: true});
             }
             currentPwd = pwd; savePwd(pwd);
-            showApp(); renderAll();
+            hideLoading(); showApp(); renderAll();
             return true;
         } catch(e) {
+            hideLoading();
             return false;
+        }
+    }
+
+    function cachePhotos(photosJson) {
+        if (!photosJson) return;
+        try { localStorage.setItem('_lp2', JSON.stringify(photosJson)); } catch(e) {
+            try { localStorage.removeItem('_lp2'); } catch(e2) {}
         }
     }
 
@@ -834,19 +932,29 @@
             const commitData = await commitResp.json();
             const treeSha = commitData.tree.sha;
 
-            // Step 3: Get tree, find data/love_encrypted.json blob SHA
+            // Step 3: Get tree, find data files
             const treeResp = await fetch('https://api.github.com/repos/' + repo + '/git/trees/' + treeSha + '?recursive=1', { headers: hdrs });
             if (!treeResp.ok) return null;
             const treeData = await treeResp.json();
             const fileEntry = treeData.tree.find(e => e.path === 'data/love_encrypted.json');
             if (!fileEntry) return null;
+            const photosEntry = treeData.tree.find(e => e.path === 'data/love_photos.json');
 
             // Step 4: Get blob content via raw media type
-            const blobResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + fileEntry.sha, {
-                headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' }
-            });
+            const rawHdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3.raw' };
+            const blobResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + fileEntry.sha, { headers: rawHdrs });
             if (!blobResp.ok) return null;
-            return await blobResp.json();
+            const metaJson = await blobResp.json();
+
+            // Also fetch photos file if it exists
+            let photosJson = null;
+            if (photosEntry) {
+                try {
+                    const pResp = await fetch('https://api.github.com/repos/' + repo + '/git/blobs/' + photosEntry.sha, { headers: rawHdrs });
+                    if (pResp.ok) photosJson = await pResp.json();
+                } catch(e) {}
+            }
+            return { meta: metaJson, photos: photosJson };
         } catch(e) { return null; }
     }
 
@@ -854,16 +962,18 @@
     async function syncFromGitHub(pwd, opts) {
         opts = opts || {};
         try {
-            const remote = await fetchFromGitHubAPI();
-            if (!remote) { if (opts.verbose) showToast('同步失败'); return; }
+            const result = await fetchFromGitHubAPI();
+            if (!result || !result.meta) { if (opts.verbose) showToast('同步失败'); return; }
+            const remote = result.meta;
             const localTime = (appData && appData._updatedAt) || '';
             const remoteTime = remote.updatedAt || '';
-            // Always replace if opts.force, otherwise only if remote is newer
             if (opts.force || (remoteTime && remoteTime > localTime)) {
                 const newData = await decryptData(pwd, remote.encrypted);
                 appData = newData;
+                await loadPhotoStore(pwd, result.photos);
                 migrateDiaryPhotos();
                 cacheData(JSON.stringify(remote));
+                cachePhotos(result.photos);
                 renderAll();
                 if (opts.verbose) {
                     const beijing = new Date(new Date(remoteTime).getTime() + 8 * 3600000);
@@ -1296,8 +1406,7 @@
             // Resolve photos to data URLs
             const photoSrcs = (d.photos || []).map(p => {
                 if (typeof p === 'string' && p.startsWith('data:')) return p;
-                const found = appData.photos.find(x => x.id === p);
-                return found ? found.data : '';
+                return getPhotoSrc(p);
             }).filter(Boolean);
             const hasPhoto = photoSrcs.length > 0;
             const coverI = d.coverIdx || 0;
@@ -1467,12 +1576,15 @@
         });
         c.innerHTML = filtered.map(item => {
             const p = item.p, origIdx = item.origIdx;
+            const src = getPhotoSrc(p.id) || p.data || '';
             const tagsText = (p.tags || []).length ? (p.tags || []).slice(0, 3).join(' · ') : '';
             const tagsOverlay = tagsText ? '<div class="item-tags-overlay">' + esc(tagsText) + '</div>' : '';
-            return '<div class="gallery-item skeleton" data-idx="' + origIdx + '" onclick="onPhotoClick(' + origIdx + ')">' +
+            const skeletonClass = src ? ' skeleton' : ' skeleton';
+            return '<div class="gallery-item' + skeletonClass + '" data-idx="' + origIdx + '" onclick="onPhotoClick(' + origIdx + ')">' +
                 '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
                 '<button class="item-cat" onclick="event.stopPropagation();editPhotoTags(\'' + p.id + '\')">' + (tagsText ? '&#x270F;' : '+') + '</button>' +
-                '<img src="' + p.data + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')">' +
+                (src ? '<img src="' + src + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')">' :
+                       '<div class="skeleton-box" style="width:100%;padding-top:100%;"></div>') +
                 tagsOverlay + '</div>';
         }).join('');
         galleryRendered = true;
@@ -1561,7 +1673,9 @@
         targets.forEach(p => { delete p.tags; });
         for (const photo of targets) {
             try {
-                const tags = await callQwenVL(photo.data, apiKey);
+                const imgData = getPhotoSrc(photo.id) || photo.data || '';
+                if (!imgData) { failed++; continue; }
+                const tags = await callQwenVL(imgData, apiKey);
                 if (tags.length) photo.tags = tags;
                 done++;
             } catch(e) {
@@ -1806,7 +1920,7 @@
         const photos = lbSourcePhotos || appData.photos;
         const p = photos[currentLbIndex];
         if (!p) return;
-        document.getElementById('lbImg').src = p.data;
+        document.getElementById('lbImg').src = p.data || getPhotoSrc(p.id) || '';
         document.getElementById('lbCap').textContent = p.caption || p.date || '';
         document.getElementById('lbDate').textContent = '';
     }
@@ -1827,15 +1941,14 @@
 
     function delItem(collection, id) {
         if (!confirm('确定删除？')) return;
-        // Before deleting a photo, inline it into any diary entries that reference it
         if (collection === 'photos') {
-            const photo = appData.photos.find(x => x.id === id);
-            if (photo && photo.data) {
-                appData.diary.forEach(d => {
-                    if (!d.photos) return;
-                    d.photos = d.photos.map(p => (p === id) ? photo.data : p);
-                });
-            }
+            // Remove references in diary entries
+            appData.diary.forEach(d => {
+                if (!d.photos) return;
+                d.photos = d.photos.filter(p => p !== id);
+            });
+            // Clean up photoStore
+            delete photoStore[id];
         }
         appData[collection] = appData[collection].filter(x => x.id !== id);
         dirty = true;
@@ -1855,12 +1968,20 @@
             d.photos = d.photos.map(p => {
                 if (typeof p !== 'string') return p;
                 if (!p.startsWith('data:')) return p; // already an ID ref
-                // Check if this exact data already exists in gallery
-                const existing = appData.photos.find(x => x.data === p);
-                if (existing) { changed = true; return existing.id; }
+                // Check if this exact data already exists in photoStore
+                const existingId = Object.keys(photoStore).find(k => photoStore[k] === p);
+                if (existingId) {
+                    // Ensure it's also in appData.photos
+                    if (!appData.photos.find(x => x.id === existingId)) {
+                        appData.photos.unshift({ id: existingId, tags: [d.title || '点滴'] });
+                    }
+                    changed = true;
+                    return existingId;
+                }
                 // Create new gallery entry
                 const photoId = genId();
-                appData.photos.unshift({ id: photoId, data: p, tags: [d.title || '点滴'] });
+                photoStore[photoId] = p;
+                appData.photos.unshift({ id: photoId, tags: [d.title || '点滴'] });
                 changed = true;
                 return photoId;
             });
@@ -1899,8 +2020,7 @@
             diaryExistingPhotos = []; // [{ref, src}]
             if (editing && editing.photos && editing.photos.length) {
                 diaryExistingPhotos = editing.photos.map(p => {
-                    const src = (typeof p === 'string' && p.startsWith('data:')) ? p :
-                                ((appData.photos.find(x => x.id === p) || {}).data || '');
+                    const src = (typeof p === 'string' && p.startsWith('data:')) ? p : getPhotoSrc(p);
                     return src ? { ref: p, src } : null;
                 }).filter(Boolean);
             }
@@ -1984,8 +2104,7 @@
         if (!d) return;
         const photoSrcs = (d.photos || []).map(p => {
             if (typeof p === 'string' && p.startsWith('data:')) return p;
-            const found = appData.photos.find(x => x.id === p);
-            return found ? found.data : '';
+            return getPhotoSrc(p);
         }).filter(Boolean);
         diaryDetailPhotos = photoSrcs;
         const heroHtml = photoSrcs.length > 0
@@ -2157,16 +2276,25 @@
         });
     }
 
-    // Compress any oversized photos in appData before save
+    // Compress any oversized photos before save
     async function autoCompressLargePhotos() {
         if (!appData) return;
+        // Compress in photoStore
+        for (const id of Object.keys(photoStore)) {
+            photoStore[id] = await compressDataUrl(photoStore[id]);
+        }
+        // Compress any remaining inline data
         for (const p of (appData.photos || [])) {
-            if (p.data) p.data = await compressDataUrl(p.data);
+            if (p.data) {
+                p.data = await compressDataUrl(p.data);
+                photoStore[p.id] = p.data;
+                delete p.data;
+            }
         }
         for (const d of (appData.diary || [])) {
             if (!d.photos) continue;
             for (let i = 0; i < d.photos.length; i++) {
-                if (typeof d.photos[i] === 'string') {
+                if (typeof d.photos[i] === 'string' && d.photos[i].startsWith('data:')) {
                     d.photos[i] = await compressDataUrl(d.photos[i]);
                 }
             }
@@ -2204,10 +2332,12 @@
             const newPhotos = [];
             files.forEach(file => {
                 compressImage(file, (dataUrl) => {
-                    const photo = { id: genId(), data: dataUrl };
+                    const pid = genId();
+                    photoStore[pid] = dataUrl;
+                    const photo = { id: pid };
                     if (currentTag && currentTag !== 'all') photo.tags = [currentTag];
                     appData.photos.unshift(photo);
-                    newPhotos.push(photo);
+                    newPhotos.push({ ...photo, data: dataUrl });
                     done++;
                     if (done === files.length) {
                         dirty = true; renderGallery(); initGalleryDrag();
@@ -2228,11 +2358,13 @@
         for (const photo of photos) {
             if (photo.tags && photo.tags.length && currentTag === 'all') continue;
             try {
-                const tags = await callQwenVL(photo.data, apiKey);
+                const imgData = photo.data || getPhotoSrc(photo.id);
+                if (!imgData) continue;
+                const tags = await callQwenVL(imgData, apiKey);
                 if (tags.length) {
-                    // Preserve manual tag from currentTag filter if set
-                    const manual = (photo.tags || []).filter(t => !tags.includes(t));
-                    photo.tags = [...tags, ...manual];
+                    const real = appData.photos.find(x => x.id === photo.id) || photo;
+                    const manual = (real.tags || []).filter(t => !tags.includes(t));
+                    real.tags = [...tags, ...manual];
                     done++;
                     renderGallery();
                 }
@@ -2256,7 +2388,9 @@
         preview.innerHTML = '';
         files.forEach(file => {
             compressImage(file, (dataUrl) => {
-                appData.photos.unshift({ id: genId(), data: dataUrl });
+                const pid = genId();
+                photoStore[pid] = dataUrl;
+                appData.photos.unshift({ id: pid });
                 done++;
                 preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
                 status.textContent = '处理中... ' + done + '/' + files.length;
@@ -2272,7 +2406,9 @@
     function addPhoto() {
         if (!pendingPhotos.length) return alert('请先选择图片');
         pendingPhotos.forEach(data => {
-            appData.photos.unshift({ id: genId(), data });
+            const pid = genId();
+            photoStore[pid] = data;
+            appData.photos.unshift({ id: pid });
         });
         pendingPhotos = [];
         dirty = true; closeModal(); renderAll();
@@ -2281,23 +2417,14 @@
 
     // ===== Recompress existing photos =====
     function recompressAll() {
-        // Collect all photos: gallery + inline diary photos
-        const targets = [];
-        appData.photos.forEach(p => targets.push({ obj: p, key: 'data' }));
-        appData.diary.forEach(d => {
-            if (!d.photos) return;
-            d.photos.forEach((ref, i) => {
-                if (typeof ref === 'string' && ref.startsWith('data:')) {
-                    targets.push({ obj: d.photos, key: i });
-                }
-            });
-        });
-        if (!targets.length) return alert('没有照片');
-        if (!confirm('压缩所有照片（包括相册和点滴）？')) return;
-        let done = 0, total = targets.length;
+        const ids = Object.keys(photoStore);
+        if (!ids.length) return alert('没有照片');
+        if (!confirm('压缩所有照片？')) return;
+        let done = 0, total = ids.length;
         showToast('压缩中... 0/' + total);
-        targets.forEach(t => {
-            const src = t.obj[t.key];
+        ids.forEach(id => {
+            const src = photoStore[id];
+            if (!src || !src.startsWith('data:')) { done++; return; }
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
@@ -2309,7 +2436,7 @@
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                 let result = canvas.toDataURL('image/jpeg', 0.65);
                 if (result.length > 300000) result = canvas.toDataURL('image/jpeg', 0.5);
-                t.obj[t.key] = result;
+                photoStore[id] = result;
                 done++;
                 if (done === total) {
                     dirty = true;
@@ -2323,6 +2450,7 @@
 
     // ===== GitHub Config =====
     const GH_PATH = 'data/love_encrypted.json';
+    const GH_PHOTOS_PATH = 'data/love_photos.json';
 
     function detectRepo() {
         const host = location.hostname;
@@ -2381,22 +2509,54 @@
 
             const now = new Date().toISOString();
             appData._updatedAt = now;
-            const encrypted = await encryptData(pwd, appData);
-            const output = JSON.stringify({ encrypted, updatedAt: now });
-            const sizeKB = Math.round(output.length / 1024);
-            const content = bufToB64(new TextEncoder().encode(output));
-            showToast('加密完成 ' + sizeKB + 'KB，上传中...');
+
+            // Separate photo data from metadata
+            const photosData = {};
+            (appData.photos || []).forEach(p => {
+                if (p.data) { photoStore[p.id] = p.data; delete p.data; }
+                if (photoStore[p.id]) photosData[p.id] = photoStore[p.id];
+            });
+            // Also ensure diary inline photos are in photoStore
+            (appData.diary || []).forEach(d => {
+                (d.photos || []).forEach(p => {
+                    if (typeof p === 'string' && !p.startsWith('data:') && photoStore[p]) {
+                        photosData[p] = photoStore[p];
+                    }
+                });
+            });
+
+            // Encrypt metadata (small, no photo data)
+            const encMeta = await encryptData(pwd, appData);
+            const metaOutput = JSON.stringify({ encrypted: encMeta, updatedAt: now });
+            const metaKB = Math.round(metaOutput.length / 1024);
+
+            // Encrypt photos (large, separate)
+            const encPhotos = await encryptData(pwd, photosData);
+            const photosOutput = JSON.stringify({ encrypted: encPhotos });
+            const photosKB = Math.round(photosOutput.length / 1024);
+
+            showToast('加密完成 ' + metaKB + 'KB + ' + photosKB + 'KB 照片');
+
+            const metaB64 = bufToB64(new TextEncoder().encode(metaOutput));
+            const photosB64 = bufToB64(new TextEncoder().encode(photosOutput));
 
             const hdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' };
             const postHdrs = { ...hdrs, 'Content-Type': 'application/json' };
             const api = 'https://api.github.com/repos/' + repo + '/git';
 
-            showToast('1/5 上传文件 (' + sizeKB + 'KB)...');
-            const blobResp = await fetchRetry(api + '/blobs', {
-                method: 'POST', headers: postHdrs,
-                body: JSON.stringify({ content, encoding: 'base64' })
-            }, '上传文件失败');
-            const blobData = await blobResp.json();
+            showToast('1/5 上传文件...');
+            const [metaBlobResp, photosBlobResp] = await Promise.all([
+                fetchRetry(api + '/blobs', {
+                    method: 'POST', headers: postHdrs,
+                    body: JSON.stringify({ content: metaB64, encoding: 'base64' })
+                }, '上传元数据失败'),
+                fetchRetry(api + '/blobs', {
+                    method: 'POST', headers: postHdrs,
+                    body: JSON.stringify({ content: photosB64, encoding: 'base64' })
+                }, '上传照片失败')
+            ]);
+            const metaBlob = await metaBlobResp.json();
+            const photosBlob = await photosBlobResp.json();
 
             showToast('2/5 读取分支...');
             const refResp = await fetchRetry(api + '/ref/heads/main', { headers: hdrs }, '读取分支失败');
@@ -2411,7 +2571,10 @@
                 method: 'POST', headers: postHdrs,
                 body: JSON.stringify({
                     base_tree: treeSha,
-                    tree: [{ path: GH_PATH, mode: '100644', type: 'blob', sha: blobData.sha }]
+                    tree: [
+                        { path: GH_PATH, mode: '100644', type: 'blob', sha: metaBlob.sha },
+                        { path: GH_PHOTOS_PATH, mode: '100644', type: 'blob', sha: photosBlob.sha }
+                    ]
                 })
             }, '创建树失败');
             const newTreeSha = (await treeResp.json()).sha;
@@ -2428,8 +2591,8 @@
                 body: JSON.stringify({ sha: newCommitSha, force: true })
             }, '更新分支失败');
 
-            // Cache locally so refresh doesn't need to wait for GitHub Pages deploy
-            cacheData(output);
+            cacheData(metaOutput);
+            cachePhotos(JSON.parse(photosOutput));
             dirty = false;
             return true;
         } catch (e) {
