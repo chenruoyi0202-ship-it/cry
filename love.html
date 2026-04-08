@@ -1003,14 +1003,15 @@
         try {
             progress('解密数据...', 85);
             appData = await decryptData(pwd, metaJson.encrypted);
+            // Extract inline photo data to photoStore (old format migration)
+            await loadPhotoStore(pwd, null);
             migrateDiaryPhotos();
             cacheData(JSON.stringify(metaJson));
             if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
             currentPwd = pwd; savePwd(pwd);
-            // Show UI immediately WITHOUT waiting for photos
             hideLoading(); showApp(); renderAll();
-            // Lazy-load photos in background
-            lazyLoadPhotos(pwd, photosSha, ghToken || getToken(), ghRepo || getRepo());
+            // Lazy-load separated photos if available
+            if (photosSha) lazyLoadPhotos(pwd, photosSha, ghToken || getToken(), ghRepo || getRepo());
             return true;
         } catch(e) {
             hideLoading();
@@ -1142,7 +1143,7 @@
             } else if (opts.verbose) {
                 showToast('数据已是最新');
             }
-        } catch(e) { if (opts.verbose) showToast('同步失败'); }
+        } catch(e) { if (opts.verbose) showToast('同步失败: ' + (e.message || '').substring(0, 40)); }
     }
 
     // Auto-sync triggers: visibilitychange + pageshow (iOS fallback) + periodic
