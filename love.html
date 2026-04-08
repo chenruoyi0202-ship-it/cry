@@ -3050,30 +3050,38 @@
     }
 
     // ===== Dark Mode =====
-    function toggleTheme() {
-        const html = document.documentElement;
-        const isDark = html.getAttribute('data-theme') === 'dark';
-        const newTheme = isDark ? 'light' : 'dark';
-        html.setAttribute('data-theme', newTheme === 'dark' ? 'dark' : '');
-        if (newTheme === 'light') html.removeAttribute('data-theme');
-        document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        try { localStorage.setItem('_theme', newTheme); } catch(e) {}
-        // Update meta theme-color
+    function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+        else document.documentElement.removeAttribute('data-theme');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
         const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.content = newTheme === 'dark' ? '#1a1a2e' : '#fdf6f0';
+        if (meta) meta.content = isDark ? '#1a1a2e' : '#fdf6f0';
+    }
+    function getSystemTheme() {
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function toggleTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        applyTheme(newTheme);
+        try { localStorage.setItem('_theme', newTheme); } catch(e) {}
     }
     (function initTheme() {
         let saved = '';
         try { saved = localStorage.getItem('_theme'); } catch(e) {}
-        if (!saved) {
-            saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        if (saved === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            const btn = document.getElementById('themeToggle');
-            if (btn) btn.textContent = '☀️';
-            const meta = document.querySelector('meta[name="theme-color"]');
-            if (meta) meta.content = '#1a1a2e';
+        // No manual override → follow system
+        if (!saved) saved = getSystemTheme();
+        applyTheme(saved);
+        // Listen for system theme changes (auto-sync)
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                // Only auto-switch if user hasn't manually overridden
+                let manual = '';
+                try { manual = localStorage.getItem('_theme'); } catch(ex) {}
+                if (!manual) applyTheme(e.matches ? 'dark' : 'light');
+            });
         }
     })();
 
