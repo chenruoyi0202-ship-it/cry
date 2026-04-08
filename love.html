@@ -1674,7 +1674,14 @@
         renderTagBar();
         const c = document.getElementById('gallery');
         const filtered = [];
-        appData.photos.forEach((p, origIdx) => {
+        // Sort by createdAt descending (newest first)
+        const sorted = [...appData.photos].sort((a, b) => {
+            const ta = a.createdAt || a.id || '';
+            const tb = b.createdAt || b.id || '';
+            return tb > ta ? 1 : tb < ta ? -1 : 0;
+        });
+        sorted.forEach((p, i) => {
+            const origIdx = appData.photos.indexOf(p);
             if (currentTag === 'all' || (p.tags || []).includes(currentTag)) {
                 filtered.push({ p, origIdx });
             }
@@ -1684,11 +1691,10 @@
             const src = getPhotoSrc(p.id) || p.data || '';
             const tagsText = (p.tags || []).length ? (p.tags || []).slice(0, 3).join(' · ') : '';
             const tagsOverlay = tagsText ? '<div class="item-tags-overlay">' + esc(tagsText) + '</div>' : '';
-            const skeletonClass = src ? ' skeleton' : ' skeleton';
-            return '<div class="gallery-item' + skeletonClass + '" data-idx="' + origIdx + '" onclick="onPhotoClick(' + origIdx + ')">' +
+            return '<div class="gallery-item" data-idx="' + origIdx + '" onclick="onPhotoClick(' + origIdx + ')">' +
                 '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
                 '<button class="item-cat" onclick="event.stopPropagation();editPhotoTags(\'' + p.id + '\')">' + (tagsText ? '&#x270F;' : '+') + '</button>' +
-                (src ? '<img src="' + src + '" alt="" loading="lazy" onload="this.parentElement.classList.remove(\'skeleton\')">' :
+                (src ? '<img src="' + src + '" alt="">' :
                        '<div class="skeleton-box" style="width:100%;padding-top:100%;"></div>') +
                 tagsOverlay + '</div>';
         }).join('');
@@ -2219,7 +2225,7 @@
                 if (existingId) {
                     // Ensure it's also in appData.photos
                     if (!appData.photos.find(x => x.id === existingId)) {
-                        appData.photos.unshift({ id: existingId, tags: [d.title || '点滴'] });
+                        appData.photos.unshift({ id: existingId, tags: [d.title || '点滴'], createdAt: d.date || new Date().toISOString() });
                     }
                     changed = true;
                     return existingId;
@@ -2227,7 +2233,7 @@
                 // Create new gallery entry
                 const photoId = genId();
                 photoStore[photoId] = p;
-                appData.photos.unshift({ id: photoId, tags: [d.title || '点滴'] });
+                appData.photos.unshift({ id: photoId, tags: [d.title || '点滴'], createdAt: d.date || new Date().toISOString() });
                 changed = true;
                 return photoId;
             });
@@ -2582,7 +2588,7 @@
                 compressImage(file, (dataUrl) => {
                     const pid = genId();
                     photoStore[pid] = dataUrl;
-                    const photo = { id: pid };
+                    const photo = { id: pid, createdAt: new Date().toISOString() };
                     if (currentTag && currentTag !== 'all') photo.tags = [currentTag];
                     appData.photos.unshift(photo);
                     newPhotos.push({ ...photo, data: dataUrl });
@@ -2638,7 +2644,7 @@
             compressImage(file, (dataUrl) => {
                 const pid = genId();
                 photoStore[pid] = dataUrl;
-                appData.photos.unshift({ id: pid });
+                appData.photos.unshift({ id: pid, createdAt: new Date().toISOString() });
                 done++;
                 preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
                 status.textContent = '处理中... ' + done + '/' + files.length;
@@ -2656,7 +2662,7 @@
         pendingPhotos.forEach(data => {
             const pid = genId();
             photoStore[pid] = data;
-            appData.photos.unshift({ id: pid });
+            appData.photos.unshift({ id: pid, createdAt: new Date().toISOString() });
         });
         pendingPhotos = [];
         dirty = true; closeModal(); renderAll();
