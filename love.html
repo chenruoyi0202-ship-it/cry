@@ -963,22 +963,25 @@
             ]);
         }
 
-        // Race: GitHub API vs Pages (whoever returns first wins)
-        const apiPromise = fetchMetaFromGitHub(progress).catch(() => null);
-        const pagesPromise = (async () => {
-            try {
-                const resp = await fetchWithTimeout('data/love_encrypted.json?v=' + Date.now(), {}, 15000);
-                if (resp.ok) return { meta: await resp.json(), photosSha: null, token: '', repo: '' };
-            } catch(e) {}
-            return null;
-        })();
+        // Race: first successful response wins immediately
+        const winner = await new Promise(resolve => {
+            let done = false, pending = 2;
+            function finish(result) {
+                if (result && !done) { done = true; resolve(result); }
+                if (--pending <= 0 && !done) { done = true; resolve(null); }
+            }
+            // GitHub API path
+            fetchMetaFromGitHub(progress).then(finish).catch(() => finish(null));
+            // Pages path (with 10s timeout)
+            (async () => {
+                try {
+                    const resp = await fetchWithTimeout('data/love_encrypted.json?v=' + Date.now(), {}, 10000);
+                    if (resp.ok) return { meta: await resp.json(), photosSha: null, token: '', repo: '' };
+                } catch(e) {}
+                return null;
+            })().then(finish);
+        });
 
-        const results = await Promise.allSettled([apiPromise, pagesPromise]);
-        const apiResult = results[0].status === 'fulfilled' ? results[0].value : null;
-        const pagesResult = results[1].status === 'fulfilled' ? results[1].value : null;
-
-        // Prefer API result (has photosSha for lazy loading), fall back to Pages
-        const winner = apiResult || pagesResult;
         if (winner) {
             metaJson = winner.meta;
             photosSha = winner.photosSha;
