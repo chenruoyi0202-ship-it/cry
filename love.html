@@ -949,25 +949,43 @@
                 try { localStorage.removeItem('_ld'); } catch(e2) {}
             }
         }
-        // === Network path: fetch metadata first, show UI, then lazy-load photos ===
+        // === Network path: race GitHub API vs Pages for fastest response ===
         const progress = (text, pct) => showLoading(text, pct);
-        progress('连接服务器...', 10);
-        let result = await fetchMetaFromGitHub(progress);
+        progress('加载中...', 10);
+
         let metaJson = null, photosSha = null, ghToken = '', ghRepo = '';
-        if (result) {
-            metaJson = result.meta;
-            photosSha = result.photosSha;
-            ghToken = result.token;
-            ghRepo = result.repo;
+
+        // Helper: fetch with timeout
+        function fetchWithTimeout(url, opts, ms) {
+            return Promise.race([
+                fetch(url, opts),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
+            ]);
         }
-        // Pages fallback
-        if (!metaJson) {
-            progress('从 Pages 加载...', 40);
+
+        // Race: GitHub API vs Pages (whoever returns first wins)
+        const apiPromise = fetchMetaFromGitHub(progress).catch(() => null);
+        const pagesPromise = (async () => {
             try {
-                const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-                if (resp.ok) metaJson = await resp.json();
+                const resp = await fetchWithTimeout('data/love_encrypted.json?v=' + Date.now(), {}, 15000);
+                if (resp.ok) return { meta: await resp.json(), photosSha: null, token: '', repo: '' };
             } catch(e) {}
+            return null;
+        })();
+
+        const results = await Promise.allSettled([apiPromise, pagesPromise]);
+        const apiResult = results[0].status === 'fulfilled' ? results[0].value : null;
+        const pagesResult = results[1].status === 'fulfilled' ? results[1].value : null;
+
+        // Prefer API result (has photosSha for lazy loading), fall back to Pages
+        const winner = apiResult || pagesResult;
+        if (winner) {
+            metaJson = winner.meta;
+            photosSha = winner.photosSha;
+            ghToken = winner.token || '';
+            ghRepo = winner.repo || '';
         }
+        progress('解密中...', 80);
         if (!metaJson) {
             appData = { version: 1, couple: { person1: 'CRY', person2: 'XYX' }, anniversaries: [], diary: [], photos: [] };
             currentPwd = pwd; savePwd(pwd);
