@@ -798,6 +798,7 @@
     let currentLbIndex = 0;
     let lbSourcePhotos = null; // null = use appData.photos, array = custom source
     let dirty = false;
+    let photosDirty = false; // only true when photos added/deleted
     let photoStore = {}; // {photoId: base64DataUrl} — separated from metadata
     let photosLoaded = false;
 
@@ -2393,7 +2394,7 @@
                 d.photos = d.photos.filter(p => p !== id);
             });
             // Clean up photoStore
-            delete photoStore[id];
+            delete photoStore[id]; photosDirty = true;
         }
         appData[collection] = appData[collection].filter(x => x.id !== id);
         dirty = true;
@@ -2875,7 +2876,7 @@
             files.forEach(file => {
                 compressImage(file, (dataUrl, exifDate) => {
                     const pid = genId();
-                    photoStore[pid] = dataUrl;
+                    photoStore[pid] = dataUrl; photosDirty = true;
                     const photo = { id: pid, createdAt: exifDate || new Date().toISOString() };
                     if (currentTag && currentTag !== 'all') photo.tags = [currentTag];
                     appData.photos.unshift(photo);
@@ -2930,7 +2931,7 @@
         files.forEach(file => {
             compressImage(file, (dataUrl, exifDate) => {
                 const pid = genId();
-                photoStore[pid] = dataUrl;
+                photoStore[pid] = dataUrl; photosDirty = true;
                 appData.photos.unshift({ id: pid, createdAt: exifDate || new Date().toISOString() });
                 done++;
                 preview.innerHTML += '<img src="' + dataUrl + '" style="max-width:60px;max-height:60px;border-radius:8px;margin:4px;">';
@@ -2948,7 +2949,7 @@
         if (!pendingPhotos.length) return alert('请先选择图片');
         pendingPhotos.forEach(data => {
             const pid = genId();
-            photoStore[pid] = data;
+            photoStore[pid] = data; photosDirty = true;
             appData.photos.unshift({ id: pid, createdAt: new Date().toISOString() });
         });
         pendingPhotos = [];
@@ -3097,7 +3098,6 @@
                 if (p.data) { photoStore[p.id] = p.data; delete p.data; }
                 if (photoStore[p.id]) photosData[p.id] = photoStore[p.id];
             });
-            // Also ensure diary inline photos are in photoStore
             (appData.diary || []).forEach(d => {
                 (d.photos || []).forEach(p => {
                     if (typeof p === 'string' && !p.startsWith('data:') && photoStore[p]) {
@@ -3106,57 +3106,65 @@
                 });
             });
 
-            // Encrypt metadata (small, no photo data)
+            // Encrypt metadata (always small)
+            showToast('加密元数据...');
             const encMeta = await encryptData(pwd, appData);
             const metaOutput = JSON.stringify({ encrypted: encMeta, updatedAt: now });
             const metaKB = Math.round(metaOutput.length / 1024);
 
-            // Encrypt photos (large, separate)
-            const encPhotos = await encryptData(pwd, photosData);
-            const photosOutput = JSON.stringify({ encrypted: encPhotos });
-            const photosKB = Math.round(photosOutput.length / 1024);
+            // Encrypt photos only if changed
+            let photosOutput = null;
+            if (photosDirty || !appData._ossAkId) {
+                showToast('加密照片...');
+                const encPhotos = await encryptData(pwd, photosData);
+                photosOutput = JSON.stringify({ encrypted: encPhotos });
+            }
 
-            showToast('加密完成 ' + metaKB + 'KB + ' + photosKB + 'KB 照片');
+            // === Step 1: Upload to OSS first (fast in China) ===
+            showToast('上传到阿里云...');
+            try {
+                await ossUpload('data/love_encrypted.json', metaOutput, 'application/json');
+                if (photosOutput) await ossUpload('data/love_photos.json', photosOutput, 'application/json');
+                showToast('阿里云同步完成，推送 GitHub...');
+            } catch(e) { showToast('阿里云失败，推送 GitHub...'); }
 
+            // === Step 2: Push to GitHub (may be slow, but data already safe on OSS) ===
             const metaB64 = bufToB64(new TextEncoder().encode(metaOutput));
-            const photosB64 = bufToB64(new TextEncoder().encode(photosOutput));
-
             const hdrs = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github.v3+json' };
             const postHdrs = { ...hdrs, 'Content-Type': 'application/json' };
             const api = 'https://api.github.com/repos/' + repo + '/git';
 
-            showToast('1/6 上传元数据 (' + metaKB + 'KB)...');
+            showToast('上传元数据到 GitHub...');
             const metaBlobResp = await fetchRetry(api + '/blobs', {
                 method: 'POST', headers: postHdrs,
                 body: JSON.stringify({ content: metaB64, encoding: 'base64' })
             }, '上传元数据失败');
             const metaBlob = await metaBlobResp.json();
 
-            showToast('2/6 上传照片 (' + photosKB + 'KB)...');
-            const photosBlobResp = await fetchRetry(api + '/blobs', {
-                method: 'POST', headers: postHdrs,
-                body: JSON.stringify({ content: photosB64, encoding: 'base64' })
-            }, '上传照片失败');
-            const photosBlob = await photosBlobResp.json();
+            const treeItems = [{ path: GH_PATH, mode: '100644', type: 'blob', sha: metaBlob.sha }];
 
-            showToast('3/6 读取分支...');
+            // Only upload photos blob if changed
+            if (photosOutput) {
+                showToast('上传照片到 GitHub...');
+                const photosB64 = bufToB64(new TextEncoder().encode(photosOutput));
+                const photosBlobResp = await fetchRetry(api + '/blobs', {
+                    method: 'POST', headers: postHdrs,
+                    body: JSON.stringify({ content: photosB64, encoding: 'base64' })
+                }, '上传照片失败');
+                const photosBlob = await photosBlobResp.json();
+                treeItems.push({ path: GH_PHOTOS_PATH, mode: '100644', type: 'blob', sha: photosBlob.sha });
+            }
+
+            showToast('创建提交...');
             const refResp = await fetchRetry(api + '/ref/heads/main', { headers: hdrs }, '读取分支失败');
             const parentSha = (await refResp.json()).object.sha;
 
-            showToast('4/6 读取提交...');
             const commitResp = await fetchRetry(api + '/commits/' + parentSha, { headers: hdrs }, '读取提交失败');
             const treeSha = (await commitResp.json()).tree.sha;
 
-            showToast('5/6 创建提交...');
             const treeResp = await fetchRetry(api + '/trees', {
                 method: 'POST', headers: postHdrs,
-                body: JSON.stringify({
-                    base_tree: treeSha,
-                    tree: [
-                        { path: GH_PATH, mode: '100644', type: 'blob', sha: metaBlob.sha },
-                        { path: GH_PHOTOS_PATH, mode: '100644', type: 'blob', sha: photosBlob.sha }
-                    ]
-                })
+                body: JSON.stringify({ base_tree: treeSha, tree: treeItems })
             }, '创建树失败');
             const newTreeSha = (await treeResp.json()).sha;
 
@@ -3166,23 +3174,16 @@
             }, '创建提交失败');
             const newCommitSha = (await newCommitResp.json()).sha;
 
-            showToast('6/6 更新分支...');
+            showToast('更新分支...');
             await fetchRetry(api + '/refs/heads/main', {
                 method: 'PATCH', headers: postHdrs,
                 body: JSON.stringify({ sha: newCommitSha, force: true })
             }, '更新分支失败');
 
             cacheData(metaOutput);
-            cachePhotos(JSON.parse(photosOutput));
+            if (photosOutput) cachePhotos(JSON.parse(photosOutput));
             dirty = false;
-
-            // Sync to OSS in background (non-blocking)
-            showToast('同步到 OSS...');
-            Promise.all([
-                ossUpload('data/love_encrypted.json', metaOutput, 'application/json'),
-                ossUpload('data/love_photos.json', photosOutput, 'application/json')
-            ]).then(() => showToast('OSS 同步完成')).catch(() => {});
-
+            photosDirty = false;
             return true;
         } catch (e) {
             const errBanner = document.createElement('div');
