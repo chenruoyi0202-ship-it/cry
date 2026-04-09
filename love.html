@@ -3062,24 +3062,18 @@
         return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     function toggleTheme() {
+        // Temporary override for current session only
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const newTheme = isDark ? 'light' : 'dark';
-        applyTheme(newTheme);
-        try { localStorage.setItem('_theme', newTheme); } catch(e) {}
+        applyTheme(isDark ? 'light' : 'dark');
     }
     (function initTheme() {
-        let saved = '';
-        try { saved = localStorage.getItem('_theme'); } catch(e) {}
-        // No manual override → follow system
-        if (!saved) saved = getSystemTheme();
-        applyTheme(saved);
-        // Listen for system theme changes (auto-sync)
+        // Always clear old manual override, follow system
+        try { localStorage.removeItem('_theme'); } catch(e) {}
+        applyTheme(getSystemTheme());
+        // Real-time sync with system
         if (window.matchMedia) {
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-                // Only auto-switch if user hasn't manually overridden
-                let manual = '';
-                try { manual = localStorage.getItem('_theme'); } catch(ex) {}
-                if (!manual) applyTheme(e.matches ? 'dark' : 'light');
+                applyTheme(e.matches ? 'dark' : 'light');
             });
         }
     })();
