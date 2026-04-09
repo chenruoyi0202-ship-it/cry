@@ -2199,7 +2199,7 @@
             }
         }
 
-        function savePlan() {
+        async function savePlan() {
             const stock = document.getElementById('stockInput').value.trim();
             const costPrice = document.getElementById('costPrice').value;
             const totalShares = document.getElementById('totalShares').value;
@@ -2238,7 +2238,7 @@
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
             refreshPlanSelect(name);
             alert('方案已保存');
-            syncPlans(true);
+            await syncPlans(true);
         }
 
         function loadPlan() {
@@ -2268,7 +2268,7 @@
             calculate();
         }
 
-        function deletePlan() {
+        async function deletePlan() {
             const name = document.getElementById('planSelect').value;
             if (!name) { alert('请先选择一个方案'); return; }
             if (!confirm(`确定删除方案「${name}」？`)) return;
@@ -2276,7 +2276,7 @@
             delete plans[name];
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
             refreshPlanSelect();
-            syncPlans(true);
+            await syncPlans(true);
         }
 
         // Focus stock input on load, refresh plan list
