@@ -3059,26 +3059,34 @@
     // OSS PUT with v1 HMAC-SHA1 signature
     async function ossUpload(path, content, contentType) {
         const ak = getOssAk();
-        if (!ak.id || !ak.secret) return false;
+        if (!ak.id || !ak.secret) { showToast('OSS: AK未配置'); return false; }
         try {
             const date = new Date().toUTCString();
             const stringToSign = 'PUT\n\n' + contentType + '\n' + date + '\n/' + OSS_BUCKET + '/' + path;
-            const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(ak.secret), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
-            const sig = bufToB64(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(stringToSign)));
+            const keyData = new TextEncoder().encode(ak.secret);
+            const key = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+            const sigBuf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(stringToSign));
+            // Convert 20-byte HMAC to base64 via btoa
+            const sigArr = new Uint8Array(sigBuf);
+            let sigStr = '';
+            for (let i = 0; i < sigArr.length; i++) sigStr += String.fromCharCode(sigArr[i]);
+            const sig = btoa(sigStr);
             const resp = await fetch(OSS_ENDPOINT + '/' + path, {
                 method: 'PUT',
-                headers: { 'Content-Type': contentType, 'Date': date, 'Authorization': 'OSS ' + ak.id + ':' + sig },
+                headers: {
+                    'Content-Type': contentType,
+                    'Date': date,
+                    'Authorization': 'OSS ' + ak.id + ':' + sig
+                },
                 body: content
             });
             if (!resp.ok) {
                 const err = await resp.text();
-                console.warn('OSS upload failed:', resp.status, err.substring(0, 200));
-                showToast('OSS上传失败: ' + resp.status);
+                showToast('OSS失败(' + resp.status + '): ' + err.substring(0, 60));
             }
             return resp.ok;
         } catch(e) {
-            console.warn('OSS upload error:', e.message);
-            showToast('OSS上传错误: ' + e.message.substring(0, 40));
+            showToast('OSS错误: ' + (e.message || '').substring(0, 40));
             return false;
         }
     }
