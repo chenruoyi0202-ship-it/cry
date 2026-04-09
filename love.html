@@ -3082,7 +3082,11 @@
             });
             if (!resp.ok) {
                 const err = await resp.text();
-                showToast('OSS失败(' + resp.status + '): ' + err.substring(0, 60));
+                // Show persistent error banner
+                const banner = document.createElement('div');
+                banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#e74c3c;color:#fff;padding:16px;text-align:left;z-index:99999;font-size:12px;word-break:break-all;';
+                banner.innerHTML = 'OSS ' + resp.status + ': ' + err.substring(0, 300) + '<br><button onclick="this.parentElement.remove()" style="margin-top:8px;padding:4px 12px;background:#fff;color:#e74c3c;border:none;border-radius:4px;">关闭</button>';
+                document.body.appendChild(banner);
             }
             return resp.ok;
         } catch(e) {
