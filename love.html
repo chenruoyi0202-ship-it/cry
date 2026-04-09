@@ -2897,12 +2897,15 @@
         let lastErr = null;
         for (let i = 0; i < 3; i++) {
             try {
-                const resp = await fetch(url, opts);
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), 60000); // 60s timeout
+                const resp = await fetch(url, { ...opts, signal: ctrl.signal });
+                clearTimeout(timer);
                 if (!resp.ok) throw new Error(label + ' ' + resp.status);
                 return resp;
             } catch(e) {
                 lastErr = e;
-                if (i < 2) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+                if (i < 2) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
             }
         }
         throw lastErr || new Error(label + ' failed');
@@ -2961,29 +2964,29 @@
             const postHdrs = { ...hdrs, 'Content-Type': 'application/json' };
             const api = 'https://api.github.com/repos/' + repo + '/git';
 
-            showToast('1/5 上传文件...');
-            const [metaBlobResp, photosBlobResp] = await Promise.all([
-                fetchRetry(api + '/blobs', {
-                    method: 'POST', headers: postHdrs,
-                    body: JSON.stringify({ content: metaB64, encoding: 'base64' })
-                }, '上传元数据失败'),
-                fetchRetry(api + '/blobs', {
-                    method: 'POST', headers: postHdrs,
-                    body: JSON.stringify({ content: photosB64, encoding: 'base64' })
-                }, '上传照片失败')
-            ]);
+            showToast('1/6 上传元数据 (' + metaKB + 'KB)...');
+            const metaBlobResp = await fetchRetry(api + '/blobs', {
+                method: 'POST', headers: postHdrs,
+                body: JSON.stringify({ content: metaB64, encoding: 'base64' })
+            }, '上传元数据失败');
             const metaBlob = await metaBlobResp.json();
+
+            showToast('2/6 上传照片 (' + photosKB + 'KB)...');
+            const photosBlobResp = await fetchRetry(api + '/blobs', {
+                method: 'POST', headers: postHdrs,
+                body: JSON.stringify({ content: photosB64, encoding: 'base64' })
+            }, '上传照片失败');
             const photosBlob = await photosBlobResp.json();
 
-            showToast('2/5 读取分支...');
+            showToast('3/6 读取分支...');
             const refResp = await fetchRetry(api + '/ref/heads/main', { headers: hdrs }, '读取分支失败');
             const parentSha = (await refResp.json()).object.sha;
 
-            showToast('3/5 读取提交...');
+            showToast('4/6 读取提交...');
             const commitResp = await fetchRetry(api + '/commits/' + parentSha, { headers: hdrs }, '读取提交失败');
             const treeSha = (await commitResp.json()).tree.sha;
 
-            showToast('4/5 创建提交...');
+            showToast('5/6 创建提交...');
             const treeResp = await fetchRetry(api + '/trees', {
                 method: 'POST', headers: postHdrs,
                 body: JSON.stringify({
@@ -3002,7 +3005,7 @@
             }, '创建提交失败');
             const newCommitSha = (await newCommitResp.json()).sha;
 
-            showToast('5/5 更新分支...');
+            showToast('6/6 更新分支...');
             await fetchRetry(api + '/refs/heads/main', {
                 method: 'PATCH', headers: postHdrs,
                 body: JSON.stringify({ sha: newCommitSha, force: true })
