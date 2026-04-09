@@ -1076,10 +1076,10 @@
             if (done) break;
             chunks.push(value);
             loaded += value.length;
-            const pct = Math.round(loaded / total * 100);
+            const pct = total ? Math.min(99, Math.round(loaded / total * 100)) : 0;
             const kb = Math.round(loaded / 1024);
-            const totalKb = Math.round(total / 1024);
-            showPhotoBar(label + ' ' + kb + '/' + totalKb + 'KB (' + pct + '%)', pct);
+            const totalKb = total ? Math.round(total / 1024) : '?';
+            showPhotoBar(label + ' ' + kb + '/' + totalKb + 'KB' + (pct ? ' (' + pct + '%)' : ''), pct || 50);
         }
         const text = new TextDecoder().decode(new Uint8Array(chunks.reduce((a, c) => a + c.length, 0)).buffer);
         // Reconstruct text from chunks
