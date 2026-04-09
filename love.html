@@ -1002,6 +1002,10 @@
             if (appData._ghToken && appData._ghRepo) saveTokenCookie(appData._ghToken, appData._ghRepo);
             currentPwd = pwd; savePwd(pwd);
             showApp(); renderAll();
+            // Always lazy-load photos if photoStore is mostly empty
+            if (Object.keys(photoStore).length < (appData.photos || []).length) {
+                lazyLoadPhotos(pwd, photosSha, ghToken || getToken(), ghRepo || getRepo());
+            }
             return true;
         } catch(e) {
             return false;
@@ -1011,8 +1015,15 @@
     // Load photos in background after UI is shown
     async function lazyLoadPhotos(pwd, photosSha, token, repo) {
         let photosJson = null;
-        // Try from GitHub API
-        if (photosSha && token && repo) {
+        // Try jsDelivr CDN first (fastest in China)
+        if (!photosJson && GH_REPO) {
+            try {
+                const resp = await fetch('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json');
+                if (resp.ok) photosJson = await resp.json();
+            } catch(e) {}
+        }
+        // Try GitHub API
+        if (!photosJson && photosSha && token && repo) {
             photosJson = await fetchPhotosBlob(token, repo, photosSha);
         }
         // Fallback to Pages
