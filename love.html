@@ -3061,7 +3061,12 @@
         const ak = getOssAk();
         if (!ak.id || !ak.secret) { showToast('OSS: AK未配置'); return false; }
         try {
-            const date = new Date().toUTCString();
+            // Format: "Thu, 09 Apr 2026 12:00:00 GMT" (OSS requires exact RFC 2616)
+            const d = new Date();
+            const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const pad = n => n < 10 ? '0' + n : '' + n;
+            const date = days[d.getUTCDay()] + ', ' + pad(d.getUTCDate()) + ' ' + months[d.getUTCMonth()] + ' ' + d.getUTCFullYear() + ' ' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + ' GMT';
             const stringToSign = 'PUT\n\n' + contentType + '\n' + date + '\n/' + OSS_BUCKET + '/' + path;
             const keyData = new TextEncoder().encode(ak.secret);
             const key = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
