@@ -932,10 +932,14 @@
         if (photosJson && photosJson.encrypted) {
             try {
                 const store = await decryptData(pwd, photosJson.encrypted);
-                Object.assign(photoStore, store);
-                photosLoaded = true;
-                return;
-            } catch(e) {}
+                if (store && typeof store === 'object') {
+                    Object.assign(photoStore, store);
+                    photosLoaded = true;
+                    return;
+                }
+            } catch(e) {
+                console.warn('Photo decrypt failed:', e.message);
+            }
         }
         // Migration: if photos still have inline .data, extract to photoStore
         if (appData && appData.photos) {
@@ -1072,9 +1076,10 @@
         if (!resp.ok) return null;
 
         const total = parseInt(resp.headers.get('content-length') || '0', 10);
-        if (!total || !resp.body) {
-            // No content-length or no ReadableStream — just download
-            showPhotoBar(label + ' 下载中...', 30);
+
+        // If no ReadableStream support, just download directly
+        if (!resp.body || !resp.body.getReader) {
+            showPhotoBar(label + ' 下载中...', 50);
             return await resp.json();
         }
 
@@ -1087,16 +1092,15 @@
             if (done) break;
             chunks.push(value);
             loaded += value.length;
-            const pct = total ? Math.min(99, Math.round(loaded / total * 100)) : 0;
+            const pct = total ? Math.min(99, Math.round(loaded / total * 100)) : 50;
             const kb = Math.round(loaded / 1024);
-            const totalKb = total ? Math.round(total / 1024) : '?';
-            showPhotoBar(label + ' ' + kb + '/' + totalKb + 'KB' + (pct ? ' (' + pct + '%)' : ''), pct || 50);
+            showPhotoBar(label + ' ' + kb + 'KB' + (total ? '/' + Math.round(total / 1024) + 'KB (' + pct + '%)' : ''), pct);
         }
-        const text = new TextDecoder().decode(new Uint8Array(chunks.reduce((a, c) => a + c.length, 0)).buffer);
-        // Reconstruct text from chunks
-        let str = '';
-        for (const chunk of chunks) str += new TextDecoder().decode(chunk, { stream: true });
-        return JSON.parse(str);
+        // Merge chunks into one Uint8Array, then decode
+        const merged = new Uint8Array(loaded);
+        let offset = 0;
+        for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.length; }
+        return JSON.parse(new TextDecoder().decode(merged));
     }
 
     // Load photos in background after UI is shown
@@ -1139,9 +1143,10 @@
             showPhotoBar('解密照片...', 90);
             await loadPhotoStore(pwd, photosJson);
             cachePhotos(photosJson);
+            const count = Object.keys(photoStore).length;
             renderAll();
-            showPhotoBar('照片加载完成', 100);
-            setTimeout(hidePhotoBar, 1500);
+            showPhotoBar('已加载 ' + count + ' 张照片', 100);
+            setTimeout(hidePhotoBar, 2000);
         } else {
             showPhotoBar('照片加载失败，请刷新重试', 0);
             setTimeout(hidePhotoBar, 5000);
