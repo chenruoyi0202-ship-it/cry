@@ -2458,7 +2458,7 @@
                 if (existingId) {
                     // Ensure it's also in appData.photos
                     if (!appData.photos.find(x => x.id === existingId)) {
-                        appData.photos.unshift({ id: existingId, tags: [d.title || '点滴'], createdAt: d.date || new Date().toISOString() });
+                        appData.photos.unshift({ id: existingId, createdAt: d.date || new Date().toISOString() });
                     }
                     changed = true;
                     return existingId;
@@ -2466,7 +2466,7 @@
                 // Create new gallery entry
                 const photoId = genId();
                 photoStore[photoId] = p;
-                appData.photos.unshift({ id: photoId, tags: [d.title || '点滴'], createdAt: d.date || new Date().toISOString() });
+                appData.photos.unshift({ id: photoId, createdAt: d.date || new Date().toISOString() });
                 changed = true;
                 return photoId;
             });
