@@ -3173,13 +3173,10 @@
             const metaOutput = JSON.stringify({ encrypted: encMeta, updatedAt: now });
             const metaKB = Math.round(metaOutput.length / 1024);
 
-            // Encrypt photos only if changed
-            let photosOutput = null;
-            if (photosDirty || !appData._ossAkId) {
-                showToast('加密照片...');
-                const encPhotos = await encryptData(pwd, photosData);
-                photosOutput = JSON.stringify({ encrypted: encPhotos });
-            }
+            // Always encrypt photos (ensure OSS has latest)
+            showToast('加密照片...');
+            const encPhotos = await encryptData(pwd, photosData);
+            const photosOutput = JSON.stringify({ encrypted: encPhotos });
 
             // === Step 1: Upload to OSS first (fast in China) ===
             showToast('上传到阿里云...');
@@ -3206,8 +3203,8 @@
 
             const treeItems = [{ path: GH_PATH, mode: '100644', type: 'blob', sha: metaBlob.sha }];
 
-            // Only upload photos blob if changed
-            if (photosOutput) {
+            // Only upload photos to GitHub if changed (OSS always gets latest)
+            if (photosDirty) {
                 showToast('上传照片到 GitHub...');
                 const photosB64 = bufToB64(new TextEncoder().encode(photosOutput));
                 const photosBlobResp = await fetchRetry(api + '/blobs', {
@@ -3244,7 +3241,7 @@
             }, '更新分支失败');
 
             cacheData(metaOutput);
-            if (photosOutput) cachePhotos(JSON.parse(photosOutput));
+            cachePhotos(JSON.parse(photosOutput));
             dirty = false;
             photosDirty = false;
             return true;
