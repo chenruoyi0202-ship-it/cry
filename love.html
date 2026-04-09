@@ -2114,13 +2114,20 @@
     }
     function closeLightbox() {
         const lb = document.getElementById('lightbox');
+        const returnToDiary = lbFromDiary;
         lb.classList.add('closing');
         setTimeout(() => {
             lb.classList.remove('open', 'dismissing', 'closing');
-            document.body.style.overflow = '';
             lbSourcePhotos = null;
+            lbFromDiary = false;
             lbZoom = 1;
             resetLbTransform();
+            if (returnToDiary) {
+                // Diary detail is still open underneath, just restore scroll
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
         }, 200);
     }
     function navLightbox(dir) {
@@ -2481,15 +2488,15 @@
         }, 200);
     }
 
+    let lbFromDiary = false; // track if lightbox was opened from diary detail
     function openDiaryLightbox(idx) {
-        closeDiaryDetail();
+        lbFromDiary = true;
         lbSourcePhotos = diaryDetailPhotos.map((data, i) => ({ id: 'tmp' + i, data }));
         currentLbIndex = idx;
         lbZoom = 1;
         resetLbTransform();
         showLbPhoto();
         document.getElementById('lightbox').classList.add('open');
-        document.body.style.overflow = 'hidden';
     }
 
     // Diary detail gestures (reuse shared handler)
