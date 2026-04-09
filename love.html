@@ -1159,20 +1159,19 @@
         }
     }
 
-    // Recovery: fetch old format (with inline photos) and extract
+    // Recovery: fetch old format backup (with inline photos) and extract
     async function reloadPhotosFromOldFormat(pwd) {
         let oldJson = null;
-        // Try Pages (has the old combined file)
+        // Fetch recovery file (old format with inline photos, encrypted by browser)
         try {
-            showPhotoBar('从 Pages 恢复照片...', 30);
-            const resp = await fetch('data/love_encrypted.json?v=' + Date.now());
-            if (resp.ok) oldJson = await resp.json();
+            showPhotoBar('下载照片备份...', 20);
+            const resp = await fetchWithProgress('data/love_recovery.json?v=' + Date.now(), '恢复', 0);
+            if (resp) oldJson = resp;
         } catch(e) {}
-        // Try CDN
-        if (!oldJson && GH_REPO) {
+        if (!oldJson) {
             try {
-                showPhotoBar('从 CDN 恢复照片...', 30);
-                const resp = await fetch('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_encrypted.json');
+                showPhotoBar('从 CDN 下载备份...', 20);
+                const resp = await fetch('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_recovery.json');
                 if (resp.ok) oldJson = await resp.json();
             } catch(e) {}
         }
