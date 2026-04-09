@@ -1014,36 +1014,36 @@
 
     // Load photos in background after UI is shown
     async function lazyLoadPhotos(pwd, photosSha, token, repo) {
-        // Race all sources, first success wins
+        showToast('照片加载中，请稍候...');
         function fetchTimeout(url, ms) {
             const ctrl = new AbortController();
             const t = setTimeout(() => ctrl.abort(), ms);
             return fetch(url, { signal: ctrl.signal }).then(r => { clearTimeout(t); return r; });
         }
+        // Race: first success wins
         const photosJson = await new Promise(resolve => {
             let done = false, pending = 3;
             function finish(result) {
                 if (result && !done) { done = true; resolve(result); }
                 if (--pending <= 0 && !done) { done = true; resolve(null); }
             }
-            // CDN (8s timeout)
             if (GH_REPO) {
                 fetchTimeout('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json', 8000)
                     .then(r => r.ok ? r.json() : null).then(finish).catch(() => finish(null));
             } else { pending--; }
-            // API (10s timeout)
             if (photosSha && token && repo) {
                 fetchPhotosBlob(token, repo, photosSha).then(finish).catch(() => finish(null));
             } else { pending--; }
-            // Pages (no timeout, always works)
             fetch('data/love_photos.json?v=' + Date.now())
                 .then(r => r.ok ? r.json() : null).then(finish).catch(() => finish(null));
         });
         if (photosJson) {
             await loadPhotoStore(pwd, photosJson);
             cachePhotos(photosJson);
-            renderAll(); // Re-render with photos now loaded
+            renderAll();
             showToast('照片加载完成');
+        } else {
+            showToast('照片加载失败，点击刷新重试');
         }
     }
 
