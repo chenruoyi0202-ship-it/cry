@@ -1014,25 +1014,31 @@
 
     // Load photos in background after UI is shown
     async function lazyLoadPhotos(pwd, photosSha, token, repo) {
-        let photosJson = null;
-        // Try jsDelivr CDN first (fastest in China)
-        if (!photosJson && GH_REPO) {
-            try {
-                const resp = await fetch('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json');
-                if (resp.ok) photosJson = await resp.json();
-            } catch(e) {}
+        // Race all sources, first success wins
+        function fetchTimeout(url, ms) {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), ms);
+            return fetch(url, { signal: ctrl.signal }).then(r => { clearTimeout(t); return r; });
         }
-        // Try GitHub API
-        if (!photosJson && photosSha && token && repo) {
-            photosJson = await fetchPhotosBlob(token, repo, photosSha);
-        }
-        // Fallback to Pages
-        if (!photosJson) {
-            try {
-                const resp = await fetch('data/love_photos.json?v=' + Date.now());
-                if (resp.ok) photosJson = await resp.json();
-            } catch(e) {}
-        }
+        const photosJson = await new Promise(resolve => {
+            let done = false, pending = 3;
+            function finish(result) {
+                if (result && !done) { done = true; resolve(result); }
+                if (--pending <= 0 && !done) { done = true; resolve(null); }
+            }
+            // CDN (8s timeout)
+            if (GH_REPO) {
+                fetchTimeout('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json', 8000)
+                    .then(r => r.ok ? r.json() : null).then(finish).catch(() => finish(null));
+            } else { pending--; }
+            // API (10s timeout)
+            if (photosSha && token && repo) {
+                fetchPhotosBlob(token, repo, photosSha).then(finish).catch(() => finish(null));
+            } else { pending--; }
+            // Pages (no timeout, always works)
+            fetch('data/love_photos.json?v=' + Date.now())
+                .then(r => r.ok ? r.json() : null).then(finish).catch(() => finish(null));
+        });
         if (photosJson) {
             await loadPhotoStore(pwd, photosJson);
             cachePhotos(photosJson);
