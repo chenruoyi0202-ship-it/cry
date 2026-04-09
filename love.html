@@ -573,6 +573,22 @@
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
 
+        /* Photo loading banner */
+        .photo-loading-bar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 3000;
+            background: var(--accent); color: #fff; padding: 8px 16px;
+            font-size: 13px; font-weight: 600; text-align: center;
+            display: none; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .photo-loading-bar.show { display: flex; }
+        .photo-loading-bar .plb-track {
+            width: 100%; max-width: 300px; height: 4px; background: rgba(255,255,255,0.3);
+            border-radius: 2px; overflow: hidden;
+        }
+        .photo-loading-bar .plb-fill {
+            height: 100%; background: #fff; border-radius: 2px; transition: width 0.3s; width: 0%;
+        }
+
         /* Skeleton shimmer */
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .skeleton-box {
@@ -669,6 +685,12 @@
         <div class="spinner"></div>
         <div class="load-text" id="loadText"></div>
         <div class="progress-bar"><div class="progress-fill" id="loadProgress"></div></div>
+    </div>
+
+    <!-- Photo Loading Banner -->
+    <div class="photo-loading-bar" id="photoLoadBar">
+        <span id="photoLoadText">照片加载中...</span>
+        <div class="plb-track"><div class="plb-fill" id="photoLoadFill"></div></div>
     </div>
 
     <!-- Pull to Refresh Indicator -->
@@ -1016,38 +1038,100 @@
         }
     }
 
+    // Photo loading banner helpers
+    function showPhotoBar(text, pct) {
+        const bar = document.getElementById('photoLoadBar');
+        const txt = document.getElementById('photoLoadText');
+        const fill = document.getElementById('photoLoadFill');
+        if (bar) bar.classList.add('show');
+        if (txt && text) txt.textContent = text;
+        if (fill && pct !== undefined) fill.style.width = Math.min(100, pct) + '%';
+    }
+    function hidePhotoBar() {
+        const bar = document.getElementById('photoLoadBar');
+        if (bar) bar.classList.remove('show');
+    }
+
+    // Fetch with download progress tracking
+    async function fetchWithProgress(url, label, timeout) {
+        const ctrl = timeout ? new AbortController() : null;
+        const timer = timeout ? setTimeout(() => ctrl.abort(), timeout) : null;
+        const resp = await fetch(url, ctrl ? { signal: ctrl.signal } : {});
+        if (timer) clearTimeout(timer);
+        if (!resp.ok) return null;
+
+        const total = parseInt(resp.headers.get('content-length') || '0', 10);
+        if (!total || !resp.body) {
+            // No content-length or no ReadableStream — just download
+            showPhotoBar(label + ' 下载中...', 30);
+            return await resp.json();
+        }
+
+        // Stream with progress
+        const reader = resp.body.getReader();
+        const chunks = [];
+        let loaded = 0;
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            loaded += value.length;
+            const pct = Math.round(loaded / total * 100);
+            const kb = Math.round(loaded / 1024);
+            const totalKb = Math.round(total / 1024);
+            showPhotoBar(label + ' ' + kb + '/' + totalKb + 'KB (' + pct + '%)', pct);
+        }
+        const text = new TextDecoder().decode(new Uint8Array(chunks.reduce((a, c) => a + c.length, 0)).buffer);
+        // Reconstruct text from chunks
+        let str = '';
+        for (const chunk of chunks) str += new TextDecoder().decode(chunk, { stream: true });
+        return JSON.parse(str);
+    }
+
     // Load photos in background after UI is shown
     async function lazyLoadPhotos(pwd, photosSha, token, repo) {
-        showToast('照片加载中，请稍候...');
-        function fetchTimeout(url, ms) {
-            const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), ms);
-            return fetch(url, { signal: ctrl.signal }).then(r => { clearTimeout(t); return r; });
+        showPhotoBar('照片加载中...', 5);
+
+        let photosJson = null;
+
+        // Try CDN with progress (8s timeout)
+        if (!photosJson && GH_REPO) {
+            try {
+                showPhotoBar('从 CDN 下载照片...', 10);
+                photosJson = await fetchWithProgress(
+                    'https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json',
+                    'CDN', 8000);
+            } catch(e) {}
         }
-        // Race: first success wins
-        const photosJson = await new Promise(resolve => {
-            let done = false, pending = 3;
-            function finish(result) {
-                if (result && !done) { done = true; resolve(result); }
-                if (--pending <= 0 && !done) { done = true; resolve(null); }
-            }
-            if (GH_REPO) {
-                fetchTimeout('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json', 8000)
-                    .then(r => r.ok ? r.json() : null).then(finish).catch(() => finish(null));
-            } else { pending--; }
-            if (photosSha && token && repo) {
-                fetchPhotosBlob(token, repo, photosSha).then(finish).catch(() => finish(null));
-            } else { pending--; }
-            fetch('data/love_photos.json?v=' + Date.now())
-                .then(r => r.ok ? r.json() : null).then(finish).catch(() => finish(null));
-        });
+
+        // Try Pages with progress (most reliable)
+        if (!photosJson) {
+            try {
+                showPhotoBar('从服务器下载照片...', 10);
+                photosJson = await fetchWithProgress(
+                    'data/love_photos.json?v=' + Date.now(),
+                    '照片', 0);
+            } catch(e) {}
+        }
+
+        // Try API as last resort
+        if (!photosJson && photosSha && token && repo) {
+            try {
+                showPhotoBar('从 GitHub 下载照片...', 10);
+                photosJson = await fetchPhotosBlob(token, repo, photosSha);
+            } catch(e) {}
+        }
+
         if (photosJson) {
+            showPhotoBar('解密照片...', 90);
             await loadPhotoStore(pwd, photosJson);
             cachePhotos(photosJson);
             renderAll();
-            showToast('照片加载完成');
+            showPhotoBar('照片加载完成', 100);
+            setTimeout(hidePhotoBar, 1500);
         } else {
-            showToast('照片加载失败，点击刷新重试');
+            showPhotoBar('照片加载失败，请刷新重试', 0);
+            setTimeout(hidePhotoBar, 5000);
         }
     }
 
