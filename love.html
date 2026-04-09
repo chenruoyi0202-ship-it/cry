@@ -1132,7 +1132,7 @@
         opts = opts || {};
         try {
             const result = await fetchFromGitHubAPI();
-            if (!result || !result.meta) { if (opts.verbose) showToast('同步失败'); return; }
+            if (!result || !result.meta) return;
             const remote = result.meta;
             const localTime = (appData && appData._updatedAt) || '';
             const remoteTime = remote.updatedAt || '';
@@ -1144,14 +1144,8 @@
                 cacheData(JSON.stringify(remote));
                 cachePhotos(result.photos);
                 renderAll();
-                if (opts.verbose) {
-                    const beijing = new Date(new Date(remoteTime).getTime() + 8 * 3600000);
-                    showToast('已同步 ' + beijing.toISOString().substring(11,16) + ' (北京)');
-                }
-            } else if (opts.verbose) {
-                showToast('数据已是最新');
             }
-        } catch(e) { if (opts.verbose) showToast('同步失败: ' + (e.message || '').substring(0, 40)); }
+        } catch(e) { /* background sync failure is silent */ }
     }
 
     // Auto-sync triggers: visibilitychange + pageshow (iOS fallback) + periodic
@@ -1166,18 +1160,20 @@
         btn.classList.add('spinning');
         showToast('同步中...');
         try {
-            const remote = await fetchFromGitHubAPI();
-            if (!remote) { showToast('拉取失败：无法连接GitHub'); btn.classList.remove('spinning'); return; }
+            const result = await fetchFromGitHubAPI();
+            if (!result || !result.meta) { showToast('无法连接，请稍后重试'); btn.classList.remove('spinning'); return; }
+            const remote = result.meta;
             const localTime = (appData && appData._updatedAt) || '';
             const remoteTime = remote.updatedAt || '';
-            // Force replace on manual sync (user explicitly wants latest)
             const newData = await decryptData(currentPwd, remote.encrypted);
             appData = newData;
+            await loadPhotoStore(currentPwd, result.photos);
             migrateDiaryPhotos();
             cacheData(JSON.stringify(remote));
+            cachePhotos(result.photos);
             renderAll();
-            showToast('本地:' + fmtTime(localTime) + ' → 远程:' + fmtTime(remoteTime));
-        } catch(e) { showToast('同步失败: ' + (e.message||'')); }
+            showToast('已同步');
+        } catch(e) { showToast('同步失败，请稍后重试'); }
         setTimeout(() => btn.classList.remove('spinning'), 500);
     }
 
