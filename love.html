@@ -448,10 +448,10 @@
             0%, 100% { transform: rotate(0.8deg); }
             50% { transform: rotate(-0.8deg); }
         }
-        body.editing .gallery-item, body.editing .ann-card { animation: jiggle 0.18s ease-in-out infinite; transform-origin: center; }
-        body.editing .gallery-item:nth-child(2n), body.editing .ann-card:nth-child(2n) { animation: jiggle-alt 0.18s ease-in-out infinite; }
-        body.editing .gallery-item.dragging, body.editing .ann-card.dragging { animation: none; opacity: 0; }
-        body.editing .gallery-item.no-jiggle { animation: none; }
+        body.editing .ann-card { animation: jiggle 0.18s ease-in-out infinite; transform-origin: center; }
+        body.editing .ann-card:nth-child(2n) { animation: jiggle-alt 0.18s ease-in-out infinite; }
+        body.editing .ann-card.dragging { animation: none; opacity: 0; }
+        body.editing .gallery-item { box-shadow: 0 0 0 2px var(--accent), var(--glow), 0 2px 12px var(--card-shadow); }
         .gallery-item img {
             width: 100%; height: auto; display: block; transition: transform 0.4s;
             -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
