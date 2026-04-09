@@ -3060,16 +3060,27 @@
     async function ossUpload(path, content, contentType) {
         const ak = getOssAk();
         if (!ak.id || !ak.secret) return false;
-        const date = new Date().toUTCString();
-        const stringToSign = 'PUT\n\n' + contentType + '\n' + date + '\n/' + OSS_BUCKET + '/' + path;
-        const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(ak.secret), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
-        const sig = bufToB64(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(stringToSign)));
-        const resp = await fetch(OSS_ENDPOINT + '/' + path, {
-            method: 'PUT',
-            headers: { 'Content-Type': contentType, 'Date': date, 'Authorization': 'OSS ' + ak.id + ':' + sig },
-            body: content
-        });
-        return resp.ok;
+        try {
+            const date = new Date().toUTCString();
+            const stringToSign = 'PUT\n\n' + contentType + '\n' + date + '\n/' + OSS_BUCKET + '/' + path;
+            const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(ak.secret), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+            const sig = bufToB64(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(stringToSign)));
+            const resp = await fetch(OSS_ENDPOINT + '/' + path, {
+                method: 'PUT',
+                headers: { 'Content-Type': contentType, 'Date': date, 'Authorization': 'OSS ' + ak.id + ':' + sig },
+                body: content
+            });
+            if (!resp.ok) {
+                const err = await resp.text();
+                console.warn('OSS upload failed:', resp.status, err.substring(0, 200));
+                showToast('OSS上传失败: ' + resp.status);
+            }
+            return resp.ok;
+        } catch(e) {
+            console.warn('OSS upload error:', e.message);
+            showToast('OSS上传错误: ' + e.message.substring(0, 40));
+            return false;
+        }
     }
 
     // OSS GET (public read, no auth needed)
@@ -3173,10 +3184,12 @@
             // === Step 1: Upload to OSS first (fast in China) ===
             showToast('上传到阿里云...');
             try {
-                await ossUpload('data/love_encrypted.json', metaOutput, 'application/json');
-                if (photosOutput) await ossUpload('data/love_photos.json', photosOutput, 'application/json');
-                showToast('阿里云同步完成，推送 GitHub...');
-            } catch(e) { showToast('阿里云失败，推送 GitHub...'); }
+                const metaOk = await ossUpload('data/love_encrypted.json', metaOutput, 'application/json');
+                let photosOk = true;
+                if (photosOutput) photosOk = await ossUpload('data/love_photos.json', photosOutput, 'application/json');
+                if (metaOk && photosOk) showToast('阿里云上传成功，推送 GitHub...');
+                else showToast('阿里云部分失败，推送 GitHub...');
+            } catch(e) { showToast('阿里云失败: ' + (e.message || '').substring(0, 30)); }
 
             // === Step 2: Push to GitHub (may be slow, but data already safe on OSS) ===
             const metaB64 = bufToB64(new TextEncoder().encode(metaOutput));
