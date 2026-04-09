@@ -1107,37 +1107,26 @@
     async function lazyLoadPhotos(pwd, photosSha, token, repo) {
         showPhotoBar('照片加载中...', 5);
 
-        let photosJson = null;
-
-        // 1. OSS (fastest in China)
-        if (!photosJson) {
-            try {
-                showPhotoBar('从阿里云下载照片...', 10);
-                photosJson = await fetchWithProgress(
-                    ossUrl('data/love_photos.json') + '?v=' + Date.now(),
-                    '阿里云', 10000);
-            } catch(e) {}
-        }
-
-        // 2. jsDelivr CDN (fallback)
-        if (!photosJson && GH_REPO) {
-            try {
-                showPhotoBar('从 CDN 下载照片...', 10);
-                photosJson = await fetchWithProgress(
-                    'https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json',
-                    'CDN', 8000);
-            } catch(e) {}
-        }
-
-        // 3. Pages (always works, slow)
-        if (!photosJson) {
-            try {
-                showPhotoBar('从 Pages 下载照片...', 10);
-                photosJson = await fetchWithProgress(
-                    'data/love_photos.json?v=' + Date.now(),
-                    '照片', 0);
-            } catch(e) {}
-        }
+        // Race all sources, first success wins (no timeout - files are large)
+        const photosJson = await new Promise(resolve => {
+            let done = false, pending = 3;
+            function finish(result) {
+                if (result && !done) { done = true; resolve(result); }
+                if (--pending <= 0 && !done) { done = true; resolve(null); }
+            }
+            // 1. OSS
+            showPhotoBar('从阿里云下载...', 10);
+            fetchWithProgress(ossUrl('data/love_photos.json') + '?v=' + Date.now(), '阿里云', 0)
+                .then(finish).catch(() => finish(null));
+            // 2. Pages
+            fetchWithProgress('data/love_photos.json?v=' + Date.now(), '服务器', 0)
+                .then(finish).catch(() => finish(null));
+            // 3. CDN
+            if (GH_REPO) {
+                fetch('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json')
+                    .then(r => r.ok ? r.json() : null).then(finish).catch(() => finish(null));
+            } else { pending--; }
+        });
 
         if (photosJson) {
             showPhotoBar('解密照片...', 90);
