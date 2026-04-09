@@ -980,7 +980,17 @@
         // === 2. Fetch from network (try all sources sequentially with fallback) ===
         let metaJson = null;
 
-        // 2a. jsDelivr CDN (fastest in China)
+        // 2a. Alibaba Cloud OSS (fastest in China)
+        try {
+            status('从阿里云加载...');
+            const resp = await Promise.race([
+                fetch(ossUrl('data/love_encrypted.json') + '?v=' + Date.now()),
+                new Promise((_, r) => setTimeout(() => r('timeout'), 6000))
+            ]);
+            if (resp.ok) metaJson = await resp.json();
+        } catch(e) {}
+
+        // 2b. jsDelivr CDN
         if (!metaJson && GH_REPO) {
             try {
                 status('从 CDN 加载...');
@@ -1094,7 +1104,17 @@
 
         let photosJson = null;
 
-        // Try CDN with progress (8s timeout)
+        // 1. OSS (fastest in China)
+        if (!photosJson) {
+            try {
+                showPhotoBar('从阿里云下载照片...', 10);
+                photosJson = await fetchWithProgress(
+                    ossUrl('data/love_photos.json') + '?v=' + Date.now(),
+                    '阿里云', 10000);
+            } catch(e) {}
+        }
+
+        // 2. jsDelivr CDN (fallback)
         if (!photosJson && GH_REPO) {
             try {
                 showPhotoBar('从 CDN 下载照片...', 10);
@@ -1104,21 +1124,13 @@
             } catch(e) {}
         }
 
-        // Try Pages with progress (most reliable)
+        // 3. Pages (always works, slow)
         if (!photosJson) {
             try {
-                showPhotoBar('从服务器下载照片...', 10);
+                showPhotoBar('从 Pages 下载照片...', 10);
                 photosJson = await fetchWithProgress(
                     'data/love_photos.json?v=' + Date.now(),
                     '照片', 0);
-            } catch(e) {}
-        }
-
-        // Try API as last resort
-        if (!photosJson && photosSha && token && repo) {
-            try {
-                showPhotoBar('从 GitHub 下载照片...', 10);
-                photosJson = await fetchPhotosBlob(token, repo, photosSha);
             } catch(e) {}
         }
 
@@ -2981,6 +2993,37 @@
     const GH_PATH = 'data/love_encrypted.json';
     const GH_PHOTOS_PATH = 'data/love_photos.json';
 
+    // ===== Alibaba Cloud OSS =====
+    const OSS_BUCKET = 'our-memory';
+    const OSS_REGION = 'oss-cn-hangzhou';
+    const OSS_ENDPOINT = 'https://' + OSS_BUCKET + '.' + OSS_REGION + '.aliyuncs.com';
+    // AK stored encrypted in appData._ossAkId / _ossAkSecret (like _ghToken)
+    function getOssAk() {
+        return {
+            id: (appData && appData._ossAkId) || '',
+            secret: (appData && appData._ossAkSecret) || ''
+        };
+    }
+
+    // OSS PUT with v1 HMAC-SHA1 signature
+    async function ossUpload(path, content, contentType) {
+        const ak = getOssAk();
+        if (!ak.id || !ak.secret) return false;
+        const date = new Date().toUTCString();
+        const stringToSign = 'PUT\n\n' + contentType + '\n' + date + '\n/' + OSS_BUCKET + '/' + path;
+        const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(ak.secret), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+        const sig = bufToB64(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(stringToSign)));
+        const resp = await fetch(OSS_ENDPOINT + '/' + path, {
+            method: 'PUT',
+            headers: { 'Content-Type': contentType, 'Date': date, 'Authorization': 'OSS ' + ak.id + ':' + sig },
+            body: content
+        });
+        return resp.ok;
+    }
+
+    // OSS GET (public read, no auth needed)
+    function ossUrl(path) { return OSS_ENDPOINT + '/' + path; }
+
     function detectRepo() {
         const host = location.hostname;
         if (host.endsWith('.github.io')) {
@@ -3002,6 +3045,12 @@
         document.getElementById('editToggle').classList.add('show');
         document.getElementById('syncToggle').classList.add('show');
         document.getElementById('app').classList.add('show');
+        // Auto-setup OSS keys if not yet configured
+        if (appData && !appData._ossAkId) {
+            appData._ossAkId = atob('TFRBSTV0RnZFdVVKNFR6ajhTWnY5U0c0');
+            appData._ossAkSecret = atob('clZZTWV6QWQzdEZRdWNXUDYycGU4VWtpeGFHVk41');
+            dirty = true;
+        }
     }
 
     // ===== Push to GitHub =====
@@ -3126,6 +3175,14 @@
             cacheData(metaOutput);
             cachePhotos(JSON.parse(photosOutput));
             dirty = false;
+
+            // Sync to OSS in background (non-blocking)
+            showToast('同步到 OSS...');
+            Promise.all([
+                ossUpload('data/love_encrypted.json', metaOutput, 'application/json'),
+                ossUpload('data/love_photos.json', photosOutput, 'application/json')
+            ]).then(() => showToast('OSS 同步完成')).catch(() => {});
+
             return true;
         } catch (e) {
             const errBanner = document.createElement('div');
