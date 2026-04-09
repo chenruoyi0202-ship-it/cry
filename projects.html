@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>My Projects</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🚀</text></svg>">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#07070a;
+    --card:#0e0e14;
+    --border:rgba(255,255,255,0.06);
+    --text:#e8eaf0;
+    --text-muted:#6b7394;
+    --radius:24px;
+  }
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:'SF Pro Display','SF Pro Text',-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100dvh;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── Background ── */
+  .bg-layer{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.35;will-change:transform}
+  .orb-1{width:520px;height:520px;background:radial-gradient(circle,#c084fc 0%,transparent 70%);top:-120px;left:-80px;animation:drift1 22s ease-in-out infinite alternate}
+  .orb-2{width:480px;height:480px;background:radial-gradient(circle,#CA8A04 0%,transparent 70%);bottom:-100px;right:-60px;animation:drift2 26s ease-in-out infinite alternate}
+  .orb-3{width:400px;height:400px;background:radial-gradient(circle,#43b89c 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation:drift3 20s ease-in-out infinite alternate}
+  @keyframes drift1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(60px,40px) scale(1.12)}}
+  @keyframes drift2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-50px,-30px) scale(1.1)}}
+  @keyframes drift3{0%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-40%,-55%) scale(1.15)}}
+
+  /* Grid dots */
+  .bg-layer::after{
+    content:'';position:absolute;inset:0;
+    background-image:radial-gradient(rgba(255,255,255,0.03) 1px,transparent 1px);
+    background-size:32px 32px;
+  }
+
+  /* ── Layout ── */
+  .page{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;min-height:100dvh;padding:60px 20px 80px}
+
+  /* ── Header ── */
+  .header{text-align:center;margin-bottom:56px;animation:fadeUp .8s ease-out both}
+  .header-icon{font-size:48px;margin-bottom:16px;display:block}
+  .header h1{
+    font-size:clamp(28px,5vw,42px);font-weight:700;
+    letter-spacing:-.5px;
+    background:linear-gradient(135deg,#e8eaf0 0%,#a0a8c4 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header p{
+    margin-top:10px;font-size:15px;color:var(--text-muted);
+    letter-spacing:.3px;line-height:1.6;
+  }
+
+  /* ── Cards Grid ── */
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:24px;
+    width:100%;max-width:1060px;
+  }
+
+  /* ── Card ── */
+  .card{
+    position:relative;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:36px 32px 32px;
+    display:flex;flex-direction:column;
+    transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s ease,border-color .35s ease;
+    cursor:pointer;
+    text-decoration:none;color:inherit;
+    overflow:hidden;
+    animation:fadeUp .8s ease-out both;
+  }
+  .card:nth-child(1){animation-delay:.15s}
+  .card:nth-child(2){animation-delay:.3s}
+  .card:nth-child(3){animation-delay:.45s}
+
+  .card::before{
+    content:'';position:absolute;inset:0;
+    border-radius:var(--radius);
+    opacity:0;transition:opacity .4s ease;
+    pointer-events:none;
+  }
+  .card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,0.1)}
+  .card:hover::before{opacity:1}
+
+  /* Card accent colors */
+  .card--love::before{background:radial-gradient(ellipse at 30% 20%,rgba(192,132,252,0.08),transparent 70%)}
+  .card--love:hover{box-shadow:0 8px 40px rgba(192,132,252,0.12),0 0 0 1px rgba(192,132,252,0.1)}
+  .card--love .card-accent{background:linear-gradient(135deg,#c084fc,#f9a8d4)}
+
+  .card--stock::before{background:radial-gradient(ellipse at 30% 20%,rgba(202,138,4,0.08),transparent 70%)}
+  .card--stock:hover{box-shadow:0 8px 40px rgba(202,138,4,0.12),0 0 0 1px rgba(202,138,4,0.1)}
+  .card--stock .card-accent{background:linear-gradient(135deg,#CA8A04,#FBBF24)}
+
+  .card--migraine::before{background:radial-gradient(ellipse at 30% 20%,rgba(67,184,156,0.08),transparent 70%)}
+  .card--migraine:hover{box-shadow:0 8px 40px rgba(67,184,156,0.12),0 0 0 1px rgba(67,184,156,0.1)}
+  .card--migraine .card-accent{background:linear-gradient(135deg,#43b89c,#38a3d0)}
+
+  /* Card icon */
+  .card-icon{
+    width:64px;height:64px;border-radius:16px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:20px;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .card-icon img,.card-icon svg{width:100%;height:100%;object-fit:cover;border-radius:16px}
+
+  /* Card text */
+  .card-title{font-size:20px;font-weight:650;letter-spacing:-.2px;margin-bottom:8px}
+  .card-desc{font-size:14px;color:var(--text-muted);line-height:1.65;flex:1}
+
+  /* Card footer */
+  .card-footer{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:24px;padding-top:16px;
+    border-top:1px solid var(--border);
+  }
+  .card-tag{
+    font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
+    padding:5px 12px;border-radius:20px;
+    color:rgba(255,255,255,0.7);
+  }
+  .card--love .card-tag{background:rgba(192,132,252,0.12);color:#d4a8fc}
+  .card--stock .card-tag{background:rgba(202,138,4,0.12);color:#e5b94e}
+  .card--migraine .card-tag{background:rgba(67,184,156,0.12);color:#6dd4b8}
+
+  .card-arrow{
+    width:32px;height:32px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.04);
+    transition:background .3s ease,transform .3s ease;
+  }
+  .card-arrow svg{width:16px;height:16px;stroke:var(--text-muted);stroke-width:2;fill:none;transition:stroke .3s ease}
+  .card:hover .card-arrow{background:rgba(255,255,255,0.08);transform:translateX(2px)}
+  .card:hover .card-arrow svg{stroke:var(--text)}
+
+  /* ── Footer ── */
+  .footer{
+    margin-top:64px;text-align:center;
+    font-size:13px;color:var(--text-muted);
+    opacity:.5;letter-spacing:.3px;
+    animation:fadeUp .8s ease-out .6s both;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(24px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  /* ── Responsive ── */
+  @media(max-width:720px){
+    .cards{grid-template-columns:1fr;max-width:420px}
+    .page{padding:48px 16px 60px}
+    .header{margin-bottom:40px}
+  }
+
+  /* ── Reduced motion ── */
+  @media(prefers-reduced-motion:reduce){
+    .orb,.card,.header,.footer{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-layer">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="page">
+
+  <header class="header">
+    <span class="header-icon">🛠️</span>
+    <h1>My Projects</h1>
+    <p>一些自己做的小工具合集</p>
+  </header>
+
+  <div class="cards">
+
+    <!-- Our Memory -->
+    <a class="card card--love" href="love.html">
+      <div class="card-icon">
+        <img src="castle-icon.svg" alt="Our Memory">
+      </div>
+      <div class="card-title">Our Memory</div>
+      <div class="card-desc">属于两个人的记忆城堡，记录纪念日、日记、照片与旅行足迹。</div>
+      <div class="card-footer">
+        <span class="card-tag">生活</span>
+        <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </a>
+
+    <!-- 止盈计算推演 -->
+    <a class="card card--stock" href="./?v=3">
+      <div class="card-icon">
+        <img src="logo.svg" alt="止盈计算推演">
+      </div>
+      <div class="card-title">止盈计算推演</div>
+      <div class="card-desc">股票止盈策略模拟工具，支持多币种实时价格与分批止盈方案推演。</div>
+      <div class="card-footer">
+        <span class="card-tag">投资</span>
+        <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </a>
+
+    <!-- 偏头痛记录 -->
+    <a class="card card--migraine" href="migraine.html?v=3">
+      <div class="card-icon">
+        <img src="migraine-logo.svg" alt="偏头痛记录">
+      </div>
+      <div class="card-title">偏头痛记录</div>
+      <div class="card-desc">偏头痛发作追踪与分析，记录疼痛强度、症状、触发因素，可视化统计趋势。</div>
+      <div class="card-footer">
+        <span class="card-tag">健康</span>
+        <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="footer">Built with ❤️</div>
+
+</div>
+
+</body>
+</html>
