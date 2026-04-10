@@ -955,6 +955,124 @@
         .save-btn-new:hover { box-shadow: 0 4px 12px rgba(30,58,138,0.4); }
         .save-mode-btn:active { transform: scale(0.97); }
 
+        /* Lot increment buttons */
+        .lot-btn {
+            width: 36px;
+            min-height: 44px;
+            border: 1px solid rgba(202,138,4,0.25);
+            background: rgba(202,138,4,0.08);
+            color: #FBBF24;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .lot-btn:hover { background: rgba(202,138,4,0.18); }
+        .lot-btn:active { transform: scale(0.92); }
+
+        /* Live preview card */
+        .add-preview {
+            margin-top: 10px;
+            padding: 12px 14px;
+            background: rgba(76,175,80,0.05);
+            border: 1px solid rgba(76,175,80,0.15);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #94A3B8;
+            line-height: 1.8;
+            animation: fadeSlideIn 0.2s ease-out;
+        }
+        .add-preview.neg {
+            background: rgba(244,67,54,0.05);
+            border-color: rgba(244,67,54,0.15);
+        }
+        .add-preview strong { color: #F1F5F9; font-weight: 700; }
+        .add-preview .pv-pos { color: #4caf50; font-weight: 700; }
+        .add-preview .pv-neg { color: #f44336; font-weight: 700; }
+
+        /* Tag bar */
+        .tag-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .tag-chip {
+            padding: 5px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02);
+            color: #64748B;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tag-chip:hover { color: #94A3B8; background: rgba(255,255,255,0.05); }
+        .tag-chip.active {
+            border-color: rgba(202,138,4,0.4);
+            background: rgba(202,138,4,0.1);
+            color: #FBBF24;
+        }
+
+        /* Undo toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a20;
+            border: 1px solid rgba(202,138,4,0.3);
+            border-radius: 12px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 13px;
+            color: #E2E8F0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            z-index: 90;
+            animation: fadeSlideIn 0.25s ease-out;
+        }
+        .toast button {
+            background: rgba(202,138,4,0.15);
+            color: #FBBF24;
+            border: 1px solid rgba(202,138,4,0.3);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 32px;
+        }
+        .toast button:hover { background: rgba(202,138,4,0.25); }
+
+        /* Monte Carlo */
+        .mc-result {
+            margin-top: 12px;
+            padding: 14px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+        }
+        .mc-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .mc-stat {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+        .mc-stat-label { font-size: 10px; color: #64748B; margin-bottom: 2px; }
+        .mc-stat-value { font-size: 14px; font-weight: 700; color: #F1F5F9; }
+
     </style>
 </head>
 <body>
@@ -979,6 +1097,7 @@
 
         <!-- Plan Management -->
         <div class="section-title">方案管理</div>
+        <div class="tag-bar" id="tagBar" style="display:none"></div>
         <div class="plan-bar">
             <select id="planSelect" onchange="loadPlan()">
                 <option value="">-- 选择已保存方案 --</option>
@@ -1008,7 +1127,7 @@
             <div class="form-row">
                 <div class="field">
                     <label>当前股价</label>
-                    <input type="number" step="0.001" id="manualPrice" placeholder="输入当前价" oninput="applyManualPrice()">
+                    <input type="number" step="0.001" inputmode="decimal" id="manualPrice" placeholder="输入当前价" oninput="applyManualPrice()">
                 </div>
                 <div class="field" style="justify-content:flex-end;">
                     <button onclick="fetchPrice()" style="padding:12px 16px;min-height:44px;background:linear-gradient(135deg,#4fc3f7,#29b6f6);border:none;border-radius:10px;color:#fff;font-weight:600;font-size:14px;cursor:pointer;width:100%;" title="尝试自动获取">刷新股价</button>
@@ -1027,11 +1146,21 @@
             <div class="form-row">
                 <div class="field">
                     <label>买入均价</label>
-                    <input type="number" step="0.001" id="costPrice" placeholder="例: 11.50" oninput="calculate()">
+                    <input type="number" step="0.001" inputmode="decimal" id="costPrice" placeholder="例: 11.50" oninput="calculate()">
                 </div>
                 <div class="field">
                     <label>总持仓股数</label>
-                    <input type="number" step="1" id="totalShares" placeholder="例: 56000" oninput="calculate()">
+                    <input type="number" step="1" inputmode="numeric" id="totalShares" placeholder="例: 56000" oninput="calculate()">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>每手股数（港股常见: 500/1000/2000）</label>
+                    <input type="number" step="1" inputmode="numeric" id="lotSize" placeholder="留空则按股计算" oninput="onLotSizeChange()">
+                </div>
+                <div class="field">
+                    <label>手续费&税（%）<span id="feeHint" style="color:#64748B;font-weight:400">港股 ≈ 0.26%</span></label>
+                    <input type="number" step="0.01" inputmode="decimal" id="feeRate" placeholder="0.26" oninput="calculate()">
                 </div>
             </div>
         </div>
@@ -1051,20 +1180,25 @@
                 <div class="form-row three-col">
                     <div class="field">
                         <label>卖出价格</label>
-                        <input type="number" step="0.001" id="addPrice" placeholder="价格">
+                        <input type="number" step="0.001" inputmode="decimal" id="addPrice" placeholder="价格" oninput="updateAddPreview()">
                     </div>
                     <div class="field">
                         <label>卖出股数</label>
-                        <input type="number" step="1" id="addShares" placeholder="股数">
+                        <div style="display:flex;gap:4px;align-items:stretch;">
+                            <button type="button" class="lot-btn" onclick="changeLots(-1)" title="-1手">−</button>
+                            <input type="number" step="1" inputmode="numeric" id="addShares" placeholder="股数" oninput="updateAddPreview()" style="flex:1;min-width:0;">
+                            <button type="button" class="lot-btn" onclick="changeLots(1)" title="+1手">+</button>
+                        </div>
                     </div>
                     <div class="field">
                         <label>类型</label>
-                        <select id="addType" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
+                        <select id="addType" onchange="updateAddPreview()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
                             <option value="done" style="background:#1E293B;">已卖出</option>
                             <option value="plan" style="background:#1E293B;">计划卖出</option>
                         </select>
                     </div>
                 </div>
+                <div id="addPreview" class="add-preview" style="display:none"></div>
                 <div class="add-form-actions">
                     <button class="btn" onclick="hideAddForm()">取消</button>
                     <button class="btn btn-primary" onclick="addRecord()">确认添加</button>
@@ -1085,6 +1219,7 @@
             </div>
         </div>
         <button class="save-img-btn" id="saveImgBtn" onclick="saveAsImage()">保存推演结果为图片</button>
+        <button class="save-img-btn visible" onclick="showMonteCarlo()" style="margin-top:8px;background:linear-gradient(135deg,#4B1D95 0%,#6D28D9 100%);color:#E9D5FF">蒙特卡洛模拟</button>
 
         <!-- Disclaimer -->
         <div class="disclaimer">
@@ -1390,6 +1525,10 @@
 
             const remainShares = totalShares - soldShares - planShares;
             const totalRevenue = soldRevenue + planRevenue;
+
+            // Fees (commission + stamp duty). Applied to buy cost + sell revenue.
+            const feeRate = (parseFloat(document.getElementById('feeRate').value) || 0) / 100;
+            const totalFees = feeRate * (totalCost + totalRevenue);
             const totalProfit = totalRevenue - (soldShares + planShares) * costPrice;
 
             // Remaining value (use realtime price if available)
@@ -1400,7 +1539,7 @@
                 remainProfit = (currentRtPrice - costPrice) * remainShares;
             }
 
-            const grandProfit = totalProfit + remainProfit;
+            const grandProfit = totalProfit + remainProfit - totalFees;
             const grandRevenue = totalRevenue + remainValue;
             const profitRate = ((grandProfit) / totalCost * 100);
 
@@ -1446,6 +1585,11 @@
                     <div class="result-row">
                         <span>卖出均价</span>
                         <span class="rv">${avgSellPrice.toFixed(3)} ${cur}</span>
+                    </div>` : ''}
+                    ${totalFees > 0 ? `
+                    <div class="result-row">
+                        <span>手续费&税 (${(feeRate*100).toFixed(2)}%)</span>
+                        <span class="rv" style="color:#f44336">-${formatMoney(totalFees)} ${cur}</span>
                     </div>` : ''}
                     <div class="result-row">
                         <span>预计总回款</span>
@@ -2362,9 +2506,14 @@
             const totalShares = document.getElementById('totalShares').value;
             const manualPrice = document.getElementById('manualPrice').value;
             const market = document.getElementById('marketSelect').value;
+            const lotSize = document.getElementById('lotSize').value;
+            const feeRate = document.getElementById('feeRate').value;
             const plans = getPlans();
+            // Preserve tag if overwriting existing plan
+            const existingTag = plans[name]?.tag;
             plans[name] = {
-                stock, costPrice, totalShares, manualPrice, market,
+                stock, costPrice, totalShares, manualPrice, market, lotSize, feeRate,
+                tag: existingTag,
                 records: records.map(r => ({ price: r.price, shares: r.shares, type: r.type })),
                 savedAt: new Date().toISOString()
             };
@@ -2516,6 +2665,8 @@
             document.getElementById('costPrice').value = plan.costPrice || '';
             document.getElementById('totalShares').value = plan.totalShares || '';
             document.getElementById('manualPrice').value = plan.manualPrice || '';
+            document.getElementById('lotSize').value = plan.lotSize || '';
+            document.getElementById('feeRate').value = plan.feeRate || '';
             updateBadge();
 
             if (plan.manualPrice) {
@@ -2543,11 +2694,354 @@
         }
 
         // Focus stock input on load, refresh plan list
+        // ==================== NEW FEATURES ====================
+
+        // --- Lot size (每手) ---
+        function getLotSize() {
+            return parseInt(document.getElementById('lotSize').value) || 0;
+        }
+        function onLotSizeChange() {
+            // Placeholder: could show "= X 手" label in future
+        }
+        function changeLots(delta) {
+            const lot = getLotSize();
+            if (lot <= 0) { alert('请先在持仓信息中设置每手股数'); return; }
+            const input = document.getElementById('addShares');
+            const current = parseInt(input.value) || 0;
+            const newVal = Math.max(0, current + delta * lot);
+            input.value = newVal;
+            updateAddPreview();
+        }
+
+        // --- Live preview in add form ---
+        function updateAddPreview() {
+            const price = parseFloat(document.getElementById('addPrice').value);
+            const shares = parseInt(document.getElementById('addShares').value);
+            const type = document.getElementById('addType').value;
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
+            const lot = getLotSize();
+            const preview = document.getElementById('addPreview');
+
+            if (!price || !shares || price <= 0 || shares <= 0 || costPrice <= 0) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            const revenue = price * shares;
+            const profit = (price - costPrice) * shares;
+            const pct = ((price - costPrice) / costPrice * 100);
+            const lotInfo = lot > 0 ? ` (${(shares / lot).toFixed(shares % lot === 0 ? 0 : 2)} 手)` : '';
+
+            // Sold so far + this one
+            let soldAfter = 0;
+            records.forEach(r => {
+                if (editingId !== null && r.id === editingId) return;
+                if (type === 'done' && r.type === 'done') soldAfter += r.shares;
+                if (type === 'plan' && (r.type === 'done' || r.type === 'plan')) soldAfter += r.shares;
+            });
+            soldAfter += shares;
+            const remainAfter = totalShares - soldAfter;
+            const sellPct = totalShares > 0 ? (shares / totalShares * 100).toFixed(1) : 0;
+
+            const profitClass = profit >= 0 ? 'pv-pos' : 'pv-neg';
+            const profitSign = profit >= 0 ? '+' : '';
+
+            preview.className = 'add-preview' + (profit >= 0 ? '' : ' neg');
+            preview.style.display = 'block';
+            preview.innerHTML = `
+                本批: <strong>${shares.toLocaleString()}</strong>股${lotInfo} ×
+                <strong>${price.toFixed(3)}</strong> =
+                <strong>${formatMoney(revenue)}</strong><br>
+                单批利润: <span class="${profitClass}">${profitSign}${formatMoney(profit)}</span>
+                (<span class="${profitClass}">${profitSign}${pct.toFixed(1)}%</span>) ·
+                占总仓 <strong>${sellPct}%</strong>${totalShares > 0 ? ' · 之后剩余 <strong>' + Math.max(0, remainAfter).toLocaleString() + '</strong>股' : ''}
+            `;
+        }
+
+        // --- Undo/Redo stack ---
+        const undoStack = [];
+        const MAX_UNDO = 10;
+        function pushUndo(action) {
+            undoStack.push(action);
+            if (undoStack.length > MAX_UNDO) undoStack.shift();
+        }
+        function undo() {
+            if (undoStack.length === 0) { showToast('没有可撤销的操作'); return; }
+            const action = undoStack.pop();
+            try { action.undo(); showToast('已撤销: ' + action.label); }
+            catch (e) { console.error(e); }
+        }
+
+        // --- Toast ---
+        let toastTimer = null;
+        function showToast(msg, actionLabel, actionFn) {
+            const existing = document.getElementById('toast');
+            if (existing) existing.remove();
+            if (toastTimer) clearTimeout(toastTimer);
+
+            const div = document.createElement('div');
+            div.className = 'toast';
+            div.id = 'toast';
+            div.innerHTML = `<span>${msg}</span>`;
+            if (actionLabel && actionFn) {
+                const btn = document.createElement('button');
+                btn.textContent = actionLabel;
+                btn.onclick = () => { actionFn(); div.remove(); };
+                div.appendChild(btn);
+            }
+            document.body.appendChild(div);
+            toastTimer = setTimeout(() => div.remove(), 4000);
+        }
+
+        // Keyboard shortcut: Ctrl+Z / Cmd+Z
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                const tag = document.activeElement?.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return; // let browser handle text undo
+                e.preventDefault();
+                undo();
+            }
+        });
+
+        // --- Sync polling (every 5 min) ---
+        let syncPollInterval = null;
+        function startSyncPoll() {
+            if (syncPollInterval) clearInterval(syncPollInterval);
+            syncPollInterval = setInterval(() => {
+                if (isLoggedIn() && document.visibilityState === 'visible') {
+                    syncPlans();
+                }
+            }, 5 * 60 * 1000);
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && isLoggedIn()) {
+                syncPlans();
+            }
+        });
+
+        // --- Tag filter ---
+        let currentTagFilter = '__all__';
+        function getPlanTag(plan) {
+            if (plan.tag) return plan.tag;
+            // Auto-detect from stock code
+            const stock = (plan.stock || '').trim();
+            if (/^\d{4,5}/.test(stock)) return '港股';
+            if (/[A-Za-z]/.test(stock)) return '美股';
+            return '其他';
+        }
+        function getAllTags() {
+            const plans = getPlans();
+            const tags = new Set();
+            Object.values(plans).forEach(p => tags.add(getPlanTag(p)));
+            return Array.from(tags).sort();
+        }
+        function refreshTagBar() {
+            const bar = document.getElementById('tagBar');
+            if (!bar) return;
+            const tags = getAllTags();
+            if (tags.length <= 1) { bar.style.display = 'none'; return; }
+            bar.style.display = 'flex';
+            bar.innerHTML = '';
+            const allChip = document.createElement('span');
+            allChip.className = 'tag-chip' + (currentTagFilter === '__all__' ? ' active' : '');
+            allChip.textContent = '全部';
+            allChip.onclick = () => { currentTagFilter = '__all__'; refreshPlanSelect(); refreshTagBar(); };
+            bar.appendChild(allChip);
+            tags.forEach(t => {
+                const chip = document.createElement('span');
+                chip.className = 'tag-chip' + (currentTagFilter === t ? ' active' : '');
+                chip.textContent = t;
+                chip.onclick = () => { currentTagFilter = t; refreshPlanSelect(); refreshTagBar(); };
+                bar.appendChild(chip);
+            });
+        }
+
+        // --- Monte Carlo simulation ---
+        function showMonteCarlo() {
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
+            if (costPrice <= 0 || totalShares <= 0) {
+                alert('请先填写持仓信息'); return;
+            }
+            if (!currentRtPrice) {
+                alert('请先填写当前股价'); return;
+            }
+            const overlay = document.getElementById('mcOverlay');
+            overlay.classList.add('visible');
+            runMonteCarlo();
+        }
+        function hideMonteCarlo() {
+            document.getElementById('mcOverlay').classList.remove('visible');
+        }
+
+        // Generate normally distributed random (Box-Muller)
+        function gaussian() {
+            let u = 0, v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+        }
+
+        function runMonteCarlo() {
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
+            const S0 = currentRtPrice;
+            const vol = (parseFloat(document.getElementById('mcVol').value) || 30) / 100; // annual vol
+            const days = parseInt(document.getElementById('mcDays').value) || 90;
+            const sims = 1000;
+
+            // GBM: S(t) = S(0) * exp((μ - σ²/2)t + σ√t·Z)
+            // Assume drift μ = 0 (pure volatility model)
+            const T = days / 252;
+            const finalPrices = [];
+            for (let i = 0; i < sims; i++) {
+                const z = gaussian();
+                const st = S0 * Math.exp((-0.5 * vol * vol) * T + vol * Math.sqrt(T) * z);
+                finalPrices.push(st);
+            }
+            finalPrices.sort((a, b) => a - b);
+
+            const percentile = (p) => finalPrices[Math.floor(p * sims)];
+            const p5 = percentile(0.05);
+            const p50 = percentile(0.5);
+            const p95 = percentile(0.95);
+            const mean = finalPrices.reduce((a, b) => a + b, 0) / sims;
+
+            // Compute profit for each scenario (assume all remaining shares sold at final price)
+            const remainShares = totalShares - records.reduce((sum, r) => sum + r.shares, 0);
+            const knownProfit = records.reduce((sum, r) => sum + (r.price - costPrice) * r.shares, 0);
+
+            const profitAt = (price) => knownProfit + Math.max(0, remainShares) * (price - costPrice);
+
+            const minProfit = profitAt(p5);
+            const medProfit = profitAt(p50);
+            const maxProfit = profitAt(p95);
+            const meanProfit = profitAt(mean);
+
+            // Probability of profit > 0
+            const profitableCount = finalPrices.filter(p => profitAt(p) > 0).length;
+            const probProfit = (profitableCount / sims * 100).toFixed(1);
+
+            // Render
+            const cur = getCurrency();
+            document.getElementById('mcResult').innerHTML = `
+                <div class="mc-stats">
+                    <div class="mc-stat">
+                        <div class="mc-stat-label">悲观 (5%)</div>
+                        <div class="mc-stat-value" style="color:#f44336">${formatMoney(minProfit)}</div>
+                    </div>
+                    <div class="mc-stat">
+                        <div class="mc-stat-label">中位 (50%)</div>
+                        <div class="mc-stat-value">${formatMoney(medProfit)}</div>
+                    </div>
+                    <div class="mc-stat">
+                        <div class="mc-stat-label">乐观 (95%)</div>
+                        <div class="mc-stat-value" style="color:#4caf50">${formatMoney(maxProfit)}</div>
+                    </div>
+                </div>
+                <div style="font-size:12px;color:#94A3B8;line-height:1.8;margin-top:10px">
+                    <div>平均股价: <strong style="color:#F1F5F9">${mean.toFixed(3)} ${cur}</strong></div>
+                    <div>预期利润: <strong style="color:${meanProfit >= 0 ? '#4caf50' : '#f44336'}">${meanProfit >= 0 ? '+' : ''}${formatMoney(meanProfit)} ${cur}</strong></div>
+                    <div>盈利概率: <strong style="color:#FBBF24">${probProfit}%</strong></div>
+                    <div style="color:#64748B;margin-top:6px;font-size:11px">基于 ${sims} 次 GBM 模拟，${days} 天后价格分布</div>
+                </div>
+            `;
+        }
+
+        // Override addRecord / removeRecord / deletePlan to support undo
+        const _origAddRecord = addRecord;
+        addRecord = function() {
+            const beforeRecords = records.map(r => ({ ...r }));
+            const beforeEditingId = editingId;
+            _origAddRecord();
+            pushUndo({
+                label: beforeEditingId !== null ? '编辑记录' : '添加记录',
+                undo: () => { records = beforeRecords; editingId = null; renderRecords(); calculate(); }
+            });
+        };
+
+        const _origRemoveRecord = removeRecord;
+        removeRecord = function(id) {
+            const removed = records.find(r => r.id === id);
+            if (!removed) return;
+            _origRemoveRecord(id);
+            showToast(`已删除 ${removed.shares}股 @ ${removed.price}`, '撤销', () => {
+                records.push(removed);
+                renderRecords();
+                calculate();
+            });
+            pushUndo({
+                label: '删除记录',
+                undo: () => { records.push(removed); renderRecords(); calculate(); }
+            });
+        };
+
+        const _origDeletePlan = deletePlan;
+        deletePlan = async function() {
+            const name = document.getElementById('planSelect').value;
+            if (!name) { alert('请先选择一个方案'); return; }
+            if (!confirm(`确定删除方案「${name}」？`)) return;
+            const plans = getPlans();
+            const backup = plans[name];
+            delete plans[name];
+            localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+            refreshPlanSelect();
+            refreshTagBar();
+            showToast(`已删除方案「${name}」`, '撤销', async () => {
+                const p = getPlans();
+                p[name] = backup;
+                localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(p));
+                refreshPlanSelect(name);
+                refreshTagBar();
+                await syncPlans(true);
+            });
+            pushUndo({
+                label: '删除方案',
+                undo: async () => {
+                    const p = getPlans();
+                    p[name] = backup;
+                    localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(p));
+                    refreshPlanSelect(name);
+                    refreshTagBar();
+                    await syncPlans(true);
+                }
+            });
+            await syncPlans(true);
+        };
+
+        // Override refreshPlanSelect to support tag filter and refresh tag bar
+        const _origRefreshPlanSelect = refreshPlanSelect;
+        refreshPlanSelect = function(selectName) {
+            const sel = document.getElementById('planSelect');
+            const plans = getPlans();
+            let names = Object.keys(plans).sort();
+            if (currentTagFilter !== '__all__') {
+                names = names.filter(n => getPlanTag(plans[n]) === currentTagFilter);
+            }
+            sel.innerHTML = '<option value="">-- 选择已保存方案 --</option>';
+            names.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                const tag = getPlanTag(plans[name]);
+                opt.textContent = `${name}`;
+                sel.appendChild(opt);
+            });
+            if (selectName && names.includes(selectName)) {
+                sel.value = selectName;
+            }
+            refreshTagBar();
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             refreshPlanSelect();
+            refreshTagBar();
             fetchFxRates();
             updateUserBar();
-            if (isLoggedIn()) syncPlans();
+            if (isLoggedIn()) {
+                syncPlans();
+                startSyncPoll();
+            }
             document.getElementById('stockInput').focus();
         });
     </script>
@@ -2598,6 +3092,26 @@
             <!-- Buttons injected by JS -->
         </div>
         <div class="auth-close" onclick="hideSave()">取消</div>
+    </div>
+</div>
+
+<!-- Monte Carlo Modal -->
+<div class="auth-overlay" id="mcOverlay">
+    <div class="auth-box" style="max-width:480px">
+        <h2>蒙特卡洛价格模拟</h2>
+        <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
+            基于几何布朗运动模型，模拟 1000 次未来价格路径
+        </p>
+        <div class="field">
+            <label>年化波动率 (%)<span style="color:#64748B;font-weight:400;margin-left:6px">港股常见 25-40</span></label>
+            <input type="number" step="1" inputmode="numeric" id="mcVol" value="30" oninput="runMonteCarlo()">
+        </div>
+        <div class="field">
+            <label>模拟天数</label>
+            <input type="number" step="1" inputmode="numeric" id="mcDays" value="90" oninput="runMonteCarlo()">
+        </div>
+        <div id="mcResult" class="mc-result"></div>
+        <div class="auth-close" onclick="hideMonteCarlo()">关闭</div>
     </div>
 </div>
 
