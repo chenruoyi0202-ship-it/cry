@@ -1092,8 +1092,9 @@
             chunks.push(value);
             loaded += value.length;
             const pct = total ? Math.min(99, Math.round(loaded / total * 100)) : 50;
-            const kb = Math.round(loaded / 1024);
-            showPhotoBar(label + ' ' + kb + 'KB' + (total ? '/' + Math.round(total / 1024) + 'KB (' + pct + '%)' : ''), pct);
+            const mb = (loaded / 1024 / 1024).toFixed(1);
+            const totalMb = total ? (total / 1024 / 1024).toFixed(1) : null;
+            showPhotoBar(label + ' ' + mb + 'MB' + (totalMb ? '/' + totalMb + 'MB (' + pct + '%)' : ''), pct);
         }
         // Merge chunks into one Uint8Array, then decode
         const merged = new Uint8Array(loaded);
