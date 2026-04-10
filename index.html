@@ -884,6 +884,77 @@
             min-height: 18px;
         }
 
+        /* Compare modal */
+        .compare-select {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px 14px;
+            min-height: 44px;
+            color: #F1F5F9;
+            font-size: 15px;
+            font-weight: 600;
+            outline: none;
+            margin-top: 4px;
+        }
+        .compare-select option { background: #1E293B; color: #F8FAFC; }
+        .compare-table {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 2px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            overflow: hidden;
+            font-size: 12px;
+        }
+        .compare-table > div {
+            padding: 10px 12px;
+            background: #121218;
+        }
+        .compare-table .ct-header {
+            background: rgba(202,138,4,0.08);
+            color: #FBBF24;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .compare-table .ct-label { color: #64748B; font-weight: 500; }
+        .compare-table .ct-value { color: #F1F5F9; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .compare-table .ct-value.pos { color: #4caf50; }
+        .compare-table .ct-value.neg { color: #f44336; }
+        .compare-table .ct-value.better {
+            background: rgba(76,175,80,0.08);
+        }
+
+        .save-mode-btn {
+            flex: 1;
+            min-height: 48px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            padding: 10px 8px;
+            line-height: 1.4;
+        }
+        .save-btn-overwrite {
+            background: linear-gradient(135deg, #7F1D1D 0%, #B91C1C 100%);
+            color: #FEE2E2;
+            box-shadow: 0 2px 8px rgba(185,28,28,0.25);
+        }
+        .save-btn-overwrite:hover { box-shadow: 0 4px 12px rgba(185,28,28,0.4); }
+        .save-btn-new {
+            background: linear-gradient(135deg, #1E3A8A 0%, #2146C7 100%);
+            color: #FBBF24;
+            box-shadow: 0 2px 8px rgba(30,58,138,0.3);
+        }
+        .save-btn-new:hover { box-shadow: 0 4px 12px rgba(30,58,138,0.4); }
+        .save-mode-btn:active { transform: scale(0.97); }
+
     </style>
 </head>
 <body>
@@ -913,6 +984,8 @@
                 <option value="">-- 选择已保存方案 --</option>
             </select>
             <button class="plan-btn plan-btn-save" onclick="savePlan()">保存</button>
+            <button class="plan-btn" onclick="renamePlan()">重命名</button>
+            <button class="plan-btn" onclick="showCompare()">对比</button>
             <button class="plan-btn plan-btn-del" onclick="deletePlan()">删除</button>
         </div>
 
@@ -2199,35 +2272,95 @@
             }
         }
 
-        async function savePlan() {
+        // --- Save Plan Modal ---
+        function savePlan() {
             const stock = document.getElementById('stockInput').value.trim();
             const costPrice = document.getElementById('costPrice').value;
-            const totalShares = document.getElementById('totalShares').value;
-            const manualPrice = document.getElementById('manualPrice').value;
 
             if (!stock && !costPrice && records.length === 0) {
                 alert('当前没有数据可保存'); return;
             }
 
             const currentSel = document.getElementById('planSelect').value;
-            let name;
+            const overlay = document.getElementById('saveOverlay');
+            const actions = document.getElementById('saveActions');
+            const title = document.getElementById('saveTitle');
+            const hint = document.getElementById('saveHint');
+            const nameField = document.getElementById('saveNameField');
+            const nameInput = document.getElementById('saveNameInput');
+            const err = document.getElementById('saveError');
+            err.textContent = '';
 
             if (currentSel) {
-                // Editing an existing plan - ask overwrite or new
-                const overwrite = confirm(`覆盖当前方案「${currentSel}」？\n\n点击「确定」覆盖原方案\n点击「取消」另存为新方案`);
-                if (overwrite) {
-                    name = currentSel;
-                } else {
-                    name = prompt('新方案名称：', currentSel + ' 副本');
-                    if (!name) return;
-                }
+                // Editing an existing plan - show two buttons
+                title.textContent = '保存当前方案';
+                hint.innerHTML = `当前方案：<span style="color:#FBBF24;font-weight:600">${currentSel}</span>`;
+                nameField.style.display = 'none';
+                actions.innerHTML = `
+                    <button class="save-mode-btn save-btn-overwrite" onclick="doSave('overwrite')">覆盖原来</button>
+                    <button class="save-mode-btn save-btn-new" onclick="doSave('new')">新增方案</button>
+                `;
             } else {
                 // Fresh save
-                const defaultName = stock || '未命名方案';
-                name = prompt('方案名称：', defaultName);
-                if (!name) return;
+                title.textContent = '新建方案';
+                hint.textContent = '为当前配置命名并保存';
+                nameField.style.display = 'block';
+                nameInput.value = stock || '未命名方案';
+                actions.innerHTML = `
+                    <button class="auth-btn-primary save-mode-btn" onclick="doSave('new')">保存</button>
+                `;
+                setTimeout(() => { nameInput.focus(); nameInput.select(); }, 50);
+            }
+            overlay.classList.add('visible');
+        }
+
+        function hideSave() {
+            document.getElementById('saveOverlay').classList.remove('visible');
+        }
+
+        async function doSave(mode) {
+            const err = document.getElementById('saveError');
+            err.textContent = '';
+            const currentSel = document.getElementById('planSelect').value;
+            let name;
+
+            if (mode === 'overwrite') {
+                name = currentSel;
+            } else {
+                // new: need name input (may be empty if coming from "新增方案" on existing plan)
+                const nameField = document.getElementById('saveNameField');
+                const nameInput = document.getElementById('saveNameInput');
+                if (nameField.style.display === 'none') {
+                    // Transition from existing plan → new: show input
+                    nameField.style.display = 'block';
+                    nameInput.value = (currentSel || document.getElementById('stockInput').value.trim() || '未命名方案') + ' 副本';
+                    document.getElementById('saveActions').innerHTML = `
+                        <button class="auth-btn-primary save-mode-btn" onclick="doSave('confirmNew')">确认保存</button>
+                    `;
+                    setTimeout(() => { nameInput.focus(); nameInput.select(); }, 50);
+                    return;
+                }
+                name = nameInput.value.trim();
+                if (!name) { err.textContent = '请输入方案名称'; return; }
+                const plans = getPlans();
+                if (plans[name] && mode !== 'confirmNew' && name !== currentSel) {
+                    err.textContent = '该名称已存在，请换一个';
+                    return;
+                }
             }
 
+            if (mode === 'confirmNew') {
+                name = document.getElementById('saveNameInput').value.trim();
+                if (!name) { err.textContent = '请输入方案名称'; return; }
+                const plans = getPlans();
+                if (plans[name]) { err.textContent = '该名称已存在，请换一个'; return; }
+            }
+
+            // Build plan data
+            const stock = document.getElementById('stockInput').value.trim();
+            const costPrice = document.getElementById('costPrice').value;
+            const totalShares = document.getElementById('totalShares').value;
+            const manualPrice = document.getElementById('manualPrice').value;
             const market = document.getElementById('marketSelect').value;
             const plans = getPlans();
             plans[name] = {
@@ -2237,9 +2370,139 @@
             };
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
             refreshPlanSelect(name);
-            alert('方案已保存');
+            hideSave();
             await syncPlans(true);
         }
+
+        // --- Rename Plan ---
+        async function renamePlan() {
+            const oldName = document.getElementById('planSelect').value;
+            if (!oldName) { alert('请先选择一个方案'); return; }
+            const newName = prompt('新的方案名称：', oldName);
+            if (!newName || newName === oldName) return;
+            const trimmed = newName.trim();
+            if (!trimmed) return;
+            const plans = getPlans();
+            if (plans[trimmed]) { alert('该名称已存在'); return; }
+            plans[trimmed] = { ...plans[oldName], savedAt: new Date().toISOString() };
+            delete plans[oldName];
+            localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+            refreshPlanSelect(trimmed);
+            await syncPlans(true);
+        }
+
+        // --- Compare Plans ---
+        function showCompare() {
+            const plans = getPlans();
+            const names = Object.keys(plans).sort();
+            if (names.length < 2) {
+                alert('至少需要 2 个方案才能对比');
+                return;
+            }
+            const selA = document.getElementById('compareA');
+            const selB = document.getElementById('compareB');
+            selA.innerHTML = '';
+            selB.innerHTML = '';
+            names.forEach(name => {
+                selA.innerHTML += `<option value="${name}">${name}</option>`;
+                selB.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+            selA.value = names[0];
+            selB.value = names[1];
+            selA.onchange = renderCompare;
+            selB.onchange = renderCompare;
+            renderCompare();
+            document.getElementById('compareOverlay').classList.add('visible');
+        }
+
+        function hideCompare() {
+            document.getElementById('compareOverlay').classList.remove('visible');
+        }
+
+        function renderCompare() {
+            const plans = getPlans();
+            const nameA = document.getElementById('compareA').value;
+            const nameB = document.getElementById('compareB').value;
+            const a = plans[nameA];
+            const b = plans[nameB];
+            if (!a || !b) return;
+
+            const computeStats = (p) => {
+                const costPrice = parseFloat(p.costPrice) || 0;
+                const totalShares = parseInt(p.totalShares) || 0;
+                const rtPrice = parseFloat(p.manualPrice) || null;
+                const recs = p.records || [];
+                const stats = calcComparePlan(costPrice, totalShares, recs, rtPrice);
+                return stats;
+            };
+
+            const sa = computeStats(a);
+            const sb = computeStats(b);
+
+            const rows = [
+                { label: '股票', a: a.stock || '—', b: b.stock || '—', cmp: 'none' },
+                { label: '成本价', a: fmtNum(a.costPrice), b: fmtNum(b.costPrice), cmp: 'none' },
+                { label: '总股数', a: fmtInt(a.totalShares), b: fmtInt(b.totalShares), cmp: 'none' },
+                { label: '总成本', a: formatMoney(sa.totalCost), b: formatMoney(sb.totalCost), cmp: 'none' },
+                { label: '已卖出', a: `${sa.soldShares}股`, b: `${sb.soldShares}股`, cmp: 'none' },
+                { label: '计划卖出', a: `${sa.planShares}股`, b: `${sb.planShares}股`, cmp: 'none' },
+                { label: '剩余持仓', a: `${sa.remainShares}股`, b: `${sb.remainShares}股`, cmp: 'none' },
+                { label: '预计总盈亏', a: signedMoney(sa.grandProfit), b: signedMoney(sb.grandProfit), cmp: 'profit', va: sa.grandProfit, vb: sb.grandProfit },
+                { label: '收益率', a: signedPct(sa.profitRate), b: signedPct(sb.profitRate), cmp: 'profit', va: sa.profitRate, vb: sb.profitRate },
+                { label: '卖出均价', a: sa.avgSellPrice > 0 ? sa.avgSellPrice.toFixed(3) : '—', b: sb.avgSellPrice > 0 ? sb.avgSellPrice.toFixed(3) : '—', cmp: 'none' },
+            ];
+
+            let html = `
+                <div class="compare-table">
+                    <div class="ct-header">指标</div>
+                    <div class="ct-header">${escapeHtml(nameA)}</div>
+                    <div class="ct-header">${escapeHtml(nameB)}</div>
+            `;
+            rows.forEach(r => {
+                let clsA = 'ct-value', clsB = 'ct-value';
+                if (r.cmp === 'profit') {
+                    clsA += (r.va >= 0 ? ' pos' : ' neg');
+                    clsB += (r.vb >= 0 ? ' pos' : ' neg');
+                    if (r.va > r.vb) clsA += ' better';
+                    else if (r.vb > r.va) clsB += ' better';
+                }
+                html += `
+                    <div class="ct-label">${r.label}</div>
+                    <div class="${clsA}">${r.a}</div>
+                    <div class="${clsB}">${r.b}</div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('compareResult').innerHTML = html;
+        }
+
+        // Helper: compute stats for comparison (mirrors calculate() logic)
+        function calcComparePlan(costPrice, totalShares, recs, rtPrice) {
+            if (costPrice <= 0 || totalShares <= 0) {
+                return { totalCost: 0, soldShares: 0, planShares: 0, remainShares: 0, grandProfit: 0, profitRate: 0, avgSellPrice: 0 };
+            }
+            const totalCost = costPrice * totalShares;
+            let soldShares = 0, soldRevenue = 0, planShares = 0, planRevenue = 0;
+            recs.forEach(r => {
+                if (r.type === 'done') { soldShares += r.shares; soldRevenue += r.price * r.shares; }
+                else { planShares += r.shares; planRevenue += r.price * r.shares; }
+            });
+            const remainShares = totalShares - soldShares - planShares;
+            const totalProfit = (soldRevenue + planRevenue) - (soldShares + planShares) * costPrice;
+            let remainProfit = 0;
+            if (remainShares > 0 && rtPrice) remainProfit = (rtPrice - costPrice) * remainShares;
+            const grandProfit = totalProfit + remainProfit;
+            const profitRate = (grandProfit / totalCost) * 100;
+            const allSellShares = soldShares + planShares;
+            const avgSellPrice = allSellShares > 0 ? (soldRevenue + planRevenue) / allSellShares : 0;
+            return { totalCost, soldShares, planShares, remainShares, grandProfit, profitRate, avgSellPrice };
+        }
+
+        function fmtNum(v) { const n = parseFloat(v); return isNaN(n) ? '—' : n.toFixed(2); }
+        function fmtInt(v) { const n = parseInt(v); return isNaN(n) ? '—' : n.toLocaleString(); }
+        function signedMoney(n) { return (n >= 0 ? '+' : '') + formatMoney(n); }
+        function signedPct(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+        function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
         function loadPlan() {
             const name = document.getElementById('planSelect').value;
@@ -2318,6 +2581,43 @@
             </ol>
         </details>
         <div class="auth-close" onclick="hideAuth()">取消</div>
+    </div>
+</div>
+
+<!-- Save Plan Modal -->
+<div class="auth-overlay" id="saveOverlay">
+    <div class="auth-box">
+        <h2 id="saveTitle">保存方案</h2>
+        <p id="saveHint" style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5"></p>
+        <div class="field" id="saveNameField">
+            <label>方案名称</label>
+            <input type="text" id="saveNameInput" placeholder="输入方案名称">
+        </div>
+        <div class="auth-error" id="saveError"></div>
+        <div class="auth-actions" id="saveActions">
+            <!-- Buttons injected by JS -->
+        </div>
+        <div class="auth-close" onclick="hideSave()">取消</div>
+    </div>
+</div>
+
+<!-- Compare Plans Modal -->
+<div class="auth-overlay" id="compareOverlay">
+    <div class="auth-box" style="max-width:560px">
+        <h2>方案对比</h2>
+        <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
+            选择两个方案进行盈亏对比
+        </p>
+        <div class="field">
+            <label>方案 A</label>
+            <select id="compareA" class="compare-select"></select>
+        </div>
+        <div class="field">
+            <label>方案 B</label>
+            <select id="compareB" class="compare-select"></select>
+        </div>
+        <div id="compareResult" style="margin-top:16px"></div>
+        <div class="auth-close" onclick="hideCompare()">关闭</div>
     </div>
 </div>
 </body>
