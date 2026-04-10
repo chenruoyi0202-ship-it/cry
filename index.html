@@ -595,9 +595,24 @@
         /* Plan management */
         .plan-bar {
             display: flex;
-            gap: 6px;
-            margin-bottom: 16px;
+            gap: 8px;
+            margin-bottom: 10px;
             flex-wrap: wrap;
+        }
+        .plan-bar-select {
+            margin-bottom: 8px;
+        }
+        .plan-bar-select select {
+            width: 100%;
+            min-height: 44px;
+            font-size: 15px !important;
+            font-weight: 600;
+            padding: 12px 14px !important;
+            border-radius: 10px !important;
+        }
+        .plan-bar .plan-btn {
+            flex: 1;
+            min-width: 0;
         }
         .plan-bar select {
             flex: 1;
@@ -1050,29 +1065,6 @@
         }
         .toast button:hover { background: rgba(202,138,4,0.25); }
 
-        /* Monte Carlo */
-        .mc-result {
-            margin-top: 12px;
-            padding: 14px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-        }
-        .mc-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        .mc-stat {
-            text-align: center;
-            padding: 8px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 8px;
-        }
-        .mc-stat-label { font-size: 10px; color: #64748B; margin-bottom: 2px; }
-        .mc-stat-value { font-size: 14px; font-weight: 700; color: #F1F5F9; }
-
     </style>
 </head>
 <body>
@@ -1098,10 +1090,12 @@
         <!-- Plan Management -->
         <div class="section-title">方案管理</div>
         <div class="tag-bar" id="tagBar" style="display:none"></div>
-        <div class="plan-bar">
+        <div class="plan-bar plan-bar-select">
             <select id="planSelect" onchange="loadPlan()">
                 <option value="">-- 选择已保存方案 --</option>
             </select>
+        </div>
+        <div class="plan-bar">
             <button class="plan-btn plan-btn-save" onclick="savePlan()">保存</button>
             <button class="plan-btn" onclick="renamePlan()">重命名</button>
             <button class="plan-btn" onclick="showCompare()">对比</button>
@@ -1219,7 +1213,6 @@
             </div>
         </div>
         <button class="save-img-btn" id="saveImgBtn" onclick="saveAsImage()">保存推演结果为图片</button>
-        <button class="save-img-btn visible" onclick="showMonteCarlo()" style="margin-top:8px;background:linear-gradient(135deg,#4B1D95 0%,#6D28D9 100%);color:#E9D5FF">蒙特卡洛模拟</button>
 
         <!-- Disclaimer -->
         <div class="disclaimer">
@@ -2839,114 +2832,25 @@
         function refreshTagBar() {
             const bar = document.getElementById('tagBar');
             if (!bar) return;
+            const plans = getPlans();
+            const planCount = Object.keys(plans).length;
+            if (planCount === 0) { bar.style.display = 'none'; return; }
             const tags = getAllTags();
-            if (tags.length <= 1) { bar.style.display = 'none'; return; }
             bar.style.display = 'flex';
             bar.innerHTML = '';
             const allChip = document.createElement('span');
             allChip.className = 'tag-chip' + (currentTagFilter === '__all__' ? ' active' : '');
-            allChip.textContent = '全部';
+            allChip.textContent = `全部 (${planCount})`;
             allChip.onclick = () => { currentTagFilter = '__all__'; refreshPlanSelect(); refreshTagBar(); };
             bar.appendChild(allChip);
             tags.forEach(t => {
+                const count = Object.values(plans).filter(p => getPlanTag(p) === t).length;
                 const chip = document.createElement('span');
                 chip.className = 'tag-chip' + (currentTagFilter === t ? ' active' : '');
-                chip.textContent = t;
+                chip.textContent = `${t} (${count})`;
                 chip.onclick = () => { currentTagFilter = t; refreshPlanSelect(); refreshTagBar(); };
                 bar.appendChild(chip);
             });
-        }
-
-        // --- Monte Carlo simulation ---
-        function showMonteCarlo() {
-            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
-            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
-            if (costPrice <= 0 || totalShares <= 0) {
-                alert('请先填写持仓信息'); return;
-            }
-            if (!currentRtPrice) {
-                alert('请先填写当前股价'); return;
-            }
-            const overlay = document.getElementById('mcOverlay');
-            overlay.classList.add('visible');
-            runMonteCarlo();
-        }
-        function hideMonteCarlo() {
-            document.getElementById('mcOverlay').classList.remove('visible');
-        }
-
-        // Generate normally distributed random (Box-Muller)
-        function gaussian() {
-            let u = 0, v = 0;
-            while (u === 0) u = Math.random();
-            while (v === 0) v = Math.random();
-            return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-        }
-
-        function runMonteCarlo() {
-            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
-            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
-            const S0 = currentRtPrice;
-            const vol = (parseFloat(document.getElementById('mcVol').value) || 30) / 100; // annual vol
-            const days = parseInt(document.getElementById('mcDays').value) || 90;
-            const sims = 1000;
-
-            // GBM: S(t) = S(0) * exp((μ - σ²/2)t + σ√t·Z)
-            // Assume drift μ = 0 (pure volatility model)
-            const T = days / 252;
-            const finalPrices = [];
-            for (let i = 0; i < sims; i++) {
-                const z = gaussian();
-                const st = S0 * Math.exp((-0.5 * vol * vol) * T + vol * Math.sqrt(T) * z);
-                finalPrices.push(st);
-            }
-            finalPrices.sort((a, b) => a - b);
-
-            const percentile = (p) => finalPrices[Math.floor(p * sims)];
-            const p5 = percentile(0.05);
-            const p50 = percentile(0.5);
-            const p95 = percentile(0.95);
-            const mean = finalPrices.reduce((a, b) => a + b, 0) / sims;
-
-            // Compute profit for each scenario (assume all remaining shares sold at final price)
-            const remainShares = totalShares - records.reduce((sum, r) => sum + r.shares, 0);
-            const knownProfit = records.reduce((sum, r) => sum + (r.price - costPrice) * r.shares, 0);
-
-            const profitAt = (price) => knownProfit + Math.max(0, remainShares) * (price - costPrice);
-
-            const minProfit = profitAt(p5);
-            const medProfit = profitAt(p50);
-            const maxProfit = profitAt(p95);
-            const meanProfit = profitAt(mean);
-
-            // Probability of profit > 0
-            const profitableCount = finalPrices.filter(p => profitAt(p) > 0).length;
-            const probProfit = (profitableCount / sims * 100).toFixed(1);
-
-            // Render
-            const cur = getCurrency();
-            document.getElementById('mcResult').innerHTML = `
-                <div class="mc-stats">
-                    <div class="mc-stat">
-                        <div class="mc-stat-label">悲观 (5%)</div>
-                        <div class="mc-stat-value" style="color:#f44336">${formatMoney(minProfit)}</div>
-                    </div>
-                    <div class="mc-stat">
-                        <div class="mc-stat-label">中位 (50%)</div>
-                        <div class="mc-stat-value">${formatMoney(medProfit)}</div>
-                    </div>
-                    <div class="mc-stat">
-                        <div class="mc-stat-label">乐观 (95%)</div>
-                        <div class="mc-stat-value" style="color:#4caf50">${formatMoney(maxProfit)}</div>
-                    </div>
-                </div>
-                <div style="font-size:12px;color:#94A3B8;line-height:1.8;margin-top:10px">
-                    <div>平均股价: <strong style="color:#F1F5F9">${mean.toFixed(3)} ${cur}</strong></div>
-                    <div>预期利润: <strong style="color:${meanProfit >= 0 ? '#4caf50' : '#f44336'}">${meanProfit >= 0 ? '+' : ''}${formatMoney(meanProfit)} ${cur}</strong></div>
-                    <div>盈利概率: <strong style="color:#FBBF24">${probProfit}%</strong></div>
-                    <div style="color:#64748B;margin-top:6px;font-size:11px">基于 ${sims} 次 GBM 模拟，${days} 天后价格分布</div>
-                </div>
-            `;
         }
 
         // Override addRecord / removeRecord / deletePlan to support undo
@@ -3092,26 +2996,6 @@
             <!-- Buttons injected by JS -->
         </div>
         <div class="auth-close" onclick="hideSave()">取消</div>
-    </div>
-</div>
-
-<!-- Monte Carlo Modal -->
-<div class="auth-overlay" id="mcOverlay">
-    <div class="auth-box" style="max-width:480px">
-        <h2>蒙特卡洛价格模拟</h2>
-        <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
-            基于几何布朗运动模型，模拟 1000 次未来价格路径
-        </p>
-        <div class="field">
-            <label>年化波动率 (%)<span style="color:#64748B;font-weight:400;margin-left:6px">港股常见 25-40</span></label>
-            <input type="number" step="1" inputmode="numeric" id="mcVol" value="30" oninput="runMonteCarlo()">
-        </div>
-        <div class="field">
-            <label>模拟天数</label>
-            <input type="number" step="1" inputmode="numeric" id="mcDays" value="90" oninput="runMonteCarlo()">
-        </div>
-        <div id="mcResult" class="mc-result"></div>
-        <div class="auth-close" onclick="hideMonteCarlo()">关闭</div>
     </div>
 </div>
 
