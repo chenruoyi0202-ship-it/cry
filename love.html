@@ -1096,10 +1096,14 @@
             const totalMb = total ? (total / 1024 / 1024).toFixed(1) : null;
             showPhotoBar(label + ' ' + mb + 'MB' + (totalMb ? '/' + totalMb + 'MB (' + pct + '%)' : ''), pct);
         }
-        // Merge chunks into one Uint8Array, then decode
+        // Merge chunks and parse (yields to UI between steps)
+        showPhotoBar('下载完成，处理中...', 95);
+        await new Promise(r => setTimeout(r, 50));
         const merged = new Uint8Array(loaded);
         let offset = 0;
         for (const chunk of chunks) { merged.set(chunk, offset); offset += chunk.length; }
+        showPhotoBar('解析数据...', 97);
+        await new Promise(r => setTimeout(r, 50));
         return JSON.parse(new TextDecoder().decode(merged));
     }
 
@@ -1129,11 +1133,13 @@
         });
 
         if (photosJson) {
-            showPhotoBar('解密照片...', 90);
+            showPhotoBar('解密照片中（可能需 10 秒）...', 98);
+            await new Promise(r => setTimeout(r, 50));
             await loadPhotoStore(pwd, photosJson);
             const count = Object.keys(photoStore).length;
             if (count > 0) {
-                cachePhotos(photosJson);
+                showPhotoBar('保存到本地缓存...', 99);
+                await cachePhotos(photosJson);
                 renderAll();
                 showPhotoBar('已加载 ' + count + ' 张照片', 100);
                 setTimeout(hidePhotoBar, 2000);
