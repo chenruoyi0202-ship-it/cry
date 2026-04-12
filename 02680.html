@@ -957,16 +957,19 @@ async function fetchChartData(period, silent) {
     } catch {}
   }
 
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}?interval=${cfg.interval}&range=${cfg.range}`;
+  // Direct Worker proxy (fastest, most reliable)
+  const workerUrl = `https://stock-quote-proxy.chenruoyi0202.workers.dev/?symbol=${SYMBOL}&interval=${cfg.interval}&range=${cfg.range}`;
+  // Fallback: CORS proxies
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}?interval=${cfg.interval}&range=${cfg.range}`;
   const proxies = [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    () => workerUrl,
+    () => `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
+    () => `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
   ];
 
-  for (const proxy of proxies) {
+  for (const getUrl of proxies) {
     try {
-      const resp = await fetch(proxy(url), { signal: AbortSignal.timeout(5000) });
+      const resp = await fetch(getUrl(), { signal: AbortSignal.timeout(5000) });
       if (!resp.ok) continue;
       const data = await resp.json();
       const result = data.chart.result[0];
