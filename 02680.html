@@ -1117,6 +1117,7 @@ function renderCandlestick(data) {
   extras += `<text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>`;
 
   svg.innerHTML = extras + candles;
+}
 
 function renderTimeAxis(seriesSlice) {
   const axis = document.getElementById('chartTimeAxis');
