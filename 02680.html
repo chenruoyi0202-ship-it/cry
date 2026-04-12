@@ -917,6 +917,11 @@ async function fetchQuote() {
     }
   } catch {}
 
+  // If no intraday data, auto-switch to daily K
+  if (!quoteCache['1d'] && quoteCache['daily']) {
+    switchChartPeriod('daily');
+  }
+
   // 2. Refresh from Yahoo Finance in background (non-blocking)
   setTimeout(() => refreshFromYahoo(usedCache), 100);
 }
@@ -987,7 +992,11 @@ async function fetchChartData(period, silent) {
     } catch { continue; }
   }
 
-  if (!silent && period === chartPeriod) {
+  // If intraday failed but we have daily, auto-switch
+  if (period === '1d' && !quoteCache['1d'] && quoteCache['daily']) {
+    switchChartPeriod('daily');
+    document.getElementById('priceStatus').textContent = '分时数据暂不可用，已切换到日K';
+  } else if (!silent && period === chartPeriod) {
     document.getElementById('priceStatus').innerHTML = '<a onclick="fetchQuote()">点击重试</a>';
   }
   return false;
