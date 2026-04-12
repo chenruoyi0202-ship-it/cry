@@ -1015,13 +1015,17 @@ function renderLineChart(data) {
   const refPrice = prevClose || prices[0];
   const refY = PAD + (1 - (refPrice - minP) / range) * (CHART_H - 2 * PAD);
 
-  const coords = series.map((p, i) => {
+  // Step-line: horizontal then vertical (like real tick data)
+  const stepPoints = [];
+  series.forEach((p, i) => {
     const x = PAD + (i / (series.length - 1)) * (W - 2 * PAD);
     const y = PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
+    if (i > 0) stepPoints.push(`${x.toFixed(1)},${stepPoints.length > 0 ? stepPoints[stepPoints.length-1].split(',')[1] : y.toFixed(1)}`);
+    stepPoints.push(`${x.toFixed(1)},${y.toFixed(1)}`);
   });
-  const allPoints = coords.join(' ');
-  const fillPoints = allPoints + ` ${(PAD + (W - 2 * PAD)).toFixed(1)},${CHART_H} ${PAD},${CHART_H}`;
+  const allPoints = stepPoints.join(' ');
+  const lastX = (PAD + (W - 2 * PAD)).toFixed(1);
+  const fillPoints = allPoints + ` ${lastX},${CHART_H} ${PAD},${CHART_H}`;
 
   let extras = '';
   if (prevClose) extras += `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.4"/>`;
@@ -1085,7 +1089,10 @@ function renderCandlestick(data) {
     const c = p.c;
     const h = p.h != null ? p.h : Math.max(o, c);
     const l = p.l != null ? p.l : Math.min(o, c);
-    const isUp = c >= o;
+    // Compare close vs previous day's close for color
+    const prevIdx = candleViewStart + i - 1;
+    const prevClose = prevIdx >= 0 && series[prevIdx] ? series[prevIdx].c : o;
+    const isUp = c >= prevClose;
     const color = isUp ? '#ef4444' : '#22c55e';
     const cx = PAD + gap * i + gap / 2;
     const bodyTop = toY(Math.max(o, c));
@@ -1094,15 +1101,8 @@ function renderCandlestick(data) {
     const wickTop = toY(h);
     const wickBot = toY(l);
 
-    // Wick (shadow line)
     candles += `<line x1="${cx.toFixed(1)}" y1="${wickTop.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${wickBot.toFixed(1)}" stroke="${color}" stroke-width="1"/>`;
-    // Body
-    if (isUp) {
-      // Hollow or filled red candle (filled for simplicity)
-      candles += `<rect x="${(cx - candleW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}" rx="0.5"/>`;
-    } else {
-      candles += `<rect x="${(cx - candleW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}" rx="0.5"/>`;
-    }
+    candles += `<rect x="${(cx - candleW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}" rx="0.5"/>`;
   }
 
   // Cost line
@@ -1145,22 +1145,25 @@ function setupCrosshair() {
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const ratio = x / rect.width;
 
-    // For candlestick, map to visible range
-    let idx, seriesRef;
+    // For candlestick, snap to nearest candle center
+    let idx, seriesRef, snapX;
     if (chartPeriod === 'daily') {
       const visCount = Math.min(candleViewCount, currentChartSeries.length - candleViewStart);
-      const visIdx = Math.round(ratio * (visCount - 1));
+      const gap = rect.width / visCount;
+      const visIdx = Math.min(visCount - 1, Math.max(0, Math.round((x - gap / 2) / gap)));
       idx = candleViewStart + visIdx;
       seriesRef = currentChartSeries;
+      snapX = gap * visIdx + gap / 2; // snap to candle center
     } else {
       idx = Math.round(ratio * (currentChartSeries.length - 1));
       seriesRef = currentChartSeries;
+      snapX = x;
     }
     const p = seriesRef[idx];
     if (!p) return;
 
     crosshair.style.display = 'block';
-    crosshair.style.left = x + 'px';
+    crosshair.style.left = snapX + 'px';
     crosshair.style.height = svg.clientHeight + 'px';
 
     const fmt = chartPeriod === '1d'
