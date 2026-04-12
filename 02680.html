@@ -892,19 +892,21 @@ async function fetchQuote() {
     const resp = await fetch(QUOTE_CACHE_PATH + '?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
     if (resp.ok) {
       const cached = await resp.json();
+      if (cached.daily && cached.daily.series && cached.daily.series.length > 0) {
+        cached.daily.fetchedAt = cached.fetchedAt;
+        cached.daily.period = 'daily';
+        quoteCache['daily'] = cached.daily;
+        // Use daily data to show price header if no intraday
+        renderPriceHeader(cached.daily);
+        if (chartPeriod === 'daily') renderChart(cached.daily);
+        usedCache = true;
+      }
       if (cached.intraday && cached.intraday.series && cached.intraday.series.length > 0) {
         cached.intraday.fetchedAt = cached.fetchedAt;
         cached.intraday.period = '1d';
         quoteCache['1d'] = cached.intraday;
         renderPriceHeader(cached.intraday);
         if (chartPeriod === '1d') renderChart(cached.intraday);
-        usedCache = true;
-      }
-      if (cached.daily && cached.daily.series && cached.daily.series.length > 0) {
-        cached.daily.fetchedAt = cached.fetchedAt;
-        cached.daily.period = 'daily';
-        quoteCache['daily'] = cached.daily;
-        if (chartPeriod === 'daily') renderChart(cached.daily);
         usedCache = true;
       }
       if (usedCache) {
@@ -915,19 +917,18 @@ async function fetchQuote() {
     }
   } catch {}
 
-  // 2. Refresh from Yahoo Finance in background
-  refreshFromYahoo(usedCache);
+  // 2. Refresh from Yahoo Finance in background (non-blocking)
+  setTimeout(() => refreshFromYahoo(usedCache), 100);
 }
 
 async function refreshFromYahoo(silent) {
   let updated = false;
-  for (const period of ['1d', 'daily']) {
-    try {
-      await fetchChartData(period, silent);
-      updated = true;
-    } catch {}
-  }
-  // 3. Push updated cache to GitHub if sync configured
+  // Run both in parallel, don't block each other
+  const results = await Promise.allSettled([
+    fetchChartData('1d', silent),
+    fetchChartData('daily', silent)
+  ]);
+  updated = results.some(r => r.status === 'fulfilled' && r.value === true);
   if (updated && syncConfig) {
     pushQuoteCache().catch(() => {});
   }
@@ -960,7 +961,7 @@ async function fetchChartData(period, silent) {
 
   for (const proxy of proxies) {
     try {
-      const resp = await fetch(proxy(url), { signal: AbortSignal.timeout(8000) });
+      const resp = await fetch(proxy(url), { signal: AbortSignal.timeout(5000) });
       if (!resp.ok) continue;
       const data = await resp.json();
       const result = data.chart.result[0];
@@ -982,13 +983,14 @@ async function fetchChartData(period, silent) {
       quoteCache[period] = quoteData;
       if (period === chartPeriod) renderChart(quoteData);
       if (period === '1d') renderPriceHeader(quoteData);
-      return;
+      return true;
     } catch { continue; }
   }
 
   if (!silent && period === chartPeriod) {
     document.getElementById('priceStatus').innerHTML = '<a onclick="fetchQuote()">点击重试</a>';
   }
+  return false;
 }
 
 async function pushQuoteCache() {
