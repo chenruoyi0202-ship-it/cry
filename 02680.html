@@ -756,12 +756,14 @@ function renderAnalyses() {
     const legacyBadge = a.isLegacy ? ' <span class="badge badge-legacy">历史</span>' : '';
     const dayStr = getDayOfWeek(a.date);
     const lineCount = (a.body || '').split('\n').length;
-    const expandBtn = lineCount > 10 ? `<button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>` : '';
+    const needExpand = lineCount > 10 && !a.isLegacy;
+    const expandBtn = needExpand ? `<button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>` : '';
+    const previewClass = a.isLegacy ? 'record-preview expanded' : 'record-preview';
     return `<div class="record">
       <div class="record-header">
         <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
       </div>
-      <div class="record-preview">${highlight(a.body)}</div>
+      <div class="${previewClass}">${highlight(a.body)}</div>
       <div class="record-actions">
         ${expandBtn}
         <button class="btn btn-secondary" onclick="editAnalysis('${a.id}')">编辑</button>
