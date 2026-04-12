@@ -73,6 +73,7 @@ body{
 .chart-tooltip{position:absolute;top:0;left:0;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:5;white-space:nowrap;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
 .chart-tooltip .tt-time{color:var(--text-muted);margin-bottom:2px}
 .chart-tooltip .tt-price{font-weight:600;font-size:13px}
+.chart-tooltip .tt-change{font-size:11px;margin-top:1px}
 .chart-crosshair{position:absolute;top:0;width:1px;background:var(--text-muted);opacity:0.4;pointer-events:none;display:none}
 .price-status{font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px}
 .price-status a{color:var(--gold);cursor:pointer;text-decoration:underline}
@@ -210,7 +211,7 @@ body{
   <svg id="priceChart" viewBox="0 0 700 140" preserveAspectRatio="xMidYMid meet" style="height:140px"></svg>
   <div class="chart-time-axis" id="chartTimeAxis"></div>
   <div class="chart-crosshair" id="chartCrosshair"></div>
-  <div class="chart-tooltip" id="chartTooltip"><div class="tt-time"></div><div class="tt-price"></div></div>
+  <div class="chart-tooltip" id="chartTooltip"><div class="tt-time"></div><div class="tt-price"></div><div class="tt-change"></div></div>
 </div>
 <div class="price-status" id="priceStatus"></div>
 
@@ -812,10 +813,11 @@ function switchChartPeriod(period) {
     if ((period === '1d' && el.textContent === '分时') || (period === 'daily' && el.textContent === '日K')) el.classList.add('active');
   });
   const cached = quoteCache[period];
-  if (cached && Date.now() - cached.fetchedAt < 5 * 60 * 1000) {
+  if (cached && cached.series && cached.series.length > 1) {
     renderChart(cached);
   } else {
-    fetchChartData(period);
+    document.getElementById('priceStatus').textContent = '加载中...';
+    fetchChartData(period, false);
   }
 }
 
@@ -987,37 +989,37 @@ function renderChart(data) {
   currentChartSeries = series;
   const svg = document.getElementById('priceChart');
   const W = 700, H = 140, PAD = 6;
-  const CHART_H = H - 20; // leave space for price labels
+  const CHART_H = H - 20;
   const prices = series.map(p => p.c);
   const minP = Math.min(...prices), maxP = Math.max(...prices);
   const range = maxP - minP || 1;
-
-  // Determine color: red up, green down (Chinese convention)
-  const lastPrice = prices[prices.length - 1];
   const refPrice = prevClose || prices[0];
-  const isUp = lastPrice >= refPrice;
-  const color = isUp ? '#ef4444' : '#22c55e';
 
-  // Prev close reference line for intraday
+  // Compute x,y for each point
+  const coords = series.map((p, i) => ({
+    x: PAD + (i / (series.length - 1)) * (W - 2 * PAD),
+    y: PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD),
+    c: p.c
+  }));
+
+  // Reference line Y (prevClose)
+  const refY = PAD + (1 - (refPrice - minP) / range) * (CHART_H - 2 * PAD);
+
+  // Build red/green segments using clipPath to split at refPrice line
+  const allPoints = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+  const fillPoints = allPoints + ` ${coords[coords.length-1].x.toFixed(1)},${CHART_H} ${coords[0].x.toFixed(1)},${CHART_H}`;
+
+  // Prev close reference line
   let refLineHtml = '';
-  if (chartPeriod === '1d' && prevClose) {
-    const refY = PAD + (1 - (prevClose - minP) / range) * (CHART_H - 2 * PAD);
+  if (prevClose) {
     refLineHtml = `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.4"/>`;
   }
 
-  // Price labels on right
-  const highY = PAD;
-  const lowY = CHART_H - PAD;
+  // Price labels
   const priceLabels = `
-    <text x="${W-2}" y="${highY+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>
-    <text x="${W-2}" y="${lowY-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>
+    <text x="${W-2}" y="${PAD+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>
+    <text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>
   `;
-
-  const points = series.map((p, i) => {
-    const x = PAD + (i / (series.length - 1)) * (W - 2 * PAD);
-    const y = PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
 
   // Cost line
   let costLineHtml = '';
@@ -1029,16 +1031,24 @@ function renderChart(data) {
 
   svg.innerHTML = `
     <defs>
-      <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${color}" stop-opacity="0.15"/>
-        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      <clipPath id="clipUp"><rect x="0" y="0" width="${W}" height="${refY.toFixed(1)}"/></clipPath>
+      <clipPath id="clipDown"><rect x="0" y="${refY.toFixed(1)}" width="${W}" height="${H}"/></clipPath>
+      <linearGradient id="gradUp" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ef4444" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="gradDown" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#22c55e" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#22c55e" stop-opacity="0.12"/>
       </linearGradient>
     </defs>
     ${refLineHtml}
     ${costLineHtml}
     ${priceLabels}
-    <polygon points="${points.join(' ')} ${W-PAD},${CHART_H} ${PAD},${CHART_H}" fill="url(#sparkGrad)" />
-    <polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" />
+    <polygon points="${fillPoints}" fill="url(#gradUp)" clip-path="url(#clipUp)" />
+    <polygon points="${fillPoints}" fill="url(#gradDown)" clip-path="url(#clipDown)" />
+    <polyline points="${allPoints}" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linejoin="round" clip-path="url(#clipUp)" />
+    <polyline points="${allPoints}" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linejoin="round" clip-path="url(#clipDown)" />
   `;
 
   // Time axis
@@ -1085,11 +1095,28 @@ function setupCrosshair() {
     const fmt = chartPeriod === '1d'
       ? new Date(p.t).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
       : new Date(p.t).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
+
+    // Calculate change vs reference (prevClose for intraday, previous point for daily)
+    let ref;
+    if (chartPeriod === '1d') {
+      ref = quoteCache['1d']?.prevClose || currentChartSeries[0].c;
+    } else {
+      ref = idx > 0 ? currentChartSeries[idx - 1].c : p.c;
+    }
+    const change = p.c - ref;
+    const pct = ref ? (change / ref * 100) : 0;
+    const sign = change >= 0 ? '+' : '';
+    const isUp = change >= 0;
+
     tooltip.querySelector('.tt-time').textContent = fmt;
-    tooltip.querySelector('.tt-price').textContent = p.c.toFixed(3);
-    tooltip.querySelector('.tt-price').style.color = (quoteCache['1d']?.prevClose && p.c >= quoteCache['1d'].prevClose) ? 'var(--red)' : 'var(--green)';
+    const priceEl = tooltip.querySelector('.tt-price');
+    priceEl.textContent = p.c.toFixed(3);
+    priceEl.style.color = isUp ? 'var(--red)' : 'var(--green)';
+    const changeEl = tooltip.querySelector('.tt-change');
+    changeEl.textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
+    changeEl.style.color = isUp ? 'var(--red)' : 'var(--green)';
+
     tooltip.style.display = 'block';
-    // Position tooltip
     const tipW = tooltip.offsetWidth;
     tooltip.style.left = (x + tipW + 20 > rect.width ? x - tipW - 10 : x + 10) + 'px';
     tooltip.style.top = '4px';
