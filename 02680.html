@@ -1840,13 +1840,17 @@ const OWNER_KEY = 'stock_02680_owner';
 const GUEST_PASS = 'zuge2680';
 let isOwner = false;
 
+const GUEST_UNLOCKED_KEY = 'stock_02680_guest_ok';
+
 function checkAccess() {
-  // Owner: has sync config or owner flag
   if (localStorage.getItem(OWNER_KEY) === '1' || localStorage.getItem(SYNC_CONFIG_KEY)) {
     isOwner = true;
     return;
   }
-  // Guest: needs password
+  if (localStorage.getItem(GUEST_UNLOCKED_KEY) === '1') {
+    document.body.classList.add('guest-mode');
+    return;
+  }
   document.getElementById('lockOverlay').style.display = '';
   document.querySelector('.page').style.display = 'none';
 }
@@ -1854,6 +1858,7 @@ function checkAccess() {
 function unlockPage() {
   const pw = document.getElementById('lockPassword').value.trim();
   if (pw === GUEST_PASS) {
+    localStorage.setItem(GUEST_UNLOCKED_KEY, '1');
     document.getElementById('lockOverlay').style.display = 'none';
     document.querySelector('.page').style.display = '';
     document.body.classList.add('guest-mode');
