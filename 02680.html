@@ -900,7 +900,6 @@ async function fetchQuote() {
         cached.daily.fetchedAt = cached.fetchedAt;
         cached.daily.period = 'daily';
         quoteCache['daily'] = cached.daily;
-        // Use daily data to show price header if no intraday
         renderPriceHeader(cached.daily);
         if (chartPeriod === 'daily') renderChart(cached.daily);
         usedCache = true;
@@ -921,13 +920,78 @@ async function fetchQuote() {
     }
   } catch {}
 
-  // If no intraday data, auto-switch to daily K
   if (!quoteCache['1d'] && quoteCache['daily']) {
     switchChartPeriod('daily');
   }
 
-  // 2. Refresh from Yahoo Finance in background (non-blocking)
-  setTimeout(() => refreshFromYahoo(usedCache), 100);
+  // 2. Try Sina Finance for real-time price (JSONP, no CORS issues)
+  setTimeout(() => fetchSinaQuote(), 50);
+
+  // 3. Refresh chart data from Yahoo in background
+  setTimeout(() => refreshFromYahoo(usedCache), 200);
+}
+
+// ==================== Sina Finance (JSONP, bypasses CORS) ====================
+function fetchSinaQuote() {
+  return new Promise((resolve) => {
+    const callbackName = '_sinaQuoteCb_' + Date.now();
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 5000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    // Sina returns: var hq_str_hk02680="...";
+    // We use a different approach: inject script and read the global variable
+    window[callbackName] = true; // placeholder
+    script.onerror = () => { cleanup(); resolve(false); };
+    script.src = `https://hq.sinajs.cn/list=hk02680&_=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const raw = window['hq_str_hk02680'];
+        if (!raw) { cleanup(); resolve(false); return; }
+        // Sina HK format: name_cn,open,prevClose,high,low,price,change,changePercent,...,date,time
+        const parts = raw.split(',');
+        if (parts.length < 10) { cleanup(); resolve(false); return; }
+        const price = parseFloat(parts[6]) || parseFloat(parts[3]);
+        const prevClose = parseFloat(parts[3]);
+        const open = parseFloat(parts[2]);
+        const high = parseFloat(parts[4]);
+        const low = parseFloat(parts[5]);
+        const dateStr = parts[17] || '';
+        const timeStr = parts[18] || '';
+
+        if (price > 0) {
+          // Update price header
+          const priceEl = document.getElementById('priceNow');
+          priceEl.textContent = price.toFixed(3);
+          const change = price - prevClose;
+          const pct = prevClose ? (change / prevClose * 100) : 0;
+          const sign = change >= 0 ? '+' : '';
+          const cls = change >= 0 ? 'up' : 'down';
+          priceEl.className = `price-now ${cls}`;
+          document.getElementById('priceChange').textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
+          document.getElementById('priceChange').className = `price-change ${cls}`;
+          document.getElementById('statHigh').textContent = high.toFixed(3);
+          document.getElementById('statLow').textContent = low.toFixed(3);
+          document.getElementById('statOpen').textContent = open.toFixed(3);
+          document.getElementById('statPrevClose').textContent = prevClose.toFixed(3);
+          if (prevClose) {
+            document.getElementById('statHigh').className = 'stat-value ' + (high >= prevClose ? 'up' : 'down');
+            document.getElementById('statLow').className = 'stat-value ' + (low >= prevClose ? 'up' : 'down');
+            document.getElementById('statOpen').className = 'stat-value ' + (open >= prevClose ? 'up' : 'down');
+          }
+          document.getElementById('stockStatus').textContent = `${dateStr} ${timeStr}`;
+        }
+        cleanup();
+        resolve(true);
+      } catch { cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
+  });
 }
 
 async function refreshFromYahoo(silent) {
