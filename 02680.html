@@ -47,16 +47,19 @@ body{
 .price-section{padding:8px 0 12px}
 .price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .price-now{font-size:36px;font-weight:700;font-variant-numeric:tabular-nums}
-.price-now.up{color:var(--green)}.price-now.down{color:var(--red)}.price-now.flat{color:var(--text)}
+.price-now.up{color:var(--red)}.price-now.down{color:var(--green)}.price-now.flat{color:var(--text)}
 .price-change{font-size:14px;font-weight:500}
-.price-change.up{color:var(--green)}.price-change.down{color:var(--red)}.price-change.flat{color:var(--gray)}
+.price-change.up{color:var(--red)}.price-change.down{color:var(--green)}.price-change.flat{color:var(--gray)}
 
-/* Stats grid */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:10px 0;margin:8px 0 12px}
-.stat-item{text-align:center;padding:4px 0}
-.stat-label{font-size:10px;color:var(--text-muted);letter-spacing:.3px}
-.stat-value{font-size:13px;font-weight:600;color:var(--text);margin-top:2px;font-variant-numeric:tabular-nums}
-.stat-value.up{color:var(--green)}.stat-value.down{color:var(--red)}
+/* Stats row */
+.stats-row{display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 0;margin:4px 0 8px;font-size:12px;align-items:center}
+.stat-inline{display:inline-flex;align-items:center;gap:3px}
+.stat-label{color:var(--text-muted);font-size:11px}
+.stat-value{font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.stat-value.up{color:var(--red)}.stat-value.down{color:var(--green)}
+.cost-edit-btn{cursor:pointer;font-size:12px;color:var(--text-muted);opacity:.6;transition:opacity .2s}
+.cost-edit-btn:hover{opacity:1}
+.cost-line{stroke:var(--orange);stroke-width:1;stroke-dasharray:6,3;opacity:.7}
 
 /* Chart tabs */
 .chart-tabs{display:flex;gap:0;margin-bottom:4px}
@@ -64,8 +67,13 @@ body{
 .chart-tab.active{background:rgba(202,138,4,0.15);color:var(--gold-light)}
 
 /* Chart */
-.price-chart-wrap{width:100%;height:120px;margin-bottom:8px;position:relative}
-.price-chart-wrap svg{width:100%;height:100%}
+.price-chart-wrap{width:100%;margin-bottom:8px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
+.price-chart-wrap svg{width:100%;display:block}
+.chart-time-axis{display:flex;justify-content:space-between;padding:2px 4px 0;font-size:10px;color:var(--text-muted)}
+.chart-tooltip{position:absolute;top:0;left:0;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:5;white-space:nowrap;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.chart-tooltip .tt-time{color:var(--text-muted);margin-bottom:2px}
+.chart-tooltip .tt-price{font-weight:600;font-size:13px}
+.chart-crosshair{position:absolute;top:0;width:1px;background:var(--text-muted);opacity:0.4;pointer-events:none;display:none}
 .price-status{font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px}
 .price-status a{color:var(--gold);cursor:pointer;text-decoration:underline}
 
@@ -150,7 +158,6 @@ body{
 /* Responsive */
 @media(max-width:480px){
   .form-row.two,.form-row.three{grid-template-columns:1fr}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media(min-width:768px){
   .page{padding:32px 24px 80px}
@@ -185,12 +192,13 @@ body{
   </div>
 </div>
 
-<!-- Stats Grid -->
-<div class="stats-grid" id="statsGrid">
-  <div class="stat-item"><div class="stat-label">最高</div><div class="stat-value" id="statHigh">--</div></div>
-  <div class="stat-item"><div class="stat-label">最低</div><div class="stat-value" id="statLow">--</div></div>
-  <div class="stat-item"><div class="stat-label">今开</div><div class="stat-value" id="statOpen">--</div></div>
-  <div class="stat-item"><div class="stat-label">昨收</div><div class="stat-value" id="statPrevClose">--</div></div>
+<!-- Stats Row -->
+<div class="stats-row" id="statsGrid">
+  <span class="stat-inline"><span class="stat-label">高</span> <span class="stat-value" id="statHigh">--</span></span>
+  <span class="stat-inline"><span class="stat-label">低</span> <span class="stat-value" id="statLow">--</span></span>
+  <span class="stat-inline"><span class="stat-label">开</span> <span class="stat-value" id="statOpen">--</span></span>
+  <span class="stat-inline"><span class="stat-label">昨收</span> <span class="stat-value" id="statPrevClose">--</span></span>
+  <span class="stat-inline"><span class="stat-label">成本</span> <span class="stat-value" id="statCost">--</span> <span class="cost-edit-btn" onclick="editCostPrice()" title="设置成本价">&#9998;</span></span>
 </div>
 
 <!-- Chart -->
@@ -199,7 +207,10 @@ body{
   <div class="chart-tab" onclick="switchChartPeriod('daily')">日K</div>
 </div>
 <div class="price-chart-wrap" id="priceChartWrap">
-  <svg id="priceChart" viewBox="0 0 700 120" preserveAspectRatio="none"></svg>
+  <svg id="priceChart" viewBox="0 0 700 140" preserveAspectRatio="xMidYMid meet" style="height:140px"></svg>
+  <div class="chart-time-axis" id="chartTimeAxis"></div>
+  <div class="chart-crosshair" id="chartCrosshair"></div>
+  <div class="chart-tooltip" id="chartTooltip"><div class="tt-time"></div><div class="tt-price"></div></div>
 </div>
 <div class="price-status" id="priceStatus"></div>
 
@@ -271,6 +282,7 @@ const ANALYSES_KEY = 'stock_02680_analyses_v1';
 const EVENTS_KEY = 'stock_02680_events_v1';
 const SEEDED_KEY = 'stock_02680_seeded_v1';
 const QUOTE_CACHE_KEY = 'stock_02680_quote_cache';
+const QUOTE_CACHE_PATH = 'data/stock_02680_quote.json';
 const SYMBOL = '2680.HK';
 
 const RATING_LABELS = {strong_buy:'强烈看多',buy:'看多',hold:'中性',sell:'看空',strong_sell:'强烈看空'};
@@ -808,18 +820,62 @@ function switchChartPeriod(period) {
 }
 
 async function fetchQuote() {
-  // Fetch intraday first (default view), then daily in background
-  await fetchChartData('1d');
-  fetchChartData('daily');
+  // 1. Try GitHub cached file first (fast, same-origin)
+  let usedCache = false;
+  try {
+    const resp = await fetch(QUOTE_CACHE_PATH + '?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
+    if (resp.ok) {
+      const cached = await resp.json();
+      if (cached.intraday && cached.intraday.series && cached.intraday.series.length > 0) {
+        cached.intraday.fetchedAt = cached.fetchedAt;
+        cached.intraday.period = '1d';
+        quoteCache['1d'] = cached.intraday;
+        renderPriceHeader(cached.intraday);
+        if (chartPeriod === '1d') renderChart(cached.intraday);
+        usedCache = true;
+      }
+      if (cached.daily && cached.daily.series && cached.daily.series.length > 0) {
+        cached.daily.fetchedAt = cached.fetchedAt;
+        cached.daily.period = 'daily';
+        quoteCache['daily'] = cached.daily;
+        if (chartPeriod === 'daily') renderChart(cached.daily);
+        usedCache = true;
+      }
+      if (usedCache) {
+        const age = Date.now() - cached.fetchedAt;
+        const mins = Math.round(age / 60000);
+        document.getElementById('stockStatus').textContent += (mins < 60 ? ` · 缓存 ${mins}分钟前` : ` · 缓存 ${Math.round(mins/60)}小时前`);
+      }
+    }
+  } catch {}
+
+  // 2. Refresh from Yahoo Finance in background
+  refreshFromYahoo(usedCache);
 }
 
-async function fetchChartData(period) {
+async function refreshFromYahoo(silent) {
+  let updated = false;
+  for (const period of ['1d', 'daily']) {
+    try {
+      await fetchChartData(period, silent);
+      updated = true;
+    } catch {}
+  }
+  // 3. Push updated cache to GitHub if sync configured
+  if (updated && syncConfig) {
+    pushQuoteCache().catch(() => {});
+  }
+}
+
+async function fetchChartData(period, silent) {
   const cfg = CHART_CONFIGS[period];
   const cacheKey = QUOTE_CACHE_KEY + '_' + period;
-  const cached = sessionStorage.getItem(cacheKey);
-  if (cached) {
+
+  // Check sessionStorage (within same session, skip re-fetch within 5 min)
+  const sessionCached = sessionStorage.getItem(cacheKey);
+  if (sessionCached) {
     try {
-      const c = JSON.parse(cached);
+      const c = JSON.parse(sessionCached);
       if (Date.now() - c.fetchedAt < 5 * 60 * 1000) {
         quoteCache[period] = c;
         if (period === chartPeriod) renderChart(c);
@@ -836,38 +892,53 @@ async function fetchChartData(period) {
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
   ];
 
-  for (let attempt = 0; attempt < 2; attempt++) {
-    for (const proxy of proxies) {
-      try {
-        const resp = await fetch(proxy(url), { signal: AbortSignal.timeout(8000) });
-        if (!resp.ok) continue;
-        const data = await resp.json();
-        const result = data.chart.result[0];
-        const meta = result.meta;
-        const timestamps = result.timestamp || [];
-        const quote = result.indicators.quote[0];
-        const closes = (quote.close || []).map(v => v === null ? undefined : v);
-        const highs = (quote.high || []).map(v => v === null ? undefined : v);
-        const lows = (quote.low || []).map(v => v === null ? undefined : v);
-        const opens = (quote.open || []).map(v => v === null ? undefined : v);
-        const quoteData = {
-          fetchedAt: Date.now(),
-          period,
-          price: meta.regularMarketPrice,
-          prevClose: meta.chartPreviousClose || meta.previousClose,
-          series: timestamps.map((t, i) => ({ t: t * 1000, c: closes[i], h: highs[i], l: lows[i], o: opens[i] })).filter(p => p.c !== undefined)
-        };
-        sessionStorage.setItem(cacheKey, JSON.stringify(quoteData));
-        quoteCache[period] = quoteData;
-        if (period === chartPeriod) renderChart(quoteData);
-        if (period === '1d') renderPriceHeader(quoteData);
-        return;
-      } catch { continue; }
-    }
+  for (const proxy of proxies) {
+    try {
+      const resp = await fetch(proxy(url), { signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const result = data.chart.result[0];
+      const meta = result.meta;
+      const timestamps = result.timestamp || [];
+      const quote = result.indicators.quote[0];
+      const closes = (quote.close || []).map(v => v === null ? undefined : v);
+      const highs = (quote.high || []).map(v => v === null ? undefined : v);
+      const lows = (quote.low || []).map(v => v === null ? undefined : v);
+      const opens = (quote.open || []).map(v => v === null ? undefined : v);
+      const quoteData = {
+        fetchedAt: Date.now(),
+        period,
+        price: meta.regularMarketPrice,
+        prevClose: meta.chartPreviousClose || meta.previousClose,
+        series: timestamps.map((t, i) => ({ t: t * 1000, c: closes[i], h: highs[i], l: lows[i], o: opens[i] })).filter(p => p.c !== undefined)
+      };
+      sessionStorage.setItem(cacheKey, JSON.stringify(quoteData));
+      quoteCache[period] = quoteData;
+      if (period === chartPeriod) renderChart(quoteData);
+      if (period === '1d') renderPriceHeader(quoteData);
+      return;
+    } catch { continue; }
   }
 
-  if (period === chartPeriod) {
+  if (!silent && period === chartPeriod) {
     document.getElementById('priceStatus').innerHTML = '<a onclick="fetchQuote()">点击重试</a>';
+  }
+}
+
+async function pushQuoteCache() {
+  if (!syncConfig || !quoteCache['1d']) return;
+  try {
+    const branch = await getDefaultBranch();
+    const cacheData = JSON.stringify({
+      fetchedAt: Date.now(),
+      intraday: quoteCache['1d'] || null,
+      daily: quoteCache['daily'] || null
+    });
+    const file = await ghGet(syncConfig.token, syncConfig.repo, QUOTE_CACHE_PATH, branch + '&t=' + Date.now());
+    const sha = file ? file.sha : null;
+    await ghPut(syncConfig.token, syncConfig.repo, QUOTE_CACHE_PATH, cacheData, sha, branch);
+  } catch (e) {
+    console.warn('Quote cache push failed:', e.message);
   }
 }
 
@@ -908,40 +979,134 @@ function renderPriceHeader(data) {
   document.getElementById('priceStatus').textContent = '';
 }
 
+let currentChartSeries = null;
+
 function renderChart(data) {
   const { series, prevClose } = data;
   if (!series || series.length < 2) return;
+  currentChartSeries = series;
   const svg = document.getElementById('priceChart');
-  const W = 700, H = 120, PAD = 4;
+  const W = 700, H = 140, PAD = 6;
+  const CHART_H = H - 20; // leave space for price labels
   const prices = series.map(p => p.c);
   const minP = Math.min(...prices), maxP = Math.max(...prices);
   const range = maxP - minP || 1;
 
+  // Determine color: red up, green down (Chinese convention)
+  const lastPrice = prices[prices.length - 1];
+  const refPrice = prevClose || prices[0];
+  const isUp = lastPrice >= refPrice;
+  const color = isUp ? '#ef4444' : '#22c55e';
+
   // Prev close reference line for intraday
   let refLineHtml = '';
   if (chartPeriod === '1d' && prevClose) {
-    const refY = PAD + (1 - (prevClose - minP) / range) * (H - 2 * PAD);
-    refLineHtml = `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.5"/>`;
+    const refY = PAD + (1 - (prevClose - minP) / range) * (CHART_H - 2 * PAD);
+    refLineHtml = `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.4"/>`;
   }
+
+  // Price labels on right
+  const highY = PAD;
+  const lowY = CHART_H - PAD;
+  const priceLabels = `
+    <text x="${W-2}" y="${highY+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>
+    <text x="${W-2}" y="${lowY-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>
+  `;
 
   const points = series.map((p, i) => {
     const x = PAD + (i / (series.length - 1)) * (W - 2 * PAD);
-    const y = PAD + (1 - (p.c - minP) / range) * (H - 2 * PAD);
+    const y = PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD);
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
 
-  const color = chartPeriod === '1d' ? '#3b82f6' : '#FBBF24';
+  // Cost line
+  let costLineHtml = '';
+  if (costPrice && costPrice >= minP && costPrice <= maxP) {
+    const costY = PAD + (1 - (costPrice - minP) / range) * (CHART_H - 2 * PAD);
+    costLineHtml = `<line x1="${PAD}" y1="${costY.toFixed(1)}" x2="${W-PAD}" y2="${costY.toFixed(1)}" class="cost-line"/>
+      <text x="${PAD+2}" y="${costY.toFixed(1)-3}" font-size="9" fill="var(--orange)" opacity="0.8">成本 ${costPrice.toFixed(3)}</text>`;
+  }
+
   svg.innerHTML = `
     <defs>
       <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.15"/>
         <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
       </linearGradient>
     </defs>
     ${refLineHtml}
-    <polygon points="${points.join(' ')} ${W-PAD},${H} ${PAD},${H}" fill="url(#sparkGrad)" />
+    ${costLineHtml}
+    ${priceLabels}
+    <polygon points="${points.join(' ')} ${W-PAD},${CHART_H} ${PAD},${CHART_H}" fill="url(#sparkGrad)" />
     <polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" />
   `;
+
+  // Time axis
+  renderTimeAxis(series);
+
+  // Setup touch/mouse crosshair
+  setupCrosshair();
+}
+
+function renderTimeAxis(series) {
+  const axis = document.getElementById('chartTimeAxis');
+  if (!series || series.length < 2) { axis.innerHTML = ''; return; }
+  const first = series[0].t, last = series[series.length - 1].t;
+  const fmt = chartPeriod === '1d'
+    ? t => new Date(t).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
+    : t => new Date(t).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'});
+  // Show 5 evenly spaced labels
+  const labels = [0, 0.25, 0.5, 0.75, 1].map(f => {
+    const idx = Math.round(f * (series.length - 1));
+    return fmt(series[idx].t);
+  });
+  axis.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+}
+
+function setupCrosshair() {
+  const wrap = document.getElementById('priceChartWrap');
+  const crosshair = document.getElementById('chartCrosshair');
+  const tooltip = document.getElementById('chartTooltip');
+  const svg = document.getElementById('priceChart');
+
+  function showAt(clientX) {
+    if (!currentChartSeries || currentChartSeries.length < 2) return;
+    const rect = svg.getBoundingClientRect();
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const ratio = x / rect.width;
+    const idx = Math.round(ratio * (currentChartSeries.length - 1));
+    const p = currentChartSeries[idx];
+    if (!p) return;
+
+    crosshair.style.display = 'block';
+    crosshair.style.left = x + 'px';
+    crosshair.style.height = svg.clientHeight + 'px';
+
+    const fmt = chartPeriod === '1d'
+      ? new Date(p.t).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
+      : new Date(p.t).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
+    tooltip.querySelector('.tt-time').textContent = fmt;
+    tooltip.querySelector('.tt-price').textContent = p.c.toFixed(3);
+    tooltip.querySelector('.tt-price').style.color = (quoteCache['1d']?.prevClose && p.c >= quoteCache['1d'].prevClose) ? 'var(--red)' : 'var(--green)';
+    tooltip.style.display = 'block';
+    // Position tooltip
+    const tipW = tooltip.offsetWidth;
+    tooltip.style.left = (x + tipW + 20 > rect.width ? x - tipW - 10 : x + 10) + 'px';
+    tooltip.style.top = '4px';
+  }
+
+  function hide() {
+    crosshair.style.display = 'none';
+    tooltip.style.display = 'none';
+  }
+
+  wrap.onmousedown = e => showAt(e.clientX);
+  wrap.onmousemove = e => { if (e.buttons) showAt(e.clientX); };
+  wrap.onmouseup = hide;
+  wrap.onmouseleave = hide;
+  wrap.ontouchstart = e => { e.preventDefault(); showAt(e.touches[0].clientX); };
+  wrap.ontouchmove = e => { e.preventDefault(); showAt(e.touches[0].clientX); };
+  wrap.ontouchend = hide;
 }
 
 // ==================== AES-256-GCM Encryption ====================
@@ -996,7 +1161,8 @@ async function ghGet(token, repo, path, branch) {
   return res.json();
 }
 async function ghPut(token, repo, path, content, sha, branch) {
-  const body = { message: 'Update stock 02680 data', content: btoa(unescape(encodeURIComponent(content))) };
+  const msg = path.includes('quote') ? 'Update 02680 quote cache' : 'Update stock 02680 data';
+  const body = { message: msg, content: btoa(unescape(encodeURIComponent(content))) };
   if (sha) body.sha = sha;
   if (branch) body.branch = branch;
   const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
@@ -1122,6 +1288,32 @@ async function pushToCloud() {
   }
 }
 
+// ==================== Cost Price ====================
+const COST_KEY = 'stock_02680_cost';
+let costPrice = null;
+
+function loadCostPrice() {
+  const v = localStorage.getItem(COST_KEY);
+  costPrice = v ? parseFloat(v) : null;
+  document.getElementById('statCost').textContent = costPrice ? costPrice.toFixed(3) : '--';
+}
+
+function editCostPrice() {
+  const input = prompt('输入你的持仓成本价（港元）', costPrice || '');
+  if (input === null) return;
+  const val = parseFloat(input);
+  if (!val || val <= 0) {
+    costPrice = null;
+    localStorage.removeItem(COST_KEY);
+  } else {
+    costPrice = val;
+    localStorage.setItem(COST_KEY, val.toString());
+  }
+  document.getElementById('statCost').textContent = costPrice ? costPrice.toFixed(3) : '--';
+  // Re-render chart with cost line
+  if (quoteCache[chartPeriod]) renderChart(quoteCache[chartPeriod]);
+}
+
 // ==================== Utils ====================
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 const WEEKDAYS = ['周日','周一','周二','周三','周四','周五','周六'];
@@ -1171,6 +1363,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAnalyses();
   loadEvents();
   loadSyncConfig();
+  loadCostPrice();
   resetAnalysisForm();
   resetEventForm();
   renderAnalyses();
