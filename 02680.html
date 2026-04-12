@@ -155,7 +155,8 @@ body{
 .clue-card:active{cursor:grabbing}
 .clue-card.dragging{opacity:.5;transform:scale(.96)}
 .clue-card.drag-over{box-shadow:0 0 0 2px var(--gold);transform:scale(1.02)}
-.clue-card .clue-body{font-size:14px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.clue-card .clue-title{font-size:14px;font-weight:700;color:var(--gold-light);margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid rgba(202,138,4,0.2)}
+.clue-card .clue-body{font-size:13px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .clue-card .clue-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
 .clue-card .clue-actions .btn{padding:2px 8px;font-size:10px;opacity:.4}
 .clue-card:hover .clue-actions .btn{opacity:1}
@@ -255,6 +256,7 @@ body{
 <div class="tab-content" id="tabEvents">
   <button class="btn btn-primary" id="eToggleBtn" onclick="toggleEventForm()" style="margin-bottom:12px;width:100%">+ 新增线索</button>
   <div class="form-section" id="eventFormSection" style="display:none">
+    <div class="form-group" style="margin-bottom:8px"><label>标题</label><input type="text" id="eTitle" placeholder="简短标题"></div>
     <div class="form-group"><label>内容</label><textarea id="eDesc" placeholder="写下重要线索..." style="min-height:80px"></textarea></div>
     <div class="form-actions">
       <button class="btn btn-primary" id="eSaveBtn" onclick="saveEvent()">保存</button>
@@ -573,28 +575,16 @@ const SEED_ANALYSES = [
 ];
 
 const SEED_CLUES = [
-  {"description": "目标价 20-25（保守），30-40 可以幻想。王庭发要出货最少要 30 才比较好出，溢价五倍左右"},
-  {"description": "减仓节奏：16 以下不减 → 18-20 减一点点 → 20-25 多减 → 25-30 全清"},
-  {"description": "出货信号：成交量超过 1 亿 = 庄家出货。两三千万成交只是在消化获利盘"},
-  {"description": "王庭发实际持仓成本 ~8 块（对外说 2.7 亿，实际现金总共拿了 4 亿多，因为创升有净资产要等价收购）。8 块铁底，10 块强支撑"},
-  {"description": "股权 90%+ 集中：王庭发 75% + 企业家朋友金主 ~15%，公众流通仅 ~10%。货源归边，拉多少他说了算"},
-  {"description": "三波行情预测：① 证监会批准→邀约（已发生）② 邀约结束→换人换董事 ③ 改名→注入业务。每波都有拉升机会"},
-  {"description": "邀约时间线：4/8 开始，4/29 结束。邀约期间横盘为主，结束后才开始拉"},
-  {"description": "改名：邀约结束后改名（确认不叫金母鸡，新名待定）。上市主体要跟厦门金母鸡区分开"},
-  {"description": "换人：邀约后把董事全部变更，原班人马全部剔除，金母鸡金融证券班底全部装进去"},
-  {"description": "注入业务：金融业务注入（主板金融壳有牌照，短期可注入不需要等三年）。把 2680 做成基金主体，接 PI 以上 800 万高级客户认购基金"},
-  {"description": "派息确认：王庭发 4/7 亲口说会派息。可做长线理财型持有，半年一年以上"},
-  {"description": "拆股：发哥说未来会拆股，拆股属于重大利好，拆股之前大概率先拉高再拆"},
-  {"description": "定增配股：会配股引入投资者。收了 75% 后如果邀约再收到超过公众最低持股量，要停牌配股"},
-  {"description": "稳定币牌照：金融牌照批完后马上申请一号稳定币牌照，律师材料已筹备好，预计 4-5 月批下来"},
-  {"description": "基金规模：旗下基金总共 10 亿美金，年化收益 30-70%（最高峰 89%）。几百个操盘手，客户百万起步认购"},
-  {"description": "公司现金：账上躺着 2 亿现金，壳非常干净，无物业资产全是现金，物业都是租赁的"},
-  {"description": "IPO 项目：手上 8 个帮人上市的 IPO 项目，今年会上 2 个，公司现在是赚钱的"},
-  {"description": "背后金主：香港美林证券主席、斯伦贝谢能源中国区总裁许成祝。年会站台：蔡文胜（美图）、沈南鹏（红杉）、张磊（高瓴）"},
-  {"description": "参照标的 3928：走势最像，4 块→18 块用了 4 个月。边拉边洗，主席机构出来吃获利盘后爆拉"},
-  {"description": "参照标的 2442：基金经理几千万收购，涨了 30 倍"},
-  {"description": "参照标的 3938：基金经理 0.6 收购，涨了 5 倍。同样做量化"},
-  {"description": "主力券商识别：创升（明牌自己人）、长桥（金母鸡借牌）、法巴（主席）、光大/国泰（内地御用）、华盛/花旗/汇丰（打手）"}
+  {"title": "目标价 & 减仓计划", "description": "目标价 20-25（保守），30-40 可幻想\n减仓节奏：16 以下不减 → 18-20 少减 → 20-25 多减 → 25-30 全清\n出货信号：成交量超 1 亿 = 庄家出货，两三千万只是消化获利盘"},
+  {"title": "主席成本 & 股权结构", "description": "王庭发实际成本 ~8 块（总共拿了 4 亿多现金收购）\n8 块铁底，10 块强支撑\n股权 90%+ 集中：王庭发 75% + 金主朋友 ~15%，公众仅 ~10%\n货源归边，拉多少他说了算"},
+  {"title": "三波行情 & 邀约时间线", "description": "三波预测：① 批准→邀约（已完成）② 换人换董事 ③ 改名注入业务\n邀约 4/8 开始，4/29 结束，期间横盘为主\n结束后：改名（不叫金母鸡，新名待定）→ 董事全部换成金母鸡班底"},
+  {"title": "未来催化剂", "description": "派息：4/7 王庭发亲口确认\n拆股：发哥说未来会拆，拆前先拉高\n配股：引入投资者，可能停牌配股\n稳定币牌照：金融牌照批完马上申请，预计 4-5 月\n注入金融业务：主板金融壳有牌照，短期可注入不用等三年"},
+  {"title": "公司基本面", "description": "基金规模 10 亿美金，年化 30-70%（最高 89%）\n账上 2 亿现金，壳干净无物业全是现金\n8 个 IPO 项目在手，今年上 2 个，公司在赚钱\n2680 定位：做基金主体，接 PI 以上 800 万高级客户"},
+  {"title": "背后实力", "description": "金主：香港美林证券主席、斯伦贝谢中国区总裁许成祝\n年会站台：蔡文胜（美图）、沈南鹏（红杉）、张磊（高瓴）\n公司规模：北京/沈阳/天津/厦门/香港，几百个操盘手"},
+  {"title": "参照标的", "description": "3928：走势最像，4→18 用 4 个月，边拉边洗后爆拉\n2442：基金经理几千万收购，涨了 30 倍\n3938：基金经理 0.6 收购，涨了 5 倍，同做量化\n耀才：延期一年多最终批准，两天涨 1.5 倍"},
+  {"title": "主力券商识别", "description": "创升 — 明牌自己人\n长桥 — 金母鸡借牌\n法巴 — 主席持有\n光大/国泰 — 内地御用券商\n华盛/花旗/汇丰 — 打手操盘号\n富途/老虎 — 散户盘"},
+  {"title": "庄家操盘逻辑", "description": "控价不拉：批准前压弹簧，避免利好落地变利空\n边拉边洗：不急拉出货，循序渐进后劲大\n洗盘手法：上面压单+下面护盘，中间吃散户血筹码\n王庭发 2.7 亿进场，要全身而退最少拉到 30"},
+  {"title": "风险提示", "description": "仙股流动性差，买卖盘跳空大\n邀约期间横盘煎熬，耐心是关键\n别追涨杀跌，别砸盘踩踏\n拉升时分批减仓，别一天清完"}
 ];
 
 function seedIfNeeded() {
@@ -620,6 +610,7 @@ function seedIfNeeded() {
   if (events.length === 0) {
     events = SEED_CLUES.map((s, i) => ({
       id: crypto.randomUUID(),
+      title: s.title || '',
       description: s.description,
       order: i,
       createdAt: Date.now() - (SEED_CLUES.length - i) * 1000,
@@ -760,6 +751,7 @@ function toggleEventForm() {
 
 function resetEventForm() {
   editingEventId = null;
+  document.getElementById('eTitle').value = '';
   document.getElementById('eDesc').value = '';
   document.getElementById('eSaveBtn').textContent = '保存';
   document.getElementById('eventFormSection').style.display = 'none';
@@ -767,15 +759,16 @@ function resetEventForm() {
 }
 
 function saveEvent() {
+  const title = document.getElementById('eTitle').value.trim();
   const desc = document.getElementById('eDesc').value.trim();
   if (!desc) { alert('请填写内容'); return; }
 
   if (editingEventId) {
     const idx = events.findIndex(e => e.id === editingEventId);
-    if (idx >= 0) events[idx] = { ...events[idx], description: desc, updatedAt: Date.now() };
+    if (idx >= 0) events[idx] = { ...events[idx], title: title, description: desc, updatedAt: Date.now() };
   } else {
     const maxOrder = events.reduce((m, e) => Math.max(m, e.order || 0), 0);
-    events.push({ id: crypto.randomUUID(), description: desc, order: maxOrder + 1, createdAt: Date.now(), updatedAt: Date.now() });
+    events.push({ id: crypto.randomUUID(), title: title, description: desc, order: maxOrder + 1, createdAt: Date.now(), updatedAt: Date.now() });
   }
   saveEvents(); resetEventForm(); renderEvents(); autoSync();
 }
@@ -784,6 +777,7 @@ function editEvent(id) {
   const e = events.find(x => x.id === id);
   if (!e) return;
   editingEventId = id;
+  document.getElementById('eTitle').value = e.title || '';
   document.getElementById('eDesc').value = e.description;
   document.getElementById('eSaveBtn').textContent = '更新';
   document.getElementById('eventFormSection').style.display = '';
@@ -814,6 +808,7 @@ function renderEvents() {
       ondragstart="onClueDragStart(event)" ondragover="onClueDragOver(event)" ondragleave="onClueDragLeave(event)" ondrop="onClueDrop(event)" ondragend="onClueDragEnd(event)"
       ontouchstart="onClueTouchStart(event, this)" ontouchmove="onClueTouchMove(event)" ontouchend="onClueTouchEnd(event)">
       <span class="drag-handle">&#9776;</span>
+      ${e.title ? `<div class="clue-title">${esc(e.title)}</div>` : ''}
       <div class="clue-body">${highlight(e.description)}</div>
       <div class="clue-actions">
         <button class="btn btn-secondary" onclick="editEvent('${e.id}')">编辑</button>
