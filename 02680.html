@@ -97,7 +97,7 @@ body{
 .btn-danger:hover{background:rgba(239,68,68,0.25)}
 
 /* Tabs */
-.tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;background:var(--bg);padding-top:8px}
 .tab{flex:1;padding:10px 0;text-align:center;font-size:14px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
 .tab.active{color:var(--gold-light);border-bottom-color:var(--gold)}
 .tab-content{display:none}.tab-content.active{display:block}
@@ -1606,12 +1606,21 @@ async function pullFromCloud() {
     events = Array.from(localMap.values());
     saveEvents();
   }
+  // Sync cost price (cloud wins if local is empty)
+  if (parsed.costPrice !== undefined) {
+    const cloudCost = parsed.costPrice;
+    if (cloudCost && !costPrice) {
+      costPrice = cloudCost;
+      localStorage.setItem(COST_KEY, costPrice.toString());
+      document.getElementById('statCost').textContent = costPrice.toFixed(3);
+    }
+  }
 }
 async function pushToCloud() {
   const branch = await getDefaultBranch();
   const encAnalyses = await encryptData(analyses, syncConfig.password);
   const encEvents = await encryptData(events, syncConfig.password);
-  const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, updatedAt: new Date().toISOString() });
+  const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, costPrice: costPrice || null, updatedAt: new Date().toISOString() });
   const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
   fileSha = file ? file.sha : null;
   try {
