@@ -314,9 +314,6 @@ body{
       <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
       <button class="btn btn-danger" onclick="clearSyncConfig()">清除</button>
     </div>
-    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)" id="reseedWrap">
-      <button class="btn btn-danger" onclick="reseedData()" style="width:100%;font-size:12px">重置为初始数据（慎用）</button>
-    </div>
     <div style="margin-top:8px;font-size:11px;color:var(--text-muted)" id="syncStatusText"></div>
   </div>
 </div>
@@ -670,7 +667,6 @@ function switchTab(name) {
 function toggleSyncModal() {
   const modal = document.getElementById('syncModal');
   modal.style.display = modal.style.display === 'none' ? '' : 'none';
-  document.getElementById('reseedWrap').style.display = isOwner ? '' : 'none';
 }
 
 // ==================== Analysis CRUD ====================
@@ -759,13 +755,15 @@ function renderAnalyses() {
   container.innerHTML = list.map(a => {
     const legacyBadge = a.isLegacy ? ' <span class="badge badge-legacy">历史</span>' : '';
     const dayStr = getDayOfWeek(a.date);
+    const lineCount = (a.body || '').split('\n').length;
+    const expandBtn = lineCount > 10 ? `<button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>` : '';
     return `<div class="record">
       <div class="record-header">
         <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
       </div>
       <div class="record-preview">${highlight(a.body)}</div>
       <div class="record-actions">
-        <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
+        ${expandBtn}
         <button class="btn btn-secondary" onclick="editAnalysis('${a.id}')">编辑</button>
         <button class="btn btn-secondary" onclick="deleteAnalysis('${a.id}')">删除</button>
       </div>
@@ -1588,18 +1586,24 @@ async function decryptData(base64, password) {
 }
 
 // ==================== GitHub API ====================
+function ghAuth(token) {
+  // Fine-grained tokens start with github_pat_, classic tokens start with ghp_
+  const prefix = token.startsWith('github_pat_') ? 'Bearer' : 'token';
+  return { 'Authorization': `${prefix} ${token}`, 'Accept': 'application/vnd.github.v3+json' };
+}
 async function ghGetDefaultBranch(token, repo) {
-  const res = await fetch(`https://api.github.com/repos/${repo}`, {
-    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-  });
-  if (!res.ok) throw new Error('无法获取仓库信息');
+  const res = await fetch(`https://api.github.com/repos/${repo}`, { headers: ghAuth(token) });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Token 无效或已过期');
+    if (res.status === 403) throw new Error('Token 权限不足，需要 repo 权限');
+    if (res.status === 404) throw new Error('仓库不存在: ' + repo);
+    throw new Error('获取仓库失败: ' + res.status);
+  }
   return (await res.json()).default_branch;
 }
 async function ghGet(token, repo, path, branch) {
   const url = `https://api.github.com/repos/${repo}/contents/${path}` + (branch ? `?ref=${branch}` : '');
-  const res = await fetch(url, {
-    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-  });
+  const res = await fetch(url, { headers: ghAuth(token) });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub GET failed: ${res.status}`);
   return res.json();
@@ -1611,7 +1615,7 @@ async function ghPut(token, repo, path, content, sha, branch) {
   if (branch) body.branch = branch;
   const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
     method: 'PUT',
-    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+    headers: { ...ghAuth(token), 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
   if (!res.ok) {
