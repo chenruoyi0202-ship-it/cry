@@ -928,36 +928,68 @@ async function fetchQuote() {
     switchChartPeriod('daily');
   }
 
-  // 2. Try Sina Finance for real-time price (JSONP, no CORS issues)
-  setTimeout(() => fetchSinaQuote(), 50);
+  // 2. Try Tencent/Sina for real-time price (script tag, no CORS)
+  setTimeout(() => fetchRealtimeQuote(), 50);
 
   // 3. Refresh chart data from Yahoo in background
   setTimeout(() => refreshFromYahoo(usedCache), 200);
 }
 
-// ==================== Sina Finance (JSONP, bypasses CORS) ====================
+// ==================== Tencent/Sina Finance (script tag, no CORS) ====================
+function fetchRealtimeQuote() {
+  return new Promise((resolve) => {
+    // Try Tencent first, then Sina
+    fetchTencentQuote().then(ok => {
+      if (ok) { resolve(true); return; }
+      fetchSinaQuote().then(resolve);
+    });
+  });
+}
+
+function fetchTencentQuote() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 4000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = () => { cleanup(); resolve(false); };
+    // Tencent finance: returns v_r_hk02680="..."
+    script.src = `https://qt.gtimg.cn/q=r_hk02680&_=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const raw = window['v_r_hk02680'];
+        if (!raw) { cleanup(); resolve(false); return; }
+        // Tencent HK format: "name~code~price~prevClose~open~high~low~...~date~time~..."
+        const parts = raw.split('~');
+        if (parts.length < 30) { cleanup(); resolve(false); return; }
+        const price = parseFloat(parts[3]);
+        const prevClose = parseFloat(parts[4]);
+        const open = parseFloat(parts[5]);
+        const high = parseFloat(parts[33]) || parseFloat(parts[6]);
+        const low = parseFloat(parts[34]) || parseFloat(parts[7]);
+        const dateStr = parts[30] || '';
+        const timeStr = parts[31] || '';
+        if (price > 0) {
+          applyQuoteToUI(price, prevClose, open, high, low, `${dateStr} ${timeStr}`);
+        }
+        cleanup();
+        resolve(price > 0);
+      } catch { cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
+  });
+}
+
 function fetchSinaQuote() {
   return new Promise((resolve) => {
-    const callbackName = '_sinaQuoteCb_' + Date.now();
     const script = document.createElement('script');
-    const timer = setTimeout(() => { cleanup(); resolve(false); }, 5000);
-
-    function cleanup() {
-      clearTimeout(timer);
-      delete window[callbackName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
-    // Sina returns: var hq_str_hk02680="...";
-    // We use a different approach: inject script and read the global variable
-    window[callbackName] = true; // placeholder
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 4000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
     script.onerror = () => { cleanup(); resolve(false); };
     script.src = `https://hq.sinajs.cn/list=hk02680&_=${Date.now()}`;
     script.onload = () => {
       try {
         const raw = window['hq_str_hk02680'];
         if (!raw) { cleanup(); resolve(false); return; }
-        // Sina HK format: name_cn,open,prevClose,high,low,price,change,changePercent,...,date,time
         const parts = raw.split(',');
         if (parts.length < 10) { cleanup(); resolve(false); return; }
         const price = parseFloat(parts[6]) || parseFloat(parts[3]);
@@ -967,35 +999,37 @@ function fetchSinaQuote() {
         const low = parseFloat(parts[5]);
         const dateStr = parts[17] || '';
         const timeStr = parts[18] || '';
-
         if (price > 0) {
-          // Update price header
-          const priceEl = document.getElementById('priceNow');
-          priceEl.textContent = price.toFixed(3);
-          const change = price - prevClose;
-          const pct = prevClose ? (change / prevClose * 100) : 0;
-          const sign = change >= 0 ? '+' : '';
-          const cls = change >= 0 ? 'up' : 'down';
-          priceEl.className = `price-now ${cls}`;
-          document.getElementById('priceChange').textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
-          document.getElementById('priceChange').className = `price-change ${cls}`;
-          document.getElementById('statHigh').textContent = high.toFixed(3);
-          document.getElementById('statLow').textContent = low.toFixed(3);
-          document.getElementById('statOpen').textContent = open.toFixed(3);
-          document.getElementById('statPrevClose').textContent = prevClose.toFixed(3);
-          if (prevClose) {
-            document.getElementById('statHigh').className = 'stat-value ' + (high >= prevClose ? 'up' : 'down');
-            document.getElementById('statLow').className = 'stat-value ' + (low >= prevClose ? 'up' : 'down');
-            document.getElementById('statOpen').className = 'stat-value ' + (open >= prevClose ? 'up' : 'down');
-          }
-          document.getElementById('stockStatus').textContent = `${dateStr} ${timeStr}`;
+          applyQuoteToUI(price, prevClose, open, high, low, `${dateStr} ${timeStr}`);
         }
         cleanup();
-        resolve(true);
+        resolve(price > 0);
       } catch { cleanup(); resolve(false); }
     };
     document.head.appendChild(script);
   });
+}
+
+function applyQuoteToUI(price, prevClose, open, high, low, timeText) {
+  const priceEl = document.getElementById('priceNow');
+  priceEl.textContent = price.toFixed(3);
+  const change = price - prevClose;
+  const pct = prevClose ? (change / prevClose * 100) : 0;
+  const sign = change >= 0 ? '+' : '';
+  const cls = change >= 0 ? 'up' : 'down';
+  priceEl.className = `price-now ${cls}`;
+  document.getElementById('priceChange').textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
+  document.getElementById('priceChange').className = `price-change ${cls}`;
+  if (high) document.getElementById('statHigh').textContent = high.toFixed(3);
+  if (low) document.getElementById('statLow').textContent = low.toFixed(3);
+  if (open) document.getElementById('statOpen').textContent = open.toFixed(3);
+  if (prevClose) document.getElementById('statPrevClose').textContent = prevClose.toFixed(3);
+  if (prevClose) {
+    document.getElementById('statHigh').className = 'stat-value ' + (high >= prevClose ? 'up' : 'down');
+    document.getElementById('statLow').className = 'stat-value ' + (low >= prevClose ? 'up' : 'down');
+    document.getElementById('statOpen').className = 'stat-value ' + (open >= prevClose ? 'up' : 'down');
+  }
+  if (timeText.trim()) document.getElementById('stockStatus').textContent = timeText.trim();
 }
 
 async function refreshFromYahoo(silent) {
