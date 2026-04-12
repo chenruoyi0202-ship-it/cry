@@ -1659,21 +1659,6 @@ function saveSyncConfig() {
   alert('同步配置已保存，已进入编辑模式');
   manualSync();
 }
-function reseedData() {
-  if (!confirm('确定要重置所有数据为初始种子数据？你手动添加的内容将被清除。')) return;
-  localStorage.removeItem(SEEDED_KEY);
-  localStorage.removeItem(ANALYSES_KEY);
-  localStorage.removeItem(EVENTS_KEY);
-  analyses = [];
-  events = [];
-  seedIfNeeded();
-  loadAnalyses();
-  loadEvents();
-  renderAnalyses();
-  renderEvents();
-  toggleSyncModal();
-  alert('已重置为种子数据（' + analyses.length + ' 条分析 + ' + events.length + ' 条线索）');
-}
 
 function clearSyncConfig() {
   if (!confirm('确认清除同步配置？')) return;
