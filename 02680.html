@@ -148,6 +148,18 @@ body{
 .record-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
 .record-actions .btn{padding:3px 10px;font-size:11px;opacity:.5;transition:opacity .2s}
 .record:hover .record-actions .btn,.record-actions .btn:focus{opacity:1}
+
+/* Clue grid */
+.clue-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.clue-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;cursor:grab;transition:box-shadow .2s,transform .2s;position:relative}
+.clue-card:active{cursor:grabbing}
+.clue-card.dragging{opacity:.5;transform:scale(.96)}
+.clue-card.drag-over{box-shadow:0 0 0 2px var(--gold);transform:scale(1.02)}
+.clue-card .clue-body{font-size:14px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.clue-card .clue-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.clue-card .clue-actions .btn{padding:2px 8px;font-size:10px;opacity:.4}
+.clue-card:hover .clue-actions .btn{opacity:1}
+.clue-card .drag-handle{position:absolute;top:6px;left:8px;font-size:10px;color:var(--text-muted);opacity:.3;cursor:grab}
 .record-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
 .record-actions{display:flex;gap:6px;margin-top:8px}
@@ -160,6 +172,7 @@ body{
 /* Responsive */
 @media(max-width:480px){
   .form-row.two,.form-row.three{grid-template-columns:1fr}
+  .clue-grid{grid-template-columns:1fr}
 }
 @media(min-width:768px){
   .page{padding:32px 24px 80px}
@@ -219,7 +232,7 @@ body{
 <!-- Tabs -->
 <div class="tabs">
   <div class="tab active" onclick="switchTab('analyses')">我的分析</div>
-  <div class="tab" onclick="switchTab('events')">重要事件</div>
+  <div class="tab" onclick="switchTab('events')">重要线索</div>
 </div>
 
 <!-- Tab 1: Analyses -->
@@ -238,24 +251,18 @@ body{
   <div id="analysisList"></div>
 </div>
 
-<!-- Tab 2: Events -->
+<!-- Tab 2: Clues -->
 <div class="tab-content" id="tabEvents">
-  <button class="btn btn-primary" id="eToggleBtn" onclick="toggleEventForm()" style="margin-bottom:12px;width:100%">+ 新增事件</button>
+  <button class="btn btn-primary" id="eToggleBtn" onclick="toggleEventForm()" style="margin-bottom:12px;width:100%">+ 新增线索</button>
   <div class="form-section" id="eventFormSection" style="display:none">
-    <div class="form-row two">
-      <div class="form-group"><label>日期</label><input type="date" id="eDate"></div>
-      <div class="form-group"><label>事件类型</label>
-        <select id="eType"><option value="announcement">公告</option><option value="earnings">业绩</option><option value="shareholder">股东变动</option><option value="regulatory">监管批复</option><option value="tender">邀约收购</option><option value="rename">改名</option><option value="dividend">派息</option><option value="placement">配股</option><option value="industry">行业新闻</option><option value="price">价格异动</option><option value="other">其他</option></select>
-      </div>
-    </div>
-    <div class="form-group"><label>内容</label><textarea id="eDesc" placeholder="事件详情..." style="min-height:100px"></textarea></div>
+    <div class="form-group"><label>内容</label><textarea id="eDesc" placeholder="写下重要线索..." style="min-height:80px"></textarea></div>
     <div class="form-actions">
       <button class="btn btn-primary" id="eSaveBtn" onclick="saveEvent()">保存</button>
       <button class="btn btn-secondary" id="eCancelBtn" onclick="cancelEditEvent()">取消</button>
     </div>
   </div>
   <div class="stats-bar"><span id="eStats"></span></div>
-  <div id="eventList"></div>
+  <div id="eventList" class="clue-grid"></div>
 </div>
 
 </div><!-- .page -->
@@ -704,24 +711,16 @@ function renderAnalyses() {
   }).join('');
 }
 
-// ==================== Event CRUD ====================
+// ==================== Clue CRUD ====================
 function toggleEventForm() {
   const form = document.getElementById('eventFormSection');
   const btn = document.getElementById('eToggleBtn');
-  if (form.style.display === 'none') {
-    form.style.display = '';
-    btn.style.display = 'none';
-  } else {
-    form.style.display = 'none';
-    btn.style.display = '';
-    editingEventId = null;
-  }
+  if (form.style.display === 'none') { form.style.display = ''; btn.style.display = 'none'; }
+  else { form.style.display = 'none'; btn.style.display = ''; editingEventId = null; }
 }
 
 function resetEventForm() {
   editingEventId = null;
-  document.getElementById('eDate').value = new Date().toISOString().slice(0,10);
-  document.getElementById('eType').value = 'announcement';
   document.getElementById('eDesc').value = '';
   document.getElementById('eSaveBtn').textContent = '保存';
   document.getElementById('eventFormSection').style.display = 'none';
@@ -729,33 +728,23 @@ function resetEventForm() {
 }
 
 function saveEvent() {
-  const date = document.getElementById('eDate').value;
   const desc = document.getElementById('eDesc').value.trim();
-  if (!date || !desc) { alert('日期和内容为必填项'); return; }
-
-  const type = document.getElementById('eType').value;
-  const title = desc.split('\n')[0].substring(0, 40);
+  if (!desc) { alert('请填写内容'); return; }
 
   if (editingEventId) {
     const idx = events.findIndex(e => e.id === editingEventId);
-    if (idx >= 0) {
-      events[idx] = { ...events[idx], date, type, title, description: desc, updatedAt: Date.now() };
-    }
+    if (idx >= 0) events[idx] = { ...events[idx], description: desc, updatedAt: Date.now() };
   } else {
-    events.push({ id: crypto.randomUUID(), date, type, title, description: desc, impact: 'neutral', createdAt: Date.now(), updatedAt: Date.now() });
+    const maxOrder = events.reduce((m, e) => Math.max(m, e.order || 0), 0);
+    events.push({ id: crypto.randomUUID(), description: desc, order: maxOrder + 1, createdAt: Date.now(), updatedAt: Date.now() });
   }
-  saveEvents();
-  resetEventForm();
-  renderEvents();
-  autoSync();
+  saveEvents(); resetEventForm(); renderEvents(); autoSync();
 }
 
 function editEvent(id) {
   const e = events.find(x => x.id === id);
   if (!e) return;
   editingEventId = id;
-  document.getElementById('eDate').value = e.date;
-  document.getElementById('eType').value = e.type;
   document.getElementById('eDesc').value = e.description;
   document.getElementById('eSaveBtn').textContent = '更新';
   document.getElementById('eventFormSection').style.display = '';
@@ -766,38 +755,76 @@ function editEvent(id) {
 function cancelEditEvent() { resetEventForm(); }
 
 function deleteEvent(id) {
-  if (!confirm('确定删除这条事件？')) return;
+  if (!confirm('确定删除这条线索？')) return;
   events = events.filter(e => e.id !== id);
-  saveEvents();
-  renderEvents();
-  autoSync();
+  saveEvents(); renderEvents(); autoSync();
 }
+
+let dragSrcId = null;
 
 function renderEvents() {
   let list = events.slice();
-  list.sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  list.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  document.getElementById('eStats').textContent = `共 ${events.length} 条事件`;
+  document.getElementById('eStats').textContent = `共 ${events.length} 条线索`;
 
   const container = document.getElementById('eventList');
-  if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无事件记录</div>'; return; }
+  if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无线索</div>'; return; }
 
-  container.innerHTML = list.map(e => {
-    const typeBadge = `<span class="badge badge-type">${EVENT_TYPE_LABELS[e.type]||e.type}</span>`;
-    const dayStr = getDayOfWeek(e.date);
-    return `<div class="record">
-      <div class="record-header">
-        <span class="record-date">${esc(e.date)}（${dayStr}）</span>
-        ${typeBadge}
-      </div>
-      <div class="record-preview">${highlight(e.description)}</div>
-      <div class="record-actions">
-        <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
+  container.innerHTML = list.map(e => `<div class="clue-card" draggable="true" data-id="${e.id}"
+      ondragstart="onClueDragStart(event)" ondragover="onClueDragOver(event)" ondragleave="onClueDragLeave(event)" ondrop="onClueDrop(event)" ondragend="onClueDragEnd(event)"
+      ontouchstart="onClueTouchStart(event, this)" ontouchmove="onClueTouchMove(event)" ontouchend="onClueTouchEnd(event)">
+      <span class="drag-handle">&#9776;</span>
+      <div class="clue-body">${highlight(e.description)}</div>
+      <div class="clue-actions">
         <button class="btn btn-secondary" onclick="editEvent('${e.id}')">编辑</button>
         <button class="btn btn-secondary" onclick="deleteEvent('${e.id}')">删除</button>
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
+}
+
+// Drag & drop reorder (desktop)
+function onClueDragStart(e) {
+  dragSrcId = e.target.closest('.clue-card').dataset.id;
+  e.target.closest('.clue-card').classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onClueDragOver(e) {
+  e.preventDefault();
+  const card = e.target.closest('.clue-card');
+  if (card && card.dataset.id !== dragSrcId) card.classList.add('drag-over');
+}
+function onClueDragLeave(e) {
+  const card = e.target.closest('.clue-card');
+  if (card) card.classList.remove('drag-over');
+}
+function onClueDrop(e) {
+  e.preventDefault();
+  const card = e.target.closest('.clue-card');
+  if (!card || card.dataset.id === dragSrcId) return;
+  card.classList.remove('drag-over');
+  reorderClues(dragSrcId, card.dataset.id);
+}
+function onClueDragEnd(e) {
+  document.querySelectorAll('.clue-card').forEach(c => c.classList.remove('dragging', 'drag-over'));
+  dragSrcId = null;
+}
+
+// Touch drag for mobile
+let touchDragId = null;
+function onClueTouchStart(e, el) { touchDragId = el.dataset.id; }
+function onClueTouchMove(e) { /* allow default scroll */ }
+function onClueTouchEnd(e) { touchDragId = null; }
+
+function reorderClues(fromId, toId) {
+  const sorted = events.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const fromIdx = sorted.findIndex(e => e.id === fromId);
+  const toIdx = sorted.findIndex(e => e.id === toId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  const [moved] = sorted.splice(fromIdx, 1);
+  sorted.splice(toIdx, 0, moved);
+  sorted.forEach((e, i) => { const orig = events.find(x => x.id === e.id); if (orig) orig.order = i; });
+  saveEvents(); renderEvents(); autoSync();
 }
 
 // ==================== Price Fetch ====================
