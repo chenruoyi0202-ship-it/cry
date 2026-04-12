@@ -314,7 +314,7 @@ body{
       <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
       <button class="btn btn-danger" onclick="clearSyncConfig()">清除</button>
     </div>
-    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)" id="reseedWrap">
       <button class="btn btn-danger" onclick="reseedData()" style="width:100%;font-size:12px">重置为初始数据（慎用）</button>
     </div>
     <div style="margin-top:8px;font-size:11px;color:var(--text-muted)" id="syncStatusText"></div>
@@ -670,6 +670,7 @@ function switchTab(name) {
 function toggleSyncModal() {
   const modal = document.getElementById('syncModal');
   modal.style.display = modal.style.display === 'none' ? '' : 'none';
+  document.getElementById('reseedWrap').style.display = isOwner ? '' : 'none';
 }
 
 // ==================== Analysis CRUD ====================
