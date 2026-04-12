@@ -224,23 +224,13 @@ body{
   <div class="form-section">
     <div class="form-title">云端同步设置</div>
     <div class="info-box">
-      数据使用 AES-256 加密后存储到你的 GitHub 仓库。<br>
-      即使仓库公开，没有密码也无法解读数据。<br>
-      Token 和密码仅保存在当前浏览器中。
+      数据使用 AES-256 加密后存储到 GitHub 仓库。<br>
+      填入 Token 即可在多个设备间同步数据。
     </div>
     <div class="form-group" style="margin-bottom:8px">
       <label>GitHub Personal Access Token</label>
       <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
       <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 勾选 repo 权限</div>
-    </div>
-    <div class="form-group" style="margin-bottom:8px">
-      <label>仓库（owner/repo）</label>
-      <input type="text" id="inputRepo" placeholder="例如 yourname/yourrepo">
-    </div>
-    <div class="form-group" style="margin-bottom:8px">
-      <label>加密密码</label>
-      <input type="password" id="inputPassword" placeholder="设置一个你记得住的密码">
-      <div class="hint">用于加密/解密数据，换设备时需要输入相同密码</div>
     </div>
     <div class="form-actions">
       <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
@@ -965,14 +955,17 @@ async function ghPut(token, repo, path, content, sha, branch) {
 }
 
 // ==================== Sync Logic ====================
+const SYNC_REPO = 'chenruoyi0202-ship-it/cry';
+const SYNC_PASSWORD = 'cry-02680-sync-2026';
+
 function loadSyncConfig() {
   try { syncConfig = JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY)); } catch { syncConfig = null; }
-  updateSyncBar();
   if (syncConfig) {
+    syncConfig.repo = SYNC_REPO;
+    syncConfig.password = SYNC_PASSWORD;
     document.getElementById('inputToken').value = syncConfig.token || '';
-    document.getElementById('inputRepo').value = syncConfig.repo || '';
-    document.getElementById('inputPassword').value = syncConfig.password || '';
   }
+  updateSyncBar();
 }
 function updateSyncBar() {
   const dot = document.getElementById('syncDot');
@@ -991,10 +984,8 @@ function setSyncStatus(status, text) {
 }
 function saveSyncConfig() {
   const token = document.getElementById('inputToken').value.trim();
-  const repo = document.getElementById('inputRepo').value.trim();
-  const password = document.getElementById('inputPassword').value.trim();
-  if (!token || !repo || !password) { alert('请填写所有字段'); return; }
-  syncConfig = { token, repo, password };
+  if (!token) { alert('请填写 Token'); return; }
+  syncConfig = { token, repo: SYNC_REPO, password: SYNC_PASSWORD };
   localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(syncConfig));
   updateSyncBar();
   alert('同步配置已保存');
@@ -1006,8 +997,6 @@ function clearSyncConfig() {
   localStorage.removeItem(SYNC_CONFIG_KEY);
   fileSha = null;
   document.getElementById('inputToken').value = '';
-  document.getElementById('inputRepo').value = '';
-  document.getElementById('inputPassword').value = '';
   updateSyncBar();
 }
 async function getDefaultBranch() {
