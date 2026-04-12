@@ -1059,43 +1059,77 @@ function applyQuoteToUI(price, prevClose, open, high, low, timeText) {
 function fetchTencentMinuteData() {
   return new Promise((resolve) => {
     if (quoteCache['1d'] && quoteCache['1d'].series && quoteCache['1d'].series.length > 5) {
-      resolve(true); return; // already have intraday data
+      resolve(true); return;
     }
+    // Try today's minute data first, then 5-day data as fallback (covers weekends)
+    loadTencentMinute('today').then(ok => {
+      if (ok) { resolve(true); return; }
+      loadTencentMinute('5day').then(resolve);
+    });
+  });
+}
+
+function loadTencentMinute(mode) {
+  return new Promise((resolve) => {
     const script = document.createElement('script');
-    const varName = 'min_data_hk02680';
+    const varName = mode === '5day' ? 'min5_data_hk02680' : 'min_data_hk02680';
+    const url = mode === '5day'
+      ? `https://web.ifzq.gtimg.cn/appstock/app/day/query?_var=${varName}&code=hk02680&_=${Date.now()}`
+      : `https://web.ifzq.gtimg.cn/appstock/app/minute/query?_var=${varName}&code=hk02680&_=${Date.now()}`;
     const timer = setTimeout(() => { cleanup(); resolve(false); }, 5000);
     function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
     script.onerror = () => { cleanup(); resolve(false); };
-    script.src = `https://web.ifzq.gtimg.cn/appstock/app/minute/query?_var=${varName}&code=hk02680&_=${Date.now()}`;
+    script.src = url;
     script.onload = () => {
       try {
         const raw = window[varName];
         if (!raw || !raw.data || !raw.data.hk02680) { cleanup(); resolve(false); return; }
         const info = raw.data.hk02680;
-        const minuteData = info.data && info.data.data ? info.data.data : (info.qt && info.qt.minute ? info.qt.minute : null);
-        const prevClose = parseFloat(info.qt && info.qt.hk02680 ? info.qt.hk02680[4] : 0) || null;
 
-        // Try to find minute array - Tencent format varies
-        let minutes = null;
-        if (info.data && info.data.data) {
-          minutes = info.data.data;
+        // Extract prevClose from qt data
+        let prevClose = null;
+        if (info.qt && info.qt.hk02680) {
+          prevClose = parseFloat(info.qt.hk02680[4]) || null;
         }
-        if (!minutes && minuteData) minutes = minuteData;
+
+        // Find minute data - try multiple possible locations
+        let minutes = null;
+        if (info.data && info.data.data) minutes = info.data.data;
+        else if (info.data && Array.isArray(info.data)) minutes = info.data;
+
+        // For 5-day mode, find the last day's data
+        if (!minutes && mode === '5day') {
+          // 5-day response has date keys like {"20260410": [...], "20260411": [...]}
+          const dayKeys = Object.keys(info).filter(k => /^\d{8}$/.test(k)).sort();
+          if (dayKeys.length > 0) {
+            const lastDay = dayKeys[dayKeys.length - 1];
+            minutes = info[lastDay];
+          }
+        }
 
         if (!minutes || !Array.isArray(minutes) || minutes.length < 2) { cleanup(); resolve(false); return; }
 
-        // Each minute entry: "HHMM price volume"
-        const today = new Date();
-        const series = minutes.map(m => {
-          const parts = typeof m === 'string' ? m.split(' ') : [m[0], m[1]];
+        // Parse: each entry is "HHMM price volume" or similar
+        const series = [];
+        for (const m of minutes) {
+          const parts = typeof m === 'string' ? m.split(' ') : null;
+          if (!parts || parts.length < 2) continue;
           const timeStr = parts[0];
           const price = parseFloat(parts[1]);
-          if (!price || isNaN(price)) return null;
-          const hh = parseInt(timeStr.substring(0, 2));
-          const mm = parseInt(timeStr.substring(2, 4));
+          if (!price || isNaN(price)) continue;
+          // timeStr could be "HHMM" or "YYYYMMDDHHMMSS"
+          let hh, mm;
+          if (timeStr.length <= 4) {
+            hh = parseInt(timeStr.substring(0, 2));
+            mm = parseInt(timeStr.substring(2, 4));
+          } else {
+            hh = parseInt(timeStr.substring(8, 10));
+            mm = parseInt(timeStr.substring(10, 12));
+          }
+          const today = new Date();
           const dt = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm);
-          return { t: dt.getTime(), c: price };
-        }).filter(Boolean);
+          series.push({ t: dt.getTime(), c: price });
+        }
 
         if (series.length > 2) {
           const quoteData = {
