@@ -987,88 +987,147 @@ function renderChart(data) {
   const { series, prevClose } = data;
   if (!series || series.length < 2) return;
   currentChartSeries = series;
-  const svg = document.getElementById('priceChart');
-  const W = 700, H = 140, PAD = 6;
-  const CHART_H = H - 20;
-  const prices = series.map(p => p.c);
-  const minP = Math.min(...prices), maxP = Math.max(...prices);
-  const range = maxP - minP || 1;
-  const refPrice = prevClose || prices[0];
 
-  // Compute x,y for each point
-  const coords = series.map((p, i) => ({
-    x: PAD + (i / (series.length - 1)) * (W - 2 * PAD),
-    y: PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD),
-    c: p.c
-  }));
-
-  // Reference line Y (prevClose)
-  const refY = PAD + (1 - (refPrice - minP) / range) * (CHART_H - 2 * PAD);
-
-  // Build red/green segments using clipPath to split at refPrice line
-  const allPoints = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
-  const fillPoints = allPoints + ` ${coords[coords.length-1].x.toFixed(1)},${CHART_H} ${coords[0].x.toFixed(1)},${CHART_H}`;
-
-  // Prev close reference line
-  let refLineHtml = '';
-  if (prevClose) {
-    refLineHtml = `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.4"/>`;
+  if (chartPeriod === 'daily') {
+    renderCandlestick(data);
+  } else {
+    renderLineChart(data);
   }
 
-  // Price labels
-  const priceLabels = `
-    <text x="${W-2}" y="${PAD+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>
-    <text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>
-  `;
-
-  // Cost line
-  let costLineHtml = '';
-  if (costPrice && costPrice >= minP && costPrice <= maxP) {
-    const costY = PAD + (1 - (costPrice - minP) / range) * (CHART_H - 2 * PAD);
-    costLineHtml = `<line x1="${PAD}" y1="${costY.toFixed(1)}" x2="${W-PAD}" y2="${costY.toFixed(1)}" class="cost-line"/>
-      <text x="${PAD+2}" y="${costY.toFixed(1)-3}" font-size="9" fill="var(--orange)" opacity="0.8">成本 ${costPrice.toFixed(3)}</text>`;
+  if (chartPeriod === 'daily') {
+    renderTimeAxis(series.slice(candleViewStart, candleViewStart + candleViewCount));
+  } else {
+    renderTimeAxis(series);
   }
-
-  svg.innerHTML = `
-    <defs>
-      <clipPath id="clipUp"><rect x="0" y="0" width="${W}" height="${refY.toFixed(1)}"/></clipPath>
-      <clipPath id="clipDown"><rect x="0" y="${refY.toFixed(1)}" width="${W}" height="${H}"/></clipPath>
-      <linearGradient id="gradUp" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#ef4444" stop-opacity="0.12"/>
-        <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
-      </linearGradient>
-      <linearGradient id="gradDown" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#22c55e" stop-opacity="0"/>
-        <stop offset="100%" stop-color="#22c55e" stop-opacity="0.12"/>
-      </linearGradient>
-    </defs>
-    ${refLineHtml}
-    ${costLineHtml}
-    ${priceLabels}
-    <polygon points="${fillPoints}" fill="url(#gradUp)" clip-path="url(#clipUp)" />
-    <polygon points="${fillPoints}" fill="url(#gradDown)" clip-path="url(#clipDown)" />
-    <polyline points="${allPoints}" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linejoin="round" clip-path="url(#clipUp)" />
-    <polyline points="${allPoints}" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linejoin="round" clip-path="url(#clipDown)" />
-  `;
-
-  // Time axis
-  renderTimeAxis(series);
-
-  // Setup touch/mouse crosshair
   setupCrosshair();
 }
 
-function renderTimeAxis(series) {
+function renderLineChart(data) {
+  const { series, prevClose } = data;
+  const svg = document.getElementById('priceChart');
+  svg.setAttribute('viewBox', '0 0 700 140');
+  svg.style.height = '140px';
+  const W = 700, H = 140, PAD = 6, CHART_H = H - 20;
+  const prices = series.map(p => p.c);
+  const allH = series.map(p => p.h || p.c), allL = series.map(p => p.l || p.c);
+  const minP = Math.min(...prices, ...allL), maxP = Math.max(...prices, ...allH);
+  const range = maxP - minP || 1;
+  const refPrice = prevClose || prices[0];
+  const refY = PAD + (1 - (refPrice - minP) / range) * (CHART_H - 2 * PAD);
+
+  const coords = series.map((p, i) => {
+    const x = PAD + (i / (series.length - 1)) * (W - 2 * PAD);
+    const y = PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const allPoints = coords.join(' ');
+  const fillPoints = allPoints + ` ${(PAD + (W - 2 * PAD)).toFixed(1)},${CHART_H} ${PAD},${CHART_H}`;
+
+  let extras = '';
+  if (prevClose) extras += `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.4"/>`;
+  if (costPrice && costPrice >= minP && costPrice <= maxP) {
+    const cy = PAD + (1 - (costPrice - minP) / range) * (CHART_H - 2 * PAD);
+    extras += `<line x1="${PAD}" y1="${cy.toFixed(1)}" x2="${W-PAD}" y2="${cy.toFixed(1)}" class="cost-line"/><text x="${PAD+2}" y="${cy.toFixed(1)-3}" font-size="9" fill="var(--orange)" opacity="0.8">成本 ${costPrice.toFixed(3)}</text>`;
+  }
+
+  svg.innerHTML = `<defs>
+    <clipPath id="clipUp"><rect x="0" y="0" width="${W}" height="${refY.toFixed(1)}"/></clipPath>
+    <clipPath id="clipDown"><rect x="0" y="${refY.toFixed(1)}" width="${W}" height="${H}"/></clipPath>
+    <linearGradient id="gradUp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.12"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gradDown" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22c55e" stop-opacity="0"/><stop offset="100%" stop-color="#22c55e" stop-opacity="0.12"/></linearGradient>
+  </defs>
+  ${extras}
+  <text x="${W-2}" y="${PAD+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>
+  <text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>
+  <polygon points="${fillPoints}" fill="url(#gradUp)" clip-path="url(#clipUp)"/>
+  <polygon points="${fillPoints}" fill="url(#gradDown)" clip-path="url(#clipDown)"/>
+  <polyline points="${allPoints}" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linejoin="round" clip-path="url(#clipUp)"/>
+  <polyline points="${allPoints}" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linejoin="round" clip-path="url(#clipDown)"/>`;
+}
+
+// ==================== Candlestick Chart ====================
+let candleViewStart = 0; // index of first visible candle
+let candleViewCount = 60; // number of visible candles
+
+function renderCandlestick(data) {
+  const { series } = data;
+  const svg = document.getElementById('priceChart');
+  const W = 700, H = 180, PAD = 6, CHART_H = H - 20;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.style.height = H + 'px';
+
+  // Clamp view range
+  const total = series.length;
+  if (candleViewStart < 0) candleViewStart = 0;
+  if (candleViewStart + candleViewCount > total) candleViewStart = Math.max(0, total - candleViewCount);
+  const visible = series.slice(candleViewStart, candleViewStart + candleViewCount);
+  if (visible.length < 1) return;
+
+  // Find price range from visible OHLC
+  let minP = Infinity, maxP = -Infinity;
+  visible.forEach(p => {
+    const lo = p.l != null ? p.l : Math.min(p.o || p.c, p.c);
+    const hi = p.h != null ? p.h : Math.max(p.o || p.c, p.c);
+    if (lo < minP) minP = lo;
+    if (hi > maxP) maxP = hi;
+  });
+  const range = maxP - minP || 1;
+  const toY = v => PAD + (1 - (v - minP) / range) * (CHART_H - 2 * PAD);
+
+  const n = visible.length;
+  const candleW = Math.max(2, (W - 2 * PAD) / n * 0.7);
+  const gap = (W - 2 * PAD) / n;
+
+  let candles = '';
+  for (let i = 0; i < n; i++) {
+    const p = visible[i];
+    const o = p.o != null ? p.o : p.c;
+    const c = p.c;
+    const h = p.h != null ? p.h : Math.max(o, c);
+    const l = p.l != null ? p.l : Math.min(o, c);
+    const isUp = c >= o;
+    const color = isUp ? '#ef4444' : '#22c55e';
+    const cx = PAD + gap * i + gap / 2;
+    const bodyTop = toY(Math.max(o, c));
+    const bodyBot = toY(Math.min(o, c));
+    const bodyH = Math.max(1, bodyBot - bodyTop);
+    const wickTop = toY(h);
+    const wickBot = toY(l);
+
+    // Wick (shadow line)
+    candles += `<line x1="${cx.toFixed(1)}" y1="${wickTop.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${wickBot.toFixed(1)}" stroke="${color}" stroke-width="1"/>`;
+    // Body
+    if (isUp) {
+      // Hollow or filled red candle (filled for simplicity)
+      candles += `<rect x="${(cx - candleW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}" rx="0.5"/>`;
+    } else {
+      candles += `<rect x="${(cx - candleW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}" rx="0.5"/>`;
+    }
+  }
+
+  // Cost line
+  let extras = '';
+  if (costPrice && costPrice >= minP && costPrice <= maxP) {
+    const cy = toY(costPrice);
+    extras += `<line x1="${PAD}" y1="${cy.toFixed(1)}" x2="${W-PAD}" y2="${cy.toFixed(1)}" class="cost-line"/><text x="${PAD+2}" y="${(cy-3).toFixed(1)}" font-size="9" fill="var(--orange)" opacity="0.8">成本 ${costPrice.toFixed(3)}</text>`;
+  }
+
+  // Price labels
+  extras += `<text x="${W-2}" y="${PAD+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>`;
+  extras += `<text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>`;
+
+  svg.innerHTML = extras + candles;
+
+function renderTimeAxis(seriesSlice) {
   const axis = document.getElementById('chartTimeAxis');
-  if (!series || series.length < 2) { axis.innerHTML = ''; return; }
-  const first = series[0].t, last = series[series.length - 1].t;
+  const s = seriesSlice || currentChartSeries;
+  if (!s || s.length < 2) { axis.innerHTML = ''; return; }
   const fmt = chartPeriod === '1d'
     ? t => new Date(t).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
     : t => new Date(t).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'});
-  // Show 5 evenly spaced labels
   const labels = [0, 0.25, 0.5, 0.75, 1].map(f => {
-    const idx = Math.round(f * (series.length - 1));
-    return fmt(series[idx].t);
+    const idx = Math.round(f * (s.length - 1));
+    return fmt(s[idx].t);
   });
   axis.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
 }
@@ -1084,8 +1143,19 @@ function setupCrosshair() {
     const rect = svg.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const ratio = x / rect.width;
-    const idx = Math.round(ratio * (currentChartSeries.length - 1));
-    const p = currentChartSeries[idx];
+
+    // For candlestick, map to visible range
+    let idx, seriesRef;
+    if (chartPeriod === 'daily') {
+      const visCount = Math.min(candleViewCount, currentChartSeries.length - candleViewStart);
+      const visIdx = Math.round(ratio * (visCount - 1));
+      idx = candleViewStart + visIdx;
+      seriesRef = currentChartSeries;
+    } else {
+      idx = Math.round(ratio * (currentChartSeries.length - 1));
+      seriesRef = currentChartSeries;
+    }
+    const p = seriesRef[idx];
     if (!p) return;
 
     crosshair.style.display = 'block';
@@ -1096,12 +1166,11 @@ function setupCrosshair() {
       ? new Date(p.t).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
       : new Date(p.t).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
 
-    // Calculate change vs reference (prevClose for intraday, previous point for daily)
     let ref;
     if (chartPeriod === '1d') {
       ref = quoteCache['1d']?.prevClose || currentChartSeries[0].c;
     } else {
-      ref = idx > 0 ? currentChartSeries[idx - 1].c : p.c;
+      ref = idx > 0 ? seriesRef[idx - 1].c : p.c;
     }
     const change = p.c - ref;
     const pct = ref ? (change / ref * 100) : 0;
@@ -1110,8 +1179,13 @@ function setupCrosshair() {
 
     tooltip.querySelector('.tt-time').textContent = fmt;
     const priceEl = tooltip.querySelector('.tt-price');
-    priceEl.textContent = p.c.toFixed(3);
-    priceEl.style.color = isUp ? 'var(--red)' : 'var(--green)';
+    // For candlestick show OHLC
+    if (chartPeriod === 'daily' && p.o != null) {
+      priceEl.innerHTML = `开 ${(p.o).toFixed(3)} 收 <span style="color:${isUp?'var(--red)':'var(--green)'}">${p.c.toFixed(3)}</span><br>高 ${(p.h||p.c).toFixed(3)} 低 ${(p.l||p.c).toFixed(3)}`;
+    } else {
+      priceEl.textContent = p.c.toFixed(3);
+      priceEl.style.color = isUp ? 'var(--red)' : 'var(--green)';
+    }
     const changeEl = tooltip.querySelector('.tt-change');
     changeEl.textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
     changeEl.style.color = isUp ? 'var(--red)' : 'var(--green)';
@@ -1127,13 +1201,46 @@ function setupCrosshair() {
     tooltip.style.display = 'none';
   }
 
+  // Single touch: crosshair
   wrap.onmousedown = e => showAt(e.clientX);
   wrap.onmousemove = e => { if (e.buttons) showAt(e.clientX); };
   wrap.onmouseup = hide;
   wrap.onmouseleave = hide;
-  wrap.ontouchstart = e => { e.preventDefault(); showAt(e.touches[0].clientX); };
-  wrap.ontouchmove = e => { e.preventDefault(); showAt(e.touches[0].clientX); };
-  wrap.ontouchend = hide;
+
+  // Touch: single finger = crosshair, pinch = zoom candlestick
+  let lastPinchDist = 0;
+  wrap.ontouchstart = e => {
+    if (e.touches.length === 1) { e.preventDefault(); showAt(e.touches[0].clientX); }
+    if (e.touches.length === 2) { lastPinchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY); }
+  };
+  wrap.ontouchmove = e => {
+    if (e.touches.length === 1) { e.preventDefault(); showAt(e.touches[0].clientX); }
+    if (e.touches.length === 2 && chartPeriod === 'daily' && currentChartSeries) {
+      e.preventDefault();
+      const dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+      const delta = dist - lastPinchDist;
+      if (Math.abs(delta) > 8) {
+        if (delta > 0) candleViewCount = Math.max(10, candleViewCount - 4); // zoom in
+        else candleViewCount = Math.min(currentChartSeries.length, candleViewCount + 4); // zoom out
+        candleViewStart = Math.max(0, currentChartSeries.length - candleViewCount);
+        lastPinchDist = dist;
+        renderCandlestick(quoteCache['daily']);
+        renderTimeAxis(currentChartSeries.slice(candleViewStart, candleViewStart + candleViewCount));
+      }
+    }
+  };
+  wrap.ontouchend = e => { if (e.touches.length === 0) hide(); };
+
+  // Mouse wheel zoom for desktop
+  wrap.onwheel = e => {
+    if (chartPeriod !== 'daily' || !currentChartSeries) return;
+    e.preventDefault();
+    if (e.deltaY < 0) candleViewCount = Math.max(10, candleViewCount - 3);
+    else candleViewCount = Math.min(currentChartSeries.length, candleViewCount + 3);
+    candleViewStart = Math.max(0, currentChartSeries.length - candleViewCount);
+    renderCandlestick(quoteCache['daily']);
+    renderTimeAxis(currentChartSeries.slice(candleViewStart, candleViewStart + candleViewCount));
+  };
 }
 
 // ==================== AES-256-GCM Encryption ====================
