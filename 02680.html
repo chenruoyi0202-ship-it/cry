@@ -1295,11 +1295,12 @@ function renderCandlestick(data) {
     const c = p.c;
     const h = p.h != null ? p.h : Math.max(o, c);
     const l = p.l != null ? p.l : Math.min(o, c);
-    // Compare close vs previous day's close for color
-    const prevIdx = candleViewStart + i - 1;
-    const prevClose = prevIdx >= 0 && series[prevIdx] ? series[prevIdx].c : o;
-    const isUp = c >= prevClose;
-    const color = isUp ? '#ef4444' : '#22c55e';
+    // Compare close vs previous day's close for color (red=up, green=down)
+    const absIdx = candleViewStart + i;
+    const prevClose = absIdx > 0 && series[absIdx - 1] ? series[absIdx - 1].c : o;
+    const isUp = c > prevClose;
+    const isFlat = c === prevClose;
+    const color = isFlat ? '#6b7280' : (isUp ? '#ef4444' : '#22c55e');
     const cx = PAD + gap * i + gap / 2;
     const bodyTop = toY(Math.max(o, c));
     const bodyBot = toY(Math.min(o, c));
