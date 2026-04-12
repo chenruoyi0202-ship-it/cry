@@ -207,7 +207,7 @@ body{
   <div class="lock-box">
     <h2>02680 创陞控股</h2>
     <p>输入密码查看分析内容</p>
-    <input type="password" id="lockPassword" placeholder="密码" maxlength="10" inputmode="numeric" onkeydown="if(event.key==='Enter')unlockPage()">
+    <input type="password" id="lockPassword" placeholder="密码" maxlength="20" onkeydown="if(event.key==='Enter')unlockPage()">
     <button class="lock-btn" onclick="unlockPage()">进入</button>
     <div class="lock-error" id="lockError">密码错误</div>
   </div>
@@ -1836,7 +1836,7 @@ function updateThemeIcon() {
 // ==================== Init ====================
 // ==================== Guest / Owner Mode ====================
 const OWNER_KEY = 'stock_02680_owner';
-const GUEST_PASS = '2680';
+const GUEST_PASS = 'zuge2680';
 let isOwner = false;
 
 function checkAccess() {
