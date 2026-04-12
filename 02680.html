@@ -569,9 +569,34 @@ const SEED_ANALYSES = [
   }
 ];
 
+const SEED_CLUES = [
+  {"description": "目标价 20-25（保守），30-40 可以幻想。王庭发要出货最少要 30 才比较好出，溢价五倍左右"},
+  {"description": "减仓节奏：16 以下不减 → 18-20 减一点点 → 20-25 多减 → 25-30 全清"},
+  {"description": "出货信号：成交量超过 1 亿 = 庄家出货。两三千万成交只是在消化获利盘"},
+  {"description": "王庭发实际持仓成本 ~8 块（对外说 2.7 亿，实际现金总共拿了 4 亿多，因为创升有净资产要等价收购）。8 块铁底，10 块强支撑"},
+  {"description": "股权 90%+ 集中：王庭发 75% + 企业家朋友金主 ~15%，公众流通仅 ~10%。货源归边，拉多少他说了算"},
+  {"description": "三波行情预测：① 证监会批准→邀约（已发生）② 邀约结束→换人换董事 ③ 改名→注入业务。每波都有拉升机会"},
+  {"description": "邀约时间线：4/8 开始，4/29 结束。邀约期间横盘为主，结束后才开始拉"},
+  {"description": "改名：邀约结束后改名（确认不叫金母鸡，新名待定）。上市主体要跟厦门金母鸡区分开"},
+  {"description": "换人：邀约后把董事全部变更，原班人马全部剔除，金母鸡金融证券班底全部装进去"},
+  {"description": "注入业务：金融业务注入（主板金融壳有牌照，短期可注入不需要等三年）。把 2680 做成基金主体，接 PI 以上 800 万高级客户认购基金"},
+  {"description": "派息确认：王庭发 4/7 亲口说会派息。可做长线理财型持有，半年一年以上"},
+  {"description": "拆股：发哥说未来会拆股，拆股属于重大利好，拆股之前大概率先拉高再拆"},
+  {"description": "定增配股：会配股引入投资者。收了 75% 后如果邀约再收到超过公众最低持股量，要停牌配股"},
+  {"description": "稳定币牌照：金融牌照批完后马上申请一号稳定币牌照，律师材料已筹备好，预计 4-5 月批下来"},
+  {"description": "基金规模：旗下基金总共 10 亿美金，年化收益 30-70%（最高峰 89%）。几百个操盘手，客户百万起步认购"},
+  {"description": "公司现金：账上躺着 2 亿现金，壳非常干净，无物业资产全是现金，物业都是租赁的"},
+  {"description": "IPO 项目：手上 8 个帮人上市的 IPO 项目，今年会上 2 个，公司现在是赚钱的"},
+  {"description": "背后金主：香港美林证券主席、斯伦贝谢能源中国区总裁许成祝。年会站台：蔡文胜（美图）、沈南鹏（红杉）、张磊（高瓴）"},
+  {"description": "参照标的 3928：走势最像，4 块→18 块用了 4 个月。边拉边洗，主席机构出来吃获利盘后爆拉"},
+  {"description": "参照标的 2442：基金经理几千万收购，涨了 30 倍"},
+  {"description": "参照标的 3938：基金经理 0.6 收购，涨了 5 倍。同样做量化"},
+  {"description": "主力券商识别：创升（明牌自己人）、长桥（金母鸡借牌）、法巴（主席）、光大/国泰（内地御用）、华盛/花旗/汇丰（打手）"}
+];
+
 function seedIfNeeded() {
   if (localStorage.getItem(SEEDED_KEY)) return;
-  if (SEED_ANALYSES.length === 0) return;
+  if (SEED_ANALYSES.length === 0 && SEED_CLUES.length === 0) return;
   loadAnalyses();
   if (analyses.length === 0) {
     analyses = SEED_ANALYSES.map((s, i) => ({
@@ -587,6 +612,17 @@ function seedIfNeeded() {
       updatedAt: Date.now() - (SEED_ANALYSES.length - i) * 1000
     }));
     saveAnalyses();
+  }
+  loadEvents();
+  if (events.length === 0) {
+    events = SEED_CLUES.map((s, i) => ({
+      id: crypto.randomUUID(),
+      description: s.description,
+      order: i,
+      createdAt: Date.now() - (SEED_CLUES.length - i) * 1000,
+      updatedAt: Date.now() - (SEED_CLUES.length - i) * 1000
+    }));
+    saveEvents();
   }
   localStorage.setItem(SEEDED_KEY, '1');
 }
