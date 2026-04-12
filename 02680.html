@@ -13,6 +13,12 @@
   --gold:#CA8A04;--gold-light:#FBBF24;
   --green:#22c55e;--red:#ef4444;--orange:#f97316;--gray:#6b7280;
 }
+[data-theme="light"]{
+  --bg:#f5f5f7;--card:#ffffff;--border:rgba(0,0,0,0.08);
+  --text:#1a1a1a;--text-muted:#6b7280;
+  --gold:#a16207;--gold-light:#ca8a04;
+  --green:#16a34a;--red:#dc2626;--orange:#ea580c;--gray:#9ca3af;
+}
 html{-webkit-text-size-adjust:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;
@@ -20,22 +26,42 @@ body{
 }
 .page{max-width:760px;margin:0 auto;padding:16px 12px 60px}
 
-/* Header */
-.header{text-align:center;padding:24px 0 16px;position:relative}
-.header h1{font-size:24px;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.header .subtitle{font-size:13px;color:var(--text-muted);margin-top:4px}
-.header .note{font-size:11px;color:rgba(255,255,255,0.25);margin-top:6px}
+/* Settings button */
+.settings-btn{position:absolute;top:16px;right:0;width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;z-index:10}
+.settings-btn:hover{background:rgba(255,255,255,0.1)}
+.settings-btn svg{width:16px;height:16px;stroke:var(--text-muted);fill:none;stroke-width:1.5}
+.sync-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.sync-modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:400px;width:100%}
+.sync-modal h3{font-size:16px;font-weight:600;color:var(--gold-light);margin-bottom:12px}
+.sync-modal .close-btn{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer}
 
-/* Price card */
-.price-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.price-main{flex:1;min-width:140px}
-.price-now{font-size:28px;font-weight:700;color:var(--gold-light)}
-.price-change{font-size:14px;margin-top:2px}
+/* Stock header */
+.stock-header{padding:16px 0 8px;position:relative}
+.stock-name-row{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+.stock-code{font-size:18px;font-weight:700;color:var(--text)}
+.stock-name{font-size:18px;font-weight:700;color:var(--text)}
+.stock-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(202,138,4,0.15);color:var(--gold-light);font-weight:500}
+.stock-status{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+/* Price section */
+.price-section{padding:8px 0 12px}
+.price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.price-now{font-size:36px;font-weight:700;font-variant-numeric:tabular-nums}
+.price-now.up{color:var(--green)}.price-now.down{color:var(--red)}.price-now.flat{color:var(--text)}
+.price-change{font-size:14px;font-weight:500}
 .price-change.up{color:var(--green)}.price-change.down{color:var(--red)}.price-change.flat{color:var(--gray)}
-.price-time{font-size:11px;color:var(--text-muted);margin-top:4px}
-.price-chart{flex:0 0 auto;width:280px;height:70px;position:relative}
-.price-chart svg{width:100%;height:100%}
-.price-status{font-size:12px;color:var(--text-muted);width:100%}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:10px 0;margin:8px 0 12px}
+.stat-item{text-align:center;padding:4px 0}
+.stat-label{font-size:10px;color:var(--text-muted);letter-spacing:.3px}
+.stat-value{font-size:13px;font-weight:600;color:var(--text);margin-top:2px;font-variant-numeric:tabular-nums}
+.stat-value.up{color:var(--green)}.stat-value.down{color:var(--red)}
+
+/* Chart */
+.price-chart-wrap{width:100%;height:100px;margin-bottom:8px;position:relative}
+.price-chart-wrap svg{width:100%;height:100%}
+.price-status{font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px}
 .price-status a{color:var(--gold);cursor:pointer;text-decoration:underline}
 
 /* Sync bar */
@@ -103,8 +129,11 @@ body{
 .badge-negative{background:rgba(239,68,68,0.15);color:#ef4444}
 .badge-type{background:rgba(202,138,4,0.15);color:var(--gold-light)}
 .badge-legacy{background:rgba(139,92,246,0.15);color:#a78bfa}
-.record-preview{font-size:13px;color:var(--text-muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word}
+.record{display:flex;gap:10px}
+.record-body{flex:1;min-width:0}
+.record-preview{font-size:13px;color:var(--text-muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:10;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word}
 .record-preview.expanded{display:block;-webkit-line-clamp:unset}
+.record-side{flex:0 0 auto;display:flex;flex-direction:column;gap:4px;padding-top:2px}
 .record-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
 .record-actions{display:flex;gap:6px;margin-top:8px}
@@ -116,9 +145,9 @@ body{
 
 /* Responsive */
 @media(max-width:480px){
-  .price-chart{width:100%}
   .form-row.two,.form-row.three{grid-template-columns:1fr}
-  .price-card{flex-direction:column;align-items:flex-start}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .record-side{flex-direction:row;flex-wrap:wrap}
 }
 @media(min-width:768px){
   .page{padding:32px 24px 80px}
@@ -129,36 +158,48 @@ body{
 <body>
 <div class="page">
 
-<!-- Header -->
-<header class="header">
-  <h1>02680.HK 创陞控股</h1>
-  <div class="subtitle">金母鸡借壳 · 王庭发收购 · 分析追踪</div>
-</header>
-
-<!-- Price Card -->
-<div class="price-card" id="priceCard">
-  <div class="price-main">
-    <div class="price-now" id="priceNow">--</div>
-    <div class="price-change flat" id="priceChange">获取中...</div>
-    <div class="price-time" id="priceTime"></div>
+<!-- Stock Header (Futu style) -->
+<div class="stock-header">
+  <div class="settings-btn" onclick="toggleTheme()" title="切换主题" style="right:40px" id="themeBtn">
+    <svg viewBox="0 0 24 24" id="themeIcon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
   </div>
-  <div class="price-chart" id="priceChartWrap">
-    <svg id="priceChart" viewBox="0 0 280 70" preserveAspectRatio="none"></svg>
+  <div class="settings-btn" onclick="toggleSyncModal()" title="同步设置">
+    <svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
   </div>
-  <div class="price-status" id="priceStatus"></div>
+  <div class="stock-name-row">
+    <span class="stock-code">02680</span>
+    <span class="stock-name">创陞控股</span>
+    <span class="stock-tag">港股</span>
+  </div>
+  <div class="stock-status" id="stockStatus">获取行情中...</div>
 </div>
 
-<!-- Sync Bar -->
-<div class="sync-bar" id="syncBar" onclick="switchTab('sync')">
-  <div class="sync-dot" id="syncDot"></div>
-  <span id="syncLabel">未配置同步</span>
+<!-- Price -->
+<div class="price-section">
+  <div class="price-row">
+    <span class="price-now flat" id="priceNow">--</span>
+    <span class="price-change flat" id="priceChange"></span>
+  </div>
 </div>
+
+<!-- Stats Grid -->
+<div class="stats-grid" id="statsGrid">
+  <div class="stat-item"><div class="stat-label">最高</div><div class="stat-value" id="statHigh">--</div></div>
+  <div class="stat-item"><div class="stat-label">最低</div><div class="stat-value" id="statLow">--</div></div>
+  <div class="stat-item"><div class="stat-label">今开</div><div class="stat-value" id="statOpen">--</div></div>
+  <div class="stat-item"><div class="stat-label">昨收</div><div class="stat-value" id="statPrevClose">--</div></div>
+</div>
+
+<!-- Chart -->
+<div class="price-chart-wrap" id="priceChartWrap">
+  <svg id="priceChart" viewBox="0 0 700 100" preserveAspectRatio="none"></svg>
+</div>
+<div class="price-status" id="priceStatus"></div>
 
 <!-- Tabs -->
 <div class="tabs">
   <div class="tab active" onclick="switchTab('analyses')">我的分析</div>
   <div class="tab" onclick="switchTab('events')">重要事件</div>
-  <div class="tab" onclick="switchTab('sync')">同步</div>
 </div>
 
 <!-- Tab 1: Analyses -->
@@ -197,28 +238,25 @@ body{
   <div id="eventList"></div>
 </div>
 
-<!-- Tab 3: Sync -->
-<div class="tab-content" id="tabSync">
-  <div class="form-section">
-    <div class="form-title">云端同步设置</div>
-    <div class="info-box">
-      数据使用 AES-256 加密后存储到 GitHub 仓库。<br>
-      填入 Token 即可在多个设备间同步数据。
-    </div>
+</div><!-- .page -->
+
+<!-- Sync Modal -->
+<div class="sync-modal-overlay" id="syncModal" style="display:none" onclick="if(event.target===this)toggleSyncModal()">
+  <div class="sync-modal">
+    <h3>同步设置</h3>
+    <div class="info-box" style="margin-bottom:12px">填入 Token 即可在多个设备间同步数据（AES-256 加密）</div>
     <div class="form-group" style="margin-bottom:8px">
-      <label>GitHub Personal Access Token</label>
+      <label>GitHub Token</label>
       <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
-      <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 勾选 repo 权限</div>
     </div>
-    <div class="form-actions">
-      <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="saveSyncConfig()">保存</button>
       <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
-      <button class="btn btn-danger" onclick="clearSyncConfig()">清除同步配置</button>
+      <button class="btn btn-danger" onclick="clearSyncConfig()">清除</button>
     </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text-muted)" id="syncStatusText"></div>
   </div>
 </div>
-
-</div><!-- .page -->
 
 <script>
 // ==================== Constants ====================
@@ -537,10 +575,12 @@ function switchTab(name) {
     document.getElementById('tabEvents').classList.add('active');
     document.querySelectorAll('.tab')[1].classList.add('active');
     renderEvents();
-  } else if (name === 'sync') {
-    document.getElementById('tabSync').classList.add('active');
-    document.querySelectorAll('.tab')[2].classList.add('active');
   }
+}
+
+function toggleSyncModal() {
+  const modal = document.getElementById('syncModal');
+  modal.style.display = modal.style.display === 'none' ? '' : 'none';
 }
 
 // ==================== Analysis CRUD ====================
@@ -611,6 +651,7 @@ function deleteAnalysis(id) {
 
 function toggleExpand(btn) {
   const preview = btn.closest('.record').querySelector('.record-preview');
+  if (!preview) return;
   preview.classList.toggle('expanded');
   btn.textContent = preview.classList.contains('expanded') ? '收起' : '展开';
 }
@@ -633,12 +674,15 @@ function renderAnalyses() {
 
   container.innerHTML = list.map(a => {
     const legacyBadge = a.isLegacy ? ' <span class="badge badge-legacy">历史</span>' : '';
+    const dayStr = getDayOfWeek(a.date);
     return `<div class="record">
-      <div class="record-header">
-        <span class="record-date">${esc(a.date)}</span>${legacyBadge}
+      <div class="record-body">
+        <div class="record-header">
+          <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
+        </div>
+        <div class="record-preview">${esc(a.body)}</div>
       </div>
-      <div class="record-preview">${esc(a.body)}</div>
-      <div class="record-actions">
+      <div class="record-side">
         <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
         <button class="btn btn-secondary" onclick="editAnalysis('${a.id}')">编辑</button>
         <button class="btn btn-secondary" onclick="deleteAnalysis('${a.id}')">删除</button>
@@ -727,13 +771,16 @@ function renderEvents() {
 
   container.innerHTML = list.map(e => {
     const typeBadge = `<span class="badge badge-type">${EVENT_TYPE_LABELS[e.type]||e.type}</span>`;
+    const dayStr = getDayOfWeek(e.date);
     return `<div class="record">
-      <div class="record-header">
-        <span class="record-date">${esc(e.date)}</span>
-        ${typeBadge}
+      <div class="record-body">
+        <div class="record-header">
+          <span class="record-date">${esc(e.date)}（${dayStr}）</span>
+          ${typeBadge}
+        </div>
+        <div class="record-preview">${esc(e.description)}</div>
       </div>
-      <div class="record-preview">${esc(e.description)}</div>
-      <div class="record-actions">
+      <div class="record-side">
         <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
         <button class="btn btn-secondary" onclick="editEvent('${e.id}')">编辑</button>
         <button class="btn btn-secondary" onclick="deleteEvent('${e.id}')">删除</button>
@@ -790,18 +837,39 @@ async function fetchQuote() {
 
 function renderPrice(data) {
   const { price, prevClose, series } = data;
-  document.getElementById('priceNow').textContent = price ? price.toFixed(2) : '--';
+  const priceEl = document.getElementById('priceNow');
+  priceEl.textContent = price ? price.toFixed(3) : '--';
 
   if (price && prevClose) {
     const change = price - prevClose;
     const pct = (change / prevClose * 100);
     const sign = change >= 0 ? '+' : '';
     const cls = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
-    document.getElementById('priceChange').textContent = `${sign}${change.toFixed(3)} (${sign}${pct.toFixed(2)}%)`;
+    priceEl.className = `price-now ${cls}`;
+    document.getElementById('priceChange').textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
     document.getElementById('priceChange').className = `price-change ${cls}`;
   }
 
-  document.getElementById('priceTime').textContent = data.fetchedAt ? `数据时间: ${new Date(data.fetchedAt).toLocaleString('zh-CN')}` : '';
+  // Stats
+  if (series && series.length > 0) {
+    const closes = series.map(p => p.c);
+    const high = Math.max(...closes);
+    const low = Math.min(...closes);
+    const open = closes[0];
+    document.getElementById('statHigh').textContent = high.toFixed(3);
+    document.getElementById('statLow').textContent = low.toFixed(3);
+    document.getElementById('statOpen').textContent = open.toFixed(3);
+    // Color high/low relative to prevClose
+    if (prevClose) {
+      document.getElementById('statHigh').className = 'stat-value ' + (high > prevClose ? 'up' : high < prevClose ? 'down' : '');
+      document.getElementById('statLow').className = 'stat-value ' + (low > prevClose ? 'up' : low < prevClose ? 'down' : '');
+      document.getElementById('statOpen').className = 'stat-value ' + (open > prevClose ? 'up' : open < prevClose ? 'down' : '');
+    }
+  }
+  if (prevClose) document.getElementById('statPrevClose').textContent = prevClose.toFixed(3);
+
+  const time = data.fetchedAt ? new Date(data.fetchedAt).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
+  document.getElementById('stockStatus').textContent = time ? `${time}` : '';
   document.getElementById('priceStatus').textContent = '';
 
   if (series && series.length > 1) renderSparkline(series);
@@ -809,7 +877,7 @@ function renderPrice(data) {
 
 function renderSparkline(series) {
   const svg = document.getElementById('priceChart');
-  const W = 280, H = 70, PAD = 2;
+  const W = 700, H = 100, PAD = 2;
   const prices = series.map(p => p.c);
   const minP = Math.min(...prices), maxP = Math.max(...prices);
   const range = maxP - minP || 1;
@@ -820,15 +888,14 @@ function renderSparkline(series) {
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
 
-  const gradId = 'sparkGrad';
   svg.innerHTML = `
     <defs>
-      <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#FBBF24" stop-opacity="0.3"/>
+      <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FBBF24" stop-opacity="0.25"/>
         <stop offset="100%" stop-color="#FBBF24" stop-opacity="0"/>
       </linearGradient>
     </defs>
-    <polygon points="${points.join(' ')} ${W-PAD},${H} ${PAD},${H}" fill="url(#${gradId})" />
+    <polygon points="${points.join(' ')} ${W-PAD},${H} ${PAD},${H}" fill="url(#sparkGrad)" />
     <polyline points="${points.join(' ')}" fill="none" stroke="#FBBF24" stroke-width="1.5" stroke-linejoin="round" />
   `;
 }
@@ -914,19 +981,12 @@ function loadSyncConfig() {
   updateSyncBar();
 }
 function updateSyncBar() {
-  const dot = document.getElementById('syncDot');
-  const label = document.getElementById('syncLabel');
-  if (!syncConfig) {
-    dot.className = 'sync-dot';
-    label.textContent = '未配置同步 - 点击设置';
-  } else {
-    dot.className = 'sync-dot connected';
-    label.textContent = '已连接 · ' + syncConfig.repo;
-  }
+  const el = document.getElementById('syncStatusText');
+  if (el) el.textContent = syncConfig ? '已连接' : '未配置';
 }
 function setSyncStatus(status, text) {
-  document.getElementById('syncDot').className = 'sync-dot ' + status;
-  document.getElementById('syncLabel').textContent = text;
+  const el = document.getElementById('syncStatusText');
+  if (el) el.textContent = text;
 }
 function saveSyncConfig() {
   const token = document.getElementById('inputToken').value.trim();
@@ -1020,9 +1080,49 @@ async function pushToCloud() {
 
 // ==================== Utils ====================
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+const WEEKDAYS = ['周日','周一','周二','周三','周四','周五','周六'];
+function getDayOfWeek(dateStr) {
+  if (!dateStr || dateStr.length < 10) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return isNaN(d) ? '' : WEEKDAYS[d.getDay()];
+}
+
+// ==================== Theme ====================
+function initTheme() {
+  const saved = localStorage.getItem('stock_02680_theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  updateThemeIcon();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('stock_02680_theme')) {
+      document.documentElement.setAttribute('data-theme', e.matches ? '' : 'light');
+      updateThemeIcon();
+    }
+  });
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? '' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('stock_02680_theme', next || 'dark');
+  updateThemeIcon();
+}
+function updateThemeIcon() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isLight
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
+  }
+}
 
 // ==================== Init ====================
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   seedIfNeeded();
   loadAnalyses();
   loadEvents();
