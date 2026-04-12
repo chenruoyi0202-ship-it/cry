@@ -58,8 +58,13 @@ body{
 .stat-value{font-size:13px;font-weight:600;color:var(--text);margin-top:2px;font-variant-numeric:tabular-nums}
 .stat-value.up{color:var(--green)}.stat-value.down{color:var(--red)}
 
+/* Chart tabs */
+.chart-tabs{display:flex;gap:0;margin-bottom:4px}
+.chart-tab{padding:5px 14px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;border-radius:6px;transition:all .2s}
+.chart-tab.active{background:rgba(202,138,4,0.15);color:var(--gold-light)}
+
 /* Chart */
-.price-chart-wrap{width:100%;height:100px;margin-bottom:8px;position:relative}
+.price-chart-wrap{width:100%;height:120px;margin-bottom:8px;position:relative}
 .price-chart-wrap svg{width:100%;height:100%}
 .price-status{font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px}
 .price-status a{color:var(--gold);cursor:pointer;text-decoration:underline}
@@ -129,11 +134,10 @@ body{
 .badge-negative{background:rgba(239,68,68,0.15);color:#ef4444}
 .badge-type{background:rgba(202,138,4,0.15);color:var(--gold-light)}
 .badge-legacy{background:rgba(139,92,246,0.15);color:#a78bfa}
-.record{display:flex;gap:10px}
-.record-body{flex:1;min-width:0}
-.record-preview{font-size:13px;color:var(--text-muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:10;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word}
-.record-preview.expanded{display:block;-webkit-line-clamp:unset}
-.record-side{flex:0 0 auto;display:flex;flex-direction:column;gap:4px;padding-top:2px}
+.record-preview{font-size:13px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.record-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.record-actions .btn{padding:3px 10px;font-size:11px;opacity:.5;transition:opacity .2s}
+.record:hover .record-actions .btn,.record-actions .btn:focus{opacity:1}
 .record-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
 .record-actions{display:flex;gap:6px;margin-top:8px}
@@ -147,7 +151,6 @@ body{
 @media(max-width:480px){
   .form-row.two,.form-row.three{grid-template-columns:1fr}
   .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .record-side{flex-direction:row;flex-wrap:wrap}
 }
 @media(min-width:768px){
   .page{padding:32px 24px 80px}
@@ -191,8 +194,12 @@ body{
 </div>
 
 <!-- Chart -->
+<div class="chart-tabs">
+  <div class="chart-tab active" onclick="switchChartPeriod('1d')">分时</div>
+  <div class="chart-tab" onclick="switchChartPeriod('daily')">日K</div>
+</div>
 <div class="price-chart-wrap" id="priceChartWrap">
-  <svg id="priceChart" viewBox="0 0 700 100" preserveAspectRatio="none"></svg>
+  <svg id="priceChart" viewBox="0 0 700 120" preserveAspectRatio="none"></svg>
 </div>
 <div class="price-status" id="priceStatus"></div>
 
@@ -649,12 +656,6 @@ function deleteAnalysis(id) {
   autoSync();
 }
 
-function toggleExpand(btn) {
-  const preview = btn.closest('.record').querySelector('.record-preview');
-  if (!preview) return;
-  preview.classList.toggle('expanded');
-  btn.textContent = preview.classList.contains('expanded') ? '收起' : '展开';
-}
 
 function renderAnalyses() {
   const query = (document.getElementById('aSearch').value || '').toLowerCase();
@@ -676,14 +677,11 @@ function renderAnalyses() {
     const legacyBadge = a.isLegacy ? ' <span class="badge badge-legacy">历史</span>' : '';
     const dayStr = getDayOfWeek(a.date);
     return `<div class="record">
-      <div class="record-body">
-        <div class="record-header">
-          <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
-        </div>
-        <div class="record-preview">${esc(a.body)}</div>
+      <div class="record-header">
+        <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
       </div>
-      <div class="record-side">
-        <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
+      <div class="record-preview">${esc(a.body)}</div>
+      <div class="record-actions">
         <button class="btn btn-secondary" onclick="editAnalysis('${a.id}')">编辑</button>
         <button class="btn btn-secondary" onclick="deleteAnalysis('${a.id}')">删除</button>
       </div>
@@ -773,15 +771,12 @@ function renderEvents() {
     const typeBadge = `<span class="badge badge-type">${EVENT_TYPE_LABELS[e.type]||e.type}</span>`;
     const dayStr = getDayOfWeek(e.date);
     return `<div class="record">
-      <div class="record-body">
-        <div class="record-header">
-          <span class="record-date">${esc(e.date)}（${dayStr}）</span>
-          ${typeBadge}
-        </div>
-        <div class="record-preview">${esc(e.description)}</div>
+      <div class="record-header">
+        <span class="record-date">${esc(e.date)}（${dayStr}）</span>
+        ${typeBadge}
       </div>
-      <div class="record-side">
-        <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
+      <div class="record-preview">${esc(e.description)}</div>
+      <div class="record-actions">
         <button class="btn btn-secondary" onclick="editEvent('${e.id}')">编辑</button>
         <button class="btn btn-secondary" onclick="deleteEvent('${e.id}')">删除</button>
       </div>
@@ -790,16 +785,51 @@ function renderEvents() {
 }
 
 // ==================== Price Fetch ====================
+let chartPeriod = '1d'; // '1d' = intraday, 'daily' = daily K
+let quoteCache = {}; // { '1d': {...}, 'daily': {...} }
+
+const CHART_CONFIGS = {
+  '1d':    { interval: '5m',  range: '1d' },
+  'daily': { interval: '1d',  range: '6mo' },
+};
+
+function switchChartPeriod(period) {
+  chartPeriod = period;
+  document.querySelectorAll('.chart-tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.chart-tab').forEach(el => {
+    if ((period === '1d' && el.textContent === '分时') || (period === 'daily' && el.textContent === '日K')) el.classList.add('active');
+  });
+  const cached = quoteCache[period];
+  if (cached && Date.now() - cached.fetchedAt < 5 * 60 * 1000) {
+    renderChart(cached);
+  } else {
+    fetchChartData(period);
+  }
+}
+
 async function fetchQuote() {
-  const cache = sessionStorage.getItem(QUOTE_CACHE_KEY);
-  if (cache) {
+  // Fetch intraday first (default view), then daily in background
+  await fetchChartData('1d');
+  fetchChartData('daily');
+}
+
+async function fetchChartData(period) {
+  const cfg = CHART_CONFIGS[period];
+  const cacheKey = QUOTE_CACHE_KEY + '_' + period;
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
     try {
-      const c = JSON.parse(cache);
-      if (Date.now() - c.fetchedAt < 5 * 60 * 1000) { renderPrice(c); return; }
+      const c = JSON.parse(cached);
+      if (Date.now() - c.fetchedAt < 5 * 60 * 1000) {
+        quoteCache[period] = c;
+        if (period === chartPeriod) renderChart(c);
+        if (period === '1d') renderPriceHeader(c);
+        return;
+      }
     } catch {}
   }
 
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}?interval=1d&range=6mo`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}?interval=${cfg.interval}&range=${cfg.range}`;
   const proxies = [
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
@@ -815,27 +845,33 @@ async function fetchQuote() {
         const result = data.chart.result[0];
         const meta = result.meta;
         const timestamps = result.timestamp || [];
-        const closes = (result.indicators.quote[0].close || []).map(v => v === null ? undefined : v);
+        const quote = result.indicators.quote[0];
+        const closes = (quote.close || []).map(v => v === null ? undefined : v);
+        const highs = (quote.high || []).map(v => v === null ? undefined : v);
+        const lows = (quote.low || []).map(v => v === null ? undefined : v);
+        const opens = (quote.open || []).map(v => v === null ? undefined : v);
         const quoteData = {
           fetchedAt: Date.now(),
+          period,
           price: meta.regularMarketPrice,
           prevClose: meta.chartPreviousClose || meta.previousClose,
-          series: timestamps.map((t, i) => ({ t: t * 1000, c: closes[i] })).filter(p => p.c !== undefined)
+          series: timestamps.map((t, i) => ({ t: t * 1000, c: closes[i], h: highs[i], l: lows[i], o: opens[i] })).filter(p => p.c !== undefined)
         };
-        sessionStorage.setItem(QUOTE_CACHE_KEY, JSON.stringify(quoteData));
-        renderPrice(quoteData);
+        sessionStorage.setItem(cacheKey, JSON.stringify(quoteData));
+        quoteCache[period] = quoteData;
+        if (period === chartPeriod) renderChart(quoteData);
+        if (period === '1d') renderPriceHeader(quoteData);
         return;
       } catch { continue; }
     }
   }
 
-  document.getElementById('priceNow').textContent = '--';
-  document.getElementById('priceChange').textContent = '无法获取报价';
-  document.getElementById('priceChange').className = 'price-change flat';
-  document.getElementById('priceStatus').innerHTML = '<a onclick="fetchQuote()">点击重试</a>';
+  if (period === chartPeriod) {
+    document.getElementById('priceStatus').innerHTML = '<a onclick="fetchQuote()">点击重试</a>';
+  }
 }
 
-function renderPrice(data) {
+function renderPriceHeader(data) {
   const { price, prevClose, series } = data;
   const priceEl = document.getElementById('priceNow');
   priceEl.textContent = price ? price.toFixed(3) : '--';
@@ -850,16 +886,15 @@ function renderPrice(data) {
     document.getElementById('priceChange').className = `price-change ${cls}`;
   }
 
-  // Stats
   if (series && series.length > 0) {
-    const closes = series.map(p => p.c);
-    const high = Math.max(...closes);
-    const low = Math.min(...closes);
-    const open = closes[0];
+    const highs = series.map(p => p.h || p.c);
+    const lows = series.map(p => p.l || p.c);
+    const high = Math.max(...highs);
+    const low = Math.min(...lows);
+    const open = series[0].o || series[0].c;
     document.getElementById('statHigh').textContent = high.toFixed(3);
     document.getElementById('statLow').textContent = low.toFixed(3);
     document.getElementById('statOpen').textContent = open.toFixed(3);
-    // Color high/low relative to prevClose
     if (prevClose) {
       document.getElementById('statHigh').className = 'stat-value ' + (high > prevClose ? 'up' : high < prevClose ? 'down' : '');
       document.getElementById('statLow').className = 'stat-value ' + (low > prevClose ? 'up' : low < prevClose ? 'down' : '');
@@ -869,18 +904,25 @@ function renderPrice(data) {
   if (prevClose) document.getElementById('statPrevClose').textContent = prevClose.toFixed(3);
 
   const time = data.fetchedAt ? new Date(data.fetchedAt).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
-  document.getElementById('stockStatus').textContent = time ? `${time}` : '';
+  document.getElementById('stockStatus').textContent = time || '';
   document.getElementById('priceStatus').textContent = '';
-
-  if (series && series.length > 1) renderSparkline(series);
 }
 
-function renderSparkline(series) {
+function renderChart(data) {
+  const { series, prevClose } = data;
+  if (!series || series.length < 2) return;
   const svg = document.getElementById('priceChart');
-  const W = 700, H = 100, PAD = 2;
+  const W = 700, H = 120, PAD = 4;
   const prices = series.map(p => p.c);
   const minP = Math.min(...prices), maxP = Math.max(...prices);
   const range = maxP - minP || 1;
+
+  // Prev close reference line for intraday
+  let refLineHtml = '';
+  if (chartPeriod === '1d' && prevClose) {
+    const refY = PAD + (1 - (prevClose - minP) / range) * (H - 2 * PAD);
+    refLineHtml = `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.5"/>`;
+  }
 
   const points = series.map((p, i) => {
     const x = PAD + (i / (series.length - 1)) * (W - 2 * PAD);
@@ -888,15 +930,17 @@ function renderSparkline(series) {
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
 
+  const color = chartPeriod === '1d' ? '#3b82f6' : '#FBBF24';
   svg.innerHTML = `
     <defs>
       <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#FBBF24" stop-opacity="0.25"/>
-        <stop offset="100%" stop-color="#FBBF24" stop-opacity="0"/>
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
       </linearGradient>
     </defs>
+    ${refLineHtml}
     <polygon points="${points.join(' ')} ${W-PAD},${H} ${PAD},${H}" fill="url(#sparkGrad)" />
-    <polyline points="${points.join(' ')}" fill="none" stroke="#FBBF24" stroke-width="1.5" stroke-linejoin="round" />
+    <polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" />
   `;
 }
 
