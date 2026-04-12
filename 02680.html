@@ -164,27 +164,16 @@ body{
 
 <!-- Tab 1: Analyses -->
 <div class="tab-content active" id="tabAnalyses">
-  <div class="form-section" id="analysisFormSection">
-    <div class="form-title" id="analysisFormTitle">新增分析</div>
-    <div class="form-row two">
-      <div class="form-group"><label>日期</label><input type="date" id="aDate"></div>
-      <div class="form-group"><label>标题</label><input type="text" id="aTitle" placeholder="简短标题"></div>
-    </div>
-    <div class="form-row three">
-      <div class="form-group"><label>评级</label>
-        <select id="aRating"><option value="">不选</option><option value="strong_buy">强烈看多</option><option value="buy">看多</option><option value="hold">中性</option><option value="sell">看空</option><option value="strong_sell">强烈看空</option></select>
-      </div>
-      <div class="form-group"><label>目标价低</label><input type="number" id="aTargetLow" placeholder="可选" step="0.01"></div>
-      <div class="form-group"><label>目标价高</label><input type="number" id="aTargetHigh" placeholder="可选" step="0.01"></div>
-    </div>
-    <div class="form-group"><label>正文</label><textarea id="aBody" placeholder="分析内容..."></textarea></div>
-    <div class="form-group"><label>标签（逗号分隔）</label><input type="text" id="aTags" placeholder="例：基本面,业绩,估值"></div>
+  <button class="btn btn-primary" id="aToggleBtn" onclick="toggleAnalysisForm()" style="margin-bottom:12px;width:100%">+ 新增分析</button>
+  <div class="form-section" id="analysisFormSection" style="display:none">
+    <div class="form-group" style="margin-bottom:8px"><label>日期</label><input type="date" id="aDate"></div>
+    <div class="form-group"><label>正文</label><textarea id="aBody" placeholder="分析内容..." style="min-height:120px"></textarea></div>
     <div class="form-actions">
       <button class="btn btn-primary" id="aSaveBtn" onclick="saveAnalysis()">保存</button>
-      <button class="btn btn-secondary" id="aCancelBtn" onclick="cancelEditAnalysis()" style="display:none">取消编辑</button>
+      <button class="btn btn-secondary" id="aCancelBtn" onclick="cancelEditAnalysis()">取消</button>
     </div>
   </div>
-  <div class="search-bar"><input type="text" id="aSearch" placeholder="搜索标题、正文、标签..." oninput="renderAnalyses()"></div>
+  <div class="search-bar"><input type="text" id="aSearch" placeholder="搜索..." oninput="renderAnalyses()"></div>
   <div class="stats-bar"><span id="aStats"></span></div>
   <div id="analysisList"></div>
 </div>
@@ -567,38 +556,42 @@ function switchTab(name) {
 }
 
 // ==================== Analysis CRUD ====================
+function toggleAnalysisForm() {
+  const form = document.getElementById('analysisFormSection');
+  const btn = document.getElementById('aToggleBtn');
+  if (form.style.display === 'none') {
+    form.style.display = '';
+    btn.style.display = 'none';
+  } else {
+    form.style.display = 'none';
+    btn.style.display = '';
+    editingAnalysisId = null;
+  }
+}
+
 function resetAnalysisForm() {
   editingAnalysisId = null;
   document.getElementById('aDate').value = new Date().toISOString().slice(0,10);
-  document.getElementById('aTitle').value = '';
-  document.getElementById('aRating').value = '';
-  document.getElementById('aTargetLow').value = '';
-  document.getElementById('aTargetHigh').value = '';
   document.getElementById('aBody').value = '';
-  document.getElementById('aTags').value = '';
   document.getElementById('aSaveBtn').textContent = '保存';
-  document.getElementById('aCancelBtn').style.display = 'none';
-  document.getElementById('analysisFormTitle').textContent = '新增分析';
+  document.getElementById('analysisFormSection').style.display = 'none';
+  document.getElementById('aToggleBtn').style.display = '';
 }
 
 function saveAnalysis() {
   const date = document.getElementById('aDate').value;
-  const title = document.getElementById('aTitle').value.trim();
   const body = document.getElementById('aBody').value.trim();
-  if (!date || !title || !body) { alert('日期、标题、正文为必填项'); return; }
+  if (!date || !body) { alert('日期和正文为必填项'); return; }
 
-  const rating = document.getElementById('aRating').value;
-  const targetLow = parseFloat(document.getElementById('aTargetLow').value) || null;
-  const targetHigh = parseFloat(document.getElementById('aTargetHigh').value) || null;
-  const tags = document.getElementById('aTags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const title = body.split('\n')[0].substring(0, 40);
 
   if (editingAnalysisId) {
     const idx = analyses.findIndex(a => a.id === editingAnalysisId);
     if (idx >= 0) {
-      analyses[idx] = { ...analyses[idx], date, title, rating, targetLow, targetHigh, body, tags, updatedAt: Date.now() };
+      analyses[idx] = { ...analyses[idx], date, title, body, updatedAt: Date.now() };
     }
   } else {
-    analyses.push({ id: crypto.randomUUID(), date, title, rating, targetLow, targetHigh, body, tags, isLegacy: false, createdAt: Date.now(), updatedAt: Date.now() });
+    analyses.push({ id: crypto.randomUUID(), date, title, rating: '', targetLow: null, targetHigh: null, body, tags: [], isLegacy: false, createdAt: Date.now(), updatedAt: Date.now() });
   }
   saveAnalyses();
   resetAnalysisForm();
@@ -611,15 +604,10 @@ function editAnalysis(id) {
   if (!a) return;
   editingAnalysisId = id;
   document.getElementById('aDate').value = a.date;
-  document.getElementById('aTitle').value = a.title;
-  document.getElementById('aRating').value = a.rating || '';
-  document.getElementById('aTargetLow').value = a.targetLow || '';
-  document.getElementById('aTargetHigh').value = a.targetHigh || '';
   document.getElementById('aBody').value = a.body;
-  document.getElementById('aTags').value = (a.tags || []).join(', ');
   document.getElementById('aSaveBtn').textContent = '更新';
-  document.getElementById('aCancelBtn').style.display = '';
-  document.getElementById('analysisFormTitle').textContent = '编辑分析';
+  document.getElementById('analysisFormSection').style.display = '';
+  document.getElementById('aToggleBtn').style.display = 'none';
   document.getElementById('analysisFormSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -656,17 +644,12 @@ function renderAnalyses() {
   if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无分析记录</div>'; return; }
 
   container.innerHTML = list.map(a => {
-    const ratingBadge = a.rating ? `<span class="badge badge-${a.rating}">${RATING_LABELS[a.rating]||a.rating}</span>` : '';
-    const legacyBadge = a.isLegacy ? '<span class="badge badge-legacy">历史</span>' : '';
-    const tagsHtml = (a.tags||[]).map(t => `<span class="tag">${esc(t)}</span>`).join('');
+    const legacyBadge = a.isLegacy ? ' <span class="badge badge-legacy">历史</span>' : '';
     return `<div class="record">
       <div class="record-header">
-        <span class="record-date">${esc(a.date)}</span>
-        ${legacyBadge}${ratingBadge}
-        <span class="record-title">${esc(a.title)}</span>
+        <span class="record-date">${esc(a.date)}</span>${legacyBadge}
       </div>
       <div class="record-preview">${esc(a.body)}</div>
-      ${tagsHtml ? `<div class="record-tags">${tagsHtml}</div>` : ''}
       <div class="record-actions">
         <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
         <button class="btn btn-secondary" onclick="editAnalysis('${a.id}')">编辑</button>
