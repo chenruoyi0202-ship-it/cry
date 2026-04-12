@@ -38,6 +38,16 @@ body{
 .price-status{font-size:12px;color:var(--text-muted);width:100%}
 .price-status a{color:var(--gold);cursor:pointer;text-decoration:underline}
 
+/* Sync bar */
+.sync-bar{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;font-size:12px;color:var(--text-muted);cursor:pointer;padding:6px 0}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#6b7280}
+.sync-dot.connected{background:var(--green)}.sync-dot.syncing{background:#e6a23c;animation:pulse 1s infinite}.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.info-box{background:rgba(202,138,4,0.08);border:1px solid rgba(202,138,4,0.2);border-radius:8px;padding:12px;font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:12px}
+.hint{font-size:11px;color:var(--text-muted);margin-top:2px;opacity:.7}
+.btn-danger{background:rgba(239,68,68,0.15);color:var(--red);padding:8px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-danger:hover{background:rgba(239,68,68,0.25)}
+
 /* Tabs */
 .tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)}
 .tab{flex:1;padding:10px 0;text-align:center;font-size:14px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
@@ -139,10 +149,17 @@ body{
   <div class="price-status" id="priceStatus"></div>
 </div>
 
+<!-- Sync Bar -->
+<div class="sync-bar" id="syncBar" onclick="switchTab('sync')">
+  <div class="sync-dot" id="syncDot"></div>
+  <span id="syncLabel">未配置同步</span>
+</div>
+
 <!-- Tabs -->
 <div class="tabs">
   <div class="tab active" onclick="switchTab('analyses')">我的分析</div>
   <div class="tab" onclick="switchTab('events')">重要事件</div>
+  <div class="tab" onclick="switchTab('sync')">同步</div>
 </div>
 
 <!-- Tab 1: Analyses -->
@@ -202,6 +219,37 @@ body{
   <div id="eventList"></div>
 </div>
 
+<!-- Tab 3: Sync -->
+<div class="tab-content" id="tabSync">
+  <div class="form-section">
+    <div class="form-title">云端同步设置</div>
+    <div class="info-box">
+      数据使用 AES-256 加密后存储到你的 GitHub 仓库。<br>
+      即使仓库公开，没有密码也无法解读数据。<br>
+      Token 和密码仅保存在当前浏览器中。
+    </div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>GitHub Personal Access Token</label>
+      <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
+      <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 勾选 repo 权限</div>
+    </div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>仓库（owner/repo）</label>
+      <input type="text" id="inputRepo" placeholder="例如 yourname/yourrepo">
+    </div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>加密密码</label>
+      <input type="password" id="inputPassword" placeholder="设置一个你记得住的密码">
+      <div class="hint">用于加密/解密数据，换设备时需要输入相同密码</div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
+      <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
+      <button class="btn btn-danger" onclick="clearSyncConfig()">清除同步配置</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- .page -->
 
 <script>
@@ -222,6 +270,10 @@ let events = [];
 let editingAnalysisId = null;
 let editingEventId = null;
 let activeEventFilter = '';
+let syncConfig = null;
+let fileSha = null;
+const SYNC_CONFIG_KEY = 'stock_02680_sync_config';
+const SYNC_DATA_PATH = 'data/stock_02680_encrypted.json';
 
 // ==================== Storage ====================
 function loadAnalyses() { try { analyses = JSON.parse(localStorage.getItem(ANALYSES_KEY)) || []; } catch { analyses = []; } }
@@ -513,11 +565,14 @@ function switchTab(name) {
     document.getElementById('tabAnalyses').classList.add('active');
     document.querySelectorAll('.tab')[0].classList.add('active');
     renderAnalyses();
-  } else {
+  } else if (name === 'events') {
     document.getElementById('tabEvents').classList.add('active');
     document.querySelectorAll('.tab')[1].classList.add('active');
     populateLinkedAnalysisSelect();
     renderEvents();
+  } else if (name === 'sync') {
+    document.getElementById('tabSync').classList.add('active');
+    document.querySelectorAll('.tab')[2].classList.add('active');
   }
 }
 
@@ -558,6 +613,7 @@ function saveAnalysis() {
   saveAnalyses();
   resetAnalysisForm();
   renderAnalyses();
+  autoSync();
 }
 
 function editAnalysis(id) {
@@ -584,6 +640,7 @@ function deleteAnalysis(id) {
   analyses = analyses.filter(a => a.id !== id);
   saveAnalyses();
   renderAnalyses();
+  autoSync();
 }
 
 function toggleExpand(btn) {
@@ -674,6 +731,7 @@ function saveEvent() {
   saveEvents();
   resetEventForm();
   renderEvents();
+  autoSync();
 }
 
 function editEvent(id) {
@@ -700,6 +758,7 @@ function deleteEvent(id) {
   events = events.filter(e => e.id !== id);
   saveEvents();
   renderEvents();
+  autoSync();
 }
 
 function setEventFilter(type) {
@@ -838,6 +897,192 @@ function renderSparkline(series) {
   `;
 }
 
+// ==================== AES-256-GCM Encryption ====================
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+async function encryptData(data, password) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
+  const buf = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+  buf.set(salt, 0);
+  buf.set(iv, salt.length);
+  buf.set(new Uint8Array(encrypted), salt.length + iv.length);
+  return btoa(String.fromCharCode(...buf));
+}
+async function decryptData(base64, password) {
+  const buf = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  const salt = buf.slice(0, 16);
+  const iv = buf.slice(16, 28);
+  const data = buf.slice(28);
+  const key = await deriveKey(password, salt);
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+  return JSON.parse(new TextDecoder().decode(decrypted));
+}
+
+// ==================== GitHub API ====================
+async function ghGetDefaultBranch(token, repo) {
+  const res = await fetch(`https://api.github.com/repos/${repo}`, {
+    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+  });
+  if (!res.ok) throw new Error('无法获取仓库信息');
+  return (await res.json()).default_branch;
+}
+async function ghGet(token, repo, path, branch) {
+  const url = `https://api.github.com/repos/${repo}/contents/${path}` + (branch ? `?ref=${branch}` : '');
+  const res = await fetch(url, {
+    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GitHub GET failed: ${res.status}`);
+  return res.json();
+}
+async function ghPut(token, repo, path, content, sha, branch) {
+  const body = { message: 'Update stock 02680 data', content: btoa(unescape(encodeURIComponent(content))) };
+  if (sha) body.sha = sha;
+  if (branch) body.branch = branch;
+  const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `GitHub PUT failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+// ==================== Sync Logic ====================
+function loadSyncConfig() {
+  try { syncConfig = JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY)); } catch { syncConfig = null; }
+  updateSyncBar();
+  if (syncConfig) {
+    document.getElementById('inputToken').value = syncConfig.token || '';
+    document.getElementById('inputRepo').value = syncConfig.repo || '';
+    document.getElementById('inputPassword').value = syncConfig.password || '';
+  }
+}
+function updateSyncBar() {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  if (!syncConfig) {
+    dot.className = 'sync-dot';
+    label.textContent = '未配置同步 - 点击设置';
+  } else {
+    dot.className = 'sync-dot connected';
+    label.textContent = '已连接 · ' + syncConfig.repo;
+  }
+}
+function setSyncStatus(status, text) {
+  document.getElementById('syncDot').className = 'sync-dot ' + status;
+  document.getElementById('syncLabel').textContent = text;
+}
+function saveSyncConfig() {
+  const token = document.getElementById('inputToken').value.trim();
+  const repo = document.getElementById('inputRepo').value.trim();
+  const password = document.getElementById('inputPassword').value.trim();
+  if (!token || !repo || !password) { alert('请填写所有字段'); return; }
+  syncConfig = { token, repo, password };
+  localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(syncConfig));
+  updateSyncBar();
+  alert('同步配置已保存');
+  manualSync();
+}
+function clearSyncConfig() {
+  if (!confirm('确认清除同步配置？')) return;
+  syncConfig = null;
+  localStorage.removeItem(SYNC_CONFIG_KEY);
+  fileSha = null;
+  document.getElementById('inputToken').value = '';
+  document.getElementById('inputRepo').value = '';
+  document.getElementById('inputPassword').value = '';
+  updateSyncBar();
+}
+async function getDefaultBranch() {
+  if (!syncConfig._branch) {
+    syncConfig._branch = await ghGetDefaultBranch(syncConfig.token, syncConfig.repo);
+  }
+  return syncConfig._branch;
+}
+async function manualSync() {
+  if (!syncConfig) { alert('请先配置同步'); return; }
+  setSyncStatus('syncing', '同步中...');
+  try {
+    await pullFromCloud();
+    await pushToCloud();
+    setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+  } catch (e) {
+    console.error('Sync error:', e);
+    setSyncStatus('error', '同步失败 · ' + e.message);
+  }
+}
+async function autoSync() {
+  if (!syncConfig) return;
+  setSyncStatus('syncing', '同步中...');
+  try {
+    await pushToCloud();
+    setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+  } catch (e) {
+    console.error('Auto sync error:', e);
+    setSyncStatus('error', '同步失败');
+  }
+}
+async function pullFromCloud() {
+  const branch = await getDefaultBranch();
+  const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch);
+  if (!file) return;
+  fileSha = file.sha;
+  const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+  const parsed = JSON.parse(content);
+  // Decrypt and merge analyses
+  if (parsed.analyses) {
+    const cloudAnalyses = await decryptData(parsed.analyses, syncConfig.password);
+    const localMap = new Map(analyses.map(r => [r.id, r]));
+    cloudAnalyses.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
+    analyses = Array.from(localMap.values());
+    saveAnalyses();
+  }
+  // Decrypt and merge events
+  if (parsed.events) {
+    const cloudEvents = await decryptData(parsed.events, syncConfig.password);
+    const localMap = new Map(events.map(r => [r.id, r]));
+    cloudEvents.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
+    events = Array.from(localMap.values());
+    saveEvents();
+  }
+}
+async function pushToCloud() {
+  const branch = await getDefaultBranch();
+  const encAnalyses = await encryptData(analyses, syncConfig.password);
+  const encEvents = await encryptData(events, syncConfig.password);
+  const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, updatedAt: new Date().toISOString() });
+  const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
+  fileSha = file ? file.sha : null;
+  try {
+    const result = await ghPut(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, content, fileSha, branch);
+    fileSha = result.content.sha;
+  } catch (e) {
+    if (e.message && e.message.includes('does not match')) {
+      const freshFile = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
+      fileSha = freshFile ? freshFile.sha : null;
+      const result = await ghPut(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, content, fileSha, branch);
+      fileSha = result.content.sha;
+    } else { throw e; }
+  }
+}
+
 // ==================== Utils ====================
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
@@ -846,10 +1091,12 @@ document.addEventListener('DOMContentLoaded', () => {
   seedIfNeeded();
   loadAnalyses();
   loadEvents();
+  loadSyncConfig();
   resetAnalysisForm();
   resetEventForm();
   renderAnalyses();
   fetchQuote();
+  if (syncConfig) manualSync().catch(() => {});
 });
 </script>
 </body>
