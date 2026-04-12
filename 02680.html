@@ -180,7 +180,7 @@ body{
 .lock-box .lock-btn{width:100%;padding:10px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#000;font-size:14px;font-weight:600;cursor:pointer}
 .lock-box .lock-error{color:var(--red);font-size:12px;margin-top:6px;display:none}
 /* Guest mode: hide all edit controls */
-.guest-mode .btn-primary,.guest-mode #aToggleBtn,.guest-mode #eToggleBtn,.guest-mode .record-actions,.guest-mode .clue-actions,.guest-mode .cost-edit-btn,.guest-mode .drag-handle,.guest-mode .search-bar,.guest-mode #analysisFormSection,.guest-mode #eventFormSection{display:none!important}
+.guest-mode #aToggleBtn,.guest-mode #eToggleBtn,.guest-mode .record-actions,.guest-mode .clue-actions,.guest-mode .cost-edit-btn,.guest-mode .drag-handle,.guest-mode .search-bar,.guest-mode #analysisFormSection,.guest-mode #eventFormSection,.guest-mode .page>.form-section .btn-primary{display:none!important}
 .record-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
 .record-actions{display:flex;gap:6px;margin-top:8px}
@@ -315,7 +315,7 @@ body{
       <button class="btn btn-danger" onclick="clearSyncConfig()">清除</button>
     </div>
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-      <button class="btn btn-secondary" onclick="reseedData()" style="width:100%;font-size:12px">重新加载种子数据（线索+分析）</button>
+      <button class="btn btn-danger" onclick="reseedData()" style="width:100%;font-size:12px">重置为初始数据（慎用）</button>
     </div>
     <div style="margin-top:8px;font-size:11px;color:var(--text-muted)" id="syncStatusText"></div>
   </div>
@@ -1653,8 +1653,7 @@ function saveSyncConfig() {
   manualSync();
 }
 function reseedData() {
-  if (!confirm('将重新加载种子数据（不会删除你手动添加的内容），确定？')) return;
-  // Force re-seed by clearing flag and existing data
+  if (!confirm('确定要重置所有数据为初始种子数据？你手动添加的内容将被清除。')) return;
   localStorage.removeItem(SEEDED_KEY);
   localStorage.removeItem(ANALYSES_KEY);
   localStorage.removeItem(EVENTS_KEY);
@@ -1666,7 +1665,7 @@ function reseedData() {
   renderAnalyses();
   renderEvents();
   toggleSyncModal();
-  alert('种子数据已重新加载（' + analyses.length + ' 条分析 + ' + events.length + ' 条线索）');
+  alert('已重置为种子数据（' + analyses.length + ' 条分析 + ' + events.length + ' 条线索）');
 }
 
 function clearSyncConfig() {
