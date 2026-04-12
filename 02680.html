@@ -180,7 +180,7 @@ body{
 .lock-box .lock-btn{width:100%;padding:10px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#000;font-size:14px;font-weight:600;cursor:pointer}
 .lock-box .lock-error{color:var(--red);font-size:12px;margin-top:6px;display:none}
 /* Guest mode: hide all edit controls */
-.guest-mode .btn-primary,.guest-mode #aToggleBtn,.guest-mode #eToggleBtn,.guest-mode .record-actions,.guest-mode .clue-actions,.guest-mode .cost-edit-btn,.guest-mode .settings-btn,.guest-mode .drag-handle{display:none!important}
+.guest-mode .btn-primary,.guest-mode #aToggleBtn,.guest-mode #eToggleBtn,.guest-mode .record-actions,.guest-mode .clue-actions,.guest-mode .cost-edit-btn,.guest-mode .drag-handle,.guest-mode .search-bar,.guest-mode #analysisFormSection,.guest-mode #eventFormSection{display:none!important}
 .record-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
 .record-actions{display:flex;gap:6px;margin-top:8px}
@@ -262,7 +262,7 @@ body{
 
 <!-- Tabs -->
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('analyses')">我的分析</div>
+  <div class="tab active" onclick="switchTab('analyses')">祖哥分析</div>
   <div class="tab" onclick="switchTab('events')">重要线索</div>
 </div>
 
@@ -1548,8 +1548,9 @@ function saveSyncConfig() {
   syncConfig = { token, repo: SYNC_REPO, password: SYNC_PASSWORD };
   localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(syncConfig));
   markAsOwner();
+  document.body.classList.remove('guest-mode');
   updateSyncBar();
-  alert('同步配置已保存');
+  alert('同步配置已保存，已进入编辑模式');
   manualSync();
 }
 function reseedData() {
