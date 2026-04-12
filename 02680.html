@@ -143,7 +143,8 @@ body{
 .badge-negative{background:rgba(239,68,68,0.15);color:#ef4444}
 .badge-type{background:rgba(202,138,4,0.15);color:var(--gold-light)}
 .badge-legacy{background:rgba(139,92,246,0.15);color:#a78bfa}
-.record-preview{font-size:13px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.record-preview{font-size:15px;color:var(--text-muted);line-height:1.7;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:10;-webkit-box-orient:vertical;overflow:hidden}
+.record-preview.expanded{-webkit-line-clamp:unset;display:block}
 .record-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
 .record-actions .btn{padding:3px 10px;font-size:11px;opacity:.5;transition:opacity .2s}
 .record:hover .record-actions .btn,.record-actions .btn:focus{opacity:1}
@@ -693,8 +694,9 @@ function renderAnalyses() {
       <div class="record-header">
         <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
       </div>
-      <div class="record-preview">${esc(a.body)}</div>
+      <div class="record-preview">${highlight(a.body)}</div>
       <div class="record-actions">
+        <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
         <button class="btn btn-secondary" onclick="editAnalysis('${a.id}')">编辑</button>
         <button class="btn btn-secondary" onclick="deleteAnalysis('${a.id}')">删除</button>
       </div>
@@ -788,8 +790,9 @@ function renderEvents() {
         <span class="record-date">${esc(e.date)}（${dayStr}）</span>
         ${typeBadge}
       </div>
-      <div class="record-preview">${esc(e.description)}</div>
+      <div class="record-preview">${highlight(e.description)}</div>
       <div class="record-actions">
+        <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
         <button class="btn btn-secondary" onclick="editEvent('${e.id}')">编辑</button>
         <button class="btn btn-secondary" onclick="deleteEvent('${e.id}')">删除</button>
       </div>
@@ -1454,6 +1457,13 @@ function editCostPrice() {
 
 // ==================== Utils ====================
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function highlight(s) { return esc(s).replace(/2680/g, '<span style="color:var(--gold-light);font-weight:600">2680</span>'); }
+function toggleExpand(btn) {
+  const preview = btn.closest('.record').querySelector('.record-preview');
+  if (!preview) return;
+  const expanded = preview.classList.toggle('expanded');
+  btn.textContent = expanded ? '收起' : '展开';
+}
 const WEEKDAYS = ['周日','周一','周二','周三','周四','周五','周六'];
 function getDayOfWeek(dateStr) {
   if (!dateStr || dateStr.length < 10) return '';
