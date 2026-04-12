@@ -133,7 +133,6 @@ body{
 <header class="header">
   <h1>02680.HK 创陞控股</h1>
   <div class="subtitle">金母鸡借壳 · 王庭发收购 · 分析追踪</div>
-  <div class="note">数据存于本地浏览器 · 不上传服务器</div>
 </header>
 
 <!-- Price Card -->
@@ -180,30 +179,20 @@ body{
 
 <!-- Tab 2: Events -->
 <div class="tab-content" id="tabEvents">
-  <div class="form-section" id="eventFormSection">
-    <div class="form-title" id="eventFormTitle">新增事件</div>
+  <button class="btn btn-primary" id="eToggleBtn" onclick="toggleEventForm()" style="margin-bottom:12px;width:100%">+ 新增事件</button>
+  <div class="form-section" id="eventFormSection" style="display:none">
     <div class="form-row two">
       <div class="form-group"><label>日期</label><input type="date" id="eDate"></div>
       <div class="form-group"><label>事件类型</label>
         <select id="eType"><option value="announcement">公告</option><option value="earnings">业绩</option><option value="shareholder">股东变动</option><option value="regulatory">监管批复</option><option value="tender">邀约收购</option><option value="rename">改名</option><option value="dividend">派息</option><option value="placement">配股</option><option value="industry">行业新闻</option><option value="price">价格异动</option><option value="other">其他</option></select>
       </div>
     </div>
-    <div class="form-group"><label>事件标题</label><input type="text" id="eTitle" placeholder="简短标题"></div>
-    <div class="form-group"><label>描述</label><textarea id="eDesc" placeholder="事件详情..."></textarea></div>
-    <div class="form-row two">
-      <div class="form-group"><label>影响评估</label>
-        <select id="eImpact"><option value="positive">正面</option><option value="neutral">中性</option><option value="negative">负面</option></select>
-      </div>
-      <div class="form-group"><label>关联分析</label>
-        <select id="eLinkedAnalysis"><option value="">无</option></select>
-      </div>
-    </div>
+    <div class="form-group"><label>内容</label><textarea id="eDesc" placeholder="事件详情..." style="min-height:100px"></textarea></div>
     <div class="form-actions">
       <button class="btn btn-primary" id="eSaveBtn" onclick="saveEvent()">保存</button>
-      <button class="btn btn-secondary" id="eCancelBtn" onclick="cancelEditEvent()" style="display:none">取消编辑</button>
+      <button class="btn btn-secondary" id="eCancelBtn" onclick="cancelEditEvent()">取消</button>
     </div>
   </div>
-  <div class="filter-bar" id="eventFilterBar"></div>
   <div class="stats-bar"><span id="eStats"></span></div>
   <div id="eventList"></div>
 </div>
@@ -547,7 +536,6 @@ function switchTab(name) {
   } else if (name === 'events') {
     document.getElementById('tabEvents').classList.add('active');
     document.querySelectorAll('.tab')[1].classList.add('active');
-    populateLinkedAnalysisSelect();
     renderEvents();
   } else if (name === 'sync') {
     document.getElementById('tabSync').classList.add('active');
@@ -660,46 +648,44 @@ function renderAnalyses() {
 }
 
 // ==================== Event CRUD ====================
-function populateLinkedAnalysisSelect() {
-  const sel = document.getElementById('eLinkedAnalysis');
-  const current = sel.value;
-  sel.innerHTML = '<option value="">无</option>';
-  analyses.slice().sort((a,b) => b.date.localeCompare(a.date)).forEach(a => {
-    sel.innerHTML += `<option value="${a.id}">${esc(a.date)} ${esc(a.title)}</option>`;
-  });
-  sel.value = current;
+function toggleEventForm() {
+  const form = document.getElementById('eventFormSection');
+  const btn = document.getElementById('eToggleBtn');
+  if (form.style.display === 'none') {
+    form.style.display = '';
+    btn.style.display = 'none';
+  } else {
+    form.style.display = 'none';
+    btn.style.display = '';
+    editingEventId = null;
+  }
 }
 
 function resetEventForm() {
   editingEventId = null;
   document.getElementById('eDate').value = new Date().toISOString().slice(0,10);
   document.getElementById('eType').value = 'announcement';
-  document.getElementById('eTitle').value = '';
   document.getElementById('eDesc').value = '';
-  document.getElementById('eImpact').value = 'positive';
-  document.getElementById('eLinkedAnalysis').value = '';
   document.getElementById('eSaveBtn').textContent = '保存';
-  document.getElementById('eCancelBtn').style.display = 'none';
-  document.getElementById('eventFormTitle').textContent = '新增事件';
+  document.getElementById('eventFormSection').style.display = 'none';
+  document.getElementById('eToggleBtn').style.display = '';
 }
 
 function saveEvent() {
   const date = document.getElementById('eDate').value;
-  const title = document.getElementById('eTitle').value.trim();
   const desc = document.getElementById('eDesc').value.trim();
-  if (!date || !title) { alert('日期和标题为必填项'); return; }
+  if (!date || !desc) { alert('日期和内容为必填项'); return; }
 
   const type = document.getElementById('eType').value;
-  const impact = document.getElementById('eImpact').value;
-  const analysisId = document.getElementById('eLinkedAnalysis').value || undefined;
+  const title = desc.split('\n')[0].substring(0, 40);
 
   if (editingEventId) {
     const idx = events.findIndex(e => e.id === editingEventId);
     if (idx >= 0) {
-      events[idx] = { ...events[idx], date, type, title, description: desc, impact, analysisId, updatedAt: Date.now() };
+      events[idx] = { ...events[idx], date, type, title, description: desc, updatedAt: Date.now() };
     }
   } else {
-    events.push({ id: crypto.randomUUID(), date, type, title, description: desc, impact, analysisId, createdAt: Date.now(), updatedAt: Date.now() });
+    events.push({ id: crypto.randomUUID(), date, type, title, description: desc, impact: 'neutral', createdAt: Date.now(), updatedAt: Date.now() });
   }
   saveEvents();
   resetEventForm();
@@ -713,14 +699,10 @@ function editEvent(id) {
   editingEventId = id;
   document.getElementById('eDate').value = e.date;
   document.getElementById('eType').value = e.type;
-  document.getElementById('eTitle').value = e.title;
   document.getElementById('eDesc').value = e.description;
-  document.getElementById('eImpact').value = e.impact;
-  populateLinkedAnalysisSelect();
-  document.getElementById('eLinkedAnalysis').value = e.analysisId || '';
   document.getElementById('eSaveBtn').textContent = '更新';
-  document.getElementById('eCancelBtn').style.display = '';
-  document.getElementById('eventFormTitle').textContent = '编辑事件';
+  document.getElementById('eventFormSection').style.display = '';
+  document.getElementById('eToggleBtn').style.display = 'none';
   document.getElementById('eventFormSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -734,42 +716,23 @@ function deleteEvent(id) {
   autoSync();
 }
 
-function setEventFilter(type) {
-  activeEventFilter = activeEventFilter === type ? '' : type;
-  renderEvents();
-}
-
-function renderEventFilters() {
-  const bar = document.getElementById('eventFilterBar');
-  bar.innerHTML = Object.entries(EVENT_TYPE_LABELS).map(([k,v]) =>
-    `<span class="filter-chip ${activeEventFilter===k?'active':''}" onclick="setEventFilter('${k}')">${v}</span>`
-  ).join('');
-}
-
 function renderEvents() {
-  renderEventFilters();
   let list = events.slice();
-  if (activeEventFilter) list = list.filter(e => e.type === activeEventFilter);
   list.sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
 
-  document.getElementById('eStats').textContent = `共 ${events.length} 条事件` + (activeEventFilter ? `，筛选出 ${list.length} 条` : '');
+  document.getElementById('eStats').textContent = `共 ${events.length} 条事件`;
 
   const container = document.getElementById('eventList');
   if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无事件记录</div>'; return; }
 
   container.innerHTML = list.map(e => {
     const typeBadge = `<span class="badge badge-type">${EVENT_TYPE_LABELS[e.type]||e.type}</span>`;
-    const impactBadge = `<span class="badge badge-${e.impact}">${IMPACT_LABELS[e.impact]||e.impact}</span>`;
-    const linked = e.analysisId ? analyses.find(a => a.id === e.analysisId) : null;
-    const linkedHtml = linked ? `<div class="record-linked">关联: ${esc(linked.date)} ${esc(linked.title)}</div>` : '';
     return `<div class="record">
       <div class="record-header">
         <span class="record-date">${esc(e.date)}</span>
-        ${typeBadge}${impactBadge}
-        <span class="record-title">${esc(e.title)}</span>
+        ${typeBadge}
       </div>
       <div class="record-preview">${esc(e.description)}</div>
-      ${linkedHtml}
       <div class="record-actions">
         <button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>
         <button class="btn btn-secondary" onclick="editEvent('${e.id}')">编辑</button>
