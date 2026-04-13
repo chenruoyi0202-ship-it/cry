@@ -70,24 +70,8 @@ body{
 .cost-line{stroke:var(--orange);stroke-width:1;stroke-dasharray:6,3;opacity:.7}
 .analysis-marker{cursor:pointer}
 .analysis-marker-hit{cursor:pointer;fill:transparent}
-.marker-popup{position:fixed;background:var(--card);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;max-width:320px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.4);font-size:13px;line-height:1.6;color:var(--text-muted);display:none}
-.marker-popup .mp-date{font-weight:600;color:var(--gold-light);margin-bottom:4px}
-.marker-popup .mp-close{position:absolute;top:4px;right:8px;color:var(--text-muted);cursor:pointer;font-size:14px}
-.marker-popup .mp-view-full{display:inline-block;margin-top:8px;padding:4px 10px;background:var(--gold);color:#000;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
-
-/* Analysis viewer modal */
-.viewer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:150;display:none;flex-direction:column;padding:20px;overflow:hidden}
-.viewer-overlay.active{display:flex}
-.viewer-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.viewer-header .v-date{font-size:16px;font-weight:700;color:var(--gold-light);flex:1}
-.viewer-header .v-close{font-size:22px;color:var(--text-muted);cursor:pointer;padding:4px 10px}
-.viewer-body{flex:1;overflow-y:auto;padding:0 4px;font-size:15px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-break:break-word;-webkit-overflow-scrolling:touch}
-.viewer-nav{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--border);gap:8px}
-.viewer-nav button{flex:1;padding:12px;border:none;background:rgba(255,255,255,0.06);color:var(--text);border-radius:8px;font-size:14px;cursor:pointer;transition:background .2s}
-.viewer-nav button:hover{background:rgba(255,255,255,0.1)}
-.viewer-nav button:disabled{opacity:.3;cursor:not-allowed}
-.viewer-nav .v-counter{font-size:12px;color:var(--text-muted);padding:0 12px;min-width:60px;text-align:center}
-.viewer-tags{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;margin-bottom:4px}
+.record-highlight{animation:recordHighlight 2s ease-out;border-color:var(--gold)!important;box-shadow:0 0 20px rgba(252,211,77,0.4)}
+@keyframes recordHighlight{0%{background:rgba(252,211,77,0.25)}100%{background:var(--card)}}
 
 /* Chart tabs */
 .chart-tabs{display:flex;gap:0;margin-bottom:4px}
@@ -288,27 +272,6 @@ body{
   <div class="chart-time-axis" id="chartTimeAxis"></div>
   <div class="chart-crosshair" id="chartCrosshair"></div>
   <div class="chart-tooltip" id="chartTooltip"><div class="tt-time"></div><div class="tt-price"></div><div class="tt-change"></div></div>
-</div>
-<div class="marker-popup" id="markerPopup">
-  <span class="mp-close" onclick="closeMarkerPopup()">✕</span>
-  <div class="mp-date"></div>
-  <div class="mp-body"></div>
-  <span class="mp-view-full" onclick="openViewerFromPopup()">查看完整 →</span>
-</div>
-
-<!-- Analysis viewer modal -->
-<div class="viewer-overlay" id="viewerOverlay">
-  <div class="viewer-header">
-    <div class="v-date" id="vDate"></div>
-    <span class="v-close" onclick="closeViewer()">✕</span>
-  </div>
-  <div class="viewer-tags" id="vTags"></div>
-  <div class="viewer-body" id="vBody"></div>
-  <div class="viewer-nav">
-    <button onclick="viewerPrev()" id="vPrevBtn">← 上一条</button>
-    <span class="v-counter" id="vCounter"></span>
-    <button onclick="viewerNext()" id="vNextBtn">下一条 →</button>
-  </div>
 </div>
 <div class="price-status" id="priceStatus"></div>
 
@@ -846,7 +809,8 @@ function renderAnalyses() {
       const activeCls = t === activeTagFilter ? ' active' : '';
       return `<span class="auto-tag${activeCls}" onclick="event.stopPropagation();filterByTag('${esc(t)}')">${esc(t)}</span>`;
     }).join('');
-    return `<div class="record" data-aid="${a.id}" onclick="openViewer('${a.id}')" style="cursor:pointer">
+    const clickable = needExpand ? `onclick="toggleCardExpand(this)" style="cursor:pointer"` : '';
+    return `<div class="record" data-aid="${a.id}" ${clickable}>
       <div class="record-header">
         <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
       </div>
@@ -1573,106 +1537,30 @@ function renderCandlestick(data) {
 
   svg.innerHTML = extras + candles + markers;
 
-  // Attach click/touch handlers to markers (both visible and hit-target circles)
+  // Attach click/touch handlers to markers — directly jump to analysis card
   svg.querySelectorAll('.analysis-marker, .analysis-marker-hit').forEach(el => {
     const handler = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      // Find the visible marker element for positioning the popup
-      const aid = el.dataset.aid;
-      const visible = svg.querySelector(`.analysis-marker[data-aid="${aid}"]`) || el;
-      showMarkerPopup(aid, visible);
+      jumpToAnalysis(el.dataset.aid);
     };
     el.addEventListener('click', handler);
     el.addEventListener('touchstart', handler, { passive: false });
   });
 }
 
-function closeMarkerPopup() {
-  document.getElementById('markerPopup').style.display = 'none';
-}
-
-// Analysis viewer state
-let viewerAnalysisId = null;
-
-function openViewerFromPopup() {
-  const popup = document.getElementById('markerPopup');
-  const aid = popup.dataset.aid;
-  closeMarkerPopup();
-  if (aid) openViewer(aid);
-}
-
-function getSortedAnalyses() {
-  return analyses.slice().sort((a, b) => {
-    if (a.date !== b.date) return b.date.localeCompare(a.date);
-    return b.createdAt - a.createdAt;
-  });
-}
-
-function openViewer(analysisId) {
-  const a = analyses.find(x => x.id === analysisId);
-  if (!a) return;
-  viewerAnalysisId = analysisId;
-  renderViewer();
-  document.getElementById('viewerOverlay').classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeViewer() {
-  document.getElementById('viewerOverlay').classList.remove('active');
-  document.body.style.overflow = '';
-  viewerAnalysisId = null;
-}
-
-function renderViewer() {
-  const a = analyses.find(x => x.id === viewerAnalysisId);
-  if (!a) return;
-  const sorted = getSortedAnalyses();
-  const idx = sorted.findIndex(x => x.id === viewerAnalysisId);
-  document.getElementById('vDate').textContent = `${a.date}（${getDayOfWeek(a.date)}）`;
-  document.getElementById('vBody').innerHTML = highlight(a.body);
-  const tagsHtml = (a.tags || []).filter(t => t !== '种子数据' && t !== '历史内容').map(t => `<span class="auto-tag">${esc(t)}</span>`).join('');
-  document.getElementById('vTags').innerHTML = tagsHtml;
-  document.getElementById('vBody').scrollTop = 0;
-  document.getElementById('vPrevBtn').disabled = idx >= sorted.length - 1;
-  document.getElementById('vNextBtn').disabled = idx <= 0;
-  document.getElementById('vCounter').textContent = `${idx + 1} / ${sorted.length}`;
-}
-
-function viewerPrev() {
-  const sorted = getSortedAnalyses();
-  const idx = sorted.findIndex(x => x.id === viewerAnalysisId);
-  if (idx < sorted.length - 1) {
-    viewerAnalysisId = sorted[idx + 1].id;
-    renderViewer();
-  }
-}
-
-function viewerNext() {
-  const sorted = getSortedAnalyses();
-  const idx = sorted.findIndex(x => x.id === viewerAnalysisId);
-  if (idx > 0) {
-    viewerAnalysisId = sorted[idx - 1].id;
-    renderViewer();
-  }
-}
-function showMarkerPopup(analysisId, markerEl) {
-  const a = analyses.find(x => x.id === analysisId);
-  if (!a) return;
-  const popup = document.getElementById('markerPopup');
-  popup.dataset.aid = analysisId;
-  popup.querySelector('.mp-date').textContent = `${a.date}（${getDayOfWeek(a.date)}）`;
-  const preview = (a.body || '').substring(0, 200) + (a.body.length > 200 ? '...' : '');
-  popup.querySelector('.mp-body').innerHTML = highlight(preview);
-  popup.style.display = 'block';
-  // Position near the marker
-  const rect = markerEl.getBoundingClientRect();
-  const popupW = 320;
-  let left = rect.left + rect.width / 2 - popupW / 2;
-  if (left < 10) left = 10;
-  if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
-  popup.style.left = left + 'px';
-  popup.style.top = (rect.bottom + 8) + 'px';
+function jumpToAnalysis(analysisId) {
+  // Switch to analysis tab
+  switchTab('analyses');
+  // Wait for render then scroll to the card
+  setTimeout(() => {
+    const card = document.querySelector(`.record[data-aid="${analysisId}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Highlight animation
+    card.classList.add('record-highlight');
+    setTimeout(() => card.classList.remove('record-highlight'), 2000);
+  }, 80);
 }
 
 function renderTimeAxis(seriesSlice) {
@@ -2195,34 +2083,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('02680-sw.js').catch(() => {});
   }
-  document.addEventListener('click', (e) => {
-    const popup = document.getElementById('markerPopup');
-    if (popup && popup.style.display === 'block' && !popup.contains(e.target) && !e.target.classList.contains('analysis-marker') && !e.target.classList.contains('analysis-marker-hit')) {
-      popup.style.display = 'none';
-    }
-  });
-  // Viewer keyboard navigation
-  document.addEventListener('keydown', (e) => {
-    if (!viewerAnalysisId) return;
-    if (e.key === 'ArrowLeft') { e.preventDefault(); viewerPrev(); }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); viewerNext(); }
-    else if (e.key === 'Escape') { e.preventDefault(); closeViewer(); }
-  });
-  // Viewer touch swipe
-  let touchStartX = null;
-  const viewer = document.getElementById('viewerOverlay');
-  viewer.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) touchStartX = e.touches[0].clientX;
-  });
-  viewer.addEventListener('touchend', (e) => {
-    if (touchStartX === null) return;
-    const dx = (e.changedTouches[0].clientX) - touchStartX;
-    touchStartX = null;
-    if (Math.abs(dx) > 60) {
-      if (dx < 0) viewerNext(); // swipe left = next
-      else viewerPrev(); // swipe right = prev
-    }
-  });
   checkAccess();
   seedIfNeeded();
   loadAnalyses();
