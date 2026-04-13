@@ -2057,10 +2057,7 @@ async function ghGetDefaultBranch(token, repo) {
 }
 async function ghGet(token, repo, path, branch) {
   const url = `https://api.github.com/repos/${repo}/contents/${path}` + (branch ? `?ref=${branch}` : '');
-  const res = await fetch(url, {
-    headers: { ...ghAuth(token), 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-    cache: 'no-store'
-  });
+  const res = await fetch(url, { headers: ghAuth(token), cache: 'no-store' });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub GET failed: ${res.status}`);
   return res.json();
