@@ -2130,23 +2130,36 @@ function computeDataHash() {
 
 async function autoSync() {
   if (!syncConfig) return;
-  // Debounce: wait 1.5s for additional changes before pushing
+  // Debounce: wait 600ms for additional changes before pushing
   if (autoSyncTimer) clearTimeout(autoSyncTimer);
   autoSyncTimer = setTimeout(async () => {
     autoSyncTimer = null;
-    // Skip if nothing actually changed since last sync
-    const hash = computeDataHash();
-    if (hash === lastSyncHash) return;
-    setSyncStatus('syncing', '同步中...');
-    try {
-      await pushToCloud();
-      lastSyncHash = hash;
-      setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
-    } catch (e) {
-      console.error('Auto sync error:', e);
-      setSyncStatus('error', '同步失败');
-    }
-  }, 1500);
+    await doAutoSync();
+  }, 600);
+}
+
+async function doAutoSync() {
+  if (!syncConfig) return;
+  const hash = computeDataHash();
+  if (hash === lastSyncHash) return;
+  setSyncStatus('syncing', '同步中...');
+  try {
+    await pushToCloud();
+    lastSyncHash = hash;
+    setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+  } catch (e) {
+    console.error('Auto sync error:', e);
+    setSyncStatus('error', '同步失败');
+  }
+}
+
+// Flush pending sync immediately when page is hidden/closed
+async function flushAutoSync() {
+  if (autoSyncTimer) {
+    clearTimeout(autoSyncTimer);
+    autoSyncTimer = null;
+    await doAutoSync();
+  }
 }
 async function pullFromCloud() {
   const branch = await getDefaultBranch();
@@ -2236,6 +2249,7 @@ function editCostPrice() {
   document.getElementById('statCost').textContent = costPrice ? costPrice.toFixed(3) : '--';
   // Re-render chart with cost line
   if (quoteCache[chartPeriod]) renderChart(quoteCache[chartPeriod]);
+  autoSync();
 }
 
 // ==================== Utils ====================
@@ -2367,6 +2381,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('02680-sw.js').catch(() => {});
   }
+  // Flush any pending sync when page becomes hidden (switching app, closing tab)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushAutoSync();
+  });
+  window.addEventListener('pagehide', flushAutoSync);
   // Close marker popup when clicking outside
   document.addEventListener('click', (e) => {
     const popup = document.getElementById('markerPopup');
