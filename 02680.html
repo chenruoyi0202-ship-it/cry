@@ -190,6 +190,10 @@ body{
 .tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
 .auto-tag{padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(234,179,8,0.12);color:var(--gold-light);cursor:pointer;transition:all .2s;border:1px solid rgba(234,179,8,0.2)}
 .auto-tag:hover{background:rgba(234,179,8,0.2)}
+.auto-tag.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:600}
+.filter-status{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:var(--text-muted)}
+.filter-status .clear-filter{padding:2px 10px;background:rgba(234,179,8,0.15);color:var(--gold-light);border:1px solid rgba(234,179,8,0.3);border-radius:10px;cursor:pointer;font-size:11px}
+.filter-status .clear-filter:hover{background:rgba(234,179,8,0.25)}
 
 /* Skeleton loader */
 .skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.03) 75%);background-size:200% 100%;animation:skeleton 1.4s ease-in-out infinite;border-radius:8px}
@@ -354,6 +358,7 @@ let events = [];
 let editingAnalysisId = null;
 let editingEventId = null;
 let activeEventFilter = '';
+let activeTagFilter = '';
 let syncConfig = null;
 let fileSha = null;
 const SYNC_CONFIG_KEY = 'stock_02680_sync_config';
@@ -784,12 +789,18 @@ function renderAnalyses() {
   if (query) {
     list = list.filter(a => a.title.toLowerCase().includes(query) || a.body.toLowerCase().includes(query) || (a.tags||[]).some(t => t.toLowerCase().includes(query)));
   }
+  if (activeTagFilter) {
+    list = list.filter(a => (a.tags || []).includes(activeTagFilter));
+  }
   list.sort((a, b) => {
     if (a.date !== b.date) return b.date.localeCompare(a.date);
     return b.createdAt - a.createdAt;
   });
 
-  document.getElementById('aStats').textContent = `共 ${analyses.length} 条分析` + (query ? `，筛选出 ${list.length} 条` : '');
+  const statsText = `共 ${analyses.length} 条分析` + ((query || activeTagFilter) ? `，筛选出 ${list.length} 条` : '');
+  document.getElementById('aStats').innerHTML = activeTagFilter
+    ? `<div class="filter-status">${statsText} · 标签: <span class="clear-filter" onclick="filterByTag('')">${esc(activeTagFilter)} ✕</span></div>`
+    : statsText;
 
   const container = document.getElementById('analysisList');
   if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无分析记录</div>'; return; }
@@ -800,7 +811,10 @@ function renderAnalyses() {
     const lineCount = (a.body || '').split('\n').length;
     const needExpand = lineCount > 10 && !a.isLegacy;
     const previewClass = a.isLegacy || !needExpand ? 'record-preview expanded' : 'record-preview';
-    const tagsHtml = (a.tags || []).filter(t => t !== '种子数据' && t !== '历史内容').map(t => `<span class="auto-tag" onclick="event.stopPropagation();filterByTag('${esc(t)}')">${esc(t)}</span>`).join('');
+    const tagsHtml = (a.tags || []).filter(t => t !== '种子数据' && t !== '历史内容').map(t => {
+      const activeCls = t === activeTagFilter ? ' active' : '';
+      return `<span class="auto-tag${activeCls}" onclick="event.stopPropagation();filterByTag('${esc(t)}')">${esc(t)}</span>`;
+    }).join('');
     const clickable = needExpand ? `onclick="toggleCardExpand(this)" style="cursor:pointer"` : '';
     return `<div class="record" ${clickable}>
       <div class="record-header">
@@ -1929,8 +1943,13 @@ function toggleCardExpand(card) {
   preview.classList.toggle('expanded');
 }
 function filterByTag(tag) {
-  const searchEl = document.getElementById('aSearch');
-  if (searchEl) { searchEl.value = tag; renderAnalyses(); }
+  // Toggle: click same tag = clear filter
+  if (activeTagFilter === tag || tag === '') {
+    activeTagFilter = '';
+  } else {
+    activeTagFilter = tag;
+  }
+  renderAnalyses();
 }
 // Auto-extract tags from analysis body
 const TAG_KEYWORDS = {
