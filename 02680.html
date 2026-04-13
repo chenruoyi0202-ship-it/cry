@@ -1639,22 +1639,43 @@ function renderLineChart(data) {
     return PAD + (min / TOTAL_MIN) * (W - 2 * PAD);
   }
 
-  // Step-line using time-based X
-  const coords = series.map(p => {
+  // Step-line using time-based X, with anchor points at 9:30 and 16:00
+  const rawCoords = series.map(p => {
     const min = timeToMin(p.t);
     const x = minToX(min);
     const y = PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD);
     return { x, y };
-  });
+  }).sort((a, b) => a.x - b.x);
+
+  // Deduplicate by x (same minute = keep last)
+  const coords = [];
+  for (const c of rawCoords) {
+    if (coords.length > 0 && Math.abs(coords[coords.length - 1].x - c.x) < 0.5) {
+      coords[coords.length - 1] = c;
+    } else {
+      coords.push(c);
+    }
+  }
+
+  // Anchor start at 9:30 (x=PAD) and end at 16:00 (x=W-PAD) using first/last prices
+  if (coords.length > 0) {
+    if (coords[0].x > PAD + 1) coords.unshift({ x: PAD, y: coords[0].y });
+    const lastX = W - PAD;
+    if (coords[coords.length - 1].x < lastX - 1) coords.push({ x: lastX, y: coords[coords.length - 1].y });
+  }
+
+  // Step-line: at each new point, go horizontal (at prev y) then vertical
   const stepPoints = [];
   coords.forEach((c, i) => {
-    if (i > 0) stepPoints.push(`${c.x.toFixed(1)},${coords[i-1].y.toFixed(1)}`);
-    stepPoints.push(`${c.x.toFixed(1)},${c.y.toFixed(1)}`);
+    if (i === 0) {
+      stepPoints.push(`${c.x.toFixed(1)},${c.y.toFixed(1)}`);
+    } else {
+      stepPoints.push(`${c.x.toFixed(1)},${coords[i-1].y.toFixed(1)}`);
+      stepPoints.push(`${c.x.toFixed(1)},${c.y.toFixed(1)}`);
+    }
   });
   const allPoints = stepPoints.join(' ');
-  const lastCoordX = coords.length > 0 ? coords[coords.length - 1].x.toFixed(1) : (W - PAD).toFixed(1);
-  const firstCoordX = coords.length > 0 ? coords[0].x.toFixed(1) : PAD.toFixed(1);
-  const fillPoints = allPoints + ` ${lastCoordX},${CHART_H} ${firstCoordX},${CHART_H}`;
+  const fillPoints = allPoints + ` ${(W-PAD).toFixed(1)},${CHART_H} ${PAD},${CHART_H}`;
 
   // Lunch break vertical divider
   const lunchX = minToX(150);
