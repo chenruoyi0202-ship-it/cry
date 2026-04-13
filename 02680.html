@@ -180,8 +180,10 @@ body{
 .badge-negative{background:rgba(239,68,68,0.15);color:#ef4444}
 .badge-type{background:rgba(202,138,4,0.15);color:var(--gold-light)}
 .badge-legacy{background:rgba(139,92,246,0.15);color:#a78bfa}
-.record-preview{font-size:15px;color:var(--text-muted);line-height:1.7;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:10;-webkit-box-orient:vertical;overflow:hidden}
-.record-preview.expanded{-webkit-line-clamp:unset;display:block}
+.record-preview{font-size:15px;color:var(--text-muted);line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:calc(15px * 1.7 * 10);overflow:hidden;position:relative}
+.record-preview::after{content:'';position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(180deg,transparent,var(--card));pointer-events:none}
+.record-preview.expanded{max-height:none;overflow:visible}
+.record-preview.expanded::after{display:none}
 .record-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
 .record-actions .btn{padding:3px 10px;font-size:11px;opacity:.5;transition:opacity .2s}
 .record:hover .record-actions .btn,.record-actions .btn:focus{opacity:1}
