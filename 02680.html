@@ -1516,20 +1516,25 @@ function renderCandlestick(data) {
   extras += `<text x="${W-2}" y="${PAD+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>`;
   extras += `<text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>`;
 
-  // Analysis markers: gold dots at dates with analyses
+  // Analysis markers: gold dots above candles where analyses exist
   let markers = '';
   if (analyses && analyses.length > 0) {
     const dateToAnalysis = new Map();
     analyses.forEach(a => { if (a.date && !a.isLegacy) dateToAnalysis.set(a.date, a); });
     for (let i = 0; i < n; i++) {
       const p = visible[i];
+      // Try both local and UTC date formats to handle timezone edge cases
       const dt = new Date(p.t);
-      const dateStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-      const a = dateToAnalysis.get(dateStr);
+      const localDate = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      const utcDate = dt.toISOString().substring(0, 10);
+      const a = dateToAnalysis.get(localDate) || dateToAnalysis.get(utcDate);
       if (a) {
         const cx = PAD + gap * i + gap / 2;
-        const markerY = PAD + 4;
-        markers += `<circle cx="${cx.toFixed(1)}" cy="${markerY}" r="3" fill="var(--gold-light)" stroke="var(--bg)" stroke-width="1" data-aid="${a.id}" class="analysis-marker"/>`;
+        // Place above the candle's high (wick top), with small offset
+        const pHigh = p.h != null ? p.h : Math.max(p.o || p.c, p.c);
+        const wickTop = PAD + (1 - (pHigh - minP) / range) * (CHART_H - 2 * PAD);
+        const markerY = Math.max(PAD + 6, wickTop - 6);
+        markers += `<circle cx="${cx.toFixed(1)}" cy="${markerY.toFixed(1)}" r="5" fill="#fcd34d" stroke="#000" stroke-width="1.2" data-aid="${a.id}" class="analysis-marker" style="filter:drop-shadow(0 0 3px rgba(252,211,77,0.8))"/>`;
       }
     }
   }
