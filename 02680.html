@@ -1178,12 +1178,18 @@ async function fetchQuote() {
     }
   } catch {}
 
-  // 2. Try Tencent/Sina for real-time price + intraday chart (script tag, no CORS)
+  // 2. Try Tencent/Sina for real-time price + intraday + daily K (script tag, no CORS)
   setTimeout(async () => {
     await fetchRealtimeQuote();
-    await fetchTencentMinuteData();
+    // Fetch daily K and intraday in parallel
+    await Promise.allSettled([
+      fetchTencentDailyK(),
+      fetchTencentMinuteData()
+    ]);
     // If still no intraday, switch to daily
     if (!quoteCache['1d'] && quoteCache['daily']) switchChartPeriod('daily');
+    // Push updated cache to GitHub if sync configured
+    if (syncConfig && quoteCache['daily']) pushQuoteCache().catch(() => {});
   }, 50);
 
   // 3. Refresh chart data from Yahoo in background
@@ -1285,6 +1291,60 @@ function applyQuoteToUI(price, prevClose, open, high, low, timeText) {
     document.getElementById('statOpen').className = 'stat-value ' + (open >= prevClose ? 'up' : 'down');
   }
   if (timeText.trim()) document.getElementById('stockStatus').textContent = timeText.trim();
+}
+
+// ==================== Tencent Daily K Data ====================
+function fetchTencentDailyK() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const varName = 'kline_data_hk02680';
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 5000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = () => { cleanup(); resolve(false); };
+    // Tencent kline endpoint with JSONP-style var
+    script.src = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=hk02680,day,,,180,qfq&_var=${varName}&_=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const raw = window[varName];
+        if (!raw || !raw.data || !raw.data.hk02680) { cleanup(); resolve(false); return; }
+        const info = raw.data.hk02680;
+        // Tencent returns either day or qfqday key
+        const klineArr = info.qfqday || info.day;
+        if (!klineArr || !Array.isArray(klineArr) || klineArr.length < 2) { cleanup(); resolve(false); return; }
+
+        // Each entry: [date, open, close, high, low, volume, ...]
+        const series = klineArr.map(row => {
+          const dateStr = row[0]; // "YYYY-MM-DD"
+          const o = parseFloat(row[1]);
+          const c = parseFloat(row[2]);
+          const h = parseFloat(row[3]);
+          const l = parseFloat(row[4]);
+          if (isNaN(c) || isNaN(o)) return null;
+          // Create timestamp at local noon of that day
+          const dt = new Date(dateStr + 'T08:00:00Z'); // UTC 08:00 = HKT 16:00 close time
+          return { t: dt.getTime(), c, o, h, l };
+        }).filter(Boolean);
+
+        if (series.length > 2) {
+          const latest = series[series.length - 1];
+          const prev = series.length > 1 ? series[series.length - 2] : null;
+          const quoteData = {
+            fetchedAt: Date.now(),
+            period: 'daily',
+            price: latest.c,
+            prevClose: prev ? prev.c : latest.o,
+            series: series
+          };
+          quoteCache['daily'] = quoteData;
+          sessionStorage.setItem(QUOTE_CACHE_KEY + '_daily', JSON.stringify(quoteData));
+          if (chartPeriod === 'daily') renderChart(quoteData);
+          cleanup(); resolve(true); return;
+        }
+        cleanup(); resolve(false);
+      } catch(e) { console.warn('Tencent daily K parse error:', e); cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
+  });
 }
 
 // ==================== Tencent Minute Chart Data ====================
