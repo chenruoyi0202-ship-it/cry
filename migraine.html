@@ -531,18 +531,12 @@
             <div class="section-title">云端同步设置</div>
             <div class="info-box">
                 首次使用会自动在你的 GitHub 下创建私有仓库 <b>migraine-data</b>（如果已存在则复用）。<br>
-                如果你之前有加密的旧数据，请在下方填入当时设置的密码，会自动解密迁移。<br>
                 Token 仅保存在当前浏览器中。
             </div>
             <div class="field">
                 <label>GitHub Personal Access Token</label>
                 <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
                 <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 创建 Token，勾选 repo 权限</div>
-            </div>
-            <div class="field">
-                <label>旧数据解密密码（可选）</label>
-                <input type="password" id="inputLegacyPassword" placeholder="仅首次迁移旧加密数据时需要">
-                <div class="hint">如果没有旧加密数据，留空即可</div>
             </div>
             <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
             <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
@@ -627,7 +621,6 @@
             updateSyncBar();
             if (syncConfig) {
                 document.getElementById('inputToken').value = syncConfig.token || '';
-                document.getElementById('inputLegacyPassword').value = syncConfig.password || '';
             }
         }
 
@@ -965,40 +958,6 @@
             return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
 
-        // ==================== AES-256-GCM Encryption ====================
-        async function deriveKey(password, salt) {
-            const enc = new TextEncoder();
-            const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-            return crypto.subtle.deriveKey(
-                { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-                keyMaterial,
-                { name: 'AES-GCM', length: 256 },
-                false,
-                ['encrypt', 'decrypt']
-            );
-        }
-        async function encryptData(data, password) {
-            const enc = new TextEncoder();
-            const salt = crypto.getRandomValues(new Uint8Array(16));
-            const iv = crypto.getRandomValues(new Uint8Array(12));
-            const key = await deriveKey(password, salt);
-            const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
-            const buf = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
-            buf.set(salt, 0);
-            buf.set(iv, salt.length);
-            buf.set(new Uint8Array(encrypted), salt.length + iv.length);
-            return btoa(String.fromCharCode(...buf));
-        }
-        async function decryptData(base64, password) {
-            const buf = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-            const salt = buf.slice(0, 16);
-            const iv = buf.slice(16, 28);
-            const data = buf.slice(28);
-            const key = await deriveKey(password, salt);
-            const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
-            return JSON.parse(new TextDecoder().decode(decrypted));
-        }
-
         // ==================== GitHub API ====================
         async function ghGetUser(token) {
             const res = await fetch('https://api.github.com/user', {
@@ -1087,16 +1046,14 @@
 
         async function saveSyncConfig() {
             const token = document.getElementById('inputToken').value.trim();
-            const legacyPassword = document.getElementById('inputLegacyPassword').value.trim();
             if (!token) { showToast('请填写 Token', true); return; }
-            // Preserve old repo/password if user had a previous config (for legacy data)
+            // Preserve old repo if user had a previous config
             let oldCfg = null;
             try { oldCfg = JSON.parse(localStorage.getItem('migraine_sync_config')); } catch (e) {}
             // Save token immediately so it persists even if validation fails
             syncConfig = {
                 token,
-                repo: (oldCfg && oldCfg.repo) || '',
-                password: legacyPassword || (oldCfg && oldCfg.password) || ''
+                repo: (oldCfg && oldCfg.repo) || ''
             };
             localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
             setSyncStatus('syncing', '正在验证 Token...');
@@ -1123,7 +1080,6 @@
             localStorage.removeItem('migraine_sync_config');
             fileSha = null;
             document.getElementById('inputToken').value = '';
-            document.getElementById('inputLegacyPassword').value = '';
             updateSyncBar();
             showToast('同步配置已清除');
         }
@@ -1166,36 +1122,15 @@
         }
 
         const DATA_PATH = 'data/migraine.json';
-        const LEGACY_PATH = 'data/migraine_encrypted.json';
 
         async function pullFromCloud() {
             const branch = await getDefaultBranch();
-            // Try new plain JSON format first
-            let file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
-            let cloudRecords = null;
-            if (file) {
-                fileSha = file.sha;
-                const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
-                const parsed = JSON.parse(content);
-                cloudRecords = parsed.records || [];
-            }
-            // Always also try legacy encrypted format to migrate old data
-            const legacy = await ghGet(syncConfig.token, syncConfig.repo, LEGACY_PATH, branch);
-            if (legacy && syncConfig.password) {
-                try {
-                    const content = decodeURIComponent(escape(atob(legacy.content.replace(/\n/g, ''))));
-                    const parsed = JSON.parse(content);
-                    const decrypted = await decryptData(parsed.encrypted, syncConfig.password);
-                    cloudRecords = (cloudRecords || []).concat(decrypted);
-                    showToast('旧加密数据已解密');
-                } catch (e) {
-                    console.error('Legacy decrypt failed:', e);
-                    showToast('旧数据密码错误', true);
-                }
-            } else if (legacy && !syncConfig.password && !file) {
-                throw new Error('检测到加密旧数据，请在设置中填写旧密码');
-            }
-            if (!cloudRecords) return;
+            const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
+            if (!file) return;
+            fileSha = file.sha;
+            const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+            const parsed = JSON.parse(content);
+            const cloudRecords = parsed.records || [];
             const localMap = new Map(records.map(r => [r.id, r]));
             cloudRecords.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
             records = Array.from(localMap.values());

@@ -1,0 +1,18 @@
+{
+  "records": [
+    {
+      "id": 1775196732637,
+      "datetime": "2026-04-01T14:11",
+      "intensity": 3,
+      "duration": 24,
+      "location": [],
+      "symptoms": [],
+      "triggers": [
+        "睡眠不足"
+      ],
+      "medication": "瑞美吉泮",
+      "notes": ""
+    }
+  ],
+  "updatedAt": "2026-04-03T13:02:20.604Z"
+}
