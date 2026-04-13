@@ -68,8 +68,8 @@ body{
 .cost-edit-btn{cursor:pointer;font-size:12px;color:var(--text-muted);opacity:.6;transition:opacity .2s}
 .cost-edit-btn:hover{opacity:1}
 .cost-line{stroke:var(--orange);stroke-width:1;stroke-dasharray:6,3;opacity:.7}
-.analysis-marker{cursor:pointer;transition:r .2s}
-.analysis-marker:hover{r:5}
+.analysis-marker{cursor:pointer}
+.analysis-marker-hit{cursor:pointer;fill:transparent}
 .marker-popup{position:fixed;background:var(--card);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;max-width:320px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.4);font-size:13px;line-height:1.6;color:var(--text-muted);display:none}
 .marker-popup .mp-date{font-weight:600;color:var(--gold-light);margin-bottom:4px}
 .marker-popup .mp-close{position:absolute;top:4px;right:8px;color:var(--text-muted);cursor:pointer;font-size:14px}
@@ -1564,19 +1564,27 @@ function renderCandlestick(data) {
         const pHigh = p.h != null ? p.h : Math.max(p.o || p.c, p.c);
         const wickTop = PAD + (1 - (pHigh - minP) / range) * (CHART_H - 2 * PAD);
         const markerY = Math.max(PAD + 6, wickTop - 6);
-        markers += `<circle cx="${cx.toFixed(1)}" cy="${markerY.toFixed(1)}" r="5" fill="#fcd34d" stroke="#000" stroke-width="1.2" data-aid="${a.id}" class="analysis-marker" style="filter:drop-shadow(0 0 3px rgba(252,211,77,0.8))"/>`;
+        markers += `<circle cx="${cx.toFixed(1)}" cy="${markerY.toFixed(1)}" r="6" fill="#fcd34d" stroke="#000" stroke-width="1.5" data-aid="${a.id}" class="analysis-marker" style="filter:drop-shadow(0 0 4px rgba(252,211,77,0.9))"/>`;
+        // Larger invisible circle for touch hit target
+        markers += `<circle cx="${cx.toFixed(1)}" cy="${markerY.toFixed(1)}" r="18" data-aid="${a.id}" class="analysis-marker-hit"/>`;
       }
     }
   }
 
   svg.innerHTML = extras + candles + markers;
 
-  // Attach click handlers to analysis markers
-  svg.querySelectorAll('.analysis-marker').forEach(el => {
-    el.addEventListener('click', (e) => {
+  // Attach click/touch handlers to markers (both visible and hit-target circles)
+  svg.querySelectorAll('.analysis-marker, .analysis-marker-hit').forEach(el => {
+    const handler = (e) => {
       e.stopPropagation();
-      showMarkerPopup(el.dataset.aid, el);
-    });
+      e.preventDefault();
+      // Find the visible marker element for positioning the popup
+      const aid = el.dataset.aid;
+      const visible = svg.querySelector(`.analysis-marker[data-aid="${aid}"]`) || el;
+      showMarkerPopup(aid, visible);
+    };
+    el.addEventListener('click', handler);
+    el.addEventListener('touchstart', handler, { passive: false });
   });
 }
 
@@ -2189,7 +2197,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   document.addEventListener('click', (e) => {
     const popup = document.getElementById('markerPopup');
-    if (popup && popup.style.display === 'block' && !popup.contains(e.target) && !e.target.classList.contains('analysis-marker')) {
+    if (popup && popup.style.display === 'block' && !popup.contains(e.target) && !e.target.classList.contains('analysis-marker') && !e.target.classList.contains('analysis-marker-hit')) {
       popup.style.display = 'none';
     }
   });
