@@ -2057,7 +2057,10 @@ async function ghGetDefaultBranch(token, repo) {
 }
 async function ghGet(token, repo, path, branch) {
   const url = `https://api.github.com/repos/${repo}/contents/${path}` + (branch ? `?ref=${branch}` : '');
-  const res = await fetch(url, { headers: ghAuth(token) });
+  const res = await fetch(url, {
+    headers: { ...ghAuth(token), 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+    cache: 'no-store'
+  });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`GitHub GET failed: ${res.status}`);
   return res.json();
@@ -2186,7 +2189,8 @@ async function flushAutoSync() {
 }
 async function pullFromCloud() {
   const branch = await getDefaultBranch();
-  const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch);
+  // Cache-bust to avoid stale data on WeChat WebView and GitHub API edge cache
+  const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
   if (!file) return;
   fileSha = file.sha;
   const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
@@ -2404,9 +2408,19 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('02680-sw.js').catch(() => {});
   }
-  // Flush any pending sync when page becomes hidden (switching app, closing tab)
+  // Auto pull when page becomes visible (WeChat/Safari switching back)
+  // Flush pending push when hidden
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flushAutoSync();
+    if (document.visibilityState === 'hidden') {
+      flushAutoSync();
+    } else if (document.visibilityState === 'visible' && syncConfig) {
+      // Pull latest data from cloud silently
+      pullFromCloud().then(() => {
+        renderAnalyses();
+        renderEvents();
+        renderTimeline();
+      }).catch(() => {});
+    }
   });
   window.addEventListener('pagehide', flushAutoSync);
   // Close marker popup when clicking outside
