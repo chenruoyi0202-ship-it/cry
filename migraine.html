@@ -547,12 +547,14 @@
             <button class="btn btn-danger" onclick="clearSyncConfig()">清除同步配置</button>
         </div>
 
-        <div class="disclaimer">数据仅保存在本地浏览器中</div>
+        <div class="disclaimer">数据仅保存在本地浏览器中 · v<span id="appVersion"></span></div>
     </div>
 
     <script>
+        const APP_VERSION = '2026.04.13.3';
         let records = [];
         let deletedIds = [];
+        let lastSyncAt = 0;
         let syncConfig = null;
         let fileSha = null;
 
@@ -618,10 +620,12 @@
             catch (e) { records = []; }
             try { deletedIds = JSON.parse(localStorage.getItem('migraine_deleted_ids')) || []; }
             catch (e) { deletedIds = []; }
+            lastSyncAt = parseInt(localStorage.getItem('migraine_last_sync') || '0');
         }
         function saveRecords() {
             localStorage.setItem('migraine_records', JSON.stringify(records));
             localStorage.setItem('migraine_deleted_ids', JSON.stringify(deletedIds));
+            localStorage.setItem('migraine_last_sync', String(lastSyncAt));
         }
         function loadSyncConfig() {
             try { syncConfig = JSON.parse(localStorage.getItem('migraine_sync_config')); }
@@ -1135,6 +1139,7 @@
                 const parsed = JSON.parse(content);
                 records = parsed.records || [];
                 deletedIds = parsed.deletedIds || [];
+                lastSyncAt = Date.now();
                 saveRecords();
                 renderHistory();
                 setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
@@ -1177,12 +1182,37 @@
             const parsed = JSON.parse(content);
             const cloudRecords = parsed.records || [];
             const cloudDeleted = parsed.deletedIds || [];
-            // Union of tombstones from both sides
+            const cloudIds = new Set(cloudRecords.map(r => r.id));
+
+            // 1) Union tombstones from both sides
             const allDeleted = new Set([...deletedIds, ...cloudDeleted]);
+
+            // 2) Implicit deletion: a record in local but not in cloud, with id < lastSyncAt,
+            //    means *some other device* deleted it after our last sync. Mark it deleted.
+            if (lastSyncAt > 0) {
+                records.forEach(r => {
+                    if (!cloudIds.has(r.id) && r.id < lastSyncAt) {
+                        allDeleted.add(r.id);
+                    }
+                });
+            }
+
+            // 3) Implicit deletion (other direction): a record in cloud but not in local,
+            //    with id < lastSyncAt, means we deleted it locally after our last sync.
+            //    Mark it deleted so it propagates to other devices.
+            const localIds = new Set(records.map(r => r.id));
+            if (lastSyncAt > 0) {
+                cloudRecords.forEach(r => {
+                    if (!localIds.has(r.id) && r.id < lastSyncAt) {
+                        allDeleted.add(r.id);
+                    }
+                });
+            }
+
             deletedIds = Array.from(allDeleted);
-            // Drop deleted records from local
+            // Apply tombstones to local
             records = records.filter(r => !allDeleted.has(r.id));
-            // Merge cloud records that aren't deleted
+            // Add cloud records that aren't deleted and aren't already local
             const localMap = new Map(records.map(r => [r.id, r]));
             cloudRecords.forEach(r => {
                 if (!allDeleted.has(r.id) && !localMap.has(r.id)) {
@@ -1213,10 +1243,14 @@
                     throw e;
                 }
             }
+            // Mark this point in time so future pulls can detect implicit deletions
+            lastSyncAt = Date.now();
+            saveRecords();
         }
 
         // ==================== Init ====================
         document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('appVersion').textContent = APP_VERSION;
             initDarkMode();
             loadRecords();
             loadSyncConfig();
