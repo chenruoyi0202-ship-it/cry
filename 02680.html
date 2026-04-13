@@ -344,6 +344,30 @@ const SYNC_DATA_PATH = 'data/stock_02680_encrypted.json';
 
 // ==================== Storage ====================
 function loadAnalyses() { try { analyses = JSON.parse(localStorage.getItem(ANALYSES_KEY)) || []; } catch { analyses = []; } }
+function dedupeAnalyses(list) {
+  // Dedupe by date + body hash, keep the one with earlier createdAt (original)
+  const map = new Map();
+  for (const a of list) {
+    const key = (a.date || '') + '|' + (a.body || '').substring(0, 80);
+    const existing = map.get(key);
+    if (!existing || (a.createdAt || 0) < (existing.createdAt || 0)) {
+      map.set(key, a);
+    }
+  }
+  return Array.from(map.values());
+}
+function dedupeEvents(list) {
+  // Dedupe by title + description
+  const map = new Map();
+  for (const e of list) {
+    const key = (e.title || '') + '|' + (e.description || '').substring(0, 80);
+    const existing = map.get(key);
+    if (!existing || (e.createdAt || 0) < (existing.createdAt || 0)) {
+      map.set(key, e);
+    }
+  }
+  return Array.from(map.values());
+}
 function saveAnalyses() { localStorage.setItem(ANALYSES_KEY, JSON.stringify(analyses)); }
 function loadEvents() { try { events = JSON.parse(localStorage.getItem(EVENTS_KEY)) || []; } catch { events = []; } }
 function saveEvents() { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); }
@@ -1704,20 +1728,16 @@ async function pullFromCloud() {
   fileSha = file.sha;
   const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
   const parsed = JSON.parse(content);
-  // Decrypt and merge analyses
+  // Decrypt and merge analyses (dedupe by date+body to handle seed re-generation)
   if (parsed.analyses) {
     const cloudAnalyses = await decryptData(parsed.analyses, syncConfig.password);
-    const localMap = new Map(analyses.map(r => [r.id, r]));
-    cloudAnalyses.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
-    analyses = Array.from(localMap.values());
+    analyses = dedupeAnalyses([...analyses, ...cloudAnalyses]);
     saveAnalyses();
   }
-  // Decrypt and merge events
+  // Decrypt and merge events (dedupe by title+description)
   if (parsed.events) {
     const cloudEvents = await decryptData(parsed.events, syncConfig.password);
-    const localMap = new Map(events.map(r => [r.id, r]));
-    cloudEvents.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
-    events = Array.from(localMap.values());
+    events = dedupeEvents([...events, ...cloudEvents]);
     saveEvents();
   }
   // Sync cost price (cloud wins if local is empty)
@@ -1870,6 +1890,12 @@ document.addEventListener('DOMContentLoaded', () => {
   seedIfNeeded();
   loadAnalyses();
   loadEvents();
+  // Clean up any existing duplicates from previous sync/seed bugs
+  const beforeA = analyses.length, beforeE = events.length;
+  analyses = dedupeAnalyses(analyses);
+  events = dedupeEvents(events);
+  if (analyses.length !== beforeA) saveAnalyses();
+  if (events.length !== beforeE) saveEvents();
   loadSyncConfig();
   loadCostPrice();
   resetAnalysisForm();
