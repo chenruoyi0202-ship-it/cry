@@ -521,23 +521,14 @@
         <div class="tab-content" id="tabSync" style="display:none">
             <div class="section-title">云端同步设置</div>
             <div class="info-box">
-                数据使用 AES-256 加密后存储到你的 GitHub 仓库。<br>
-                即使仓库公开，没有密码也无法解读数据。<br>
-                Token 和密码仅保存在当前浏览器中。
+                首次同步会自动在你的 GitHub 账号下创建一个名为 <b>migraine-data</b> 的私有仓库。<br>
+                数据以 JSON 格式存储在私有仓库中，仅你本人可见。<br>
+                Token 仅保存在当前浏览器中。
             </div>
             <div class="field">
                 <label>GitHub Personal Access Token</label>
                 <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
                 <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 创建 Token，勾选 repo 权限</div>
-            </div>
-            <div class="field">
-                <label>仓库（owner/repo）</label>
-                <input type="text" id="inputRepo" placeholder="例如 yourname/yourrepo">
-            </div>
-            <div class="field">
-                <label>加密密码</label>
-                <input type="password" id="inputPassword" placeholder="设置一个你记得住的密码">
-                <div class="hint">用于加密/解密数据，换设备时需要输入相同密码</div>
             </div>
             <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
             <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
@@ -622,8 +613,6 @@
             updateSyncBar();
             if (syncConfig) {
                 document.getElementById('inputToken').value = syncConfig.token || '';
-                document.getElementById('inputRepo').value = syncConfig.repo || '';
-                document.getElementById('inputPassword').value = syncConfig.password || '';
             }
         }
 
@@ -996,6 +985,38 @@
         }
 
         // ==================== GitHub API ====================
+        async function ghGetUser(token) {
+            const res = await fetch('https://api.github.com/user', {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!res.ok) throw new Error('Token 无效或缺少权限');
+            return res.json();
+        }
+        async function ensureRepo(token, owner) {
+            // Check if repo exists
+            const check = await fetch(`https://api.github.com/repos/${owner}/migraine-data`, {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (check.ok) return;
+            if (check.status !== 404) throw new Error(`检查仓库失败: ${check.status}`);
+            // Create private repo
+            const create = await fetch('https://api.github.com/user/repos', {
+                method: 'POST',
+                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                body: JSON.stringify({
+                    name: 'migraine-data',
+                    description: '偏头痛记录数据（自动创建）',
+                    private: true,
+                    auto_init: true
+                })
+            });
+            if (!create.ok) {
+                const err = await create.json().catch(() => ({}));
+                throw new Error(err.message || '创建仓库失败');
+            }
+            // Wait a moment for GitHub to finish initializing the repo
+            await new Promise(r => setTimeout(r, 1500));
+        }
         async function ghGetDefaultBranch(token, repo) {
             const res = await fetch(`https://api.github.com/repos/${repo}`, {
                 headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
@@ -1048,16 +1069,24 @@
             label.textContent = text;
         }
 
-        function saveSyncConfig() {
+        async function saveSyncConfig() {
             const token = document.getElementById('inputToken').value.trim();
-            const repo = document.getElementById('inputRepo').value.trim();
-            const password = document.getElementById('inputPassword').value.trim();
-            if (!token || !repo || !password) { showToast('请填写所有字段', true); return; }
-            syncConfig = { token, repo, password };
-            localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
-            updateSyncBar();
-            showToast('同步配置已保存');
-            manualSync();
+            if (!token) { showToast('请填写 Token', true); return; }
+            setSyncStatus('syncing', '正在验证 Token...');
+            try {
+                const user = await ghGetUser(token);
+                const repo = `${user.login}/migraine-data`;
+                await ensureRepo(token, user.login);
+                syncConfig = { token, repo };
+                localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
+                updateSyncBar();
+                showToast('配置已保存');
+                manualSync();
+            } catch (e) {
+                console.error(e);
+                setSyncStatus('error', '配置失败 · 点击重试');
+                showToast('配置失败: ' + e.message, true);
+            }
         }
         function clearSyncConfig() {
             if (!confirm('确认清除同步配置？')) return;
@@ -1065,8 +1094,6 @@
             localStorage.removeItem('migraine_sync_config');
             fileSha = null;
             document.getElementById('inputToken').value = '';
-            document.getElementById('inputRepo').value = '';
-            document.getElementById('inputPassword').value = '';
             updateSyncBar();
             showToast('同步配置已清除');
         }
@@ -1105,14 +1132,16 @@
             return syncConfig._branch;
         }
 
+        const DATA_PATH = 'data/migraine.json';
+
         async function pullFromCloud() {
             const branch = await getDefaultBranch();
-            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch);
+            const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
             if (!file) return;
             fileSha = file.sha;
             const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
             const parsed = JSON.parse(content);
-            const cloudRecords = await decryptData(parsed.encrypted, syncConfig.password);
+            const cloudRecords = parsed.records || [];
             const localMap = new Map(records.map(r => [r.id, r]));
             cloudRecords.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
             records = Array.from(localMap.values());
@@ -1121,20 +1150,19 @@
 
         async function pushToCloud() {
             const branch = await getDefaultBranch();
-            const encrypted = await encryptData(records, syncConfig.password);
-            const content = JSON.stringify({ encrypted, updatedAt: new Date().toISOString() });
+            const content = JSON.stringify({ records, updatedAt: new Date().toISOString() }, null, 2);
             // Fetch with cache-bust to avoid stale SHA
-            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch + '&t=' + Date.now());
+            const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch + '&t=' + Date.now());
             fileSha = file ? file.sha : null;
             try {
-                const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha, branch);
+                const result = await ghPut(syncConfig.token, syncConfig.repo, DATA_PATH, content, fileSha, branch);
                 fileSha = result.content.sha;
             } catch (e) {
                 if (e.message && e.message.includes('does not match')) {
                     // SHA mismatch - refetch and retry once
-                    const freshFile = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch + '&t=' + Date.now());
+                    const freshFile = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch + '&t=' + Date.now());
                     fileSha = freshFile ? freshFile.sha : null;
-                    const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha, branch);
+                    const result = await ghPut(syncConfig.token, syncConfig.repo, DATA_PATH, content, fileSha, branch);
                     fileSha = result.content.sha;
                 } else {
                     throw e;
