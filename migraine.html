@@ -548,6 +548,7 @@
 
     <script>
         let records = [];
+        let deletedIds = [];
         let syncConfig = null;
         let fileSha = null;
 
@@ -611,9 +612,12 @@
         function loadRecords() {
             try { records = JSON.parse(localStorage.getItem('migraine_records')) || []; }
             catch (e) { records = []; }
+            try { deletedIds = JSON.parse(localStorage.getItem('migraine_deleted_ids')) || []; }
+            catch (e) { deletedIds = []; }
         }
         function saveRecords() {
             localStorage.setItem('migraine_records', JSON.stringify(records));
+            localStorage.setItem('migraine_deleted_ids', JSON.stringify(deletedIds));
         }
         function loadSyncConfig() {
             try { syncConfig = JSON.parse(localStorage.getItem('migraine_sync_config')); }
@@ -808,6 +812,7 @@
         function deleteEpisode(id) {
             if (!confirm('确认删除此记录？')) return;
             records = records.filter(r => r.id !== id);
+            if (!deletedIds.includes(id)) deletedIds.push(id);
             saveRecords();
             renderHistory();
             autoSync();
@@ -1092,8 +1097,8 @@
             try {
                 await ensurePrivateRepo();
                 await pullFromCloud();
-                // Safety: don't push if local is empty (avoid wiping cloud)
-                if (records.length > 0) {
+                // Safety: don't push only if both records and tombstones are empty (fresh device)
+                if (records.length > 0 || deletedIds.length > 0) {
                     await pushToCloud();
                 }
                 setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
@@ -1135,15 +1140,26 @@
             const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
             const parsed = JSON.parse(content);
             const cloudRecords = parsed.records || [];
+            const cloudDeleted = parsed.deletedIds || [];
+            // Union of tombstones from both sides
+            const allDeleted = new Set([...deletedIds, ...cloudDeleted]);
+            deletedIds = Array.from(allDeleted);
+            // Drop deleted records from local
+            records = records.filter(r => !allDeleted.has(r.id));
+            // Merge cloud records that aren't deleted
             const localMap = new Map(records.map(r => [r.id, r]));
-            cloudRecords.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
+            cloudRecords.forEach(r => {
+                if (!allDeleted.has(r.id) && !localMap.has(r.id)) {
+                    localMap.set(r.id, r);
+                }
+            });
             records = Array.from(localMap.values());
             saveRecords();
         }
 
         async function pushToCloud() {
             const branch = await getDefaultBranch();
-            const content = JSON.stringify({ records, updatedAt: new Date().toISOString() }, null, 2);
+            const content = JSON.stringify({ records, deletedIds, updatedAt: new Date().toISOString() }, null, 2);
             // Fetch with cache-bust to avoid stale SHA
             const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch + '&t=' + Date.now());
             fileSha = file ? file.sha : null;
