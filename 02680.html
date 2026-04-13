@@ -70,6 +70,10 @@ body{
 .cost-line{stroke:var(--orange);stroke-width:1;stroke-dasharray:6,3;opacity:.7}
 .analysis-marker{cursor:pointer}
 .analysis-marker-hit{cursor:pointer;fill:transparent}
+.marker-popup{position:fixed;background:var(--card);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;max-width:320px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.4);font-size:13px;line-height:1.6;color:var(--text-muted);display:none}
+.marker-popup .mp-date{font-weight:600;color:var(--gold-light);margin-bottom:4px}
+.marker-popup .mp-close{position:absolute;top:4px;right:8px;color:var(--text-muted);cursor:pointer;font-size:14px}
+.marker-popup .mp-view-full{display:inline-block;margin-top:8px;padding:4px 10px;background:var(--gold);color:#000;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
 .record-highlight{animation:recordHighlight 2s ease-out;border-color:var(--gold)!important;box-shadow:0 0 20px rgba(252,211,77,0.4)}
 @keyframes recordHighlight{0%{background:rgba(252,211,77,0.25)}100%{background:var(--card)}}
 
@@ -293,6 +297,12 @@ body{
   <div class="chart-time-axis" id="chartTimeAxis"></div>
   <div class="chart-crosshair" id="chartCrosshair"></div>
   <div class="chart-tooltip" id="chartTooltip"><div class="tt-time"></div><div class="tt-price"></div><div class="tt-change"></div></div>
+</div>
+<div class="marker-popup" id="markerPopup">
+  <span class="mp-close" onclick="closeMarkerPopup()">✕</span>
+  <div class="mp-date"></div>
+  <div class="mp-body"></div>
+  <span class="mp-view-full" onclick="jumpFromPopup()">查看完整 →</span>
 </div>
 <div class="price-status" id="priceStatus"></div>
 
@@ -1706,16 +1716,47 @@ function renderCandlestick(data) {
 
   svg.innerHTML = extras + candles + markers;
 
-  // Attach click/touch handlers to markers — directly jump to analysis card
+  // Attach click/touch handlers to markers — show popup preview
   svg.querySelectorAll('.analysis-marker, .analysis-marker-hit').forEach(el => {
     const handler = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      jumpToAnalysis(el.dataset.aid);
+      const aid = el.dataset.aid;
+      const visible = svg.querySelector(`.analysis-marker[data-aid="${aid}"]`) || el;
+      showMarkerPopup(aid, visible);
     };
     el.addEventListener('click', handler);
     el.addEventListener('touchstart', handler, { passive: false });
   });
+}
+
+function closeMarkerPopup() {
+  document.getElementById('markerPopup').style.display = 'none';
+}
+
+function showMarkerPopup(analysisId, markerEl) {
+  const a = analyses.find(x => x.id === analysisId);
+  if (!a) return;
+  const popup = document.getElementById('markerPopup');
+  popup.dataset.aid = analysisId;
+  popup.querySelector('.mp-date').textContent = `${a.date}（${getDayOfWeek(a.date)}）`;
+  const preview = (a.body || '').substring(0, 200) + (a.body.length > 200 ? '...' : '');
+  popup.querySelector('.mp-body').innerHTML = highlight(preview);
+  popup.style.display = 'block';
+  const rect = markerEl.getBoundingClientRect();
+  const popupW = 320;
+  let left = rect.left + rect.width / 2 - popupW / 2;
+  if (left < 10) left = 10;
+  if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
+  popup.style.left = left + 'px';
+  popup.style.top = (rect.bottom + 8) + 'px';
+}
+
+function jumpFromPopup() {
+  const popup = document.getElementById('markerPopup');
+  const aid = popup.dataset.aid;
+  closeMarkerPopup();
+  if (aid) jumpToAnalysis(aid);
 }
 
 function jumpToAnalysis(analysisId) {
@@ -2266,6 +2307,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('02680-sw.js').catch(() => {});
   }
+  // Close marker popup when clicking outside
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('markerPopup');
+    if (popup && popup.style.display === 'block' && !popup.contains(e.target) && !e.target.classList.contains('analysis-marker') && !e.target.classList.contains('analysis-marker-hit')) {
+      popup.style.display = 'none';
+    }
+  });
   checkAccess();
   seedIfNeeded();
   loadAnalyses();
