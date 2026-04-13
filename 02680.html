@@ -1344,20 +1344,51 @@ function renderLineChart(data) {
   const refPrice = prevClose || prices[0];
   const refY = PAD + (1 - (refPrice - minP) / range) * (CHART_H - 2 * PAD);
 
-  // Step-line: horizontal then vertical (like real tick data)
-  const stepPoints = [];
-  series.forEach((p, i) => {
-    const x = PAD + (i / (series.length - 1)) * (W - 2 * PAD);
+  // HK trading session: 9:30-12:00 (morning) + 13:00-16:00 (afternoon) = 330 min total
+  // Use first data point's date to anchor start of day
+  const firstTime = new Date(series[0].t);
+  const dayStart = new Date(firstTime.getFullYear(), firstTime.getMonth(), firstTime.getDate(), 9, 30).getTime();
+  const lunchStart = new Date(firstTime.getFullYear(), firstTime.getMonth(), firstTime.getDate(), 12, 0).getTime();
+  const lunchEnd = new Date(firstTime.getFullYear(), firstTime.getMonth(), firstTime.getDate(), 13, 0).getTime();
+  const dayEnd = new Date(firstTime.getFullYear(), firstTime.getMonth(), firstTime.getDate(), 16, 0).getTime();
+  const TOTAL_MIN = 330; // 150 morning + 180 afternoon
+
+  // Map a timestamp to trading minutes offset (0 to TOTAL_MIN), skipping lunch
+  function timeToMin(t) {
+    if (t <= dayStart) return 0;
+    if (t >= dayEnd) return TOTAL_MIN;
+    if (t >= lunchStart && t <= lunchEnd) return 150; // lunch freeze at end of morning
+    if (t < lunchStart) return Math.round((t - dayStart) / 60000);
+    return 150 + Math.round((t - lunchEnd) / 60000);
+  }
+  function minToX(min) {
+    return PAD + (min / TOTAL_MIN) * (W - 2 * PAD);
+  }
+
+  // Step-line using time-based X
+  const coords = series.map(p => {
+    const min = timeToMin(p.t);
+    const x = minToX(min);
     const y = PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD);
-    if (i > 0) stepPoints.push(`${x.toFixed(1)},${stepPoints.length > 0 ? stepPoints[stepPoints.length-1].split(',')[1] : y.toFixed(1)}`);
-    stepPoints.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    return { x, y };
+  });
+  const stepPoints = [];
+  coords.forEach((c, i) => {
+    if (i > 0) stepPoints.push(`${c.x.toFixed(1)},${coords[i-1].y.toFixed(1)}`);
+    stepPoints.push(`${c.x.toFixed(1)},${c.y.toFixed(1)}`);
   });
   const allPoints = stepPoints.join(' ');
-  const lastX = (PAD + (W - 2 * PAD)).toFixed(1);
-  const fillPoints = allPoints + ` ${lastX},${CHART_H} ${PAD},${CHART_H}`;
+  const lastCoordX = coords.length > 0 ? coords[coords.length - 1].x.toFixed(1) : (W - PAD).toFixed(1);
+  const firstCoordX = coords.length > 0 ? coords[0].x.toFixed(1) : PAD.toFixed(1);
+  const fillPoints = allPoints + ` ${lastCoordX},${CHART_H} ${firstCoordX},${CHART_H}`;
+
+  // Lunch break vertical divider
+  const lunchX = minToX(150);
 
   let extras = '';
   if (prevClose) extras += `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.4"/>`;
+  // Lunch break line
+  extras += `<line x1="${lunchX.toFixed(1)}" y1="${PAD}" x2="${lunchX.toFixed(1)}" y2="${CHART_H}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.3"/>`;
   if (costPrice && costPrice >= minP && costPrice <= maxP) {
     const cy = PAD + (1 - (costPrice - minP) / range) * (CHART_H - 2 * PAD);
     extras += `<line x1="${PAD}" y1="${cy.toFixed(1)}" x2="${W-PAD}" y2="${cy.toFixed(1)}" class="cost-line"/><text x="${PAD+2}" y="${cy.toFixed(1)-3}" font-size="9" fill="var(--orange)" opacity="0.8">成本 ${costPrice.toFixed(3)}</text>`;
@@ -1453,9 +1484,12 @@ function renderTimeAxis(seriesSlice) {
   const axis = document.getElementById('chartTimeAxis');
   const s = seriesSlice || currentChartSeries;
   if (!s || s.length < 2) { axis.innerHTML = ''; return; }
-  const fmt = chartPeriod === '1d'
-    ? t => new Date(t).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
-    : t => new Date(t).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'});
+  if (chartPeriod === '1d') {
+    // Fixed HK trading session labels
+    axis.innerHTML = ['09:30','11:00','12:00/13:00','14:30','16:00'].map(l => `<span>${l}</span>`).join('');
+    return;
+  }
+  const fmt = t => new Date(t).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'});
   const labels = [0, 0.25, 0.5, 0.75, 1].map(f => {
     const idx = Math.round(f * (s.length - 1));
     return fmt(s[idx].t);
@@ -1483,11 +1517,29 @@ function setupCrosshair() {
       const visIdx = Math.min(visCount - 1, Math.max(0, Math.round((x - gap / 2) / gap)));
       idx = candleViewStart + visIdx;
       seriesRef = currentChartSeries;
-      snapX = gap * visIdx + gap / 2; // snap to candle center
+      snapX = gap * visIdx + gap / 2;
     } else {
-      idx = Math.round(ratio * (currentChartSeries.length - 1));
+      // Intraday: find nearest data point by time position
       seriesRef = currentChartSeries;
-      snapX = x;
+      const first = new Date(seriesRef[0].t);
+      const dayStart = new Date(first.getFullYear(), first.getMonth(), first.getDate(), 9, 30).getTime();
+      const lunchStart = new Date(first.getFullYear(), first.getMonth(), first.getDate(), 12, 0).getTime();
+      const lunchEnd = new Date(first.getFullYear(), first.getMonth(), first.getDate(), 13, 0).getTime();
+      const TOTAL_MIN = 330;
+      function t2m(t) {
+        if (t <= dayStart) return 0;
+        if (t >= lunchStart && t <= lunchEnd) return 150;
+        if (t < lunchStart) return (t - dayStart) / 60000;
+        return 150 + (t - lunchEnd) / 60000;
+      }
+      const targetMin = ratio * TOTAL_MIN;
+      let bestIdx = 0, bestDiff = Infinity;
+      for (let i = 0; i < seriesRef.length; i++) {
+        const diff = Math.abs(t2m(seriesRef[i].t) - targetMin);
+        if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+      }
+      idx = bestIdx;
+      snapX = (t2m(seriesRef[idx].t) / TOTAL_MIN) * rect.width;
     }
     const p = seriesRef[idx];
     if (!p) return;
