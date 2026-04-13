@@ -718,7 +718,28 @@ const SEED_TIMELINE = [
   {"date": "阶段目标", "title": "主升浪 → 目标价 20-25", "status": "pending", "description": "保守目标 20-25，乐观目标 30-40\n减仓节奏：16 以下不减 → 18-20 少减 → 20-25 多减 → 25-30 全清\n出货信号：成交量超 1 亿 = 庄家出货"}
 ];
 
+const TIMELINE_SEEDED_KEY = 'stock_02680_timeline_seeded_v1';
+
 function seedIfNeeded() {
+  // Seed timeline independently (even for users with old SEEDED_KEY already set)
+  if (!localStorage.getItem(TIMELINE_SEEDED_KEY)) {
+    loadTimeline();
+    if (timeline.length === 0 && SEED_TIMELINE.length > 0) {
+      timeline = SEED_TIMELINE.map((s, i) => ({
+        id: crypto.randomUUID(),
+        date: s.date,
+        title: s.title,
+        status: s.status,
+        description: s.description,
+        order: i,
+        createdAt: Date.now() - (SEED_TIMELINE.length - i) * 1000,
+        updatedAt: Date.now() - (SEED_TIMELINE.length - i) * 1000
+      }));
+      saveTimelineStorage();
+    }
+    localStorage.setItem(TIMELINE_SEEDED_KEY, '1');
+  }
+  // Main seed flow (analyses + clues)
   if (localStorage.getItem(SEEDED_KEY)) return;
   if (SEED_ANALYSES.length === 0 && SEED_CLUES.length === 0) return;
   loadAnalyses();
@@ -748,20 +769,6 @@ function seedIfNeeded() {
       updatedAt: Date.now() - (SEED_CLUES.length - i) * 1000
     }));
     saveEvents();
-  }
-  loadTimeline();
-  if (timeline.length === 0) {
-    timeline = SEED_TIMELINE.map((s, i) => ({
-      id: crypto.randomUUID(),
-      date: s.date,
-      title: s.title,
-      status: s.status,
-      description: s.description,
-      order: i,
-      createdAt: Date.now() - (SEED_TIMELINE.length - i) * 1000,
-      updatedAt: Date.now() - (SEED_TIMELINE.length - i) * 1000
-    }));
-    saveTimelineStorage();
   }
   localStorage.setItem(SEEDED_KEY, '1');
 }
