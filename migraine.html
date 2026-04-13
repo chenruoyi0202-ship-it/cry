@@ -1047,23 +1047,14 @@
         async function saveSyncConfig() {
             const token = document.getElementById('inputToken').value.trim();
             if (!token) { showToast('请填写 Token', true); return; }
-            // Preserve old repo if user had a previous config
-            let oldCfg = null;
-            try { oldCfg = JSON.parse(localStorage.getItem('migraine_sync_config')); } catch (e) {}
             // Save token immediately so it persists even if validation fails
-            syncConfig = {
-                token,
-                repo: (oldCfg && oldCfg.repo) || ''
-            };
+            syncConfig = { token, repo: '' };
             localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
             setSyncStatus('syncing', '正在验证 Token...');
             try {
                 const user = await ghGetUser(token);
-                if (!syncConfig.repo) syncConfig.repo = `${user.login}/migraine-data`;
-                // Only ensure/create the default repo if we're not reusing an existing one
-                if (syncConfig.repo === `${user.login}/migraine-data`) {
-                    await ensureRepo(token, user.login);
-                }
+                syncConfig.repo = `${user.login}/migraine-data`;
+                await ensureRepo(token, user.login);
                 localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
                 updateSyncBar();
                 showToast('配置已保存');
@@ -1084,10 +1075,22 @@
             showToast('同步配置已清除');
         }
 
+        async function ensurePrivateRepo() {
+            // Migrate from any non-private-migraine-data repo to the standard one
+            if (!syncConfig.repo || !syncConfig.repo.endsWith('/migraine-data')) {
+                const user = await ghGetUser(syncConfig.token);
+                syncConfig.repo = `${user.login}/migraine-data`;
+                syncConfig._branch = null;
+                await ensureRepo(syncConfig.token, user.login);
+                localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
+            }
+        }
+
         async function manualSync() {
             if (!syncConfig) { showToast('请先配置同步', true); return; }
             setSyncStatus('syncing', '同步中...');
             try {
+                await ensurePrivateRepo();
                 await pullFromCloud();
                 // Safety: don't push if local is empty (avoid wiping cloud)
                 if (records.length > 0) {
@@ -1106,6 +1109,7 @@
             if (!syncConfig) return;
             setSyncStatus('syncing', '同步中...');
             try {
+                await ensurePrivateRepo();
                 await pushToCloud();
                 setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
             } catch (e) {
@@ -1159,35 +1163,6 @@
             }
         }
 
-        // ==================== Public Read-Only Pull ====================
-        // Fetch data/migraine.json via relative URL (works in any browser
-        // without auth, since the file lives in the same public repo).
-        async function publicPull() {
-            try {
-                const res = await fetch('data/migraine.json?t=' + Date.now(), { cache: 'no-store' });
-                if (!res.ok) return;
-                const parsed = await res.json();
-                const cloudRecords = parsed.records || [];
-                const localMap = new Map(records.map(r => [r.id, r]));
-                let added = 0;
-                cloudRecords.forEach(r => {
-                    if (!localMap.has(r.id)) {
-                        localMap.set(r.id, r);
-                        added++;
-                    }
-                });
-                if (added > 0) {
-                    records = Array.from(localMap.values());
-                    saveRecords();
-                    // Re-render currently visible tab
-                    const activeTab = document.querySelector('.tab.active');
-                    if (activeTab) activeTab.click();
-                }
-            } catch (e) {
-                console.warn('Public pull failed:', e);
-            }
-        }
-
         // ==================== Init ====================
         document.addEventListener('DOMContentLoaded', () => {
             initDarkMode();
@@ -1195,12 +1170,9 @@
             loadSyncConfig();
             initForm();
             initCalendar();
-            // Auto pull on load if sync is configured (full read+write)
+            // Auto pull on load if sync is configured
             if (syncConfig) {
                 manualSync().catch(() => {});
-            } else {
-                // No sync configured: still try public read-only pull
-                publicPull();
             }
         });
     </script>
