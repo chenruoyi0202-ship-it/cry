@@ -521,8 +521,8 @@
         <div class="tab-content" id="tabSync" style="display:none">
             <div class="section-title">云端同步设置</div>
             <div class="info-box">
-                首次同步会自动在你的 GitHub 账号下创建一个名为 <b>migraine-data</b> 的私有仓库。<br>
-                数据以 JSON 格式存储在私有仓库中，仅你本人可见。<br>
+                首次使用会自动在你的 GitHub 下创建私有仓库 <b>migraine-data</b>（如果已存在则复用）。<br>
+                如果检测到旧的加密数据，会提示输入原密码一次性解密迁移。<br>
                 Token 仅保存在当前浏览器中。
             </div>
             <div class="field">
@@ -1075,9 +1075,16 @@
             setSyncStatus('syncing', '正在验证 Token...');
             try {
                 const user = await ghGetUser(token);
-                const repo = `${user.login}/migraine-data`;
-                await ensureRepo(token, user.login);
+                // Preserve old repo/password if user had a previous config (for legacy data)
+                let oldCfg = null;
+                try { oldCfg = JSON.parse(localStorage.getItem('migraine_sync_config')); } catch (e) {}
+                let repo = oldCfg && oldCfg.repo ? oldCfg.repo : `${user.login}/migraine-data`;
+                // Only ensure/create the default repo if we're not reusing an existing one
+                if (repo === `${user.login}/migraine-data`) {
+                    await ensureRepo(token, user.login);
+                }
                 syncConfig = { token, repo };
+                if (oldCfg && oldCfg.password) syncConfig.password = oldCfg.password;
                 localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
                 updateSyncBar();
                 showToast('配置已保存');
@@ -1133,15 +1140,40 @@
         }
 
         const DATA_PATH = 'data/migraine.json';
+        const LEGACY_PATH = 'data/migraine_encrypted.json';
 
         async function pullFromCloud() {
             const branch = await getDefaultBranch();
-            const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
-            if (!file) return;
-            fileSha = file.sha;
-            const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
-            const parsed = JSON.parse(content);
-            const cloudRecords = parsed.records || [];
+            // Try new plain JSON format first
+            let file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
+            let cloudRecords = null;
+            if (file) {
+                fileSha = file.sha;
+                const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+                const parsed = JSON.parse(content);
+                cloudRecords = parsed.records || [];
+            } else {
+                // Fallback to legacy encrypted format
+                const legacy = await ghGet(syncConfig.token, syncConfig.repo, LEGACY_PATH, branch);
+                if (legacy) {
+                    const content = decodeURIComponent(escape(atob(legacy.content.replace(/\n/g, ''))));
+                    const parsed = JSON.parse(content);
+                    let password = syncConfig.password;
+                    if (!password) {
+                        password = prompt('检测到旧的加密数据，请输入之前设置的解密密码：');
+                        if (!password) throw new Error('已取消解密');
+                    }
+                    try {
+                        cloudRecords = await decryptData(parsed.encrypted, password);
+                    } catch (e) {
+                        throw new Error('密码错误，无法解密旧数据');
+                    }
+                    // Save password for this session so we don't prompt again
+                    syncConfig.password = password;
+                    showToast('旧数据已解密，将迁移到新格式');
+                }
+            }
+            if (!cloudRecords) return;
             const localMap = new Map(records.map(r => [r.id, r]));
             cloudRecords.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
             records = Array.from(localMap.values());
