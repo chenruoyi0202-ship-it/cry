@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>02680 创陞控股 · 分析追踪</title>
 <meta property="og:title" content="02680 创陞控股 · 分析追踪">
 <meta property="og:description" content="港股02680创陞控股分析追踪，记录盘中分析、重要线索与实时行情。">
@@ -2041,17 +2044,18 @@ async function decryptData(base64, password) {
 
 // ==================== GitHub API ====================
 function ghAuth(token) {
-  // Fine-grained tokens start with github_pat_, classic tokens start with ghp_
-  const prefix = token.startsWith('github_pat_') ? 'Bearer' : 'token';
-  return { 'Authorization': `${prefix} ${token}`, 'Accept': 'application/vnd.github.v3+json' };
+  // GitHub now recommends Bearer for both classic and fine-grained tokens
+  return { 'Authorization': `Bearer ${token.trim()}`, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
 }
 async function ghGetDefaultBranch(token, repo) {
   const res = await fetch(`https://api.github.com/repos/${repo}`, { headers: ghAuth(token) });
   if (!res.ok) {
-    if (res.status === 401) throw new Error('Token 无效或已过期');
-    if (res.status === 403) throw new Error('Token 权限不足，需要 repo 权限');
-    if (res.status === 404) throw new Error('仓库不存在: ' + repo);
-    throw new Error('获取仓库失败: ' + res.status);
+    let errText = '';
+    try { const err = await res.json(); errText = err.message || ''; } catch {}
+    if (res.status === 401) throw new Error('Token 无效 (401) ' + errText);
+    if (res.status === 403) throw new Error('Token 权限不足 (403) ' + errText);
+    if (res.status === 404) throw new Error('仓库不存在或无访问权限: ' + repo + ' (404)');
+    throw new Error('获取仓库失败: ' + res.status + ' ' + errText);
   }
   return (await res.json()).default_branch;
 }
