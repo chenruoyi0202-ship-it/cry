@@ -1159,6 +1159,35 @@
             }
         }
 
+        // ==================== Public Read-Only Pull ====================
+        // Fetch data/migraine.json via relative URL (works in any browser
+        // without auth, since the file lives in the same public repo).
+        async function publicPull() {
+            try {
+                const res = await fetch('data/migraine.json?t=' + Date.now(), { cache: 'no-store' });
+                if (!res.ok) return;
+                const parsed = await res.json();
+                const cloudRecords = parsed.records || [];
+                const localMap = new Map(records.map(r => [r.id, r]));
+                let added = 0;
+                cloudRecords.forEach(r => {
+                    if (!localMap.has(r.id)) {
+                        localMap.set(r.id, r);
+                        added++;
+                    }
+                });
+                if (added > 0) {
+                    records = Array.from(localMap.values());
+                    saveRecords();
+                    // Re-render currently visible tab
+                    const activeTab = document.querySelector('.tab.active');
+                    if (activeTab) activeTab.click();
+                }
+            } catch (e) {
+                console.warn('Public pull failed:', e);
+            }
+        }
+
         // ==================== Init ====================
         document.addEventListener('DOMContentLoaded', () => {
             initDarkMode();
@@ -1166,9 +1195,12 @@
             loadSyncConfig();
             initForm();
             initCalendar();
-            // Auto pull on load if sync is configured
+            // Auto pull on load if sync is configured (full read+write)
             if (syncConfig) {
                 manualSync().catch(() => {});
+            } else {
+                // No sync configured: still try public read-only pull
+                publicPull();
             }
         });
     </script>
