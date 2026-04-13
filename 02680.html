@@ -396,6 +396,7 @@ body{
 const ANALYSES_KEY = 'stock_02680_analyses_v1';
 const EVENTS_KEY = 'stock_02680_events_v1';
 const TIMELINE_KEY = 'stock_02680_timeline_v1';
+const DELETED_KEY = 'stock_02680_deleted_v1';
 const SEEDED_KEY = 'stock_02680_seeded_v1';
 const QUOTE_CACHE_KEY = 'stock_02680_quote_cache';
 const QUOTE_CACHE_PATH = 'data/stock_02680_quote.json';
@@ -409,6 +410,7 @@ const IMPACT_LABELS = {positive:'正面',neutral:'中性',negative:'负面'};
 let analyses = [];
 let events = [];
 let timeline = [];
+let deletedIds = new Set();
 let editingAnalysisId = null;
 let editingEventId = null;
 let editingTimelineId = null;
@@ -450,6 +452,17 @@ function loadEvents() { try { events = JSON.parse(localStorage.getItem(EVENTS_KE
 function saveEvents() { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); }
 function loadTimeline() { try { timeline = JSON.parse(localStorage.getItem(TIMELINE_KEY)) || []; } catch { timeline = []; } }
 function saveTimelineStorage() { localStorage.setItem(TIMELINE_KEY, JSON.stringify(timeline)); }
+function loadDeletedIds() { try { deletedIds = new Set(JSON.parse(localStorage.getItem(DELETED_KEY)) || []); } catch { deletedIds = new Set(); } }
+function saveDeletedIds() {
+  // Cap at 500 most recent tombstones to prevent unbounded growth
+  let arr = Array.from(deletedIds);
+  if (arr.length > 500) { arr = arr.slice(-500); deletedIds = new Set(arr); }
+  localStorage.setItem(DELETED_KEY, JSON.stringify(arr));
+}
+function tombstoneDelete(id) {
+  deletedIds.add(id);
+  saveDeletedIds();
+}
 
 // ==================== Seed Data ====================
 const SEED_ANALYSES = [
@@ -874,6 +887,7 @@ function cancelEditAnalysis() { resetAnalysisForm(); }
 function deleteAnalysis(id) {
   if (!confirm('确定删除这条分析？')) return;
   analyses = analyses.filter(a => a.id !== id);
+  tombstoneDelete(id);
   saveAnalyses();
   renderAnalyses();
   autoSync();
@@ -976,6 +990,7 @@ function cancelEditEvent() { resetEventForm(); }
 function deleteEvent(id) {
   if (!confirm('确定删除这条线索？')) return;
   events = events.filter(e => e.id !== id);
+  tombstoneDelete(id);
   saveEvents(); renderEvents(); autoSync();
 }
 
@@ -1104,6 +1119,7 @@ function cancelEditTimeline() { resetTimelineForm(); }
 function deleteTimeline(id) {
   if (!confirm('确定删除这个节点？')) return;
   timeline = timeline.filter(t => t.id !== id);
+  tombstoneDelete(id);
   saveTimelineStorage(); renderTimeline(); autoSync();
 }
 
@@ -2148,7 +2164,7 @@ let autoSyncTimer = null;
 let lastSyncHash = null;
 
 function computeDataHash() {
-  const str = JSON.stringify({ a: analyses.map(x => [x.id, x.updatedAt]), e: events.map(x => [x.id, x.updatedAt, x.order]), t: timeline.map(x => [x.id, x.updatedAt, x.order]), c: costPrice });
+  const str = JSON.stringify({ a: analyses.map(x => [x.id, x.updatedAt]), e: events.map(x => [x.id, x.updatedAt, x.order]), t: timeline.map(x => [x.id, x.updatedAt, x.order]), d: Array.from(deletedIds).sort(), c: costPrice });
   let hash = 0;
   for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
   return hash.toString();
@@ -2195,19 +2211,29 @@ async function pullFromCloud() {
   fileSha = file.sha;
   const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
   const parsed = JSON.parse(content);
-  // Decrypt and merge analyses (dedupe by date+body to handle seed re-generation)
+
+  // Merge tombstone list first, so deleted ids are filtered out below
+  if (parsed.deletedIds) {
+    try {
+      const cloudDeleted = await decryptData(parsed.deletedIds, syncConfig.password);
+      cloudDeleted.forEach(id => deletedIds.add(id));
+      saveDeletedIds();
+    } catch {}
+  }
+
+  // Decrypt and merge analyses (dedupe by date+body + remove tombstoned ids)
   if (parsed.analyses) {
     const cloudAnalyses = await decryptData(parsed.analyses, syncConfig.password);
-    analyses = dedupeAnalyses([...analyses, ...cloudAnalyses]);
+    analyses = dedupeAnalyses([...analyses, ...cloudAnalyses]).filter(a => !deletedIds.has(a.id));
     saveAnalyses();
   }
-  // Decrypt and merge events (dedupe by title+description)
+  // Decrypt and merge events + remove tombstoned
   if (parsed.events) {
     const cloudEvents = await decryptData(parsed.events, syncConfig.password);
-    events = dedupeEvents([...events, ...cloudEvents]);
+    events = dedupeEvents([...events, ...cloudEvents]).filter(e => !deletedIds.has(e.id));
     saveEvents();
   }
-  // Decrypt and merge timeline (dedupe by title+date)
+  // Decrypt and merge timeline + remove tombstoned
   if (parsed.timeline) {
     try {
       const cloudTimeline = await decryptData(parsed.timeline, syncConfig.password);
@@ -2217,7 +2243,7 @@ async function pullFromCloud() {
         const existing = map.get(key);
         if (!existing || (t.updatedAt || 0) > (existing.updatedAt || 0)) map.set(key, t);
       });
-      timeline = Array.from(map.values());
+      timeline = Array.from(map.values()).filter(t => !deletedIds.has(t.id));
       saveTimelineStorage();
     } catch {}
   }
@@ -2236,7 +2262,8 @@ async function pushToCloud() {
   const encAnalyses = await encryptData(analyses, syncConfig.password);
   const encEvents = await encryptData(events, syncConfig.password);
   const encTimeline = await encryptData(timeline, syncConfig.password);
-  const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, timeline: encTimeline, costPrice: costPrice || null, updatedAt: new Date().toISOString() });
+  const encDeleted = await encryptData(Array.from(deletedIds), syncConfig.password);
+  const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, timeline: encTimeline, deletedIds: encDeleted, costPrice: costPrice || null, updatedAt: new Date().toISOString() });
   const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
   fileSha = file ? file.sha : null;
   try {
@@ -2435,10 +2462,13 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAnalyses();
   loadEvents();
   loadTimeline();
-  // Clean up any existing duplicates and auto-tag entries without tags
-  const beforeA = analyses.length, beforeE = events.length;
-  analyses = dedupeAnalyses(analyses);
-  events = dedupeEvents(events);
+  loadDeletedIds();
+  // Filter out tombstoned items and dedupe
+  const beforeA = analyses.length, beforeE = events.length, beforeT = timeline.length;
+  analyses = dedupeAnalyses(analyses).filter(a => !deletedIds.has(a.id));
+  events = dedupeEvents(events).filter(e => !deletedIds.has(e.id));
+  timeline = timeline.filter(t => !deletedIds.has(t.id));
+  if (timeline.length !== beforeT) saveTimelineStorage();
   let tagged = 0;
   analyses.forEach(a => {
     if (!a.tags || a.tags.length === 0 || a.tags.every(t => t === '种子数据' || t === '历史内容')) {
