@@ -66,6 +66,7 @@
             --focus-ring: rgba(67,184,156,0.25);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { overflow-x: hidden; }
         body {
             background: var(--bg);
             color: var(--text);
@@ -125,6 +126,14 @@
             color: var(--text-dim);
             cursor: pointer;
             padding: 6px 0;
+            max-width: 100%;
+            min-width: 0;
+        }
+        .sync-bar span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 80%;
         }
         .sync-dot {
             width: 8px; height: 8px;
@@ -1051,6 +1060,7 @@
         }
 
         // ==================== Sync Logic ====================
+        function repoName(r) { return (r || '').split('/').pop(); }
         function updateSyncBar() {
             const dot = document.getElementById('syncDot');
             const label = document.getElementById('syncLabel');
@@ -1059,7 +1069,7 @@
                 label.textContent = '未配置同步 - 点击设置';
             } else {
                 dot.className = 'sync-dot connected';
-                label.textContent = '已连接 · ' + syncConfig.repo;
+                label.textContent = '已连接 · ' + repoName(syncConfig.repo);
             }
         }
         function setSyncStatus(status, text) {
@@ -1111,7 +1121,7 @@
             try {
                 await pullFromCloud();
                 await pushToCloud();
-                setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+                setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
                 showToast('同步完成');
             } catch (e) {
                 console.error('Sync error:', e);
@@ -1125,7 +1135,7 @@
             setSyncStatus('syncing', '同步中...');
             try {
                 await pushToCloud();
-                setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+                setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
             } catch (e) {
                 console.error('Auto sync error:', e);
                 setSyncStatus('error', '同步失败');
