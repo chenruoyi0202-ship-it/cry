@@ -531,13 +531,18 @@
             <div class="section-title">云端同步设置</div>
             <div class="info-box">
                 首次使用会自动在你的 GitHub 下创建私有仓库 <b>migraine-data</b>（如果已存在则复用）。<br>
-                如果检测到旧的加密数据，会提示输入原密码一次性解密迁移。<br>
+                如果你之前有加密的旧数据，请在下方填入当时设置的密码，会自动解密迁移。<br>
                 Token 仅保存在当前浏览器中。
             </div>
             <div class="field">
                 <label>GitHub Personal Access Token</label>
                 <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
                 <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 创建 Token，勾选 repo 权限</div>
+            </div>
+            <div class="field">
+                <label>旧数据解密密码（可选）</label>
+                <input type="password" id="inputLegacyPassword" placeholder="仅首次迁移旧加密数据时需要">
+                <div class="hint">如果没有旧加密数据，留空即可</div>
             </div>
             <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
             <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
@@ -622,6 +627,7 @@
             updateSyncBar();
             if (syncConfig) {
                 document.getElementById('inputToken').value = syncConfig.token || '';
+                document.getElementById('inputLegacyPassword').value = syncConfig.password || '';
             }
         }
 
@@ -1081,20 +1087,26 @@
 
         async function saveSyncConfig() {
             const token = document.getElementById('inputToken').value.trim();
+            const legacyPassword = document.getElementById('inputLegacyPassword').value.trim();
             if (!token) { showToast('请填写 Token', true); return; }
+            // Preserve old repo/password if user had a previous config (for legacy data)
+            let oldCfg = null;
+            try { oldCfg = JSON.parse(localStorage.getItem('migraine_sync_config')); } catch (e) {}
+            // Save token immediately so it persists even if validation fails
+            syncConfig = {
+                token,
+                repo: (oldCfg && oldCfg.repo) || '',
+                password: legacyPassword || (oldCfg && oldCfg.password) || ''
+            };
+            localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
             setSyncStatus('syncing', '正在验证 Token...');
             try {
                 const user = await ghGetUser(token);
-                // Preserve old repo/password if user had a previous config (for legacy data)
-                let oldCfg = null;
-                try { oldCfg = JSON.parse(localStorage.getItem('migraine_sync_config')); } catch (e) {}
-                let repo = oldCfg && oldCfg.repo ? oldCfg.repo : `${user.login}/migraine-data`;
+                if (!syncConfig.repo) syncConfig.repo = `${user.login}/migraine-data`;
                 // Only ensure/create the default repo if we're not reusing an existing one
-                if (repo === `${user.login}/migraine-data`) {
+                if (syncConfig.repo === `${user.login}/migraine-data`) {
                     await ensureRepo(token, user.login);
                 }
-                syncConfig = { token, repo };
-                if (oldCfg && oldCfg.password) syncConfig.password = oldCfg.password;
                 localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
                 updateSyncBar();
                 showToast('配置已保存');
@@ -1111,6 +1123,7 @@
             localStorage.removeItem('migraine_sync_config');
             fileSha = null;
             document.getElementById('inputToken').value = '';
+            document.getElementById('inputLegacyPassword').value = '';
             updateSyncBar();
             showToast('同步配置已清除');
         }
@@ -1120,9 +1133,12 @@
             setSyncStatus('syncing', '同步中...');
             try {
                 await pullFromCloud();
-                await pushToCloud();
+                // Safety: don't push if local is empty (avoid wiping cloud)
+                if (records.length > 0) {
+                    await pushToCloud();
+                }
                 setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
-                showToast('同步完成');
+                showToast(records.length > 0 ? '同步完成' : '已拉取，本地暂无数据');
             } catch (e) {
                 console.error('Sync error:', e);
                 setSyncStatus('error', '同步失败 · 点击重试');
@@ -1162,26 +1178,22 @@
                 const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
                 const parsed = JSON.parse(content);
                 cloudRecords = parsed.records || [];
-            } else {
-                // Fallback to legacy encrypted format
-                const legacy = await ghGet(syncConfig.token, syncConfig.repo, LEGACY_PATH, branch);
-                if (legacy) {
+            }
+            // Always also try legacy encrypted format to migrate old data
+            const legacy = await ghGet(syncConfig.token, syncConfig.repo, LEGACY_PATH, branch);
+            if (legacy && syncConfig.password) {
+                try {
                     const content = decodeURIComponent(escape(atob(legacy.content.replace(/\n/g, ''))));
                     const parsed = JSON.parse(content);
-                    let password = syncConfig.password;
-                    if (!password) {
-                        password = prompt('检测到旧的加密数据，请输入之前设置的解密密码：');
-                        if (!password) throw new Error('已取消解密');
-                    }
-                    try {
-                        cloudRecords = await decryptData(parsed.encrypted, password);
-                    } catch (e) {
-                        throw new Error('密码错误，无法解密旧数据');
-                    }
-                    // Save password for this session so we don't prompt again
-                    syncConfig.password = password;
-                    showToast('旧数据已解密，将迁移到新格式');
+                    const decrypted = await decryptData(parsed.encrypted, syncConfig.password);
+                    cloudRecords = (cloudRecords || []).concat(decrypted);
+                    showToast('旧加密数据已解密');
+                } catch (e) {
+                    console.error('Legacy decrypt failed:', e);
+                    showToast('旧数据密码错误', true);
                 }
+            } else if (legacy && !syncConfig.password && !file) {
+                throw new Error('检测到加密旧数据，请在设置中填写旧密码');
             }
             if (!cloudRecords) return;
             const localMap = new Map(records.map(r => [r.id, r]));
