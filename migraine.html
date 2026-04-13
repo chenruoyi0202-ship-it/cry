@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>偏头痛记录</title>
     <meta name="description" content="偏头痛记录追踪工具，记录疼痛强度、症状、诱因，分析发作规律">
     <meta property="og:title" content="偏头痛记录">
@@ -540,6 +543,7 @@
             </div>
             <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
             <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
+            <button class="btn btn-secondary" onclick="forcePullFromCloud()">用云端数据覆盖本地</button>
             <button class="btn btn-danger" onclick="clearSyncConfig()">清除同步配置</button>
         </div>
 
@@ -1107,6 +1111,38 @@
                 console.error('Sync error:', e);
                 setSyncStatus('error', '同步失败 · 点击重试');
                 showToast('同步失败: ' + e.message, true);
+            }
+        }
+
+        async function forcePullFromCloud() {
+            if (!syncConfig) { showToast('请先配置同步', true); return; }
+            if (!confirm('将丢弃本地数据，使用云端数据覆盖。确定？')) return;
+            setSyncStatus('syncing', '正在拉取云端...');
+            try {
+                await ensurePrivateRepo();
+                const branch = await getDefaultBranch();
+                const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
+                if (!file) {
+                    records = [];
+                    deletedIds = [];
+                    saveRecords();
+                    showToast('云端无数据', true);
+                    setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
+                    return;
+                }
+                fileSha = file.sha;
+                const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+                const parsed = JSON.parse(content);
+                records = parsed.records || [];
+                deletedIds = parsed.deletedIds || [];
+                saveRecords();
+                renderHistory();
+                setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
+                showToast(`已从云端拉取 ${records.length} 条记录`);
+            } catch (e) {
+                console.error(e);
+                setSyncStatus('error', '拉取失败');
+                showToast('拉取失败: ' + e.message, true);
             }
         }
 
