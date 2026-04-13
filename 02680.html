@@ -16,9 +16,9 @@
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#050505;--card:#0e0e14;--border:rgba(255,255,255,0.06);
-  --text:#e8eaf0;--text-muted:#6b7394;--radius:16px;
-  --gold:#CA8A04;--gold-light:#FBBF24;
+  --bg:#050505;--card:#0e0e14;--border:rgba(255,255,255,0.08);
+  --text:#e8eaf0;--text-muted:#8892b0;--radius:16px;
+  --gold:#eab308;--gold-light:#fcd34d;
   --green:#22c55e;--red:#ef4444;--orange:#f97316;--gray:#6b7280;
 }
 [data-theme="light"]{
@@ -68,6 +68,11 @@ body{
 .cost-edit-btn{cursor:pointer;font-size:12px;color:var(--text-muted);opacity:.6;transition:opacity .2s}
 .cost-edit-btn:hover{opacity:1}
 .cost-line{stroke:var(--orange);stroke-width:1;stroke-dasharray:6,3;opacity:.7}
+.analysis-marker{cursor:pointer;transition:r .2s}
+.analysis-marker:hover{r:5}
+.marker-popup{position:fixed;background:var(--card);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;max-width:320px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.4);font-size:13px;line-height:1.6;color:var(--text-muted);display:none}
+.marker-popup .mp-date{font-weight:600;color:var(--gold-light);margin-bottom:4px}
+.marker-popup .mp-close{position:absolute;top:4px;right:8px;color:var(--text-muted);cursor:pointer;font-size:14px}
 
 /* Chart tabs */
 .chart-tabs{display:flex;gap:0;margin-bottom:4px}
@@ -181,8 +186,14 @@ body{
 .lock-box .lock-error{color:var(--red);font-size:12px;margin-top:6px;display:none}
 /* Guest mode: hide all edit controls */
 .guest-mode #aToggleBtn,.guest-mode #eToggleBtn,.guest-mode .record-actions,.guest-mode .clue-actions,.guest-mode .cost-edit-btn,.guest-mode .drag-handle,.guest-mode .search-bar,.guest-mode #analysisFormSection,.guest-mode #eventFormSection,.guest-mode .page>.form-section .btn-primary{display:none!important}
-.record-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.record-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 .tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
+.auto-tag{padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(234,179,8,0.12);color:var(--gold-light);cursor:pointer;transition:all .2s;border:1px solid rgba(234,179,8,0.2)}
+.auto-tag:hover{background:rgba(234,179,8,0.2)}
+
+/* Skeleton loader */
+.skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.03) 75%);background-size:200% 100%;animation:skeleton 1.4s ease-in-out infinite;border-radius:8px}
+@keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .record-actions{display:flex;gap:6px;margin-top:8px}
 .record-actions .btn{padding:4px 12px;font-size:11px}
 .record-linked{font-size:11px;color:var(--text-muted);margin-top:4px;font-style:italic}
@@ -253,10 +264,16 @@ body{
   <div class="chart-tab" onclick="switchChartPeriod('daily')">日K</div>
 </div>
 <div class="price-chart-wrap" id="priceChartWrap">
-  <svg id="priceChart" viewBox="0 0 700 140" preserveAspectRatio="xMidYMid meet" style="height:140px"></svg>
+  <div class="skeleton" id="chartSkeleton" style="width:100%;height:140px"></div>
+  <svg id="priceChart" viewBox="0 0 700 140" preserveAspectRatio="xMidYMid meet" style="height:140px;display:none"></svg>
   <div class="chart-time-axis" id="chartTimeAxis"></div>
   <div class="chart-crosshair" id="chartCrosshair"></div>
   <div class="chart-tooltip" id="chartTooltip"><div class="tt-time"></div><div class="tt-price"></div><div class="tt-change"></div></div>
+</div>
+<div class="marker-popup" id="markerPopup">
+  <span class="mp-close" onclick="closeMarkerPopup()">✕</span>
+  <div class="mp-date"></div>
+  <div class="mp-body"></div>
 </div>
 <div class="price-status" id="priceStatus"></div>
 
@@ -722,14 +739,15 @@ function saveAnalysis() {
   if (!date || !body) { alert('日期和正文为必填项'); return; }
 
   const title = body.split('\n')[0].substring(0, 40);
+  const autoTags = extractTags(body);
 
   if (editingAnalysisId) {
     const idx = analyses.findIndex(a => a.id === editingAnalysisId);
     if (idx >= 0) {
-      analyses[idx] = { ...analyses[idx], date, title, body, updatedAt: Date.now() };
+      analyses[idx] = { ...analyses[idx], date, title, body, tags: autoTags, updatedAt: Date.now() };
     }
   } else {
-    analyses.push({ id: crypto.randomUUID(), date, title, rating: '', targetLow: null, targetHigh: null, body, tags: [], isLegacy: false, createdAt: Date.now(), updatedAt: Date.now() });
+    analyses.push({ id: crypto.randomUUID(), date, title, rating: '', targetLow: null, targetHigh: null, body, tags: autoTags, isLegacy: false, createdAt: Date.now(), updatedAt: Date.now() });
   }
   saveAnalyses();
   resetAnalysisForm();
@@ -781,17 +799,18 @@ function renderAnalyses() {
     const dayStr = getDayOfWeek(a.date);
     const lineCount = (a.body || '').split('\n').length;
     const needExpand = lineCount > 10 && !a.isLegacy;
-    const expandBtn = needExpand ? `<button class="btn btn-secondary" onclick="toggleExpand(this)">展开</button>` : '';
-    const previewClass = a.isLegacy ? 'record-preview expanded' : 'record-preview';
-    return `<div class="record">
+    const previewClass = a.isLegacy || !needExpand ? 'record-preview expanded' : 'record-preview';
+    const tagsHtml = (a.tags || []).filter(t => t !== '种子数据' && t !== '历史内容').map(t => `<span class="auto-tag" onclick="event.stopPropagation();filterByTag('${esc(t)}')">${esc(t)}</span>`).join('');
+    const clickable = needExpand ? `onclick="toggleCardExpand(this)" style="cursor:pointer"` : '';
+    return `<div class="record" ${clickable}>
       <div class="record-header">
         <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
       </div>
       <div class="${previewClass}">${highlight(a.body)}</div>
+      ${tagsHtml ? `<div class="record-tags">${tagsHtml}</div>` : ''}
       <div class="record-actions">
-        ${expandBtn}
-        <button class="btn btn-secondary" onclick="editAnalysis('${a.id}')">编辑</button>
-        <button class="btn btn-secondary" onclick="deleteAnalysis('${a.id}')">删除</button>
+        <button class="btn btn-secondary" onclick="event.stopPropagation();editAnalysis('${a.id}')">编辑</button>
+        <button class="btn btn-secondary" onclick="event.stopPropagation();deleteAnalysis('${a.id}')">删除</button>
       </div>
     </div>`;
   }).join('');
@@ -1317,6 +1336,12 @@ function renderChart(data) {
   if (!series || series.length < 2) return;
   currentChartSeries = series;
 
+  // Hide skeleton, show chart
+  const skeleton = document.getElementById('chartSkeleton');
+  const svg = document.getElementById('priceChart');
+  if (skeleton) skeleton.style.display = 'none';
+  if (svg) svg.style.display = '';
+
   if (chartPeriod === 'daily') {
     renderCandlestick(data);
   } else {
@@ -1477,7 +1502,54 @@ function renderCandlestick(data) {
   extras += `<text x="${W-2}" y="${PAD+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>`;
   extras += `<text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>`;
 
-  svg.innerHTML = extras + candles;
+  // Analysis markers: gold dots at dates with analyses
+  let markers = '';
+  if (analyses && analyses.length > 0) {
+    const dateToAnalysis = new Map();
+    analyses.forEach(a => { if (a.date && !a.isLegacy) dateToAnalysis.set(a.date, a); });
+    for (let i = 0; i < n; i++) {
+      const p = visible[i];
+      const dt = new Date(p.t);
+      const dateStr = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      const a = dateToAnalysis.get(dateStr);
+      if (a) {
+        const cx = PAD + gap * i + gap / 2;
+        const markerY = PAD + 4;
+        markers += `<circle cx="${cx.toFixed(1)}" cy="${markerY}" r="3" fill="var(--gold-light)" stroke="var(--bg)" stroke-width="1" data-aid="${a.id}" class="analysis-marker"/>`;
+      }
+    }
+  }
+
+  svg.innerHTML = extras + candles + markers;
+
+  // Attach click handlers to analysis markers
+  svg.querySelectorAll('.analysis-marker').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showMarkerPopup(el.dataset.aid, el);
+    });
+  });
+}
+
+function closeMarkerPopup() {
+  document.getElementById('markerPopup').style.display = 'none';
+}
+function showMarkerPopup(analysisId, markerEl) {
+  const a = analyses.find(x => x.id === analysisId);
+  if (!a) return;
+  const popup = document.getElementById('markerPopup');
+  popup.querySelector('.mp-date').textContent = `${a.date}（${getDayOfWeek(a.date)}）`;
+  const preview = (a.body || '').substring(0, 200) + (a.body.length > 200 ? '...' : '');
+  popup.querySelector('.mp-body').innerHTML = highlight(preview);
+  popup.style.display = 'block';
+  // Position near the marker
+  const rect = markerEl.getBoundingClientRect();
+  const popupW = 320;
+  let left = rect.left + rect.width / 2 - popupW / 2;
+  if (left < 10) left = 10;
+  if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
+  popup.style.left = left + 'px';
+  popup.style.top = (rect.bottom + 8) + 'px';
 }
 
 function renderTimeAxis(seriesSlice) {
@@ -1851,12 +1923,42 @@ function editCostPrice() {
 // ==================== Utils ====================
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function highlight(s) { return esc(s).replace(/2680/g, '<span style="color:var(--gold-light);font-weight:600">2680</span>'); }
-function toggleExpand(btn) {
-  const preview = btn.closest('.record').querySelector('.record-preview');
+function toggleCardExpand(card) {
+  const preview = card.querySelector('.record-preview');
   if (!preview) return;
-  const expanded = preview.classList.toggle('expanded');
-  btn.textContent = expanded ? '收起' : '展开';
+  preview.classList.toggle('expanded');
 }
+function filterByTag(tag) {
+  const searchEl = document.getElementById('aSearch');
+  if (searchEl) { searchEl.value = tag; renderAnalyses(); }
+}
+// Auto-extract tags from analysis body
+const TAG_KEYWORDS = {
+  '邀约': ['邀约', '收购邀约', '要约'],
+  '洗盘': ['洗盘', '洗了', '洗盘', '最后一洗', '震仓'],
+  '护盘': ['护盘', '守护', '托底'],
+  '牌照': ['牌照', '证监会', '批准', '审批'],
+  '王庭发': ['王庭发', '发哥', '王总', '主席'],
+  '派息': ['派息', '分红'],
+  '拆股': ['拆股', '拆细'],
+  '改名': ['改名', '更名', '金母鸡'],
+  '配股': ['配股', '定增'],
+  '注入业务': ['注入业务', '注入', '借壳'],
+  '目标价': ['目标价', '20', '25', '30'],
+  '支撑位': ['铁底', '支撑', '强支撑'],
+  '主力': ['主力', '机构', '庄家'],
+  '3928': ['3928'],
+  '耀才': ['耀才'],
+};
+function extractTags(body) {
+  if (!body) return [];
+  const tags = [];
+  for (const [tag, keywords] of Object.entries(TAG_KEYWORDS)) {
+    if (keywords.some(k => body.includes(k))) tags.push(tag);
+  }
+  return tags;
+}
+
 const WEEKDAYS = ['周日','周一','周二','周三','周四','周五','周六'];
 function getDayOfWeek(dateStr) {
   if (!dateStr || dateStr.length < 10) return '';
@@ -1938,15 +2040,28 @@ function markAsOwner() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('markerPopup');
+    if (popup && popup.style.display === 'block' && !popup.contains(e.target) && !e.target.classList.contains('analysis-marker')) {
+      popup.style.display = 'none';
+    }
+  });
   checkAccess();
   seedIfNeeded();
   loadAnalyses();
   loadEvents();
-  // Clean up any existing duplicates from previous sync/seed bugs
+  // Clean up any existing duplicates and auto-tag entries without tags
   const beforeA = analyses.length, beforeE = events.length;
   analyses = dedupeAnalyses(analyses);
   events = dedupeEvents(events);
-  if (analyses.length !== beforeA) saveAnalyses();
+  let tagged = 0;
+  analyses.forEach(a => {
+    if (!a.tags || a.tags.length === 0 || a.tags.every(t => t === '种子数据' || t === '历史内容')) {
+      const autoTags = extractTags(a.body);
+      if (autoTags.length > 0) { a.tags = autoTags; tagged++; }
+    }
+  });
+  if (analyses.length !== beforeA || tagged > 0) saveAnalyses();
   if (events.length !== beforeE) saveEvents();
   loadSyncConfig();
   loadCostPrice();
