@@ -2124,11 +2124,10 @@ function clearSyncConfig() {
   document.getElementById('inputToken').value = '';
   updateSyncBar();
 }
+const SYNC_BRANCH = 'main'; // Force sync to main branch regardless of remote default
 async function getDefaultBranch() {
-  if (!syncConfig._branch) {
-    syncConfig._branch = await ghGetDefaultBranch(syncConfig.token, syncConfig.repo);
-  }
-  return syncConfig._branch;
+  // Always use main (the branch GitHub Pages serves from)
+  return SYNC_BRANCH;
 }
 async function manualSync() {
   if (!syncConfig) { alert('请先配置同步'); return; }
