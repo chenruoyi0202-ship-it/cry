@@ -26,7 +26,21 @@
       "medication": "",
       "notes": "",
       "weather": "雷暴 24.2°C 湿度88%"
+    },
+    {
+      "id": 1776089671073,
+      "datetime": "2026-04-13T22:14",
+      "intensity": 1,
+      "duration": 0,
+      "location": [],
+      "symptoms": [],
+      "triggers": [
+        "周一总是会头疼，这次算轻的"
+      ],
+      "medication": "",
+      "notes": "",
+      "weather": "阴天 17°C 湿度94%"
     }
   ],
-  "updatedAt": "2026-04-13T14:14:06.566Z"
+  "updatedAt": "2026-04-13T14:14:31.074Z"
 }
