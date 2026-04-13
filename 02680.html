@@ -2264,18 +2264,24 @@ async function pushToCloud() {
   const encTimeline = await encryptData(timeline, syncConfig.password);
   const encDeleted = await encryptData(Array.from(deletedIds), syncConfig.password);
   const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, timeline: encTimeline, deletedIds: encDeleted, costPrice: costPrice || null, updatedAt: new Date().toISOString() });
-  const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
-  fileSha = file ? file.sha : null;
-  try {
-    const result = await ghPut(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, content, fileSha, branch);
-    fileSha = result.content.sha;
-  } catch (e) {
-    if (e.message && e.message.includes('does not match')) {
-      const freshFile = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
-      fileSha = freshFile ? freshFile.sha : null;
+
+  // Retry up to 3 times with fresh SHA on any conflict
+  const isConflict = (e) => {
+    const msg = (e && e.message) || '';
+    return msg.includes('does not match') || msg.includes('is at') || msg.includes('expected') || msg.includes('409') || msg.includes('422');
+  };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
+      fileSha = file ? file.sha : null;
       const result = await ghPut(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, content, fileSha, branch);
       fileSha = result.content.sha;
-    } else { throw e; }
+      return;
+    } catch (e) {
+      if (attempt === 2 || !isConflict(e)) throw e;
+      // Wait a bit before retry to let any concurrent write settle
+      await new Promise(r => setTimeout(r, 200 * (attempt + 1)));
+    }
   }
 }
 
