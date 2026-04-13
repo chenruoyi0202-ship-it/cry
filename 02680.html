@@ -73,6 +73,27 @@ body{
 .record-highlight{animation:recordHighlight 2s ease-out;border-color:var(--gold)!important;box-shadow:0 0 20px rgba(252,211,77,0.4)}
 @keyframes recordHighlight{0%{background:rgba(252,211,77,0.25)}100%{background:var(--card)}}
 
+/* Timeline */
+.timeline-wrap{position:relative;padding-left:24px}
+.timeline-wrap::before{content:'';position:absolute;left:8px;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--gold),rgba(234,179,8,0.1))}
+.timeline-item{position:relative;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;transition:border-color .2s}
+.timeline-item:hover{border-color:rgba(234,179,8,0.3)}
+.timeline-item::before{content:'';position:absolute;left:-22px;top:18px;width:12px;height:12px;border-radius:50%;background:var(--gold);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--gold)}
+.timeline-item.done::before{background:var(--gray);box-shadow:0 0 0 2px var(--gray)}
+.timeline-item.ongoing::before{background:var(--orange);box-shadow:0 0 0 2px var(--orange);animation:pulse 1.5s infinite}
+.timeline-item.pending::before{background:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.timeline-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.timeline-date{font-size:12px;font-weight:600;color:var(--gold-light);font-variant-numeric:tabular-nums}
+.timeline-status{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.timeline-status.done{background:rgba(107,114,128,0.2);color:var(--gray)}
+.timeline-status.ongoing{background:rgba(249,115,22,0.2);color:var(--orange)}
+.timeline-status.pending{background:rgba(234,179,8,0.15);color:var(--gold-light)}
+.timeline-title{font-size:15px;font-weight:700;color:var(--text);flex:1;min-width:0}
+.timeline-desc{font-size:13px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.timeline-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.timeline-actions .btn{padding:3px 10px;font-size:11px;opacity:.5}
+.timeline-item:hover .timeline-actions .btn{opacity:1}
+
 /* Chart tabs */
 .chart-tabs{display:flex;gap:0;margin-bottom:4px}
 .chart-tab{padding:5px 14px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;border-radius:6px;transition:all .2s}
@@ -184,7 +205,7 @@ body{
 .lock-box .lock-btn{width:100%;padding:10px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#000;font-size:14px;font-weight:600;cursor:pointer}
 .lock-box .lock-error{color:var(--red);font-size:12px;margin-top:6px;display:none}
 /* Guest mode: hide all edit controls */
-.guest-mode #aToggleBtn,.guest-mode #eToggleBtn,.guest-mode .record-actions,.guest-mode .clue-actions,.guest-mode .cost-edit-btn,.guest-mode .drag-handle,.guest-mode .search-bar,.guest-mode #analysisFormSection,.guest-mode #eventFormSection,.guest-mode .page>.form-section .btn-primary{display:none!important}
+.guest-mode #aToggleBtn,.guest-mode #eToggleBtn,.guest-mode #tToggleBtn,.guest-mode .record-actions,.guest-mode .clue-actions,.guest-mode .timeline-actions,.guest-mode .cost-edit-btn,.guest-mode .drag-handle,.guest-mode .search-bar,.guest-mode #analysisFormSection,.guest-mode #eventFormSection,.guest-mode #timelineFormSection,.guest-mode .page>.form-section .btn-primary{display:none!important}
 .record-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 .tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
 .auto-tag{padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(234,179,8,0.12);color:var(--gold-light);cursor:pointer;transition:all .2s;border:1px solid rgba(234,179,8,0.2)}
@@ -279,6 +300,7 @@ body{
 <div class="tabs">
   <div class="tab active" onclick="switchTab('analyses')">祖哥分析</div>
   <div class="tab" onclick="switchTab('events')">重要线索</div>
+  <div class="tab" onclick="switchTab('timeline')">后续推演</div>
 </div>
 
 <!-- Tab 1: Analyses -->
@@ -313,6 +335,27 @@ body{
   <div id="eventList" class="clue-grid"></div>
 </div>
 
+<!-- Tab 3: Timeline -->
+<div class="tab-content" id="tabTimeline">
+  <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;opacity:.6">根据祖哥分析 AI 推演的后续重要节点</div>
+  <button class="btn btn-primary" id="tToggleBtn" onclick="toggleTimelineForm()" style="margin-bottom:12px;width:100%">+ 新增节点</button>
+  <div class="form-section" id="timelineFormSection" style="display:none">
+    <div class="form-row two">
+      <div class="form-group"><label>预期时间</label><input type="text" id="tDate" placeholder="例：2026-04-29 或 5 月中"></div>
+      <div class="form-group"><label>状态</label>
+        <select id="tStatus"><option value="pending">待发生</option><option value="ongoing">进行中</option><option value="done">已发生</option></select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:8px"><label>节点名称</label><input type="text" id="tTitle" placeholder="例：邀约结束"></div>
+    <div class="form-group"><label>影响 / 描述</label><textarea id="tDesc" placeholder="对股价/基本面的预期影响..." style="min-height:80px"></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="tSaveBtn" onclick="saveTimeline()">保存</button>
+      <button class="btn btn-secondary" id="tCancelBtn" onclick="cancelEditTimeline()">取消</button>
+    </div>
+  </div>
+  <div id="timelineList"></div>
+</div>
+
 </div><!-- .page -->
 
 <!-- Sync Modal -->
@@ -337,6 +380,7 @@ body{
 // ==================== Constants ====================
 const ANALYSES_KEY = 'stock_02680_analyses_v1';
 const EVENTS_KEY = 'stock_02680_events_v1';
+const TIMELINE_KEY = 'stock_02680_timeline_v1';
 const SEEDED_KEY = 'stock_02680_seeded_v1';
 const QUOTE_CACHE_KEY = 'stock_02680_quote_cache';
 const QUOTE_CACHE_PATH = 'data/stock_02680_quote.json';
@@ -349,8 +393,10 @@ const IMPACT_LABELS = {positive:'正面',neutral:'中性',negative:'负面'};
 // ==================== State ====================
 let analyses = [];
 let events = [];
+let timeline = [];
 let editingAnalysisId = null;
 let editingEventId = null;
+let editingTimelineId = null;
 let activeEventFilter = '';
 let activeTagFilter = '';
 let syncConfig = null;
@@ -387,6 +433,8 @@ function dedupeEvents(list) {
 function saveAnalyses() { localStorage.setItem(ANALYSES_KEY, JSON.stringify(analyses)); }
 function loadEvents() { try { events = JSON.parse(localStorage.getItem(EVENTS_KEY)) || []; } catch { events = []; } }
 function saveEvents() { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); }
+function loadTimeline() { try { timeline = JSON.parse(localStorage.getItem(TIMELINE_KEY)) || []; } catch { timeline = []; } }
+function saveTimelineStorage() { localStorage.setItem(TIMELINE_KEY, JSON.stringify(timeline)); }
 
 // ==================== Seed Data ====================
 const SEED_ANALYSES = [
@@ -655,6 +703,21 @@ const SEED_CLUES = [
   {"title": "风险提示", "description": "仙股流动性差，买卖盘跳空大\n邀约期间横盘煎熬，耐心是关键\n别追涨杀跌，别砸盘踩踏\n拉升时分批减仓，别一天清完"}
 ];
 
+const SEED_TIMELINE = [
+  {"date": "2026-03-25", "title": "证监会批准收购", "status": "done", "description": "证监会正式批准，收购板上钉钉\n影响：消除最大不确定性，股价爆拉，从 10 → 14 区间"},
+  {"date": "2026-04-08", "title": "邀约收购开始", "status": "done", "description": "王庭发按程序开始全面邀约收购剩余 25% 股份\n预期持续到 4/29\n影响：邀约期间以横盘为主，不会大涨大跌"},
+  {"date": "2026-04-29", "title": "邀约结束", "status": "ongoing", "description": "4 月底邀约结束，完成对全部剩余筹码的回收\n影响：结束后市场预期提前兑现，主升浪启动前最后一次震荡"},
+  {"date": "2026-05 初", "title": "换人换董事", "status": "pending", "description": "邀约结束后立即召开股东大会，原班董事全部剔除，金母鸡金融证券班底进场\n影响：正面，市场将重新估值为「量化基金公司」，第二波行情启动"},
+  {"date": "2026-05 初-中", "title": "公司改名", "status": "pending", "description": "改为非金母鸡的新名称（待定），上市主体与厦门金母鸡区分\n影响：改名当天通常有 20-30% 拉升，资金面发酵"},
+  {"date": "2026-05 中-06", "title": "注入金融业务", "status": "pending", "description": "将金母鸡旗下 10 亿美金规模的量化基金业务注入上市主体\n主板金融壳有牌照，短期可注入不用等三年\n影响：估值重构，参考内地证券股平均 PB，市值预期 20-50 亿+"},
+  {"date": "2026-05-06", "title": "稳定币牌照申请", "status": "pending", "description": "金融牌照批完后马上申请一号稳定币牌照\n律师材料已筹备好，预计 4-5 月批下来\n影响：消息面爆点，参考云峰金融/耀才暴涨"},
+  {"date": "2026-06-07", "title": "派息", "status": "pending", "description": "王庭发 4/7 亲口确认会派息，属于真金白银回报\n一个月后可印证\n影响：吸引长线资金，做理财型持有人群扩大"},
+  {"date": "2026-06 以后", "title": "定增配股", "status": "pending", "description": "引入机构投资者，如果邀约再收到超过公众最低持股量需停牌配股\n影响：短期承压但长期引入机构背书，为拉升准备子弹"},
+  {"date": "待定", "title": "拆股", "status": "pending", "description": "发哥说未来会拆股（重大利好）\n正常拆股之前会先拉高再拆\n影响：拆股信号意味着管理层认为股价已经进入「贵」的阶段，是阶段性顶部信号"},
+  {"date": "2026 年内", "title": "IPO 项目上市", "status": "pending", "description": "公司手上 8 个 IPO 项目，今年会上 2 个\n影响：作为投行业务验证，支撑估值提升"},
+  {"date": "阶段目标", "title": "主升浪 → 目标价 20-25", "status": "pending", "description": "保守目标 20-25，乐观目标 30-40\n减仓节奏：16 以下不减 → 18-20 少减 → 20-25 多减 → 25-30 全清\n出货信号：成交量超 1 亿 = 庄家出货"}
+];
+
 function seedIfNeeded() {
   if (localStorage.getItem(SEEDED_KEY)) return;
   if (SEED_ANALYSES.length === 0 && SEED_CLUES.length === 0) return;
@@ -686,6 +749,20 @@ function seedIfNeeded() {
     }));
     saveEvents();
   }
+  loadTimeline();
+  if (timeline.length === 0) {
+    timeline = SEED_TIMELINE.map((s, i) => ({
+      id: crypto.randomUUID(),
+      date: s.date,
+      title: s.title,
+      status: s.status,
+      description: s.description,
+      order: i,
+      createdAt: Date.now() - (SEED_TIMELINE.length - i) * 1000,
+      updatedAt: Date.now() - (SEED_TIMELINE.length - i) * 1000
+    }));
+    saveTimelineStorage();
+  }
   localStorage.setItem(SEEDED_KEY, '1');
 }
 
@@ -701,6 +778,10 @@ function switchTab(name) {
     document.getElementById('tabEvents').classList.add('active');
     document.querySelectorAll('.tab')[1].classList.add('active');
     renderEvents();
+  } else if (name === 'timeline') {
+    document.getElementById('tabTimeline').classList.add('active');
+    document.querySelectorAll('.tab')[2].classList.add('active');
+    renderTimeline();
   }
 }
 
@@ -942,6 +1023,87 @@ function reorderClues(fromId, toId) {
   sorted.splice(toIdx, 0, moved);
   sorted.forEach((e, i) => { const orig = events.find(x => x.id === e.id); if (orig) orig.order = i; });
   saveEvents(); renderEvents(); autoSync();
+}
+
+// ==================== Timeline CRUD ====================
+const TIMELINE_STATUS_LABELS = {pending:'待发生', ongoing:'进行中', done:'已发生'};
+
+function toggleTimelineForm() {
+  const form = document.getElementById('timelineFormSection');
+  const btn = document.getElementById('tToggleBtn');
+  if (form.style.display === 'none') { form.style.display = ''; btn.style.display = 'none'; }
+  else { form.style.display = 'none'; btn.style.display = ''; editingTimelineId = null; }
+}
+
+function resetTimelineForm() {
+  editingTimelineId = null;
+  document.getElementById('tDate').value = '';
+  document.getElementById('tTitle').value = '';
+  document.getElementById('tDesc').value = '';
+  document.getElementById('tStatus').value = 'pending';
+  document.getElementById('tSaveBtn').textContent = '保存';
+  document.getElementById('timelineFormSection').style.display = 'none';
+  document.getElementById('tToggleBtn').style.display = '';
+}
+
+function saveTimeline() {
+  const date = document.getElementById('tDate').value.trim();
+  const title = document.getElementById('tTitle').value.trim();
+  const description = document.getElementById('tDesc').value.trim();
+  const status = document.getElementById('tStatus').value;
+  if (!date || !title) { alert('时间和节点名称为必填项'); return; }
+
+  if (editingTimelineId) {
+    const idx = timeline.findIndex(t => t.id === editingTimelineId);
+    if (idx >= 0) timeline[idx] = { ...timeline[idx], date, title, description, status, updatedAt: Date.now() };
+  } else {
+    const maxOrder = timeline.reduce((m, t) => Math.max(m, t.order || 0), 0);
+    timeline.push({ id: crypto.randomUUID(), date, title, description, status, order: maxOrder + 1, createdAt: Date.now(), updatedAt: Date.now() });
+  }
+  saveTimelineStorage(); resetTimelineForm(); renderTimeline(); autoSync();
+}
+
+function editTimeline(id) {
+  const t = timeline.find(x => x.id === id);
+  if (!t) return;
+  editingTimelineId = id;
+  document.getElementById('tDate').value = t.date || '';
+  document.getElementById('tTitle').value = t.title || '';
+  document.getElementById('tDesc').value = t.description || '';
+  document.getElementById('tStatus').value = t.status || 'pending';
+  document.getElementById('tSaveBtn').textContent = '更新';
+  document.getElementById('timelineFormSection').style.display = '';
+  document.getElementById('tToggleBtn').style.display = 'none';
+  document.getElementById('timelineFormSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditTimeline() { resetTimelineForm(); }
+
+function deleteTimeline(id) {
+  if (!confirm('确定删除这个节点？')) return;
+  timeline = timeline.filter(t => t.id !== id);
+  saveTimelineStorage(); renderTimeline(); autoSync();
+}
+
+function renderTimeline() {
+  const list = timeline.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const container = document.getElementById('timelineList');
+  if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无推演节点</div>'; return; }
+  container.innerHTML = '<div class="timeline-wrap">' + list.map(t => {
+    const st = t.status || 'pending';
+    return `<div class="timeline-item ${st}">
+      <div class="timeline-header">
+        <span class="timeline-date">${esc(t.date)}</span>
+        <span class="timeline-status ${st}">${TIMELINE_STATUS_LABELS[st]||st}</span>
+        <span class="timeline-title">${esc(t.title)}</span>
+      </div>
+      <div class="timeline-desc">${highlight(t.description || '')}</div>
+      <div class="timeline-actions">
+        <button class="btn btn-secondary" onclick="editTimeline('${t.id}')">编辑</button>
+        <button class="btn btn-secondary" onclick="deleteTimeline('${t.id}')">删除</button>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
 }
 
 // ==================== Price Fetch ====================
@@ -1852,8 +2014,7 @@ let autoSyncTimer = null;
 let lastSyncHash = null;
 
 function computeDataHash() {
-  // Simple hash of the current analyses + events + costPrice
-  const str = JSON.stringify({ a: analyses.map(x => [x.id, x.updatedAt]), e: events.map(x => [x.id, x.updatedAt, x.order]), c: costPrice });
+  const str = JSON.stringify({ a: analyses.map(x => [x.id, x.updatedAt]), e: events.map(x => [x.id, x.updatedAt, x.order]), t: timeline.map(x => [x.id, x.updatedAt, x.order]), c: costPrice });
   let hash = 0;
   for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
   return hash.toString();
@@ -1898,6 +2059,20 @@ async function pullFromCloud() {
     events = dedupeEvents([...events, ...cloudEvents]);
     saveEvents();
   }
+  // Decrypt and merge timeline (dedupe by title+date)
+  if (parsed.timeline) {
+    try {
+      const cloudTimeline = await decryptData(parsed.timeline, syncConfig.password);
+      const map = new Map();
+      [...timeline, ...cloudTimeline].forEach(t => {
+        const key = (t.title || '') + '|' + (t.date || '');
+        const existing = map.get(key);
+        if (!existing || (t.updatedAt || 0) > (existing.updatedAt || 0)) map.set(key, t);
+      });
+      timeline = Array.from(map.values());
+      saveTimelineStorage();
+    } catch {}
+  }
   // Sync cost price (cloud wins if local is empty)
   if (parsed.costPrice !== undefined) {
     const cloudCost = parsed.costPrice;
@@ -1912,7 +2087,8 @@ async function pushToCloud() {
   const branch = await getDefaultBranch();
   const encAnalyses = await encryptData(analyses, syncConfig.password);
   const encEvents = await encryptData(events, syncConfig.password);
-  const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, costPrice: costPrice || null, updatedAt: new Date().toISOString() });
+  const encTimeline = await encryptData(timeline, syncConfig.password);
+  const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, timeline: encTimeline, costPrice: costPrice || null, updatedAt: new Date().toISOString() });
   const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
   fileSha = file ? file.sha : null;
   try {
@@ -2087,6 +2263,7 @@ document.addEventListener('DOMContentLoaded', () => {
   seedIfNeeded();
   loadAnalyses();
   loadEvents();
+  loadTimeline();
   // Clean up any existing duplicates and auto-tag entries without tags
   const beforeA = analyses.length, beforeE = events.length;
   analyses = dedupeAnalyses(analyses);
@@ -2104,6 +2281,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCostPrice();
   resetAnalysisForm();
   resetEventForm();
+  resetTimelineForm();
   renderAnalyses();
   fetchQuote();
   if (syncConfig) manualSync().catch(() => {});
