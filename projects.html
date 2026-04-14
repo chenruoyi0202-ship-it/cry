@@ -10,6 +10,13 @@
 <meta property="og:url" content="https://chenruoyi0202-ship-it.github.io/cry/projects.html">
 <link rel="icon" href="projects-icon.png">
 <link rel="apple-touch-icon" href="projects-icon.png">
+<script>
+  (function(){
+    var s = localStorage.getItem('projects-theme');
+    var t = s || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    if(t === 'light') document.documentElement.setAttribute('data-theme','light');
+  })();
+</script>
 <style>
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
   :root{
@@ -18,7 +25,26 @@
     --border:rgba(255,255,255,0.06);
     --text:#e8eaf0;
     --text-muted:#6b7394;
+    --text-grad-from:#e8eaf0;
+    --text-grad-to:#a0a8c4;
+    --dot:rgba(255,255,255,0.03);
+    --arrow-bg:rgba(255,255,255,0.04);
+    --arrow-bg-hover:rgba(255,255,255,0.08);
+    --orb-opacity:.35;
     --radius:24px;
+  }
+  [data-theme="light"]{
+    --bg:#fafafe;
+    --card:#ffffff;
+    --border:rgba(15,23,42,0.08);
+    --text:#1a1a2e;
+    --text-muted:#6b7394;
+    --text-grad-from:#1a1a2e;
+    --text-grad-to:#5a6280;
+    --dot:rgba(15,23,42,0.05);
+    --arrow-bg:rgba(15,23,42,0.04);
+    --arrow-bg-hover:rgba(15,23,42,0.08);
+    --orb-opacity:.25;
   }
   html{-webkit-text-size-adjust:100%}
   body{
@@ -28,11 +54,12 @@
     min-height:100dvh;
     overflow-x:hidden;
     -webkit-font-smoothing:antialiased;
+    transition:background .4s ease,color .4s ease;
   }
 
   /* ── Background ── */
   .bg-layer{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-  .orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.35;will-change:transform}
+  .orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:var(--orb-opacity);will-change:transform;transition:opacity .4s ease}
   .orb-1{width:520px;height:520px;background:radial-gradient(circle,#c084fc 0%,transparent 70%);top:-120px;left:-80px;animation:drift1 22s ease-in-out infinite alternate}
   .orb-2{width:480px;height:480px;background:radial-gradient(circle,#CA8A04 0%,transparent 70%);bottom:-100px;right:-60px;animation:drift2 26s ease-in-out infinite alternate}
   .orb-3{width:400px;height:400px;background:radial-gradient(circle,#43b89c 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation:drift3 20s ease-in-out infinite alternate}
@@ -43,7 +70,7 @@
   /* Grid dots */
   .bg-layer::after{
     content:'';position:absolute;inset:0;
-    background-image:radial-gradient(rgba(255,255,255,0.03) 1px,transparent 1px);
+    background-image:radial-gradient(var(--dot) 1px,transparent 1px);
     background-size:32px 32px;
   }
 
@@ -56,7 +83,7 @@
   .header h1{
     font-size:clamp(22px,5vw,38px);font-weight:700;
     letter-spacing:-.5px;
-    background:linear-gradient(135deg,#e8eaf0 0%,#a0a8c4 100%);
+    background:linear-gradient(135deg,var(--text-grad-from) 0%,var(--text-grad-to) 100%);
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;
     background-clip:text;
   }
@@ -81,12 +108,13 @@
     border-radius:var(--radius);
     padding:16px 18px;
     display:flex;flex-direction:row;align-items:center;gap:14px;
-    transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s ease,border-color .35s ease;
+    transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s ease,border-color .35s ease,background .4s ease;
     cursor:pointer;
     text-decoration:none;color:inherit;
     overflow:hidden;
     animation:fadeUp .8s ease-out both;
   }
+  [data-theme="light"] .card{box-shadow:0 2px 12px rgba(15,23,42,0.04)}
   .card:nth-child(1){animation-delay:.15s}
   .card:nth-child(2){animation-delay:.3s}
   .card:nth-child(3){animation-delay:.45s}
@@ -98,7 +126,7 @@
     opacity:0;transition:opacity .4s ease;
     pointer-events:none;
   }
-  .card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,0.1)}
+  .card:hover{transform:translateY(-6px)}
   .card:hover::before{opacity:1}
 
   /* Card accent colors */
@@ -132,13 +160,37 @@
   .card-arrow{
     width:28px;height:28px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    background:rgba(255,255,255,0.04);
+    background:var(--arrow-bg);
     flex-shrink:0;
     transition:background .3s ease,transform .3s ease;
   }
   .card-arrow svg{width:14px;height:14px;stroke:var(--text-muted);stroke-width:2;fill:none;transition:stroke .3s ease}
-  .card:hover .card-arrow{background:rgba(255,255,255,0.08);transform:translateX(2px)}
+  .card:hover .card-arrow{background:var(--arrow-bg-hover);transform:translateX(2px)}
   .card:hover .card-arrow svg{stroke:var(--text)}
+
+  /* ── Theme Toggle ── */
+  .theme-toggle{
+    position:fixed;top:18px;right:18px;z-index:10;
+    width:40px;height:40px;border-radius:50%;
+    background:var(--card);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:transform .3s ease,background .4s ease,border-color .4s ease;
+    color:var(--text);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .theme-toggle:hover{transform:scale(1.08)}
+  .theme-toggle:active{transform:scale(0.95)}
+  .theme-toggle svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .theme-toggle .icon-sun{display:none}
+  .theme-toggle .icon-moon{display:block}
+  [data-theme="light"] .theme-toggle .icon-sun{display:block}
+  [data-theme="light"] .theme-toggle .icon-moon{display:none}
+  @media(min-width:768px){
+    .theme-toggle{top:24px;right:24px;width:44px;height:44px}
+    .theme-toggle svg{width:20px;height:20px}
+  }
 
   /* ── Animations ── */
   @keyframes fadeUp{
@@ -177,6 +229,11 @@
 </style>
 </head>
 <body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+  <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+</button>
 
 <div class="bg-layer">
   <div class="orb orb-1"></div>
@@ -245,6 +302,16 @@
   </div>
 
 </div>
+
+<script>
+  document.getElementById('themeToggle').addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    var next = cur === 'light' ? 'dark' : 'light';
+    if(next === 'light') document.documentElement.setAttribute('data-theme','light');
+    else document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('projects-theme', next);
+  });
+</script>
 
 </body>
 </html>
