@@ -2434,7 +2434,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   // Register Service Worker for offline access
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('02680-sw.js').catch(() => {});
+    navigator.serviceWorker.register('02680-sw.js').then(reg => {
+      // Check for updates on every page load
+      reg.update().catch(() => {});
+      // When new SW takes control, reload so the user sees fresh HTML
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        location.reload();
+      });
+    }).catch(() => {});
   }
   // Auto pull when page becomes visible (WeChat/Safari switching back)
   // Flush pending push when hidden
