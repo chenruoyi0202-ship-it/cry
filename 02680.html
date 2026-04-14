@@ -1409,8 +1409,13 @@ function loadTencentMinute(mode) {
 
         // Find minute data - try multiple possible locations
         let minutes = null;
-        if (info.data && info.data.data) minutes = info.data.data;
-        else if (info.data && Array.isArray(info.data)) minutes = info.data;
+        let dataDate = null; // YYYYMMDD from Tencent response
+        if (info.data && info.data.data) {
+          minutes = info.data.data;
+          dataDate = info.data.date || null;
+        } else if (info.data && Array.isArray(info.data)) {
+          minutes = info.data;
+        }
 
         // For 5-day mode, find the last day's data
         if (!minutes && mode === '5day') {
@@ -1419,10 +1424,19 @@ function loadTencentMinute(mode) {
           if (dayKeys.length > 0) {
             const lastDay = dayKeys[dayKeys.length - 1];
             minutes = info[lastDay];
+            dataDate = lastDay;
           }
         }
 
         if (!minutes || !Array.isArray(minutes) || minutes.length < 2) { cleanup(); resolve(false); return; }
+
+        // Parse date from Tencent response (YYYYMMDD), fall back to today
+        let dataDay;
+        if (dataDate && /^\d{8}$/.test(dataDate)) {
+          dataDay = new Date(parseInt(dataDate.substring(0,4)), parseInt(dataDate.substring(4,6))-1, parseInt(dataDate.substring(6,8)));
+        } else {
+          dataDay = new Date();
+        }
 
         // Parse: each entry is "HHMM price volume" or similar
         const series = [];
@@ -1441,8 +1455,7 @@ function loadTencentMinute(mode) {
             hh = parseInt(timeStr.substring(8, 10));
             mm = parseInt(timeStr.substring(10, 12));
           }
-          const today = new Date();
-          const dt = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hh, mm);
+          const dt = new Date(dataDay.getFullYear(), dataDay.getMonth(), dataDay.getDate(), hh, mm);
           series.push({ t: dt.getTime(), c: price });
         }
 
@@ -1452,11 +1465,18 @@ function loadTencentMinute(mode) {
             period: '1d',
             price: series[series.length - 1].c,
             prevClose: prevClose || series[0].c,
+            dataDate: dataDate,
             series: series
           };
           quoteCache['1d'] = quoteData;
           if (chartPeriod === '1d') renderChart(quoteData);
           document.getElementById('priceStatus').textContent = '';
+          // If the data isn't from today, show a notice
+          const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; })();
+          if (dataDate && dataDate !== todayStr) {
+            const mmdd = dataDate.substring(4,6) + '/' + dataDate.substring(6,8);
+            document.getElementById('priceStatus').textContent = `分时数据: ${mmdd}（非今日）`;
+          }
           cleanup(); resolve(true); return;
         }
         cleanup(); resolve(false);
