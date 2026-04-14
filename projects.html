@@ -92,12 +92,39 @@
     letter-spacing:.3px;line-height:1.5;
   }
 
+  /* ── Sections ── */
+  .sections{
+    display:flex;flex-direction:column;gap:24px;
+    width:100%;max-width:400px;
+  }
+  .section{display:flex;flex-direction:column;gap:10px;animation:fadeUp .8s ease-out both}
+  .section:nth-child(1){animation-delay:.1s}
+  .section:nth-child(2){animation-delay:.25s}
+  .section-title{
+    display:flex;align-items:center;gap:8px;
+    padding:0 4px;
+    font-size:11px;font-weight:600;
+    letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .section-title::before{
+    content:'';width:3px;height:12px;border-radius:2px;
+    background:linear-gradient(180deg,var(--section-c1),var(--section-c2));
+  }
+  .section-title .count{
+    font-size:10px;padding:1px 7px;border-radius:10px;
+    background:var(--arrow-bg);color:var(--text-muted);
+    letter-spacing:.5px;
+  }
+  .section--life{--section-c1:#c084fc;--section-c2:#818cf8}
+  .section--invest{--section-c1:#CA8A04;--section-c2:#FBBF24}
+
   /* ── Cards Grid ── */
   .cards{
     display:grid;
     grid-template-columns:1fr;
     gap:12px;
-    width:100%;max-width:400px;
+    width:100%;
   }
 
   /* ── Card ── */
@@ -209,16 +236,13 @@
     .header{margin-bottom:40px}
     .header-icon{font-size:44px;margin-bottom:12px}
     .header p{font-size:15px;margin-top:10px}
+    .sections{gap:40px;max-width:1060px}
+    .section{gap:16px}
+    .section-title{font-size:12px;padding:0 2px}
+    .section-title::before{width:4px;height:14px}
     .cards{
       grid-template-columns:repeat(3,1fr);
       gap:24px;
-      max-width:1060px;
-    }
-  }
-  @media(min-width:1200px){
-    .cards{
-      grid-template-columns:repeat(5,1fr)!important;
-      max-width:1400px!important;
     }
     .card{
       flex-direction:column;align-items:flex-start;gap:0;
@@ -260,67 +284,83 @@
     <p>一些自己做的小工具合集</p>
   </header>
 
-  <div class="cards">
+  <div class="sections">
 
-    <!-- Our Memory -->
-    <a class="card card--love" href="love.html" target="_blank">
-      <div class="card-icon">
-        <img src="castle-icon.svg" alt="Our Memory">
-      </div>
-      <div class="card-body">
-        <div class="card-title">Our Memory</div>
-        <div class="card-desc">属于两个人的记忆城堡，记录纪念日、日记、照片与旅行足迹。</div>
-      </div>
-      <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-    </a>
+    <!-- 生活 -->
+    <section class="section section--life">
+      <div class="section-title">生活 <span class="count">3</span></div>
+      <div class="cards">
 
-    <!-- 偏头痛记录 -->
-    <a class="card card--migraine" href="migraine.html?v=3" target="_blank">
-      <div class="card-icon">
-        <img src="migraine-logo.svg" alt="偏头痛记录">
-      </div>
-      <div class="card-body">
-        <div class="card-title">偏头痛记录</div>
-        <div class="card-desc">偏头痛发作追踪与分析，记录疼痛强度、症状、触发因素，可视化统计趋势。</div>
-      </div>
-      <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-    </a>
+        <!-- Our Memory -->
+        <a class="card card--love" href="love.html" target="_blank">
+          <div class="card-icon">
+            <img src="castle-icon.svg" alt="Our Memory">
+          </div>
+          <div class="card-body">
+            <div class="card-title">Our Memory</div>
+            <div class="card-desc">属于两个人的记忆城堡，记录纪念日、日记、照片与旅行足迹。</div>
+          </div>
+          <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
 
-    <!-- 止盈计算推演 -->
-    <a class="card card--stock" href="./?v=3" target="_blank">
-      <div class="card-icon">
-        <img src="logo.svg" alt="止盈计算推演">
-      </div>
-      <div class="card-body">
-        <div class="card-title">止盈计算推演</div>
-        <div class="card-desc">股票止盈策略模拟工具，支持多币种实时价格与分批止盈方案推演。</div>
-      </div>
-      <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-    </a>
+        <!-- 剧集追踪 -->
+        <a class="card card--tv" href="http://47.103.108.226:8888/tv-tracker" target="_blank">
+          <div class="card-icon">
+            <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1e1b3a"/><rect x="10" y="14" width="28" height="20" rx="3" fill="none" stroke="#a78bfa" stroke-width="2.5"/><path d="M18 10l6 4 6-4" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="24" r="3" fill="#818cf8"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">剧集追踪</div>
+            <div class="card-desc">海外热门电视剧更新监控，追踪在看剧集的最新集数与播出日期。</div>
+          </div>
+          <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
 
-    <!-- 02680 创陞跟踪 -->
-    <a class="card card--stock" href="02680.html" target="_blank">
-      <div class="card-icon">
-        <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1a1a2e"/><path d="M12 32l8-10 6 6 10-14" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="36" cy="14" r="3" fill="#CA8A04"/></svg>
-      </div>
-      <div class="card-body">
-        <div class="card-title">02680 创陞跟踪</div>
-        <div class="card-desc">港股02680创陞控股分析追踪，记录盘中分析、重要事件与实时行情。</div>
-      </div>
-      <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-    </a>
+        <!-- 偏头痛记录 -->
+        <a class="card card--migraine" href="migraine.html?v=3" target="_blank">
+          <div class="card-icon">
+            <img src="migraine-logo.svg" alt="偏头痛记录">
+          </div>
+          <div class="card-body">
+            <div class="card-title">偏头痛记录</div>
+            <div class="card-desc">偏头痛发作追踪与分析，记录疼痛强度、症状、触发因素，可视化统计趋势。</div>
+          </div>
+          <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
 
-    <!-- 美剧追踪 -->
-    <a class="card card--tv" href="http://47.103.108.226:8888/tv-tracker" target="_blank">
-      <div class="card-icon">
-        <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1e1b3a"/><rect x="10" y="14" width="28" height="20" rx="3" fill="none" stroke="#a78bfa" stroke-width="2.5"/><path d="M18 10l6 4 6-4" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="24" r="3" fill="#818cf8"/></svg>
       </div>
-      <div class="card-body">
-        <div class="card-title">剧集追踪</div>
-        <div class="card-desc">海外热门电视剧更新监控，追踪在看剧集的最新集数与播出日期。</div>
+    </section>
+
+    <!-- 投资 -->
+    <section class="section section--invest">
+      <div class="section-title">投资 <span class="count">2</span></div>
+      <div class="cards">
+
+        <!-- 止盈计算推演 -->
+        <a class="card card--stock" href="./?v=3" target="_blank">
+          <div class="card-icon">
+            <img src="logo.svg" alt="止盈计算推演">
+          </div>
+          <div class="card-body">
+            <div class="card-title">止盈计算推演</div>
+            <div class="card-desc">股票止盈策略模拟工具，支持多币种实时价格与分批止盈方案推演。</div>
+          </div>
+          <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
+
+        <!-- 02680 创陞跟踪 -->
+        <a class="card card--stock" href="02680.html" target="_blank">
+          <div class="card-icon">
+            <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1a1a2e"/><path d="M12 32l8-10 6 6 10-14" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="36" cy="14" r="3" fill="#CA8A04"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">02680 创陞跟踪</div>
+            <div class="card-desc">港股02680创陞控股分析追踪，记录盘中分析、重要事件与实时行情。</div>
+          </div>
+          <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
+
       </div>
-      <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-    </a>
+    </section>
 
   </div>
 
