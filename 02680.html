@@ -1376,11 +1376,87 @@ function fetchTencentMinuteData() {
     if (quoteCache['1d'] && quoteCache['1d'].series && quoteCache['1d'].series.length > 5) {
       resolve(true); return;
     }
-    // Try today's minute data first, then 5-day data as fallback (covers weekends)
-    loadTencentMinute('today').then(ok => {
+    // Prefer the 1-minute K-line endpoint (has explicit datetime per entry)
+    fetchTencent1MinKline().then(ok => {
       if (ok) { resolve(true); return; }
-      loadTencentMinute('5day').then(resolve);
+      // Fallback to minute/query endpoint
+      loadTencentMinute('today').then(ok2 => {
+        if (ok2) { resolve(true); return; }
+        loadTencentMinute('5day').then(resolve);
+      });
     });
+  });
+}
+
+// 1-minute K-line endpoint — has unambiguous datetime strings so we always
+// get the correct trading day.
+function fetchTencent1MinKline() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const varName = 'kline_m1_hk02680';
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 5000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = () => { cleanup(); resolve(false); };
+    script.src = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=hk02680,m1,,,500,qfq&_var=${varName}&_=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const raw = window[varName];
+        if (!raw || !raw.data || !raw.data.hk02680) { cleanup(); resolve(false); return; }
+        const info = raw.data.hk02680;
+        const klineArr = info.qfqm1 || info.m1;
+        if (!klineArr || !Array.isArray(klineArr) || klineArr.length < 2) { cleanup(); resolve(false); return; }
+
+        // The latest trading day is the one with the largest datetime prefix
+        const lastEntry = klineArr[klineArr.length - 1];
+        const lastDateTime = lastEntry[0] || '';
+        if (lastDateTime.length < 12) { cleanup(); resolve(false); return; }
+        const lastDate = lastDateTime.substring(0, 8);
+
+        // Keep only entries from that latest day
+        const todayEntries = klineArr.filter(e => (e[0] || '').substring(0, 8) === lastDate);
+
+        const series = todayEntries.map(e => {
+          const dt = e[0];
+          const y = parseInt(dt.substring(0,4));
+          const mo = parseInt(dt.substring(4,6)) - 1;
+          const d = parseInt(dt.substring(6,8));
+          const hh = parseInt(dt.substring(8,10));
+          const mm = parseInt(dt.substring(10,12));
+          const t = new Date(y, mo, d, hh, mm).getTime();
+          return { t, c: parseFloat(e[2]) };
+        }).filter(p => p.c > 0 && !isNaN(p.c));
+
+        if (series.length < 2) { cleanup(); resolve(false); return; }
+
+        // Fetch prevClose from qt data if available
+        let prevClose = null;
+        if (info.qt && info.qt.hk02680 && info.qt.hk02680[4]) {
+          prevClose = parseFloat(info.qt.hk02680[4]) || null;
+        }
+        if (!prevClose) prevClose = series[0].c;
+
+        const quoteData = {
+          fetchedAt: Date.now(),
+          period: '1d',
+          price: series[series.length - 1].c,
+          prevClose: prevClose,
+          dataDate: lastDate,
+          series: series
+        };
+        quoteCache['1d'] = quoteData;
+        if (chartPeriod === '1d') renderChart(quoteData);
+        // Show notice if not today
+        const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; })();
+        if (lastDate !== todayStr) {
+          const mmdd = lastDate.substring(4,6) + '/' + lastDate.substring(6,8);
+          document.getElementById('priceStatus').textContent = `分时数据: ${mmdd}（非今日 · 上游暂未刷新）`;
+        } else {
+          document.getElementById('priceStatus').textContent = '';
+        }
+        cleanup(); resolve(true);
+      } catch(e) { console.warn('Tencent m1 kline parse error:', e); cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
   });
 }
 
