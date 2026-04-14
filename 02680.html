@@ -1634,7 +1634,24 @@ function renderLineChart(data) {
   const W = 700, H = 140, PAD = 6, CHART_H = H - 20;
   const prices = series.map(p => p.c);
   const allH = series.map(p => p.h || p.c), allL = series.map(p => p.l || p.c);
-  const minP = Math.min(...prices, ...allL), maxP = Math.max(...prices, ...allH);
+  let minP = Math.min(...prices, ...allL);
+  let maxP = Math.max(...prices, ...allH);
+  // Include prevClose in the range so the reference line is always visible
+  if (prevClose) {
+    minP = Math.min(minP, prevClose);
+    maxP = Math.max(maxP, prevClose);
+  }
+  // Add small padding so the line doesn't touch the top/bottom edges
+  const priceRange = maxP - minP;
+  if (priceRange > 0) {
+    const pad = priceRange * 0.1;
+    minP -= pad;
+    maxP += pad;
+  } else {
+    // All prices identical — widen range by 0.5%
+    minP -= minP * 0.005;
+    maxP += maxP * 0.005;
+  }
   const range = maxP - minP || 1;
   const refPrice = prevClose || prices[0];
   const refY = PAD + (1 - (refPrice - minP) / range) * (CHART_H - 2 * PAD);
@@ -2432,19 +2449,15 @@ function markAsOwner() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
-  // Register Service Worker for offline access
+  // Unregister any existing Service Worker to avoid stale cache issues
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('02680-sw.js').then(reg => {
-      // Check for updates on every page load
-      reg.update().catch(() => {});
-      // When new SW takes control, reload so the user sees fresh HTML
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        refreshing = true;
-        location.reload();
-      });
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => reg.unregister());
     }).catch(() => {});
+    // Also clear caches
+    if (window.caches) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
+    }
   }
   // Auto pull when page becomes visible (WeChat/Safari switching back)
   // Flush pending push when hidden
