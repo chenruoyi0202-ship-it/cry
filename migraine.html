@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>偏头痛记录</title>
     <meta name="description" content="偏头痛记录追踪工具，记录疼痛强度、症状、诱因，分析发作规律">
     <meta property="og:title" content="偏头痛记录">
@@ -12,6 +15,12 @@
     <meta property="og:type" content="website">
     <link rel="icon" type="image/png" href="migraine-logo.png">
     <link rel="icon" type="image/svg+xml" href="migraine-logo.svg">
+    <link rel="apple-touch-icon" href="migraine-logo.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="偏头痛记录">
+    <meta name="theme-color" content="#43b89c">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -60,6 +69,7 @@
             --focus-ring: rgba(67,184,156,0.25);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { overflow-x: hidden; }
         body {
             background: var(--bg);
             color: var(--text);
@@ -119,6 +129,14 @@
             color: var(--text-dim);
             cursor: pointer;
             padding: 6px 0;
+            max-width: 100%;
+            min-width: 0;
+        }
+        .sync-bar span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 80%;
         }
         .sync-dot {
             width: 8px; height: 8px;
@@ -515,34 +533,28 @@
         <div class="tab-content" id="tabSync" style="display:none">
             <div class="section-title">云端同步设置</div>
             <div class="info-box">
-                数据使用 AES-256 加密后存储到你的 GitHub 仓库。<br>
-                即使仓库公开，没有密码也无法解读数据。<br>
-                Token 和密码仅保存在当前浏览器中。
+                首次使用会自动在你的 GitHub 下创建私有仓库 <b>migraine-data</b>（如果已存在则复用）。<br>
+                Token 仅保存在当前浏览器中。
             </div>
             <div class="field">
                 <label>GitHub Personal Access Token</label>
                 <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
                 <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 创建 Token，勾选 repo 权限</div>
             </div>
-            <div class="field">
-                <label>仓库（owner/repo）</label>
-                <input type="text" id="inputRepo" placeholder="例如 yourname/yourrepo">
-            </div>
-            <div class="field">
-                <label>加密密码</label>
-                <input type="password" id="inputPassword" placeholder="设置一个你记得住的密码">
-                <div class="hint">用于加密/解密数据，换设备时需要输入相同密码</div>
-            </div>
             <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
             <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
+            <button class="btn btn-secondary" onclick="forcePullFromCloud()">用云端数据覆盖本地</button>
             <button class="btn btn-danger" onclick="clearSyncConfig()">清除同步配置</button>
         </div>
 
-        <div class="disclaimer">数据仅保存在本地浏览器中</div>
+        <div class="disclaimer">数据仅保存在本地浏览器中 · v<span id="appVersion"></span></div>
     </div>
 
     <script>
+        const APP_VERSION = '2026.04.13.3';
         let records = [];
+        let deletedIds = [];
+        let lastSyncAt = 0;
         let syncConfig = null;
         let fileSha = null;
 
@@ -606,9 +618,14 @@
         function loadRecords() {
             try { records = JSON.parse(localStorage.getItem('migraine_records')) || []; }
             catch (e) { records = []; }
+            try { deletedIds = JSON.parse(localStorage.getItem('migraine_deleted_ids')) || []; }
+            catch (e) { deletedIds = []; }
+            lastSyncAt = parseInt(localStorage.getItem('migraine_last_sync') || '0');
         }
         function saveRecords() {
             localStorage.setItem('migraine_records', JSON.stringify(records));
+            localStorage.setItem('migraine_deleted_ids', JSON.stringify(deletedIds));
+            localStorage.setItem('migraine_last_sync', String(lastSyncAt));
         }
         function loadSyncConfig() {
             try { syncConfig = JSON.parse(localStorage.getItem('migraine_sync_config')); }
@@ -616,8 +633,6 @@
             updateSyncBar();
             if (syncConfig) {
                 document.getElementById('inputToken').value = syncConfig.token || '';
-                document.getElementById('inputRepo').value = syncConfig.repo || '';
-                document.getElementById('inputPassword').value = syncConfig.password || '';
             }
         }
 
@@ -805,6 +820,7 @@
         function deleteEpisode(id) {
             if (!confirm('确认删除此记录？')) return;
             records = records.filter(r => r.id !== id);
+            if (!deletedIds.includes(id)) deletedIds.push(id);
             saveRecords();
             renderHistory();
             autoSync();
@@ -955,41 +971,39 @@
             return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
 
-        // ==================== AES-256-GCM Encryption ====================
-        async function deriveKey(password, salt) {
-            const enc = new TextEncoder();
-            const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-            return crypto.subtle.deriveKey(
-                { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-                keyMaterial,
-                { name: 'AES-GCM', length: 256 },
-                false,
-                ['encrypt', 'decrypt']
-            );
-        }
-        async function encryptData(data, password) {
-            const enc = new TextEncoder();
-            const salt = crypto.getRandomValues(new Uint8Array(16));
-            const iv = crypto.getRandomValues(new Uint8Array(12));
-            const key = await deriveKey(password, salt);
-            const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
-            const buf = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
-            buf.set(salt, 0);
-            buf.set(iv, salt.length);
-            buf.set(new Uint8Array(encrypted), salt.length + iv.length);
-            return btoa(String.fromCharCode(...buf));
-        }
-        async function decryptData(base64, password) {
-            const buf = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-            const salt = buf.slice(0, 16);
-            const iv = buf.slice(16, 28);
-            const data = buf.slice(28);
-            const key = await deriveKey(password, salt);
-            const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
-            return JSON.parse(new TextDecoder().decode(decrypted));
-        }
-
         // ==================== GitHub API ====================
+        async function ghGetUser(token) {
+            const res = await fetch('https://api.github.com/user', {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!res.ok) throw new Error('Token 无效或缺少权限');
+            return res.json();
+        }
+        async function ensureRepo(token, owner) {
+            // Check if repo exists
+            const check = await fetch(`https://api.github.com/repos/${owner}/migraine-data`, {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (check.ok) return;
+            if (check.status !== 404) throw new Error(`检查仓库失败: ${check.status}`);
+            // Create private repo
+            const create = await fetch('https://api.github.com/user/repos', {
+                method: 'POST',
+                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                body: JSON.stringify({
+                    name: 'migraine-data',
+                    description: '偏头痛记录数据（自动创建）',
+                    private: true,
+                    auto_init: true
+                })
+            });
+            if (!create.ok) {
+                const err = await create.json().catch(() => ({}));
+                throw new Error(err.message || '创建仓库失败');
+            }
+            // Wait a moment for GitHub to finish initializing the repo
+            await new Promise(r => setTimeout(r, 1500));
+        }
         async function ghGetDefaultBranch(token, repo) {
             const res = await fetch(`https://api.github.com/repos/${repo}`, {
                 headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
@@ -1024,6 +1038,7 @@
         }
 
         // ==================== Sync Logic ====================
+        function repoName(r) { return (r || '').split('/').pop(); }
         function updateSyncBar() {
             const dot = document.getElementById('syncDot');
             const label = document.getElementById('syncLabel');
@@ -1032,7 +1047,7 @@
                 label.textContent = '未配置同步 - 点击设置';
             } else {
                 dot.className = 'sync-dot connected';
-                label.textContent = '已连接 · ' + syncConfig.repo;
+                label.textContent = '已连接 · ' + repoName(syncConfig.repo);
             }
         }
         function setSyncStatus(status, text) {
@@ -1042,16 +1057,26 @@
             label.textContent = text;
         }
 
-        function saveSyncConfig() {
+        async function saveSyncConfig() {
             const token = document.getElementById('inputToken').value.trim();
-            const repo = document.getElementById('inputRepo').value.trim();
-            const password = document.getElementById('inputPassword').value.trim();
-            if (!token || !repo || !password) { showToast('请填写所有字段', true); return; }
-            syncConfig = { token, repo, password };
+            if (!token) { showToast('请填写 Token', true); return; }
+            // Save token immediately so it persists even if validation fails
+            syncConfig = { token, repo: '' };
             localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
-            updateSyncBar();
-            showToast('同步配置已保存');
-            manualSync();
+            setSyncStatus('syncing', '正在验证 Token...');
+            try {
+                const user = await ghGetUser(token);
+                syncConfig.repo = `${user.login}/migraine-data`;
+                await ensureRepo(token, user.login);
+                localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
+                updateSyncBar();
+                showToast('配置已保存');
+                manualSync();
+            } catch (e) {
+                console.error(e);
+                setSyncStatus('error', '配置失败 · 点击重试');
+                showToast('配置失败: ' + e.message, true);
+            }
         }
         function clearSyncConfig() {
             if (!confirm('确认清除同步配置？')) return;
@@ -1059,20 +1084,33 @@
             localStorage.removeItem('migraine_sync_config');
             fileSha = null;
             document.getElementById('inputToken').value = '';
-            document.getElementById('inputRepo').value = '';
-            document.getElementById('inputPassword').value = '';
             updateSyncBar();
             showToast('同步配置已清除');
+        }
+
+        async function ensurePrivateRepo() {
+            // Migrate from any non-private-migraine-data repo to the standard one
+            if (!syncConfig.repo || !syncConfig.repo.endsWith('/migraine-data')) {
+                const user = await ghGetUser(syncConfig.token);
+                syncConfig.repo = `${user.login}/migraine-data`;
+                syncConfig._branch = null;
+                await ensureRepo(syncConfig.token, user.login);
+                localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
+            }
         }
 
         async function manualSync() {
             if (!syncConfig) { showToast('请先配置同步', true); return; }
             setSyncStatus('syncing', '同步中...');
             try {
+                await ensurePrivateRepo();
                 await pullFromCloud();
-                await pushToCloud();
-                setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
-                showToast('同步完成');
+                // Safety: don't push only if both records and tombstones are empty (fresh device)
+                if (records.length > 0 || deletedIds.length > 0) {
+                    await pushToCloud();
+                }
+                setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
+                showToast(records.length > 0 ? '同步完成' : '已拉取，本地暂无数据');
             } catch (e) {
                 console.error('Sync error:', e);
                 setSyncStatus('error', '同步失败 · 点击重试');
@@ -1080,12 +1118,46 @@
             }
         }
 
+        async function forcePullFromCloud() {
+            if (!syncConfig) { showToast('请先配置同步', true); return; }
+            if (!confirm('将丢弃本地数据，使用云端数据覆盖。确定？')) return;
+            setSyncStatus('syncing', '正在拉取云端...');
+            try {
+                await ensurePrivateRepo();
+                const branch = await getDefaultBranch();
+                const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
+                if (!file) {
+                    records = [];
+                    deletedIds = [];
+                    saveRecords();
+                    showToast('云端无数据', true);
+                    setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
+                    return;
+                }
+                fileSha = file.sha;
+                const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+                const parsed = JSON.parse(content);
+                records = parsed.records || [];
+                deletedIds = parsed.deletedIds || [];
+                lastSyncAt = Date.now();
+                saveRecords();
+                renderHistory();
+                setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
+                showToast(`已从云端拉取 ${records.length} 条记录`);
+            } catch (e) {
+                console.error(e);
+                setSyncStatus('error', '拉取失败');
+                showToast('拉取失败: ' + e.message, true);
+            }
+        }
+
         async function autoSync() {
             if (!syncConfig) return;
             setSyncStatus('syncing', '同步中...');
             try {
+                await ensurePrivateRepo();
                 await pushToCloud();
-                setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+                setSyncStatus('connected', '已同步 · ' + repoName(syncConfig.repo));
             } catch (e) {
                 console.error('Auto sync error:', e);
                 setSyncStatus('error', '同步失败');
@@ -1099,45 +1171,86 @@
             return syncConfig._branch;
         }
 
+        const DATA_PATH = 'data/migraine.json';
+
         async function pullFromCloud() {
             const branch = await getDefaultBranch();
-            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch);
+            const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
             if (!file) return;
             fileSha = file.sha;
             const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
             const parsed = JSON.parse(content);
-            const cloudRecords = await decryptData(parsed.encrypted, syncConfig.password);
+            const cloudRecords = parsed.records || [];
+            const cloudDeleted = parsed.deletedIds || [];
+            const cloudIds = new Set(cloudRecords.map(r => r.id));
+
+            // 1) Union tombstones from both sides
+            const allDeleted = new Set([...deletedIds, ...cloudDeleted]);
+
+            // 2) Implicit deletion: a record in local but not in cloud, with id < lastSyncAt,
+            //    means *some other device* deleted it after our last sync. Mark it deleted.
+            if (lastSyncAt > 0) {
+                records.forEach(r => {
+                    if (!cloudIds.has(r.id) && r.id < lastSyncAt) {
+                        allDeleted.add(r.id);
+                    }
+                });
+            }
+
+            // 3) Implicit deletion (other direction): a record in cloud but not in local,
+            //    with id < lastSyncAt, means we deleted it locally after our last sync.
+            //    Mark it deleted so it propagates to other devices.
+            const localIds = new Set(records.map(r => r.id));
+            if (lastSyncAt > 0) {
+                cloudRecords.forEach(r => {
+                    if (!localIds.has(r.id) && r.id < lastSyncAt) {
+                        allDeleted.add(r.id);
+                    }
+                });
+            }
+
+            deletedIds = Array.from(allDeleted);
+            // Apply tombstones to local
+            records = records.filter(r => !allDeleted.has(r.id));
+            // Add cloud records that aren't deleted and aren't already local
             const localMap = new Map(records.map(r => [r.id, r]));
-            cloudRecords.forEach(r => { if (!localMap.has(r.id)) localMap.set(r.id, r); });
+            cloudRecords.forEach(r => {
+                if (!allDeleted.has(r.id) && !localMap.has(r.id)) {
+                    localMap.set(r.id, r);
+                }
+            });
             records = Array.from(localMap.values());
             saveRecords();
         }
 
         async function pushToCloud() {
             const branch = await getDefaultBranch();
-            const encrypted = await encryptData(records, syncConfig.password);
-            const content = JSON.stringify({ encrypted, updatedAt: new Date().toISOString() });
+            const content = JSON.stringify({ records, deletedIds, updatedAt: new Date().toISOString() }, null, 2);
             // Fetch with cache-bust to avoid stale SHA
-            const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch + '&t=' + Date.now());
+            const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch + '&t=' + Date.now());
             fileSha = file ? file.sha : null;
             try {
-                const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha, branch);
+                const result = await ghPut(syncConfig.token, syncConfig.repo, DATA_PATH, content, fileSha, branch);
                 fileSha = result.content.sha;
             } catch (e) {
                 if (e.message && e.message.includes('does not match')) {
                     // SHA mismatch - refetch and retry once
-                    const freshFile = await ghGet(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', branch + '&t=' + Date.now());
+                    const freshFile = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch + '&t=' + Date.now());
                     fileSha = freshFile ? freshFile.sha : null;
-                    const result = await ghPut(syncConfig.token, syncConfig.repo, 'data/migraine_encrypted.json', content, fileSha, branch);
+                    const result = await ghPut(syncConfig.token, syncConfig.repo, DATA_PATH, content, fileSha, branch);
                     fileSha = result.content.sha;
                 } else {
                     throw e;
                 }
             }
+            // Mark this point in time so future pulls can detect implicit deletions
+            lastSyncAt = Date.now();
+            saveRecords();
         }
 
         // ==================== Init ====================
         document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('appVersion').textContent = APP_VERSION;
             initDarkMode();
             loadRecords();
             loadSyncConfig();

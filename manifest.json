@@ -1,0 +1,17 @@
+{
+  "name": "偏头痛记录",
+  "short_name": "偏头痛",
+  "description": "记录、追踪、分析你的偏头痛",
+  "start_url": "./migraine.html",
+  "display": "standalone",
+  "background_color": "#e8f5f0",
+  "theme_color": "#43b89c",
+  "icons": [
+    {
+      "src": "migraine-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

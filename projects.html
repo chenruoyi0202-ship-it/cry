@@ -118,6 +118,7 @@
   .card:nth-child(1){animation-delay:.15s}
   .card:nth-child(2){animation-delay:.3s}
   .card:nth-child(3){animation-delay:.45s}
+  .card:nth-child(4){animation-delay:.6s}
 
   .card::before{
     content:'';position:absolute;inset:0;
@@ -204,9 +205,9 @@
     .header-icon{font-size:44px;margin-bottom:12px}
     .header p{font-size:15px;margin-top:10px}
     .cards{
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(4,1fr);
       gap:24px;
-      max-width:1060px;
+      max-width:1200px;
     }
     .card{
       flex-direction:column;align-items:flex-start;gap:0;
@@ -262,6 +263,18 @@
       <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
 
+    <!-- 偏头痛记录 -->
+    <a class="card card--migraine" href="migraine.html?v=3" target="_blank">
+      <div class="card-icon">
+        <img src="migraine-logo.svg" alt="偏头痛记录">
+      </div>
+      <div class="card-body">
+        <div class="card-title">偏头痛记录</div>
+        <div class="card-desc">偏头痛发作追踪与分析，记录疼痛强度、症状、触发因素，可视化统计趋势。</div>
+      </div>
+      <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+
     <!-- 止盈计算推演 -->
     <a class="card card--stock" href="./?v=3" target="_blank">
       <div class="card-icon">
@@ -274,14 +287,14 @@
       <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
 
-    <!-- 偏头痛记录 -->
-    <a class="card card--migraine" href="migraine.html?v=3" target="_blank">
+    <!-- 02680 创陞跟踪 -->
+    <a class="card card--stock" href="02680.html" target="_blank">
       <div class="card-icon">
-        <img src="migraine-logo.svg" alt="偏头痛记录">
+        <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1a1a2e"/><path d="M12 32l8-10 6 6 10-14" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="36" cy="14" r="3" fill="#CA8A04"/></svg>
       </div>
       <div class="card-body">
-        <div class="card-title">偏头痛记录</div>
-        <div class="card-desc">偏头痛发作追踪与分析，记录疼痛强度、症状、触发因素，可视化统计趋势。</div>
+        <div class="card-title">02680 创陞跟踪</div>
+        <div class="card-desc">港股02680创陞控股分析追踪，记录盘中分析、重要事件与实时行情。</div>
       </div>
       <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>

@@ -14,6 +14,12 @@
     <meta property="og:type" content="website">
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <link rel="manifest" href="cry-manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="止盈推演">
+    <meta name="theme-color" content="#050505">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -595,9 +601,24 @@
         /* Plan management */
         .plan-bar {
             display: flex;
-            gap: 6px;
-            margin-bottom: 16px;
+            gap: 8px;
+            margin-bottom: 10px;
             flex-wrap: wrap;
+        }
+        .plan-bar-select {
+            margin-bottom: 8px;
+        }
+        .plan-bar-select select {
+            width: 100%;
+            min-height: 44px;
+            font-size: 15px !important;
+            font-weight: 600;
+            padding: 12px 14px !important;
+            border-radius: 10px !important;
+        }
+        .plan-bar .plan-btn {
+            flex: 1;
+            min-width: 0;
         }
         .plan-bar select {
             flex: 1;
@@ -884,6 +905,172 @@
             min-height: 18px;
         }
 
+        /* Compare modal */
+        .compare-select {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px 14px;
+            min-height: 44px;
+            color: #F1F5F9;
+            font-size: 15px;
+            font-weight: 600;
+            outline: none;
+            margin-top: 4px;
+        }
+        .compare-select option { background: #1E293B; color: #F8FAFC; }
+        .compare-table {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 2px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            overflow: hidden;
+            font-size: 12px;
+        }
+        .compare-table > div {
+            padding: 10px 12px;
+            background: #121218;
+        }
+        .compare-table .ct-header {
+            background: rgba(202,138,4,0.08);
+            color: #FBBF24;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .compare-table .ct-label { color: #64748B; font-weight: 500; }
+        .compare-table .ct-value { color: #F1F5F9; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .compare-table .ct-value.pos { color: #4caf50; }
+        .compare-table .ct-value.neg { color: #f44336; }
+        .compare-table .ct-value.better {
+            background: rgba(76,175,80,0.08);
+        }
+
+        .save-mode-btn {
+            flex: 1;
+            min-height: 48px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            padding: 10px 8px;
+            line-height: 1.4;
+        }
+        .save-btn-overwrite {
+            background: linear-gradient(135deg, #7F1D1D 0%, #B91C1C 100%);
+            color: #FEE2E2;
+            box-shadow: 0 2px 8px rgba(185,28,28,0.25);
+        }
+        .save-btn-overwrite:hover { box-shadow: 0 4px 12px rgba(185,28,28,0.4); }
+        .save-btn-new {
+            background: linear-gradient(135deg, #1E3A8A 0%, #2146C7 100%);
+            color: #FBBF24;
+            box-shadow: 0 2px 8px rgba(30,58,138,0.3);
+        }
+        .save-btn-new:hover { box-shadow: 0 4px 12px rgba(30,58,138,0.4); }
+        .save-mode-btn:active { transform: scale(0.97); }
+
+        /* Lot increment buttons */
+        .lot-btn {
+            width: 36px;
+            min-height: 44px;
+            border: 1px solid rgba(202,138,4,0.25);
+            background: rgba(202,138,4,0.08);
+            color: #FBBF24;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .lot-btn:hover { background: rgba(202,138,4,0.18); }
+        .lot-btn:active { transform: scale(0.92); }
+
+        /* Live preview card */
+        .add-preview {
+            margin-top: 10px;
+            padding: 12px 14px;
+            background: rgba(76,175,80,0.05);
+            border: 1px solid rgba(76,175,80,0.15);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #94A3B8;
+            line-height: 1.8;
+            animation: fadeSlideIn 0.2s ease-out;
+        }
+        .add-preview.neg {
+            background: rgba(244,67,54,0.05);
+            border-color: rgba(244,67,54,0.15);
+        }
+        .add-preview strong { color: #F1F5F9; font-weight: 700; }
+        .add-preview .pv-pos { color: #4caf50; font-weight: 700; }
+        .add-preview .pv-neg { color: #f44336; font-weight: 700; }
+
+        /* Tag bar */
+        .tag-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .tag-chip {
+            padding: 5px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02);
+            color: #64748B;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tag-chip:hover { color: #94A3B8; background: rgba(255,255,255,0.05); }
+        .tag-chip.active {
+            border-color: rgba(202,138,4,0.4);
+            background: rgba(202,138,4,0.1);
+            color: #FBBF24;
+        }
+
+        /* Undo toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a20;
+            border: 1px solid rgba(202,138,4,0.3);
+            border-radius: 12px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 13px;
+            color: #E2E8F0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            z-index: 90;
+            animation: fadeSlideIn 0.25s ease-out;
+        }
+        .toast button {
+            background: rgba(202,138,4,0.15);
+            color: #FBBF24;
+            border: 1px solid rgba(202,138,4,0.3);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 32px;
+        }
+        .toast button:hover { background: rgba(202,138,4,0.25); }
+
     </style>
 </head>
 <body>
@@ -908,11 +1095,16 @@
 
         <!-- Plan Management -->
         <div class="section-title">方案管理</div>
-        <div class="plan-bar">
+        <div class="tag-bar" id="tagBar" style="display:none"></div>
+        <div class="plan-bar plan-bar-select">
             <select id="planSelect" onchange="loadPlan()">
                 <option value="">-- 选择已保存方案 --</option>
             </select>
+        </div>
+        <div class="plan-bar">
             <button class="plan-btn plan-btn-save" onclick="savePlan()">保存</button>
+            <button class="plan-btn" onclick="renamePlan()">重命名</button>
+            <button class="plan-btn" onclick="showCompare()">对比</button>
             <button class="plan-btn plan-btn-del" onclick="deletePlan()">删除</button>
         </div>
 
@@ -935,7 +1127,7 @@
             <div class="form-row">
                 <div class="field">
                     <label>当前股价</label>
-                    <input type="number" step="0.001" id="manualPrice" placeholder="输入当前价" oninput="applyManualPrice()">
+                    <input type="number" step="0.001" inputmode="decimal" id="manualPrice" placeholder="输入当前价" oninput="applyManualPrice()">
                 </div>
                 <div class="field" style="justify-content:flex-end;">
                     <button onclick="fetchPrice()" style="padding:12px 16px;min-height:44px;background:linear-gradient(135deg,#4fc3f7,#29b6f6);border:none;border-radius:10px;color:#fff;font-weight:600;font-size:14px;cursor:pointer;width:100%;" title="尝试自动获取">刷新股价</button>
@@ -954,11 +1146,21 @@
             <div class="form-row">
                 <div class="field">
                     <label>买入均价</label>
-                    <input type="number" step="0.001" id="costPrice" placeholder="例: 11.50" oninput="calculate()">
+                    <input type="number" step="0.001" inputmode="decimal" id="costPrice" placeholder="例: 11.50" oninput="calculate()">
                 </div>
                 <div class="field">
                     <label>总持仓股数</label>
-                    <input type="number" step="1" id="totalShares" placeholder="例: 56000" oninput="calculate()">
+                    <input type="number" step="1" inputmode="numeric" id="totalShares" placeholder="例: 56000" oninput="calculate()">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>每手股数（港股常见: 500/1000/2000）</label>
+                    <input type="number" step="1" inputmode="numeric" id="lotSize" placeholder="留空则按股计算" oninput="onLotSizeChange()">
+                </div>
+                <div class="field">
+                    <label>手续费&税（%）<span id="feeHint" style="color:#64748B;font-weight:400">港股 ≈ 0.26%</span></label>
+                    <input type="number" step="0.01" inputmode="decimal" id="feeRate" placeholder="0.26" oninput="calculate()">
                 </div>
             </div>
         </div>
@@ -978,20 +1180,25 @@
                 <div class="form-row three-col">
                     <div class="field">
                         <label>卖出价格</label>
-                        <input type="number" step="0.001" id="addPrice" placeholder="价格">
+                        <input type="number" step="0.001" inputmode="decimal" id="addPrice" placeholder="价格" oninput="updateAddPreview()">
                     </div>
                     <div class="field">
                         <label>卖出股数</label>
-                        <input type="number" step="1" id="addShares" placeholder="股数">
+                        <div style="display:flex;gap:4px;align-items:stretch;">
+                            <button type="button" class="lot-btn" onclick="changeLots(-1)" title="-1手">−</button>
+                            <input type="number" step="1" inputmode="numeric" id="addShares" placeholder="股数" oninput="updateAddPreview()" style="flex:1;min-width:0;">
+                            <button type="button" class="lot-btn" onclick="changeLots(1)" title="+1手">+</button>
+                        </div>
                     </div>
                     <div class="field">
                         <label>类型</label>
-                        <select id="addType" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
+                        <select id="addType" onchange="updateAddPreview()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
                             <option value="done" style="background:#1E293B;">已卖出</option>
                             <option value="plan" style="background:#1E293B;">计划卖出</option>
                         </select>
                     </div>
                 </div>
+                <div id="addPreview" class="add-preview" style="display:none"></div>
                 <div class="add-form-actions">
                     <button class="btn" onclick="hideAddForm()">取消</button>
                     <button class="btn btn-primary" onclick="addRecord()">确认添加</button>
@@ -1317,6 +1524,10 @@
 
             const remainShares = totalShares - soldShares - planShares;
             const totalRevenue = soldRevenue + planRevenue;
+
+            // Fees (commission + stamp duty). Applied to buy cost + sell revenue.
+            const feeRate = (parseFloat(document.getElementById('feeRate').value) || 0) / 100;
+            const totalFees = feeRate * (totalCost + totalRevenue);
             const totalProfit = totalRevenue - (soldShares + planShares) * costPrice;
 
             // Remaining value (use realtime price if available)
@@ -1327,7 +1538,7 @@
                 remainProfit = (currentRtPrice - costPrice) * remainShares;
             }
 
-            const grandProfit = totalProfit + remainProfit;
+            const grandProfit = totalProfit + remainProfit - totalFees;
             const grandRevenue = totalRevenue + remainValue;
             const profitRate = ((grandProfit) / totalCost * 100);
 
@@ -1373,6 +1584,11 @@
                     <div class="result-row">
                         <span>卖出均价</span>
                         <span class="rv">${avgSellPrice.toFixed(3)} ${cur}</span>
+                    </div>` : ''}
+                    ${totalFees > 0 ? `
+                    <div class="result-row">
+                        <span>手续费&税 (${(feeRate*100).toFixed(2)}%)</span>
+                        <span class="rv" style="color:#f44336">-${formatMoney(totalFees)} ${cur}</span>
                     </div>` : ''}
                     <div class="result-row">
                         <span>预计总回款</span>
@@ -2199,47 +2415,242 @@
             }
         }
 
+        // --- Save Plan Modal ---
         function savePlan() {
             const stock = document.getElementById('stockInput').value.trim();
             const costPrice = document.getElementById('costPrice').value;
-            const totalShares = document.getElementById('totalShares').value;
-            const manualPrice = document.getElementById('manualPrice').value;
 
             if (!stock && !costPrice && records.length === 0) {
                 alert('当前没有数据可保存'); return;
             }
 
             const currentSel = document.getElementById('planSelect').value;
-            let name;
+            const overlay = document.getElementById('saveOverlay');
+            const actions = document.getElementById('saveActions');
+            const title = document.getElementById('saveTitle');
+            const hint = document.getElementById('saveHint');
+            const nameField = document.getElementById('saveNameField');
+            const nameInput = document.getElementById('saveNameInput');
+            const err = document.getElementById('saveError');
+            err.textContent = '';
 
             if (currentSel) {
-                // Editing an existing plan - ask overwrite or new
-                const overwrite = confirm(`覆盖当前方案「${currentSel}」？\n\n点击「确定」覆盖原方案\n点击「取消」另存为新方案`);
-                if (overwrite) {
-                    name = currentSel;
-                } else {
-                    name = prompt('新方案名称：', currentSel + ' 副本');
-                    if (!name) return;
-                }
+                // Editing an existing plan - show two buttons
+                title.textContent = '保存当前方案';
+                hint.innerHTML = `当前方案：<span style="color:#FBBF24;font-weight:600">${currentSel}</span>`;
+                nameField.style.display = 'none';
+                actions.innerHTML = `
+                    <button class="save-mode-btn save-btn-overwrite" onclick="doSave('overwrite')">覆盖原来</button>
+                    <button class="save-mode-btn save-btn-new" onclick="doSave('new')">新增方案</button>
+                `;
             } else {
                 // Fresh save
-                const defaultName = stock || '未命名方案';
-                name = prompt('方案名称：', defaultName);
-                if (!name) return;
+                title.textContent = '新建方案';
+                hint.textContent = '为当前配置命名并保存';
+                nameField.style.display = 'block';
+                nameInput.value = stock || '未命名方案';
+                actions.innerHTML = `
+                    <button class="auth-btn-primary save-mode-btn" onclick="doSave('new')">保存</button>
+                `;
+                setTimeout(() => { nameInput.focus(); nameInput.select(); }, 50);
+            }
+            overlay.classList.add('visible');
+        }
+
+        function hideSave() {
+            document.getElementById('saveOverlay').classList.remove('visible');
+        }
+
+        async function doSave(mode) {
+            const err = document.getElementById('saveError');
+            err.textContent = '';
+            const currentSel = document.getElementById('planSelect').value;
+            let name;
+
+            if (mode === 'overwrite') {
+                name = currentSel;
+            } else {
+                // new: need name input (may be empty if coming from "新增方案" on existing plan)
+                const nameField = document.getElementById('saveNameField');
+                const nameInput = document.getElementById('saveNameInput');
+                if (nameField.style.display === 'none') {
+                    // Transition from existing plan → new: show input
+                    nameField.style.display = 'block';
+                    nameInput.value = (currentSel || document.getElementById('stockInput').value.trim() || '未命名方案') + ' 副本';
+                    document.getElementById('saveActions').innerHTML = `
+                        <button class="auth-btn-primary save-mode-btn" onclick="doSave('confirmNew')">确认保存</button>
+                    `;
+                    setTimeout(() => { nameInput.focus(); nameInput.select(); }, 50);
+                    return;
+                }
+                name = nameInput.value.trim();
+                if (!name) { err.textContent = '请输入方案名称'; return; }
+                const plans = getPlans();
+                if (plans[name] && mode !== 'confirmNew' && name !== currentSel) {
+                    err.textContent = '该名称已存在，请换一个';
+                    return;
+                }
             }
 
+            if (mode === 'confirmNew') {
+                name = document.getElementById('saveNameInput').value.trim();
+                if (!name) { err.textContent = '请输入方案名称'; return; }
+                const plans = getPlans();
+                if (plans[name]) { err.textContent = '该名称已存在，请换一个'; return; }
+            }
+
+            // Build plan data
+            const stock = document.getElementById('stockInput').value.trim();
+            const costPrice = document.getElementById('costPrice').value;
+            const totalShares = document.getElementById('totalShares').value;
+            const manualPrice = document.getElementById('manualPrice').value;
             const market = document.getElementById('marketSelect').value;
+            const lotSize = document.getElementById('lotSize').value;
+            const feeRate = document.getElementById('feeRate').value;
             const plans = getPlans();
+            // Preserve tag if overwriting existing plan
+            const existingTag = plans[name]?.tag;
             plans[name] = {
-                stock, costPrice, totalShares, manualPrice, market,
+                stock, costPrice, totalShares, manualPrice, market, lotSize, feeRate,
+                tag: existingTag,
                 records: records.map(r => ({ price: r.price, shares: r.shares, type: r.type })),
                 savedAt: new Date().toISOString()
             };
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
             refreshPlanSelect(name);
-            alert('方案已保存');
-            syncPlans(true);
+            hideSave();
+            await syncPlans(true);
         }
+
+        // --- Rename Plan ---
+        async function renamePlan() {
+            const oldName = document.getElementById('planSelect').value;
+            if (!oldName) { alert('请先选择一个方案'); return; }
+            const newName = prompt('新的方案名称：', oldName);
+            if (!newName || newName === oldName) return;
+            const trimmed = newName.trim();
+            if (!trimmed) return;
+            const plans = getPlans();
+            if (plans[trimmed]) { alert('该名称已存在'); return; }
+            plans[trimmed] = { ...plans[oldName], savedAt: new Date().toISOString() };
+            delete plans[oldName];
+            localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+            refreshPlanSelect(trimmed);
+            await syncPlans(true);
+        }
+
+        // --- Compare Plans ---
+        function showCompare() {
+            const plans = getPlans();
+            const names = Object.keys(plans).sort();
+            if (names.length < 2) {
+                alert('至少需要 2 个方案才能对比');
+                return;
+            }
+            const selA = document.getElementById('compareA');
+            const selB = document.getElementById('compareB');
+            selA.innerHTML = '';
+            selB.innerHTML = '';
+            names.forEach(name => {
+                selA.innerHTML += `<option value="${name}">${name}</option>`;
+                selB.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+            selA.value = names[0];
+            selB.value = names[1];
+            selA.onchange = renderCompare;
+            selB.onchange = renderCompare;
+            renderCompare();
+            document.getElementById('compareOverlay').classList.add('visible');
+        }
+
+        function hideCompare() {
+            document.getElementById('compareOverlay').classList.remove('visible');
+        }
+
+        function renderCompare() {
+            const plans = getPlans();
+            const nameA = document.getElementById('compareA').value;
+            const nameB = document.getElementById('compareB').value;
+            const a = plans[nameA];
+            const b = plans[nameB];
+            if (!a || !b) return;
+
+            const computeStats = (p) => {
+                const costPrice = parseFloat(p.costPrice) || 0;
+                const totalShares = parseInt(p.totalShares) || 0;
+                const rtPrice = parseFloat(p.manualPrice) || null;
+                const recs = p.records || [];
+                const stats = calcComparePlan(costPrice, totalShares, recs, rtPrice);
+                return stats;
+            };
+
+            const sa = computeStats(a);
+            const sb = computeStats(b);
+
+            const rows = [
+                { label: '股票', a: a.stock || '—', b: b.stock || '—', cmp: 'none' },
+                { label: '成本价', a: fmtNum(a.costPrice), b: fmtNum(b.costPrice), cmp: 'none' },
+                { label: '总股数', a: fmtInt(a.totalShares), b: fmtInt(b.totalShares), cmp: 'none' },
+                { label: '总成本', a: formatMoney(sa.totalCost), b: formatMoney(sb.totalCost), cmp: 'none' },
+                { label: '已卖出', a: `${sa.soldShares}股`, b: `${sb.soldShares}股`, cmp: 'none' },
+                { label: '计划卖出', a: `${sa.planShares}股`, b: `${sb.planShares}股`, cmp: 'none' },
+                { label: '剩余持仓', a: `${sa.remainShares}股`, b: `${sb.remainShares}股`, cmp: 'none' },
+                { label: '预计总盈亏', a: signedMoney(sa.grandProfit), b: signedMoney(sb.grandProfit), cmp: 'profit', va: sa.grandProfit, vb: sb.grandProfit },
+                { label: '收益率', a: signedPct(sa.profitRate), b: signedPct(sb.profitRate), cmp: 'profit', va: sa.profitRate, vb: sb.profitRate },
+                { label: '卖出均价', a: sa.avgSellPrice > 0 ? sa.avgSellPrice.toFixed(3) : '—', b: sb.avgSellPrice > 0 ? sb.avgSellPrice.toFixed(3) : '—', cmp: 'none' },
+            ];
+
+            let html = `
+                <div class="compare-table">
+                    <div class="ct-header">指标</div>
+                    <div class="ct-header">${escapeHtml(nameA)}</div>
+                    <div class="ct-header">${escapeHtml(nameB)}</div>
+            `;
+            rows.forEach(r => {
+                let clsA = 'ct-value', clsB = 'ct-value';
+                if (r.cmp === 'profit') {
+                    clsA += (r.va >= 0 ? ' pos' : ' neg');
+                    clsB += (r.vb >= 0 ? ' pos' : ' neg');
+                    if (r.va > r.vb) clsA += ' better';
+                    else if (r.vb > r.va) clsB += ' better';
+                }
+                html += `
+                    <div class="ct-label">${r.label}</div>
+                    <div class="${clsA}">${r.a}</div>
+                    <div class="${clsB}">${r.b}</div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('compareResult').innerHTML = html;
+        }
+
+        // Helper: compute stats for comparison (mirrors calculate() logic)
+        function calcComparePlan(costPrice, totalShares, recs, rtPrice) {
+            if (costPrice <= 0 || totalShares <= 0) {
+                return { totalCost: 0, soldShares: 0, planShares: 0, remainShares: 0, grandProfit: 0, profitRate: 0, avgSellPrice: 0 };
+            }
+            const totalCost = costPrice * totalShares;
+            let soldShares = 0, soldRevenue = 0, planShares = 0, planRevenue = 0;
+            recs.forEach(r => {
+                if (r.type === 'done') { soldShares += r.shares; soldRevenue += r.price * r.shares; }
+                else { planShares += r.shares; planRevenue += r.price * r.shares; }
+            });
+            const remainShares = totalShares - soldShares - planShares;
+            const totalProfit = (soldRevenue + planRevenue) - (soldShares + planShares) * costPrice;
+            let remainProfit = 0;
+            if (remainShares > 0 && rtPrice) remainProfit = (rtPrice - costPrice) * remainShares;
+            const grandProfit = totalProfit + remainProfit;
+            const profitRate = (grandProfit / totalCost) * 100;
+            const allSellShares = soldShares + planShares;
+            const avgSellPrice = allSellShares > 0 ? (soldRevenue + planRevenue) / allSellShares : 0;
+            return { totalCost, soldShares, planShares, remainShares, grandProfit, profitRate, avgSellPrice };
+        }
+
+        function fmtNum(v) { const n = parseFloat(v); return isNaN(n) ? '—' : n.toFixed(2); }
+        function fmtInt(v) { const n = parseInt(v); return isNaN(n) ? '—' : n.toLocaleString(); }
+        function signedMoney(n) { return (n >= 0 ? '+' : '') + formatMoney(n); }
+        function signedPct(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+        function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
         function loadPlan() {
             const name = document.getElementById('planSelect').value;
@@ -2253,6 +2664,8 @@
             document.getElementById('costPrice').value = plan.costPrice || '';
             document.getElementById('totalShares').value = plan.totalShares || '';
             document.getElementById('manualPrice').value = plan.manualPrice || '';
+            document.getElementById('lotSize').value = plan.lotSize || '';
+            document.getElementById('feeRate').value = plan.feeRate || '';
             updateBadge();
 
             if (plan.manualPrice) {
@@ -2268,7 +2681,7 @@
             calculate();
         }
 
-        function deletePlan() {
+        async function deletePlan() {
             const name = document.getElementById('planSelect').value;
             if (!name) { alert('请先选择一个方案'); return; }
             if (!confirm(`确定删除方案「${name}」？`)) return;
@@ -2276,15 +2689,269 @@
             delete plans[name];
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
             refreshPlanSelect();
-            syncPlans(true);
+            await syncPlans(true);
         }
 
         // Focus stock input on load, refresh plan list
+        // ==================== NEW FEATURES ====================
+
+        // --- Lot size (每手) ---
+        function getLotSize() {
+            return parseInt(document.getElementById('lotSize').value) || 0;
+        }
+        function onLotSizeChange() {
+            // Placeholder: could show "= X 手" label in future
+        }
+        function changeLots(delta) {
+            const lot = getLotSize();
+            if (lot <= 0) { alert('请先在持仓信息中设置每手股数'); return; }
+            const input = document.getElementById('addShares');
+            const current = parseInt(input.value) || 0;
+            const newVal = Math.max(0, current + delta * lot);
+            input.value = newVal;
+            updateAddPreview();
+        }
+
+        // --- Live preview in add form ---
+        function updateAddPreview() {
+            const price = parseFloat(document.getElementById('addPrice').value);
+            const shares = parseInt(document.getElementById('addShares').value);
+            const type = document.getElementById('addType').value;
+            const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
+            const lot = getLotSize();
+            const preview = document.getElementById('addPreview');
+
+            if (!price || !shares || price <= 0 || shares <= 0 || costPrice <= 0) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            const revenue = price * shares;
+            const profit = (price - costPrice) * shares;
+            const pct = ((price - costPrice) / costPrice * 100);
+            const lotInfo = lot > 0 ? ` (${(shares / lot).toFixed(shares % lot === 0 ? 0 : 2)} 手)` : '';
+
+            // Sold so far + this one
+            let soldAfter = 0;
+            records.forEach(r => {
+                if (editingId !== null && r.id === editingId) return;
+                if (type === 'done' && r.type === 'done') soldAfter += r.shares;
+                if (type === 'plan' && (r.type === 'done' || r.type === 'plan')) soldAfter += r.shares;
+            });
+            soldAfter += shares;
+            const remainAfter = totalShares - soldAfter;
+            const sellPct = totalShares > 0 ? (shares / totalShares * 100).toFixed(1) : 0;
+
+            const profitClass = profit >= 0 ? 'pv-pos' : 'pv-neg';
+            const profitSign = profit >= 0 ? '+' : '';
+
+            preview.className = 'add-preview' + (profit >= 0 ? '' : ' neg');
+            preview.style.display = 'block';
+            preview.innerHTML = `
+                本批: <strong>${shares.toLocaleString()}</strong>股${lotInfo} ×
+                <strong>${price.toFixed(3)}</strong> =
+                <strong>${formatMoney(revenue)}</strong><br>
+                单批利润: <span class="${profitClass}">${profitSign}${formatMoney(profit)}</span>
+                (<span class="${profitClass}">${profitSign}${pct.toFixed(1)}%</span>) ·
+                占总仓 <strong>${sellPct}%</strong>${totalShares > 0 ? ' · 之后剩余 <strong>' + Math.max(0, remainAfter).toLocaleString() + '</strong>股' : ''}
+            `;
+        }
+
+        // --- Undo/Redo stack ---
+        const undoStack = [];
+        const MAX_UNDO = 10;
+        function pushUndo(action) {
+            undoStack.push(action);
+            if (undoStack.length > MAX_UNDO) undoStack.shift();
+        }
+        function undo() {
+            if (undoStack.length === 0) { showToast('没有可撤销的操作'); return; }
+            const action = undoStack.pop();
+            try { action.undo(); showToast('已撤销: ' + action.label); }
+            catch (e) { console.error(e); }
+        }
+
+        // --- Toast ---
+        let toastTimer = null;
+        function showToast(msg, actionLabel, actionFn) {
+            const existing = document.getElementById('toast');
+            if (existing) existing.remove();
+            if (toastTimer) clearTimeout(toastTimer);
+
+            const div = document.createElement('div');
+            div.className = 'toast';
+            div.id = 'toast';
+            div.innerHTML = `<span>${msg}</span>`;
+            if (actionLabel && actionFn) {
+                const btn = document.createElement('button');
+                btn.textContent = actionLabel;
+                btn.onclick = () => { actionFn(); div.remove(); };
+                div.appendChild(btn);
+            }
+            document.body.appendChild(div);
+            toastTimer = setTimeout(() => div.remove(), 4000);
+        }
+
+        // Keyboard shortcut: Ctrl+Z / Cmd+Z
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                const tag = document.activeElement?.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA') return; // let browser handle text undo
+                e.preventDefault();
+                undo();
+            }
+        });
+
+        // --- Sync polling (every 5 min) ---
+        let syncPollInterval = null;
+        function startSyncPoll() {
+            if (syncPollInterval) clearInterval(syncPollInterval);
+            syncPollInterval = setInterval(() => {
+                if (isLoggedIn() && document.visibilityState === 'visible') {
+                    syncPlans();
+                }
+            }, 5 * 60 * 1000);
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && isLoggedIn()) {
+                syncPlans();
+            }
+        });
+
+        // --- Tag filter ---
+        let currentTagFilter = '__all__';
+        function getPlanTag(plan) {
+            if (plan.tag) return plan.tag;
+            // Auto-detect from stock code
+            const stock = (plan.stock || '').trim();
+            if (/^\d{4,5}/.test(stock)) return '港股';
+            if (/[A-Za-z]/.test(stock)) return '美股';
+            return '其他';
+        }
+        function getAllTags() {
+            const plans = getPlans();
+            const tags = new Set();
+            Object.values(plans).forEach(p => tags.add(getPlanTag(p)));
+            return Array.from(tags).sort();
+        }
+        function refreshTagBar() {
+            const bar = document.getElementById('tagBar');
+            if (!bar) return;
+            const plans = getPlans();
+            const planCount = Object.keys(plans).length;
+            if (planCount === 0) { bar.style.display = 'none'; return; }
+            const tags = getAllTags();
+            bar.style.display = 'flex';
+            bar.innerHTML = '';
+            const allChip = document.createElement('span');
+            allChip.className = 'tag-chip' + (currentTagFilter === '__all__' ? ' active' : '');
+            allChip.textContent = `全部 (${planCount})`;
+            allChip.onclick = () => { currentTagFilter = '__all__'; refreshPlanSelect(); refreshTagBar(); };
+            bar.appendChild(allChip);
+            tags.forEach(t => {
+                const count = Object.values(plans).filter(p => getPlanTag(p) === t).length;
+                const chip = document.createElement('span');
+                chip.className = 'tag-chip' + (currentTagFilter === t ? ' active' : '');
+                chip.textContent = `${t} (${count})`;
+                chip.onclick = () => { currentTagFilter = t; refreshPlanSelect(); refreshTagBar(); };
+                bar.appendChild(chip);
+            });
+        }
+
+        // Override addRecord / removeRecord / deletePlan to support undo
+        const _origAddRecord = addRecord;
+        addRecord = function() {
+            const beforeRecords = records.map(r => ({ ...r }));
+            const beforeEditingId = editingId;
+            _origAddRecord();
+            pushUndo({
+                label: beforeEditingId !== null ? '编辑记录' : '添加记录',
+                undo: () => { records = beforeRecords; editingId = null; renderRecords(); calculate(); }
+            });
+        };
+
+        const _origRemoveRecord = removeRecord;
+        removeRecord = function(id) {
+            const removed = records.find(r => r.id === id);
+            if (!removed) return;
+            _origRemoveRecord(id);
+            showToast(`已删除 ${removed.shares}股 @ ${removed.price}`, '撤销', () => {
+                records.push(removed);
+                renderRecords();
+                calculate();
+            });
+            pushUndo({
+                label: '删除记录',
+                undo: () => { records.push(removed); renderRecords(); calculate(); }
+            });
+        };
+
+        const _origDeletePlan = deletePlan;
+        deletePlan = async function() {
+            const name = document.getElementById('planSelect').value;
+            if (!name) { alert('请先选择一个方案'); return; }
+            if (!confirm(`确定删除方案「${name}」？`)) return;
+            const plans = getPlans();
+            const backup = plans[name];
+            delete plans[name];
+            localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+            refreshPlanSelect();
+            refreshTagBar();
+            showToast(`已删除方案「${name}」`, '撤销', async () => {
+                const p = getPlans();
+                p[name] = backup;
+                localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(p));
+                refreshPlanSelect(name);
+                refreshTagBar();
+                await syncPlans(true);
+            });
+            pushUndo({
+                label: '删除方案',
+                undo: async () => {
+                    const p = getPlans();
+                    p[name] = backup;
+                    localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(p));
+                    refreshPlanSelect(name);
+                    refreshTagBar();
+                    await syncPlans(true);
+                }
+            });
+            await syncPlans(true);
+        };
+
+        // Override refreshPlanSelect to support tag filter and refresh tag bar
+        const _origRefreshPlanSelect = refreshPlanSelect;
+        refreshPlanSelect = function(selectName) {
+            const sel = document.getElementById('planSelect');
+            const plans = getPlans();
+            let names = Object.keys(plans).sort();
+            if (currentTagFilter !== '__all__') {
+                names = names.filter(n => getPlanTag(plans[n]) === currentTagFilter);
+            }
+            sel.innerHTML = '<option value="">-- 选择已保存方案 --</option>';
+            names.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                const tag = getPlanTag(plans[name]);
+                opt.textContent = `${name}`;
+                sel.appendChild(opt);
+            });
+            if (selectName && names.includes(selectName)) {
+                sel.value = selectName;
+            }
+            refreshTagBar();
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             refreshPlanSelect();
+            refreshTagBar();
             fetchFxRates();
             updateUserBar();
-            if (isLoggedIn()) syncPlans();
+            if (isLoggedIn()) {
+                syncPlans();
+                startSyncPoll();
+            }
             document.getElementById('stockInput').focus();
         });
     </script>
@@ -2318,6 +2985,43 @@
             </ol>
         </details>
         <div class="auth-close" onclick="hideAuth()">取消</div>
+    </div>
+</div>
+
+<!-- Save Plan Modal -->
+<div class="auth-overlay" id="saveOverlay">
+    <div class="auth-box">
+        <h2 id="saveTitle">保存方案</h2>
+        <p id="saveHint" style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5"></p>
+        <div class="field" id="saveNameField">
+            <label>方案名称</label>
+            <input type="text" id="saveNameInput" placeholder="输入方案名称">
+        </div>
+        <div class="auth-error" id="saveError"></div>
+        <div class="auth-actions" id="saveActions">
+            <!-- Buttons injected by JS -->
+        </div>
+        <div class="auth-close" onclick="hideSave()">取消</div>
+    </div>
+</div>
+
+<!-- Compare Plans Modal -->
+<div class="auth-overlay" id="compareOverlay">
+    <div class="auth-box" style="max-width:560px">
+        <h2>方案对比</h2>
+        <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
+            选择两个方案进行盈亏对比
+        </p>
+        <div class="field">
+            <label>方案 A</label>
+            <select id="compareA" class="compare-select"></select>
+        </div>
+        <div class="field">
+            <label>方案 B</label>
+            <select id="compareB" class="compare-select"></select>
+        </div>
+        <div id="compareResult" style="margin-top:16px"></div>
+        <div class="auth-close" onclick="hideCompare()">关闭</div>
     </div>
 </div>
 </body>
