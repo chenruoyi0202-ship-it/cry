@@ -1155,6 +1155,7 @@ const CHART_CONFIGS = {
 
 function switchChartPeriod(period) {
   chartPeriod = period;
+  if (period === 'daily') candleViewExplicit = false; // reset to latest on switch
   document.querySelectorAll('.chart-tab').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.chart-tab').forEach(el => {
     if ((period === '1d' && el.textContent === '分时') || (period === 'daily' && el.textContent === '日K')) el.classList.add('active');
@@ -1358,6 +1359,7 @@ function fetchTencentDailyK() {
           };
           quoteCache['daily'] = quoteData;
           sessionStorage.setItem(QUOTE_CACHE_KEY + '_daily', JSON.stringify(quoteData));
+          candleViewExplicit = false; // new data = reset to latest view
           if (chartPeriod === 'daily') renderChart(quoteData);
           cleanup(); resolve(true); return;
         }
@@ -1658,41 +1660,29 @@ function renderLineChart(data) {
     return PAD + (min / TOTAL_MIN) * (W - 2 * PAD);
   }
 
-  // Step-line using time-based X, with anchor points at 9:30 and 16:00
-  const rawCoords = series.map(p => {
-    const min = timeToMin(p.t);
-    const x = minToX(min);
-    const y = PAD + (1 - (p.c - minP) / range) * (CHART_H - 2 * PAD);
-    return { x, y };
-  }).sort((a, b) => a.x - b.x);
-
-  // Deduplicate by x (same minute = keep last)
-  const coords = [];
-  for (const c of rawCoords) {
-    if (coords.length > 0 && Math.abs(coords[coords.length - 1].x - c.x) < 0.5) {
-      coords[coords.length - 1] = c;
-    } else {
-      coords.push(c);
+  // Densify: build a price-by-minute array for the full 330-minute trading day.
+  // Carry forward last known price to fill gaps in sparse data.
+  // This makes the step-line continuous without edge cases.
+  const minToPrice = new Array(TOTAL_MIN + 1);
+  const sortedSeries = series.slice().sort((a, b) => a.t - b.t);
+  let lastPrice = sortedSeries[0] ? sortedSeries[0].c : (prevClose || minP);
+  let seriesIdx = 0;
+  for (let m = 0; m <= TOTAL_MIN; m++) {
+    // Advance seriesIdx while the next point is at or before this minute
+    while (seriesIdx < sortedSeries.length && timeToMin(sortedSeries[seriesIdx].t) <= m) {
+      lastPrice = sortedSeries[seriesIdx].c;
+      seriesIdx++;
     }
+    minToPrice[m] = lastPrice;
   }
 
-  // Anchor start at 9:30 (x=PAD) and end at 16:00 (x=W-PAD) using first/last prices
-  if (coords.length > 0) {
-    if (coords[0].x > PAD + 1) coords.unshift({ x: PAD, y: coords[0].y });
-    const lastX = W - PAD;
-    if (coords[coords.length - 1].x < lastX - 1) coords.push({ x: lastX, y: coords[coords.length - 1].y });
-  }
-
-  // Step-line: at each new point, go horizontal (at prev y) then vertical
+  // Build points array from dense minute data
   const stepPoints = [];
-  coords.forEach((c, i) => {
-    if (i === 0) {
-      stepPoints.push(`${c.x.toFixed(1)},${c.y.toFixed(1)}`);
-    } else {
-      stepPoints.push(`${c.x.toFixed(1)},${coords[i-1].y.toFixed(1)}`);
-      stepPoints.push(`${c.x.toFixed(1)},${c.y.toFixed(1)}`);
-    }
-  });
+  for (let m = 0; m <= TOTAL_MIN; m++) {
+    const x = minToX(m);
+    const y = PAD + (1 - (minToPrice[m] - minP) / range) * (CHART_H - 2 * PAD);
+    stepPoints.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
   const allPoints = stepPoints.join(' ');
   const fillPoints = allPoints + ` ${(W-PAD).toFixed(1)},${CHART_H} ${PAD},${CHART_H}`;
 
@@ -1726,6 +1716,7 @@ function renderLineChart(data) {
 // ==================== Candlestick Chart ====================
 let candleViewStart = 0; // index of first visible candle
 let candleViewCount = 60; // number of visible candles
+let candleViewExplicit = false; // true once user zooms/scrolls
 
 function renderCandlestick(data) {
   const { series } = data;
@@ -1734,10 +1725,12 @@ function renderCandlestick(data) {
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.style.height = H + 'px';
 
-  // Clamp view range
+  // Default to showing the last N candles (most recent). Only respect
+  // existing candleViewStart if it was explicitly set by user zoom.
   const total = series.length;
-  if (candleViewStart < 0) candleViewStart = 0;
-  if (candleViewStart + candleViewCount > total) candleViewStart = Math.max(0, total - candleViewCount);
+  if (!candleViewExplicit || candleViewStart < 0 || candleViewStart + candleViewCount > total) {
+    candleViewStart = Math.max(0, total - candleViewCount);
+  }
   const visible = series.slice(candleViewStart, candleViewStart + candleViewCount);
   if (visible.length < 1) return;
 
@@ -2004,6 +1997,7 @@ function setupCrosshair() {
         if (delta > 0) candleViewCount = Math.max(10, candleViewCount - 4); // zoom in
         else candleViewCount = Math.min(currentChartSeries.length, candleViewCount + 4); // zoom out
         candleViewStart = Math.max(0, currentChartSeries.length - candleViewCount);
+        candleViewExplicit = true;
         lastPinchDist = dist;
         renderCandlestick(quoteCache['daily']);
         renderTimeAxis(currentChartSeries.slice(candleViewStart, candleViewStart + candleViewCount));
@@ -2019,6 +2013,7 @@ function setupCrosshair() {
     if (e.deltaY < 0) candleViewCount = Math.max(10, candleViewCount - 3);
     else candleViewCount = Math.min(currentChartSeries.length, candleViewCount + 3);
     candleViewStart = Math.max(0, currentChartSeries.length - candleViewCount);
+    candleViewExplicit = true;
     renderCandlestick(quoteCache['daily']);
     renderTimeAxis(currentChartSeries.slice(candleViewStart, candleViewStart + candleViewCount));
   };
