@@ -1170,6 +1170,8 @@ function switchChartPeriod(period) {
 }
 
 async function fetchQuote() {
+  // Clear intraday session cache to force fresh data for today
+  sessionStorage.removeItem(QUOTE_CACHE_KEY + '_1d');
   // 1. Try GitHub cached file first (fast, same-origin)
   let usedCache = false;
   try {
@@ -1185,12 +1187,19 @@ async function fetchQuote() {
         usedCache = true;
       }
       if (cached.intraday && cached.intraday.series && cached.intraday.series.length > 0) {
-        cached.intraday.fetchedAt = cached.fetchedAt;
-        cached.intraday.period = '1d';
-        quoteCache['1d'] = cached.intraday;
-        renderPriceHeader(cached.intraday);
-        if (chartPeriod === '1d') renderChart(cached.intraday);
-        usedCache = true;
+        // Only use cached intraday if it's from today (HK timezone)
+        const firstT = cached.intraday.series[0].t;
+        const dt = new Date(firstT);
+        const today = new Date();
+        const sameDay = dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
+        if (sameDay) {
+          cached.intraday.fetchedAt = cached.fetchedAt;
+          cached.intraday.period = '1d';
+          quoteCache['1d'] = cached.intraday;
+          renderPriceHeader(cached.intraday);
+          if (chartPeriod === '1d') renderChart(cached.intraday);
+          usedCache = true;
+        }
       }
       if (usedCache) {
         const age = Date.now() - cached.fetchedAt;
@@ -1373,9 +1382,7 @@ function fetchTencentDailyK() {
 // ==================== Tencent Minute Chart Data ====================
 function fetchTencentMinuteData() {
   return new Promise((resolve) => {
-    if (quoteCache['1d'] && quoteCache['1d'].series && quoteCache['1d'].series.length > 5) {
-      resolve(true); return;
-    }
+    // Always fetch fresh intraday data — stale cache is worse than no data
     // Prefer the 1-minute K-line endpoint (has explicit datetime per entry)
     fetchTencent1MinKline().then(ok => {
       if (ok) { resolve(true); return; }
