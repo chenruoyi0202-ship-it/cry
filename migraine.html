@@ -415,6 +415,61 @@
         @media (prefers-reduced-motion: reduce) {
             * { transition: none !important; animation: none !important; }
         }
+
+        /* ==================== PC / tablet adaptation ==================== */
+        @media (min-width: 768px) {
+            body { padding: 40px 24px 64px; }
+            .card {
+                max-width: 720px;
+                padding: 40px 40px 36px;
+                border-radius: 32px;
+            }
+            .header h1 { font-size: 26px; }
+            .header .sub { font-size: 14px; letter-spacing: 3px; }
+            .section-title { font-size: 16px; margin-bottom: 20px; }
+            .field { margin-bottom: 22px; }
+            .field label { font-size: 14px; }
+            .field input, .field textarea, #inputOtherTrigger {
+                font-size: 16px; padding: 13px 16px;
+            }
+            .tag-toggle { font-size: 14px; padding: 9px 18px; }
+            .btn { font-size: 16px; padding: 16px; }
+            .stat-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+            .stat-card { padding: 20px; }
+            .stat-card .sc-val { font-size: 30px; }
+            .cal-day { font-size: 16px; }
+            .history-item { padding: 20px; }
+        }
+
+        @media (min-width: 1024px) {
+            .card {
+                max-width: 920px;
+                padding: 44px 48px 40px;
+            }
+            /* Two-column form layout on desktop */
+            #tabRecord .form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0 32px;
+            }
+            #tabRecord .form-grid .full {
+                grid-column: 1 / -1;
+            }
+            .history-item {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-areas:
+                    "top top"
+                    "details details"
+                    "tags tags"
+                    "actions actions";
+            }
+            .hi-top { grid-area: top; }
+            .hi-details { grid-area: details; }
+            .hi-tags { grid-area: tags; }
+            .hi-actions { grid-area: actions; }
+            .hi-btn { max-width: 120px; }
+        }
     </style>
 </head>
 <body>
@@ -443,62 +498,64 @@
         <!-- Tab: Record -->
         <div class="tab-content" id="tabRecord">
             <div class="section-title">新建记录</div>
-            <div class="field">
-                <label>发作时间</label>
-                <input type="datetime-local" id="inputDatetime">
-            </div>
-            <div class="field">
-                <label>疼痛强度</label>
-                <div class="intensity-row">
-                    <input type="range" id="inputIntensity" min="1" max="10" value="5" oninput="updateIntensity()">
-                    <div class="intensity-val" id="intensityVal">5</div>
+            <div class="form-grid">
+                <div class="field">
+                    <label>发作时间</label>
+                    <input type="datetime-local" id="inputDatetime">
                 </div>
-            </div>
-            <div class="field">
-                <label>持续时长（小时）</label>
-                <input type="number" id="inputDuration" min="0" step="0.5" placeholder="例如 2.5">
-            </div>
-            <div class="field">
-                <label>头痛位置</label>
-                <div class="tag-group" id="groupLocation">
-                    <span class="tag-toggle" data-value="左侧" onclick="toggleTag(this)">左侧</span>
-                    <span class="tag-toggle" data-value="右侧" onclick="toggleTag(this)">右侧</span>
-                    <span class="tag-toggle" data-value="前额" onclick="toggleTag(this)">前额</span>
-                    <span class="tag-toggle" data-value="后脑" onclick="toggleTag(this)">后脑</span>
-                    <span class="tag-toggle" data-value="全头" onclick="toggleTag(this)">全头</span>
+                <div class="field">
+                    <label>持续时长（小时）</label>
+                    <input type="number" id="inputDuration" min="0" step="0.5" placeholder="例如 2.5">
                 </div>
-            </div>
-            <div class="field">
-                <label>伴随症状</label>
-                <div class="tag-group" id="groupSymptoms">
-                    <span class="tag-toggle" data-value="恶心" onclick="toggleTag(this)">恶心</span>
-                    <span class="tag-toggle" data-value="呕吐" onclick="toggleTag(this)">呕吐</span>
-                    <span class="tag-toggle" data-value="畏光" onclick="toggleTag(this)">畏光</span>
-                    <span class="tag-toggle" data-value="畏声" onclick="toggleTag(this)">畏声</span>
-                    <span class="tag-toggle" data-value="视觉障碍" onclick="toggleTag(this)">视觉障碍</span>
+                <div class="field full">
+                    <label>疼痛强度</label>
+                    <div class="intensity-row">
+                        <input type="range" id="inputIntensity" min="1" max="10" value="5" oninput="updateIntensity()">
+                        <div class="intensity-val" id="intensityVal">5</div>
+                    </div>
                 </div>
-            </div>
-            <div class="field">
-                <label>可能诱因</label>
-                <div class="tag-group" id="groupTriggers">
-                    <span class="tag-toggle" data-value="压力" onclick="toggleTag(this)">压力</span>
-                    <span class="tag-toggle" data-value="睡眠不足" onclick="toggleTag(this)">睡眠不足</span>
-                    <span class="tag-toggle" data-value="饮食" onclick="toggleTag(this)">饮食</span>
-                    <span class="tag-toggle" data-value="天气" onclick="toggleTag(this)">天气</span>
-                    <span class="tag-toggle" data-value="月经" onclick="toggleTag(this)">月经</span>
-                    <span class="tag-toggle" data-value="运动" onclick="toggleTag(this)">运动</span>
-                    <span class="tag-toggle" data-value="酒精" onclick="toggleTag(this)">酒精</span>
-                    <span class="tag-toggle" data-value="其他" onclick="toggleTag(this, true)">其他</span>
+                <div class="field full">
+                    <label>头痛位置</label>
+                    <div class="tag-group" id="groupLocation">
+                        <span class="tag-toggle" data-value="左侧" onclick="toggleTag(this)">左侧</span>
+                        <span class="tag-toggle" data-value="右侧" onclick="toggleTag(this)">右侧</span>
+                        <span class="tag-toggle" data-value="前额" onclick="toggleTag(this)">前额</span>
+                        <span class="tag-toggle" data-value="后脑" onclick="toggleTag(this)">后脑</span>
+                        <span class="tag-toggle" data-value="全头" onclick="toggleTag(this)">全头</span>
+                    </div>
                 </div>
-                <input type="text" id="inputOtherTrigger" style="display:none;margin-top:8px" placeholder="请输入其他诱因">
-            </div>
-            <div class="field">
-                <label>用药</label>
-                <input type="text" id="inputMedication" placeholder="例如 布洛芬 400mg">
-            </div>
-            <div class="field">
-                <label>备注</label>
-                <textarea id="inputNotes" placeholder="其他信息..."></textarea>
+                <div class="field full">
+                    <label>伴随症状</label>
+                    <div class="tag-group" id="groupSymptoms">
+                        <span class="tag-toggle" data-value="恶心" onclick="toggleTag(this)">恶心</span>
+                        <span class="tag-toggle" data-value="呕吐" onclick="toggleTag(this)">呕吐</span>
+                        <span class="tag-toggle" data-value="畏光" onclick="toggleTag(this)">畏光</span>
+                        <span class="tag-toggle" data-value="畏声" onclick="toggleTag(this)">畏声</span>
+                        <span class="tag-toggle" data-value="视觉障碍" onclick="toggleTag(this)">视觉障碍</span>
+                    </div>
+                </div>
+                <div class="field full">
+                    <label>可能诱因</label>
+                    <div class="tag-group" id="groupTriggers">
+                        <span class="tag-toggle" data-value="压力" onclick="toggleTag(this)">压力</span>
+                        <span class="tag-toggle" data-value="睡眠不足" onclick="toggleTag(this)">睡眠不足</span>
+                        <span class="tag-toggle" data-value="饮食" onclick="toggleTag(this)">饮食</span>
+                        <span class="tag-toggle" data-value="天气" onclick="toggleTag(this)">天气</span>
+                        <span class="tag-toggle" data-value="月经" onclick="toggleTag(this)">月经</span>
+                        <span class="tag-toggle" data-value="运动" onclick="toggleTag(this)">运动</span>
+                        <span class="tag-toggle" data-value="酒精" onclick="toggleTag(this)">酒精</span>
+                        <span class="tag-toggle" data-value="其他" onclick="toggleTag(this, true)">其他</span>
+                    </div>
+                    <input type="text" id="inputOtherTrigger" style="display:none;margin-top:8px" placeholder="请输入其他诱因">
+                </div>
+                <div class="field">
+                    <label>用药</label>
+                    <input type="text" id="inputMedication" placeholder="例如 布洛芬 400mg">
+                </div>
+                <div class="field full">
+                    <label>备注</label>
+                    <textarea id="inputNotes" placeholder="其他信息..."></textarea>
+                </div>
             </div>
             <button class="btn btn-primary" onclick="addEpisode()">保存记录</button>
         </div>
