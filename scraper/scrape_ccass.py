@@ -24,7 +24,7 @@ import requests
 from bs4 import BeautifulSoup
 
 HKT = timezone(timedelta(hours=8))
-# HKEX CCASS search endpoint (ASP.NET WebForm)
+# HKEX CCASS search endpoint — ASP.NET WebForm (requires __VIEWSTATE on POST)
 BASE_URL = 'https://www3.hkexnews.hk/sdw/search/searchsdw.aspx'
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
