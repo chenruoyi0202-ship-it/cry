@@ -801,7 +801,7 @@
 
         async function addEpisode() {
             const datetime = document.getElementById('inputDatetime').value;
-            if (!datetime) return;
+            if (!datetime) { showToast('请选择发作时间'); return; }
             const btn = document.querySelector('#tabRecord .btn-primary');
             const origText = btn.textContent;
             btn.disabled = true;

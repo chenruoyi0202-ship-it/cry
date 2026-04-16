@@ -319,7 +319,8 @@ def consolidate_data(raw_results):
 
     for r in raw_results:
         src = r.get('source', '')
-        if r.get('name') and '幸福' in r.get('name', '') or '尚品' in r.get('name', ''):
+        name = r.get('name', '')
+        if name and ('幸福' in name or '尚品' in name):
             if r.get('unit_price'):
                 shangpinju_prices[src] = r['unit_price']
             if r.get('rent_price'):

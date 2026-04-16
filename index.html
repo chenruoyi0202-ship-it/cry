@@ -1232,6 +1232,11 @@
         let records = [];
         let currentRtPrice = null;
 
+        // Monotonic ID generator. Date.now() alone collides on rapid clicks
+        // (deleting "the wrong row" because two records share the same id).
+        let _idSeq = 0;
+        function genId() { return Date.now() * 1000 + ((_idSeq++) & 0x3FF); }
+
         // --- Currency (real-time via Yahoo Finance) ---
         let FX_RATES = { HK: 0.89, US: 6.90 }; // fallback defaults
         let fxLoaded = false;
@@ -1246,18 +1251,23 @@
                 url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                 url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
             ];
-            for (const pair of pairs) {
+            // Race the proxies in parallel per pair instead of trying them serially.
+            // Worst case used to be 3*5s = 15s per pair; now ~5s total.
+            await Promise.all(pairs.map(async pair => {
                 const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${pair.symbol}?interval=1d&range=1d`;
-                for (const proxy of proxies) {
-                    try {
+                try {
+                    const price = await Promise.any(proxies.map(async proxy => {
                         const resp = await fetch(proxy(yahooUrl), { signal: AbortSignal.timeout(5000) });
-                        if (!resp.ok) continue;
+                        if (!resp.ok) throw new Error('bad status ' + resp.status);
                         const data = await resp.json();
-                        const price = data.chart.result[0].meta.regularMarketPrice;
-                        if (price) { FX_RATES[pair.key] = price; fxLoaded = true; break; }
-                    } catch { continue; }
-                }
-            }
+                        const p = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+                        if (!p) throw new Error('no price in response');
+                        return p;
+                    }));
+                    FX_RATES[pair.key] = price;
+                    fxLoaded = true;
+                } catch (e) { /* keep fallback rate */ }
+            }));
             updateFxDisplay();
             calculate();
         }
@@ -1314,7 +1324,10 @@
             if (fullMatch) {
                 symbol = fullMatch[1].toUpperCase();
             } else if (codeMatch) {
-                symbol = codeMatch[1].replace(/^0+/, '') + '.HK';
+                // HK tickers are 4 digits on Yahoo (e.g. 0700.HK, 2680.HK).
+                // Normalize: strip leading zeros, then left-pad to 4.
+                const stripped = codeMatch[1].replace(/^0+/, '') || '0';
+                symbol = stripped.padStart(4, '0') + '.HK';
             } else if (tickerMatch) {
                 symbol = tickerMatch[1].toUpperCase();
             }
@@ -1353,28 +1366,31 @@
                 ...proxies.map(p => ({ url: p(yahooV6), parse: parseV6 })),
             ];
 
-            for (const api of apis) {
-                try {
+            // Race all proxy/API combinations in parallel (Promise.any returns
+            // the first fulfilled). Old serial loop took up to 10*8s = 80s on
+            // total proxy failure; this caps at the slowest single attempt.
+            try {
+                const result = await Promise.any(apis.map(async api => {
                     const resp = await fetch(api.url, { signal: AbortSignal.timeout(8000) });
-                    if (!resp.ok) continue;
+                    if (!resp.ok) throw new Error('bad status ' + resp.status);
                     const data = await resp.json();
-                    const result = api.parse(data);
-                    if (result.price) {
-                        document.getElementById('manualPrice').value = result.price;
-                        currentRtPrice = result.price;
-                        const chg = result.prevClose ? result.price - result.prevClose : 0;
-                        const chgPct = result.prevClose ? (chg / result.prevClose * 100) : 0;
-                        const sign = chg >= 0 ? '+' : '';
-                        statusEl.style.color = '#4caf50';
-                        statusEl.textContent = `${symbol} = ${result.price} (${sign}${chgPct.toFixed(2)}%) · ${new Date().toLocaleTimeString('zh-CN')}`;
-                        calculate();
-                        return;
-                    }
-                } catch (e) { continue; }
+                    const r = api.parse(data);
+                    if (!r || !r.price) throw new Error('no price in response');
+                    return r;
+                }));
+                document.getElementById('manualPrice').value = result.price;
+                currentRtPrice = result.price;
+                const chg = result.prevClose ? result.price - result.prevClose : 0;
+                const chgPct = result.prevClose ? (chg / result.prevClose * 100) : 0;
+                const sign = chg >= 0 ? '+' : '';
+                statusEl.style.color = '#4caf50';
+                statusEl.textContent = `${symbol} = ${result.price} (${sign}${chgPct.toFixed(2)}%) · ${new Date().toLocaleTimeString('zh-CN')}`;
+                calculate();
+                return;
+            } catch (e) {
+                statusEl.style.color = '#f44336';
+                statusEl.textContent = `${symbol} 获取失败（API受限），请手动输入当前价格`;
             }
-
-            statusEl.style.color = '#f44336';
-            statusEl.textContent = `${symbol} 获取失败（API受限），请手动输入当前价格`;
         }
 
         // --- Records Management ---
@@ -1416,7 +1432,7 @@
                 if (rec) { rec.price = price; rec.shares = shares; rec.type = type; }
                 editingId = null;
             } else {
-                records.push({ price, shares, type, id: Date.now() });
+                records.push({ price, shares, type, id: genId() });
             }
             hideAddForm();
             renderRecords();
@@ -1523,6 +1539,7 @@
             });
 
             const remainShares = totalShares - soldShares - planShares;
+            const oversoldBy = remainShares < 0 ? -remainShares : 0;
             const totalRevenue = soldRevenue + planRevenue;
 
             // Fees (commission + stamp duty). Applied to buy cost + sell revenue.
@@ -1579,6 +1596,11 @@
                     <div class="result-row">
                         <span>剩余持仓${currentRtPrice ? '(按实时价)' : ''}</span>
                         <span class="rv">${remainShares.toLocaleString()}股${currentRtPrice ? ' ≈ ' + formatMoney(remainValue) + ' <small style="color:#475569">' + fmtCNY(remainValue) + '</small>' : ''}</span>
+                    </div>` : ''}
+                    ${oversoldBy > 0 ? `
+                    <div class="result-row" style="background:rgba(244,67,54,0.12);border-left:3px solid #f44336;padding-left:10px;">
+                        <span style="color:#f44336;font-weight:600">⚠️ 卖出超过持仓</span>
+                        <span class="rv" style="color:#f44336">超出 ${oversoldBy.toLocaleString()} 股</span>
                     </div>` : ''}
                     ${allSellShares > 0 ? `
                     <div class="result-row">
@@ -2242,15 +2264,22 @@
             if (!resp.ok) throw new Error('更新 Gist 失败: ' + resp.status);
         }
 
-        // Find existing cry gist
+        // Find existing cry gist (paginate through all gists, not just the first 100)
         async function gistFind(token) {
-            const resp = await fetch('https://api.github.com/gists?per_page=100', {
-                headers: { 'Authorization': 'token ' + token }
-            });
-            if (!resp.ok) return null;
-            const gists = await resp.json();
-            const found = gists.find(g => g.files[GIST_FILENAME]);
-            return found ? found.id : null;
+            const PER_PAGE = 100;
+            const MAX_PAGES = 20; // 2000 gists is plenty for any real user
+            for (let page = 1; page <= MAX_PAGES; page++) {
+                const resp = await fetch(`https://api.github.com/gists?per_page=${PER_PAGE}&page=${page}`, {
+                    headers: { 'Authorization': 'token ' + token }
+                });
+                if (!resp.ok) return null;
+                const gists = await resp.json();
+                if (!gists.length) return null;
+                const found = gists.find(g => g.files[GIST_FILENAME]);
+                if (found) return found.id;
+                if (gists.length < PER_PAGE) return null;
+            }
+            return null;
         }
 
         // --- Auth UI ---
@@ -2369,11 +2398,23 @@
                 } else {
                     // Normal sync: merge local + cloud
                     let cloudPlans = {};
+                    let cloudHadContent = false;
                     if (gistId) {
                         const content = await gistGet(token, gistId);
                         if (content) {
-                            try { cloudPlans = await decryptData(content, password); }
-                            catch (e) { console.warn('Decrypt failed, password may differ:', e); }
+                            cloudHadContent = true;
+                            try {
+                                cloudPlans = await decryptData(content, password);
+                            } catch (e) {
+                                // Wrong password (or corrupted blob). If we proceed,
+                                // we'd merge local into an empty {} and then re-encrypt
+                                // it back to the gist — silently wiping the cloud.
+                                // Abort instead and surface the error.
+                                console.error('Decrypt failed, aborting sync to protect cloud data:', e);
+                                setSyncStatus('error');
+                                alert('云端数据解密失败（密码可能与之前不同）。已中止同步以避免覆盖云端。\n\n请在「设置」中输入正确的加密密码后再试。');
+                                return;
+                            }
                         }
                     }
                     const localPlans = getPlans();
@@ -2693,8 +2734,8 @@
                 currentRtPrice = null;
             }
 
-            records = (plan.records || []).map((r, i) => ({
-                price: r.price, shares: r.shares, type: r.type, id: Date.now() + i
+            records = (plan.records || []).map(r => ({
+                price: r.price, shares: r.shares, type: r.type, id: genId()
             }));
             renderRecords();
             calculate();
