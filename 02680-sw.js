@@ -1,5 +1,5 @@
 // Service worker for 02680 stock tracker
-const CACHE_NAME = 'stock-02680-v4';
+const CACHE_NAME = 'stock-02680-v5';
 const CORE_ASSETS = [
   './02680.html',
   './02680-apple-icon.png',
@@ -36,6 +36,7 @@ self.addEventListener('fetch', (event) => {
   // Always bypass cache for HTML — force fresh fetch
   const isHtml = url.pathname.endsWith('.html');
   const isQuote = url.pathname.includes('stock_02680_quote.json');
+  const isCcass = url.pathname.includes('stock_02680_ccass');
 
   if (isHtml) {
     // Network-only for HTML to avoid any stale version
@@ -55,7 +56,7 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      if (isQuote) {
+      if (isQuote || isCcass) {
         return fetch(event.request)
           .then((resp) => {
             if (resp && resp.ok) {

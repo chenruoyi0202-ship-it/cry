@@ -234,6 +234,30 @@ body{
 /* Stats bar */
 .stats-bar{font-size:12px;color:var(--text-muted);margin-bottom:8px;display:flex;justify-content:space-between}
 
+/* CCASS */
+.ccass-overview{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.ccass-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+.ccass-card .ccass-label{font-size:11px;color:var(--text-muted);margin-bottom:4px;letter-spacing:.3px}
+.ccass-card .ccass-value{font-size:16px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.ccass-card .ccass-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.ccass-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px}
+.ccass-section h4{font-size:13px;font-weight:600;color:var(--gold-light);margin-bottom:10px;padding-left:8px;border-left:3px solid var(--gold)}
+.ccass-table{width:100%;border-collapse:collapse;font-size:12px}
+.ccass-table th{text-align:left;padding:6px 6px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:11px}
+.ccass-table td{padding:6px 6px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);font-variant-numeric:tabular-nums}
+.ccass-table td.num,.ccass-table th.num{text-align:right}
+.ccass-table tr:hover td{background:rgba(255,255,255,0.02)}
+.ccass-delta-up{color:var(--red);font-weight:600}
+.ccass-delta-down{color:var(--green);font-weight:600}
+.ccass-delta-flat{color:var(--text-muted)}
+.ccass-alert{background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:var(--text);line-height:1.6}
+.ccass-meta{font-size:11px;color:var(--text-muted);text-align:center;margin-top:10px}
+.ccass-meta a{color:var(--gold);text-decoration:none}
+@media(max-width:480px){
+  .ccass-overview{grid-template-columns:1fr 1fr}
+  .ccass-table th:nth-child(4),.ccass-table td:nth-child(4){display:none}
+}
+
 /* Responsive */
 @media(max-width:480px){
   .form-row.two,.form-row.three{grid-template-columns:1fr}
@@ -316,6 +340,7 @@ body{
   <div class="tab active" onclick="switchTab('analyses')">祖哥分析</div>
   <div class="tab" onclick="switchTab('events')">重要线索</div>
   <div class="tab" onclick="switchTab('timeline')">后续推演</div>
+  <div class="tab" onclick="switchTab('ccass')">CCASS</div>
 </div>
 
 <!-- Tab 1: Analyses -->
@@ -369,6 +394,16 @@ body{
     </div>
   </div>
   <div id="timelineList"></div>
+</div>
+
+<!-- Tab 4: CCASS -->
+<div class="tab-content" id="tabCCASS">
+  <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;opacity:.6">
+    港交所 CCASS 中央结算系统持股分布 · 每交易日 17:30 自动更新
+  </div>
+  <div id="ccassContent">
+    <div class="list-empty">加载中...</div>
+  </div>
 </div>
 
 </div><!-- .page -->
@@ -817,7 +852,170 @@ function switchTab(name) {
     document.getElementById('tabTimeline').classList.add('active');
     document.querySelectorAll('.tab')[2].classList.add('active');
     renderTimeline();
+  } else if (name === 'ccass') {
+    document.getElementById('tabCCASS').classList.add('active');
+    document.querySelectorAll('.tab')[3].classList.add('active');
+    renderCCASS();
   }
+}
+
+// ==================== CCASS ====================
+const CCASS_SUMMARY_PATH = 'data/stock_02680_ccass_summary.json';
+let _ccassLoaded = false;
+let _ccassData = null;
+
+function fmtShares(n) {
+  if (n === null || n === undefined || n === 0) return n === 0 ? '0' : '-';
+  const abs = Math.abs(n);
+  if (abs >= 1e8) return (n / 1e8).toFixed(2) + ' 亿';
+  if (abs >= 1e4) return (n / 1e4).toFixed(2) + ' 万';
+  return n.toLocaleString();
+}
+function fmtSignedShares(n) {
+  if (!n) return '0';
+  return (n > 0 ? '+' : '-') + fmtShares(Math.abs(n));
+}
+function fmtPct(p) {
+  if (p === null || p === undefined) return '-';
+  return p.toFixed(2) + '%';
+}
+function fmtSignedPct(p) {
+  if (p === null || p === undefined || p === 0) return '0.00%';
+  return (p > 0 ? '+' : '') + p.toFixed(2) + '%';
+}
+function deltaClass(d) {
+  if (!d) return 'ccass-delta-flat';
+  return d > 0 ? 'ccass-delta-up' : 'ccass-delta-down';
+}
+
+async function renderCCASS() {
+  const container = document.getElementById('ccassContent');
+  if (_ccassLoaded && _ccassData) {
+    container.innerHTML = renderCCASSHTML(_ccassData);
+    return;
+  }
+  container.innerHTML = '<div class="list-empty">加载中...</div>';
+  try {
+    const resp = await fetch(CCASS_SUMMARY_PATH + '?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    _ccassData = await resp.json();
+    _ccassLoaded = true;
+    container.innerHTML = renderCCASSHTML(_ccassData);
+  } catch (e) {
+    container.innerHTML = `
+      <div class="list-empty">
+        暂无 CCASS 数据<br>
+        <span style="font-size:11px;opacity:.7">
+          GitHub Actions 每交易日 17:30 (HKT) 自动抓取<br>
+          可前往 Actions 手动运行 "CCASS 02680 Daily"
+        </span>
+      </div>`;
+  }
+}
+
+function renderCCASSHTML(d) {
+  const conc = d.concentration || {};
+  const total = d.totalInCCASS || {};
+  const updated = d.fetchedAt ? new Date(d.fetchedAt).toLocaleString('zh-CN', {hour12:false}) : '-';
+
+  let html = '';
+  // 概览卡片
+  html += `<div class="ccass-overview">
+    <div class="ccass-card">
+      <div class="ccass-label">持股日期</div>
+      <div class="ccass-value">${d.shareholdingDate || '-'}</div>
+      <div class="ccass-sub">${d.participantCount || 0} 家参与者</div>
+    </div>
+    <div class="ccass-card">
+      <div class="ccass-label">CCASS 存管</div>
+      <div class="ccass-value">${fmtShares(total.shares)}</div>
+      <div class="ccass-sub">占已发行 ${fmtPct(total.pct)}</div>
+    </div>
+    <div class="ccass-card">
+      <div class="ccass-label">Top 10 占比</div>
+      <div class="ccass-value">${conc.top10_pct_of_issued || '-'}%</div>
+      <div class="ccass-sub">Top 5: ${conc.top5_pct_of_issued || '-'}%</div>
+    </div>
+    <div class="ccass-card">
+      <div class="ccass-label">HHI 集中度</div>
+      <div class="ccass-value">${conc.hhi || '-'}</div>
+      <div class="ccass-sub">${(conc.hhi || 0) > 2500 ? '高度集中' : (conc.hhi || 0) > 1500 ? '中度集中' : '分散'}</div>
+    </div>
+  </div>`;
+
+  // 异常信号
+  if (d.alerts && d.alerts.length) {
+    html += `<div class="ccass-section"><h4>异常信号</h4>`;
+    d.alerts.slice(0, 10).forEach(a => {
+      html += `<div class="ccass-alert">${a.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Top 20
+  html += `<div class="ccass-section"><h4>Top 20 参与者</h4>
+    <table class="ccass-table">
+      <thead><tr>
+        <th>#</th><th>参与者</th><th class="num">持股</th><th class="num">占比</th><th class="num">日变化</th>
+      </tr></thead><tbody>`;
+  (d.top20 || []).forEach((p, i) => {
+    const dc = p.dayDeltaPct || 0;
+    html += `<tr>
+      <td>${i + 1}</td>
+      <td>${p.name || '-'}</td>
+      <td class="num">${fmtShares(p.shares)}</td>
+      <td class="num">${fmtPct(p.pct)}</td>
+      <td class="num ${deltaClass(dc)}">${fmtSignedPct(dc)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // 加仓 / 减仓榜
+  const m7 = d.movers7d || {};
+  if ((m7.top && m7.top.length) || (m7.bottom && m7.bottom.length)) {
+    html += `<div class="ccass-section"><h4>近 7 日变动</h4>
+      <table class="ccass-table">
+        <thead><tr><th>参与者</th><th class="num">持股变化</th><th class="num">占比变化</th></tr></thead><tbody>`;
+    (m7.top || []).slice(0, 5).forEach(c => {
+      html += `<tr>
+        <td>${c.name}</td>
+        <td class="num ccass-delta-up">${fmtSignedShares(c.deltaShares)}</td>
+        <td class="num ccass-delta-up">${fmtSignedPct(c.deltaPct)}</td>
+      </tr>`;
+    });
+    (m7.bottom || []).slice(0, 5).forEach(c => {
+      html += `<tr>
+        <td>${c.name}</td>
+        <td class="num ccass-delta-down">${fmtSignedShares(c.deltaShares)}</td>
+        <td class="num ccass-delta-down">${fmtSignedPct(c.deltaPct)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  // 趋势
+  if (d.trend && d.trend.length > 1) {
+    html += `<div class="ccass-section"><h4>近期 CCASS 总持股走势</h4>
+      <table class="ccass-table">
+        <thead><tr><th>日期</th><th class="num">CCASS 持股</th><th class="num">占比</th><th class="num">参与者</th></tr></thead><tbody>`;
+    d.trend.slice(-15).reverse().forEach(t => {
+      html += `<tr>
+        <td>${t.date || '-'}</td>
+        <td class="num">${fmtShares(t.shares)}</td>
+        <td class="num">${fmtPct(t.pct)}</td>
+        <td class="num">${t.participants || '-'}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  html += `<div class="ccass-meta">
+    数据更新: ${updated}<br>
+    来源: <a href="https://www3.hkexnews.hk/sdw/search/searchsdw.aspx?stockId=02680" target="_blank">港交所 CCASS</a>
+    · <a href="data/stock_02680_ccass_report.md" target="_blank">完整 Markdown 报告</a>
+  </div>`;
+
+  return html;
 }
 
 function toggleSyncModal() {
