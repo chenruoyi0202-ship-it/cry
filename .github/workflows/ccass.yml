@@ -4,6 +4,12 @@ on:
   schedule:
     # 每个工作日 HKT 17:30 (UTC 09:30) — CCASS 通常 17:00 后刷新
     - cron: '30 9 * * 1-5'
+  push:
+    branches: [main]
+    paths:
+      - 'scraper/scrape_ccass.py'
+      - 'scraper/analyze_ccass.py'
+      - '.github/workflows/ccass.yml'
   workflow_dispatch:
     inputs:
       shareholding_date:
