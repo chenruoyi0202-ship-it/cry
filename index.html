@@ -15,7 +15,7 @@
     <link rel="icon" type="image/svg+xml" href="logo.svg">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="icon-180.png">
-    <link rel="manifest" href="cry-manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="止盈推演">
@@ -2336,6 +2336,20 @@
             else if (status === 'error') info.innerHTML = '<span class="sync-dot error"></span>同步失败';
         }
 
+        // Deletion tombstones: track which plans were deleted locally
+        function getDeletedNames() {
+            try { return JSON.parse(localStorage.getItem('cry_deleted')) || []; }
+            catch { return []; }
+        }
+        function markDeleted(name) {
+            const list = getDeletedNames();
+            if (!list.includes(name)) list.push(name);
+            localStorage.setItem('cry_deleted', JSON.stringify(list));
+        }
+        function clearDeletedNames() {
+            localStorage.removeItem('cry_deleted');
+        }
+
         async function syncPlans(forceUpload) {
             if (!isLoggedIn()) return;
             const token = getGHToken();
@@ -2347,6 +2361,7 @@
             try {
                 let gistId = getGistId();
                 let finalPlans;
+                const deletedNames = getDeletedNames();
 
                 if (forceUpload) {
                     // After delete/save: local is the source of truth, push directly
@@ -2370,6 +2385,8 @@
                             finalPlans[name] = local;
                         }
                     }
+                    // Remove plans that were deleted locally (tombstones)
+                    deletedNames.forEach(name => { delete finalPlans[name]; });
                     // Save merged locally
                     localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(finalPlans));
                     refreshPlanSelect();
@@ -2384,6 +2401,8 @@
                     localStorage.setItem('cry_gist_id', gistId);
                 }
 
+                // Sync succeeded, clear tombstones
+                clearDeletedNames();
                 setSyncStatus('synced');
             } catch (e) {
                 console.error('Sync failed:', e);
@@ -2896,12 +2915,16 @@
             const backup = plans[name];
             delete plans[name];
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+            markDeleted(name);
             refreshPlanSelect();
             refreshTagBar();
             showToast(`已删除方案「${name}」`, '撤销', async () => {
                 const p = getPlans();
                 p[name] = backup;
                 localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(p));
+                // Remove from tombstones
+                const dl = getDeletedNames().filter(n => n !== name);
+                localStorage.setItem('cry_deleted', JSON.stringify(dl));
                 refreshPlanSelect(name);
                 refreshTagBar();
                 await syncPlans(true);
@@ -2912,6 +2935,8 @@
                     const p = getPlans();
                     p[name] = backup;
                     localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(p));
+                    const dl = getDeletedNames().filter(n => n !== name);
+                    localStorage.setItem('cry_deleted', JSON.stringify(dl));
                     refreshPlanSelect(name);
                     refreshTagBar();
                     await syncPlans(true);
