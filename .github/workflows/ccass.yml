@@ -44,19 +44,33 @@ jobs:
           pip install requests beautifulsoup4
 
       - name: Scrape CCASS
+        id: scrape
         run: |
           python scraper/scrape_ccass.py \
             "${{ github.event.inputs.shareholding_date }}" \
             "${{ github.event.inputs.stock_code || '02680' }}"
 
+      - name: Upload debug HTML on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccass-debug-${{ github.run_id }}
+          path: data/ccass_history/_debug_*.html
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Generate analysis report
+        if: steps.scrape.outcome == 'success'
         run: |
           python scraper/analyze_ccass.py "${{ github.event.inputs.stock_code || '02680' }}"
 
       - name: Commit and push
+        if: steps.scrape.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # 不提交 debug HTML
+          rm -f data/ccass_history/_debug_*.html
           git add data/stock_*_ccass*.json data/stock_*_ccass_report.md data/ccass_history/ 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No CCASS changes to commit"
