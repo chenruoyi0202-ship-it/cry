@@ -81,6 +81,8 @@ jobs:
 
       - name: Generate analysis report
         if: steps.scrape.outcome == 'success'
+        env:
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
         run: |
           python scraper/analyze_ccass.py "${{ github.event.inputs.stock_code || '02680' }}"
 
