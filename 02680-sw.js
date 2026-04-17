@@ -1,5 +1,5 @@
 // Service worker for 02680 stock tracker
-const CACHE_NAME = 'stock-02680-v5';
+const CACHE_NAME = 'stock-02680-v6';
 const CORE_ASSETS = [
   './02680.html',
   './02680-apple-icon.png',
