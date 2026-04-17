@@ -51,6 +51,8 @@ jobs:
             "${{ github.event.inputs.stock_code || '02680' }}"
 
       - name: Regenerate analysis report
+        env:
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
         run: |
           python scraper/analyze_ccass.py "${{ github.event.inputs.stock_code || '02680' }}"
 

@@ -465,7 +465,201 @@ def build_insights(snapshots, latest, prev_day, prev_week):
     if judgement:
         insights.append('**整体判断与风险** — ' + ';'.join(judgement))
 
+    # ============ 9) 散户经纪内部明细 ============
+    if cat_flow:
+        retail_flow = []
+        for p in participants:
+            if categorize(p.get('id'), p.get('name')) != 'retail':
+                continue
+            key = p.get('id') or p.get('name')
+            wc = ((index_by_key(prev_week.get('participants', []) if prev_week else [])).get(key) or {})
+            d_shares = (p.get('shares') or 0) - (wc.get('shares') or 0)
+            d_pct = round((p.get('pct') or 0) - (wc.get('pct') or 0), 4)
+            retail_flow.append({
+                'name': to_chinese(p.get('id'), p.get('name')),
+                'pct': p.get('pct') or 0,
+                'd_pct': d_pct,
+                'd_shares': d_shares,
+            })
+        retail_flow.sort(key=lambda x: x['pct'], reverse=True)
+        top_retail = retail_flow[:5]
+        if top_retail:
+            lines = []
+            for r in top_retail:
+                if r['d_pct'] == 0:
+                    flow = ''
+                else:
+                    flow = f' (7日 {fmt_signed_pct(r["d_pct"])})'
+                lines.append(f'{r["name"]} {r["pct"]}%{flow}')
+            insights.append(
+                '**散户去哪买** — ' + ';'.join(lines)
+                + '。散户筹码主要通过这些经纪商进出,加仓最多的渠道反映散户买入热情来源。'
+            )
+
+    # ============ 10) 中资券商内部明细 ============
+    if cat_flow and cat_now['china']['count'] > 0:
+        china_flow = []
+        for p in participants:
+            if categorize(p.get('id'), p.get('name')) != 'china':
+                continue
+            key = p.get('id') or p.get('name')
+            wc = ((index_by_key(prev_week.get('participants', []) if prev_week else [])).get(key) or {})
+            d_shares = (p.get('shares') or 0) - (wc.get('shares') or 0)
+            d_pct = round((p.get('pct') or 0) - (wc.get('pct') or 0), 4)
+            china_flow.append({
+                'name': to_chinese(p.get('id'), p.get('name')),
+                'pct': p.get('pct') or 0,
+                'd_pct': d_pct,
+                'd_shares': d_shares,
+            })
+        china_flow.sort(key=lambda x: x['pct'], reverse=True)
+        top_china = china_flow[:5]
+        if top_china:
+            lines = []
+            for r in top_china:
+                if r['d_pct'] == 0:
+                    flow = ''
+                else:
+                    flow = f' (7日 {fmt_signed_pct(r["d_pct"])})'
+                lines.append(f'{r["name"]} {r["pct"]}%{flow}')
+            insights.append(
+                '**中资券商分布** — ' + ';'.join(lines)
+                + '。中资券商持仓相对分散,缺乏单一主力,反映内地资金参与广度尚可但深度不足。'
+            )
+
+    # ============ 11) 加速度 / 减速度 ============
+    if len(snapshots) >= 4:
+        # 比较 最近 ~3 天 vs 之前 ~4 天 的总变动
+        n = len(snapshots)
+        mid = n - 4 if n >= 8 else n // 2
+        recent = snapshots[mid:]
+        earlier = snapshots[:mid + 1]  # +1 to overlap on boundary
+        if len(earlier) >= 2 and len(recent) >= 2:
+            recent_top1 = concentration(recent[-1].get('participants', []))['top1_pct_of_issued']
+            recent_start_top1 = concentration(recent[0].get('participants', []))['top1_pct_of_issued']
+            earlier_end_top1 = concentration(earlier[-1].get('participants', []))['top1_pct_of_issued']
+            earlier_start_top1 = concentration(earlier[0].get('participants', []))['top1_pct_of_issued']
+            recent_speed = round(recent_top1 - recent_start_top1, 3)
+            earlier_speed = round(earlier_end_top1 - earlier_start_top1, 3)
+            if abs(recent_speed) > abs(earlier_speed) * 1.5 and abs(recent_speed) > 0.05:
+                trend = '加速加仓' if recent_speed > 0 else '加速减仓'
+                insights.append(
+                    f'**节奏变化** — 第一大户最近 {len(recent)} 天 Top 1 占比变化 '
+                    f'{fmt_signed_pct(recent_speed)},较之前同窗口的 {fmt_signed_pct(earlier_speed)} **{trend}**,'
+                    '动作有提速迹象,值得密切关注后续是否延续。'
+                )
+            elif abs(recent_speed) < abs(earlier_speed) * 0.5 and abs(earlier_speed) > 0.05:
+                insights.append(
+                    f'**节奏变化** — 第一大户最近 {len(recent)} 天动作明显放缓 '
+                    f'(从 {fmt_signed_pct(earlier_speed)} → {fmt_signed_pct(recent_speed)}),'
+                    '可能进入观望阶段。'
+                )
+
+    # ============ 12) CCASS 总持股变化 ============
+    if prev_week and prev_week is not latest:
+        prev_ccass = (prev_week.get('totalInCCASS') or {}).get('shares') or 0
+        curr_ccass = (latest.get('totalInCCASS') or {}).get('shares') or 0
+        d_ccass = curr_ccass - prev_ccass
+        if abs(d_ccass) >= 100000:  # > 10 万股
+            verb = '净流入' if d_ccass > 0 else '净流出'
+            line = (
+                f'**CCASS 总盘 7 日{verb} {fmt_shares(abs(d_ccass))} 股** — '
+            )
+            if d_ccass > 0:
+                line += '场外股份转入中央结算,可能的解读:大股东将股份用于质押/借券/或准备减持。'
+            else:
+                line += '中央结算股份转出场外,可能是大股东收回或某机构客户提货。'
+            insights.append(line)
+
     return insights
+
+
+# ==================== Qwen 自然语言总结(可选) ====================
+
+def call_qwen(prompt, api_key, model='qwen-max', max_tokens=1200):
+    """调用百炼 Qwen 模型。失败返回 None,调用方应优雅降级。"""
+    import urllib.request
+    import urllib.error
+
+    url = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+    payload = {
+        'model': model,
+        'messages': [
+            {'role': 'system', 'content': '你是一位资深的港股 CCASS 持仓数据分析师,擅长用专业但易懂的中文,'
+                                          '从筹码分布数据中读出资金动向、市场情绪和潜在风险。请直接给出分析,'
+                                          '不要寒暄,不要复述数据,要有判断有解读。'},
+            {'role': 'user', 'content': prompt},
+        ],
+        'temperature': 0.3,
+        'max_tokens': max_tokens,
+    }
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            return data['choices'][0]['message']['content'].strip()
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')[:200]
+        print(f'[Qwen] HTTP {e.code}: {body}', file=sys.stderr)
+        return None
+    except Exception as e:
+        print(f'[Qwen] 失败: {e}', file=sys.stderr)
+        return None
+
+
+def build_qwen_narrative(summary, api_key):
+    """把结构化 summary 喂给 Qwen,让它产出 2-3 段自然语言深度分析。"""
+    top20_brief = '\n'.join(
+        f"  {p['rank']}. {p.get('cn_name') or p['name']} — 持股 {p['shares']:,} ({p['pct']}%), "
+        f"日变 {p['dayDeltaPct']}%, 7日变 {p['weekDeltaPct']}%"
+        for p in summary['top20'][:10]
+    )
+    movers_up = ', '.join(
+        f"{m.get('cn_name') or m['name']}({m['deltaPct']}%)"
+        for m in summary['movers7d']['up'][:5]
+    ) or '无'
+    movers_down = ', '.join(
+        f"{m.get('cn_name') or m['name']}({m['deltaPct']}%)"
+        for m in summary['movers7d']['down'][:5]
+    ) or '无'
+
+    prompt = f"""以下是港股 02680 创陞控股截至 {summary['shareholdingDate']} 的 CCASS 持仓数据,请基于此写一段 250-400 字的深度市场分析。
+
+## 概览
+- 已发行股份: {summary['totalIssued']:,}
+- CCASS 存管: {summary['totalInCCASS']['shares']:,} ({summary['totalInCCASS']['pct']}%)
+- 参与者数量: {summary['participantCount']} 家
+- 集中度 HHI: {summary['concentration']['hhi']} ({summary['concentration']['label']})
+- Top 1 占比: {summary['concentration']['top1_pct_of_issued']}%
+- Top 10 占比: {summary['concentration']['top10_pct_of_issued']}%
+
+## Top 10 参与者
+{top20_brief}
+
+## 近 7 日加仓榜
+{movers_up}
+
+## 近 7 日减仓榜
+{movers_down}
+
+## 已生成的规则版洞察
+{chr(10).join('- ' + i for i in summary.get('insights', []))}
+
+请输出:
+1. 不要重复罗列上面的数据,而是从中提炼**资金行为模式**和**控盘特征**;
+2. 解读这些数据**意味着什么**(可能的剧本:大股东锁仓/派发/吸纳;散户接盘还是离场;有无机构博弈);
+3. 给出**未来 1-2 周值得关注的信号**;
+4. 用中文,分 2-3 段,每段 80-150 字,直接以分析开头,不要"以下是分析:"之类的开场白。
+"""
+    return call_qwen(prompt, api_key)
 
 
 # ==================== main ====================
@@ -636,6 +830,20 @@ def build_report(stock_code):
 def main():
     stock_code = sys.argv[1].zfill(5) if len(sys.argv) > 1 else '02680'
     md, summary = build_report(stock_code)
+
+    # 可选: 调用百炼 Qwen 生成自然语言深度分析
+    api_key = os.environ.get('DASHSCOPE_API_KEY', '').strip()
+    if api_key:
+        print('[Qwen] 调用百炼 API 生成 AI 深度分析...', flush=True)
+        narrative = build_qwen_narrative(summary, api_key)
+        if narrative:
+            md += '\n\n## 五、AI 深度分析(Qwen)\n\n' + narrative + '\n\n*由阿里云百炼 qwen-max 生成*\n'
+            summary['aiNarrative'] = narrative
+            print('[Qwen] AI 分析已附加到报告', flush=True)
+        else:
+            print('[Qwen] AI 调用失败,跳过', flush=True)
+    else:
+        print('[Qwen] 未配置 DASHSCOPE_API_KEY,跳过 AI 分析', flush=True)
 
     md_path = os.path.join(DATA_DIR, f'stock_{stock_code}_ccass_report.md')
     with open(md_path, 'w', encoding='utf-8') as f:
