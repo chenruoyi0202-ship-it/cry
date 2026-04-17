@@ -225,6 +225,14 @@ def fetch_ccass(stock_code='02680', shareholding_date=None, retries=3):
                       f'CCASS={data["totalInCCASS"].get("shares")}',
                       flush=True)
                 if not data['participants']:
+                    # Check if HKEX suggests a fallback date (means our
+                    # requested date has no data yet, e.g. late publish)
+                    m = re.search(r"data-reset=['\"](\d{4}/\d{2}/\d{2})['\"]", r.text)
+                    if m and m.group(1) != shareholding_date:
+                        fallback_date = m.group(1)
+                        print(f'  HKEX 建议回退到 {fallback_date},重试', flush=True)
+                        shareholding_date = fallback_date
+                        continue  # retry the outer for-loop with new date
                     # 失败时保留原始 HTML 供诊断
                     debug_dir = os.path.join(ROOT, 'data', 'ccass_history')
                     os.makedirs(debug_dir, exist_ok=True)
