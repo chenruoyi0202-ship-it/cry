@@ -1,5 +1,5 @@
 {
-  "shareholdingDate": "2026-04-02",
+  "shareholdingDate": "2026-04-15",
   "stockCode": "02680",
   "stockName": "INNOVAX HOLDINGS LIMITED",
   "totalIssued": 60000000,
@@ -10,7 +10,7 @@
   "marketIntermediaries": {
     "shares": 59958648,
     "pct": 99.93,
-    "count": 110
+    "count": 108
   },
   "consentingInvestors": {
     "shares": null,
@@ -27,29 +27,29 @@
       "id": "C00093",
       "name": "BNP PARIBAS",
       "address": "21/F PCCW TOWER TAIKOO PLACE 979 KING'S ROAD QUARRY BAY HONG KONG",
-      "shares": 45040600,
-      "pct": 75.06
+      "shares": 45030600,
+      "pct": 75.05
     },
     {
       "id": "B01955",
       "name": "FUTU SECURITIES INTERNATIONAL",
       "address": "34/F UNITED CENTRE 95 QUEENSWAY ADMIRALTY HONG KONG",
-      "shares": 4250822,
+      "shares": 4250622,
       "pct": 7.08
     },
     {
       "id": "B02075",
       "name": "INNOVAX SECURITIES LTD",
       "address": "UNIT A-C 20/F NEICH TOWER 128 GLOUCESTER ROAD WANCHAI HONG KONG",
-      "shares": 1923554,
-      "pct": 3.2
+      "shares": 1907554,
+      "pct": 3.17
     },
     {
       "id": "C00033",
       "name": "BANK OF CHINA (HONG KONG) LTD",
       "address": "23/F BANK OF CHINA CENTRE OLYMPIAN CITY 11 HOI FAI ROAD WEST KOWLOON",
-      "shares": 1554500,
-      "pct": 2.59
+      "shares": 1519100,
+      "pct": 2.53
     },
     {
       "id": "B01925",
@@ -62,29 +62,29 @@
       "id": "B01345",
       "name": "PHILLIP SECURITIES (HONG KONG) LTD",
       "address": "11/F UNITED CENTRE 95 QUEENSWAY HONG KONG",
-      "shares": 715405,
-      "pct": 1.19
+      "shares": 710305,
+      "pct": 1.18
     },
     {
       "id": "C00019",
       "name": "THE HONGKONG AND SHANGHAI BANKING",
       "address": "HSBC WEALTH BUSINESS SERVICES 8/F TOWER 2 & 3 HSBC CENTRE 1 SHAM MONG ROAD KOWLOON",
-      "shares": 547300,
-      "pct": 0.91
+      "shares": 563300,
+      "pct": 0.93
     },
     {
       "id": "B01590",
       "name": "INTERACTIVE BROKERS HONG KONG LTD",
       "address": "SUITE 1512 TWO PACIFIC PLACE 88 QUEENSWAY HONG KONG",
-      "shares": 544600,
-      "pct": 0.9
+      "shares": 562600,
+      "pct": 0.93
     },
     {
       "id": "B02195",
       "name": "LONG BRIDGE HK LTD",
       "address": "SUITES 1801-1804 & 1815-1816 18TH FLOOR ONE INTERNATIONAL FINANCE CENTRE NO.1 HARBOUR VIEW STREET HONG KONG",
-      "shares": 502300,
-      "pct": 0.83
+      "shares": 494300,
+      "pct": 0.82
     },
     {
       "id": "B01852",
@@ -104,8 +104,8 @@
       "id": "C00039",
       "name": "STANDARD CHARTERED BANK (HONG KONG) LTD",
       "address": "18/F STANDARD CHARTERED BANK TOWER MILLENNIUM CITY 388 KWUN TONG ROAD KWUN TONG KOWLOON",
-      "shares": 260725,
-      "pct": 0.43
+      "shares": 267725,
+      "pct": 0.44
     },
     {
       "id": "B01423",
@@ -115,25 +115,32 @@
       "pct": 0.42
     },
     {
+      "id": "C00042",
+      "name": "CMB WING LUNG BANK LTD",
+      "address": "45 DES VOEUX ROAD CENTRAL   HONG KONG",
+      "shares": 192790,
+      "pct": 0.32
+    },
+    {
       "id": "B02142",
       "name": "TIGER BROKERS (HK) GLOBAL LTD",
       "address": "23/F LI PO CHUN CHAMBERS 189 DES VOEUX ROAD CENTRAL SHEUNG WAN HONG KONG",
-      "shares": 190000,
-      "pct": 0.31
+      "shares": 192000,
+      "pct": 0.32
     },
     {
       "id": "B01668",
       "name": "BRIGHT SMART SECURITIES INTERNATIONAL",
       "address": "10/F WING ON HOUSE 71 DES VOEUX ROAD CENTRAL CENTRAL HONG KONG",
-      "shares": 187800,
-      "pct": 0.31
+      "shares": 185800,
+      "pct": 0.3
     },
     {
       "id": "B01284",
       "name": "HANG SENG SECURITIES LTD",
       "address": "HANG SENG 113 113 ARGYLE STREET MONGKOK KOWLOON",
-      "shares": 186000,
-      "pct": 0.31
+      "shares": 185400,
+      "pct": 0.3
     },
     {
       "id": "B01565",
@@ -141,13 +148,6 @@
       "address": "27/F GRAND MILLENNIUM PLAZA 181 QUEEN'S ROAD CENTRAL HONG KONG",
       "shares": 184000,
       "pct": 0.3
-    },
-    {
-      "id": "C00042",
-      "name": "CMB WING LUNG BANK LTD",
-      "address": "45 DES VOEUX ROAD CENTRAL   HONG KONG",
-      "shares": 178790,
-      "pct": 0.29
     },
     {
       "id": "B01938",
@@ -174,7 +174,7 @@
       "id": "B01130",
       "name": "BOCI SECURITIES LTD",
       "address": "22/F GRAND MILLENNIUM PLAZA 181 QUEEN'S ROAD CENTRAL HONG KONG",
-      "shares": 99200,
+      "shares": 97200,
       "pct": 0.16
     },
     {
@@ -185,17 +185,17 @@
       "pct": 0.14
     },
     {
-      "id": "B01904",
-      "name": "VALUABLE CAPITAL LTD",
-      "address": "ROOM 3606 36/F CHINA MERCHANTS TOWER SHUN TAK CENTRE 168-200 CONNAUGHT ROAD CENTRAL HONG KONG",
-      "shares": 71900,
-      "pct": 0.11
-    },
-    {
       "id": "C00010",
       "name": "CITIBANK N.A.",
       "address": "9/F CITI TOWER ONE BAY EAST 83 HOI BUN ROAD KWUN TONG KOWLOON",
-      "shares": 67800,
+      "shares": 75800,
+      "pct": 0.12
+    },
+    {
+      "id": "B01904",
+      "name": "VALUABLE CAPITAL LTD",
+      "address": "ROOM 3606 36/F CHINA MERCHANTS TOWER SHUN TAK CENTRE 168-200 CONNAUGHT ROAD CENTRAL HONG KONG",
+      "shares": 67900,
       "pct": 0.11
     },
     {
@@ -209,21 +209,21 @@
       "id": "C00088",
       "name": "CHINA MERCHANTS BANK CO LTD",
       "address": "28/F THREE EXCHANGE SQUARE 8 CONNAUGHT PLACE CENTRAL HONG KONG",
-      "shares": 56500,
+      "shares": 58500,
       "pct": 0.09
     },
     {
       "id": "B02159",
       "name": "USMART SECURITIES LTD",
       "address": "UNIT 2606-07 26/F FWD FINANCIAL CENTRE 308 DES VOEUX ROAD CENTRAL HONG KONG",
-      "shares": 54600,
+      "shares": 57000,
       "pct": 0.09
     },
     {
-      "id": "B01584",
-      "name": "CHIEF SECURITIES LTD",
-      "address": "5/F WORLD-WIDE HOUSE 19 DES VOEUX ROAD CENTRAL CENTRAL HONG KONG",
-      "shares": 52900,
+      "id": "B01181",
+      "name": "FOSUN INTERNATIONAL SECURITIES LTD",
+      "address": "SUITE 2101-2105 21/F CHAMPION TOWER 3 GARDEN ROAD CENTRAL HONG KONG",
+      "shares": 50000,
       "pct": 0.08
     },
     {
@@ -241,11 +241,18 @@
       "pct": 0.08
     },
     {
+      "id": "B01584",
+      "name": "CHIEF SECURITIES LTD",
+      "address": "5/F WORLD-WIDE HOUSE 19 DES VOEUX ROAD CENTRAL CENTRAL HONG KONG",
+      "shares": 48900,
+      "pct": 0.08
+    },
+    {
       "id": "C00036",
       "name": "CHINA CONSTRUCTION BANK (ASIA)",
       "address": "20/F CCB CENTRE 18 WANG CHIU ROAD KOWLOON BAY KOWLOON",
-      "shares": 42400,
-      "pct": 0.07
+      "shares": 48400,
+      "pct": 0.08
     },
     {
       "id": "B01814",
@@ -253,13 +260,6 @@
       "address": "UNIT 13-15 11/F CHINA MERCHANTS TOWER SHUN TAK CENTRE 168-200 CONNAUGHT ROAD CENTRAL HONG KONG",
       "shares": 42000,
       "pct": 0.07
-    },
-    {
-      "id": "B01181",
-      "name": "FOSUN INTERNATIONAL SECURITIES LTD",
-      "address": "SUITE 2101-2105 21/F CHAMPION TOWER 3 GARDEN ROAD CENTRAL HONG KONG",
-      "shares": 40000,
-      "pct": 0.06
     },
     {
       "id": "B01438",
@@ -293,7 +293,14 @@
       "id": "B01901",
       "name": "CMB INTERNATIONAL SECURITIES LTD",
       "address": "45/F CHAMPION TOWER 3 GARDEN ROAD CENTRAL HONG KONG",
-      "shares": 30500,
+      "shares": 32500,
+      "pct": 0.05
+    },
+    {
+      "id": "B02175",
+      "name": "WEBULL SECURITIES LTD",
+      "address": "SUITES 2509-12 25/F TOWER 6 THE GATEWAY HARBOUR CITY KOWLOON",
+      "shares": 32000,
       "pct": 0.05
     },
     {
@@ -311,17 +318,10 @@
       "pct": 0.04
     },
     {
-      "id": "B02175",
-      "name": "WEBULL SECURITIES LTD",
-      "address": "SUITES 2509-12 25/F TOWER 6 THE GATEWAY HARBOUR CITY KOWLOON",
-      "shares": 28000,
-      "pct": 0.04
-    },
-    {
       "id": "C00028",
       "name": "NANYANG COMMERCIAL BANK LTD",
       "address": "30/F NCB INNOVATION CENTRE 888 LAI CHI KOK ROAD CHEUNG SHA WAN KOWLOON",
-      "shares": 27400,
+      "shares": 27200,
       "pct": 0.04
     },
     {
@@ -330,13 +330,6 @@
       "address": "UNIT 1706 TOWER 1 CHINA HONG KONG CITY 33 CANTON ROAD TSIM SHA TSUI KOWLOON",
       "shares": 24000,
       "pct": 0.04
-    },
-    {
-      "id": "B01842",
-      "name": "BOCOM INTERNATIONAL SECURITIES LTD",
-      "address": "11/F MAN YEE BUILDING 68 DES VOEUX ROAD CENTRAL HONG KONG",
-      "shares": 21600,
-      "pct": 0.03
     },
     {
       "id": "B01829",
@@ -360,10 +353,10 @@
       "pct": 0.03
     },
     {
-      "id": "B01338",
-      "name": "EMPEROR SECURITIES LTD",
-      "address": "23/F-24/F EMPEROR GROUP CENTRE 288 HENNESSY ROAD WANCHAI HONG KONG",
-      "shares": 19600,
+      "id": "B01224",
+      "name": "MERRILL LYNCH FAR EAST LTD",
+      "address": "C/O BANK OF AMERICA MERRILL LYNCH 38/F CHEUNG KONG CENTER 2 QUEEN'S ROAD CENTRAL CENTRAL HONG KONG",
+      "shares": 19800,
       "pct": 0.03
     },
     {
@@ -374,10 +367,38 @@
       "pct": 0.03
     },
     {
+      "id": "B01842",
+      "name": "BOCOM INTERNATIONAL SECURITIES LTD",
+      "address": "11/F MAN YEE BUILDING 68 DES VOEUX ROAD CENTRAL HONG KONG",
+      "shares": 17600,
+      "pct": 0.02
+    },
+    {
+      "id": "B01298",
+      "name": "GET NICE SECURITIES LTD",
+      "address": "G/F-3/F COSCO TOWER GRAND MILLENNIUM PLAZA 183 QUEEN'S ROAD CENTRAL HONG KONG",
+      "shares": 16000,
+      "pct": 0.02
+    },
+    {
       "id": "B01169",
       "name": "PUBLIC FINANCIAL SECURITIES LTD",
       "address": "10/F PUBLIC BANK CENTRE 120 DES VOEUX ROAD CENTRAL HONG KONG",
       "shares": 15600,
+      "pct": 0.02
+    },
+    {
+      "id": "C00002",
+      "name": "BANK OF COMMUNICATIONS TRUSTEE LTD",
+      "address": "16/F COS CENTRE 56 TSUN YIP STREET KWUN TONG KOWLOON",
+      "shares": 14400,
+      "pct": 0.02
+    },
+    {
+      "id": "B01338",
+      "name": "EMPEROR SECURITIES LTD",
+      "address": "23/F-24/F EMPEROR GROUP CENTRE 288 HENNESSY ROAD WANCHAI HONG KONG",
+      "shares": 13600,
       "pct": 0.02
     },
     {
@@ -402,13 +423,6 @@
       "pct": 0.02
     },
     {
-      "id": "C00002",
-      "name": "BANK OF COMMUNICATIONS TRUSTEE LTD",
-      "address": "16/F COS CENTRE 56 TSUN YIP STREET KWUN TONG KOWLOON",
-      "shares": 12400,
-      "pct": 0.02
-    },
-    {
       "id": "C00015",
       "name": "DBS BANK (HONG KONG) LTD",
       "address": "6/F TWO HARBOUR SQUARE 180 WAI YIP STREET KWUN TONG KOWLOON",
@@ -416,31 +430,10 @@
       "pct": 0.02
     },
     {
-      "id": "B01275",
-      "name": "SANFULL SECURITIES LTD",
-      "address": "RM 2001-2006 COSCO TOWER 183 QUEEN'S ROAD CENTRAL HONG KONG",
-      "shares": 12000,
-      "pct": 0.02
-    },
-    {
       "id": "B02214",
       "name": "WINBULL SECURITIES INTERNATIONAL (HONG",
       "address": "ROOMS 2202-3 22/F JUBILEE CENTRE 18 FENWICK STREET WAN CHAI HONG KONG",
       "shares": 10000,
-      "pct": 0.01
-    },
-    {
-      "id": "B01298",
-      "name": "GET NICE SECURITIES LTD",
-      "address": "G/F-3/F COSCO TOWER GRAND MILLENNIUM PLAZA 183 QUEEN'S ROAD CENTRAL HONG KONG",
-      "shares": 8000,
-      "pct": 0.01
-    },
-    {
-      "id": "B01224",
-      "name": "MERRILL LYNCH FAR EAST LTD",
-      "address": "C/O BANK OF AMERICA MERRILL LYNCH 38/F CHEUNG KONG CENTER 2 QUEEN'S ROAD CENTRAL CENTRAL HONG KONG",
-      "shares": 7800,
       "pct": 0.01
     },
     {
@@ -549,13 +542,6 @@
       "pct": 0.0
     },
     {
-      "id": "B01858",
-      "name": "YUANTA SECURITIES (HONG KONG) CO LTD",
-      "address": "23/F TOWER 1 ADMIRALTY CENTRE 18 HARCOURT ROAD ADMIRALTY HONG KONG",
-      "shares": 3600,
-      "pct": 0.0
-    },
-    {
       "id": "B02120",
       "name": "LIVERMORE HOLDINGS LTD",
       "address": "UNIT 1214A 12/F TOWER II CHEUNG SHA WAN PLAZA 833 CHEUNG SHA WAN ROAD KOWLOON",
@@ -598,13 +584,6 @@
       "pct": 0.0
     },
     {
-      "id": "B01555",
-      "name": "ABN AMRO CLEARING HONG KONG LTD",
-      "address": "SUITE 2407-2409 LEVEL 24 THREE PACIFIC PLACE 1 QUEEN'S ROAD EAST HONG KONG",
-      "shares": 2000,
-      "pct": 0.0
-    },
-    {
       "id": "B01745",
       "name": "GUOCHUANG SECURITIES FINANCIAL HOLDING",
       "address": "RM B-D 3/F SHING HING COMMERCIAL BUILDING 21-27 WING KUT STREET HONG KONG",
@@ -615,6 +594,13 @@
       "id": "B01813",
       "name": "CCB INTERNATIONAL SECURITIES LTD",
       "address": "12/F CCB TOWER 3 CONNAUGHT ROAD CENTRAL CENTRAL HONG KONG",
+      "shares": 2000,
+      "pct": 0.0
+    },
+    {
+      "id": "B02032",
+      "name": "FORTHRIGHT SECURITIES CO LTD",
+      "address": "20/F GOLDEN CENTRE 188 DES VOEUX ROAD CENTRAL SHEUNG WAN HONG KONG",
       "shares": 2000,
       "pct": 0.0
     },
@@ -640,10 +626,10 @@
       "pct": 0.0
     },
     {
-      "id": "B01769",
-      "name": "ONE CHINA SECURITIES LTD",
-      "address": "2/F CHEONG K. BUILDING 84-86 DES VOEUX ROAD CENTRAL HONG KONG",
-      "shares": 1373,
+      "id": "B01240",
+      "name": "TSUN CHI YUEN SECURITIES CO LTD",
+      "address": "20/F MAN ON COMM BLDG 12 JUBILEE ST CENTRAL HONG KONG",
+      "shares": 1270,
       "pct": 0.0
     },
     {
@@ -689,10 +675,10 @@
       "pct": 0.0
     },
     {
-      "id": "B01240",
-      "name": "TSUN CHI YUEN SECURITIES CO LTD",
-      "address": "20/F MAN ON COMM BLDG 12 JUBILEE ST CENTRAL HONG KONG",
-      "shares": 670,
+      "id": "B01769",
+      "name": "ONE CHINA SECURITIES LTD",
+      "address": "2/F CHEONG K. BUILDING 84-86 DES VOEUX ROAD CENTRAL HONG KONG",
+      "shares": 673,
       "pct": 0.0
     },
     {
@@ -727,13 +713,6 @@
       "id": "B02102",
       "name": "ZINVEST GLOBAL LTD",
       "address": "RM 3502 LIPPO CENTRE TOWER 2 89 QUEENSWAY HONG KONG",
-      "shares": 400,
-      "pct": 0.0
-    },
-    {
-      "id": "C00048",
-      "name": "CHIYU BANKING CORPORATION LTD",
-      "address": "10/F LOW BLOCK GRAND MILLENNIUM PLAZA NO. 181 QUEEN'S ROAD CENTRAL  HONG KONG",
       "shares": 400,
       "pct": 0.0
     },
@@ -785,7 +764,14 @@
       "address": "32/F LEE GARDEN ONE 33 HYSAN AVENUE CAUSEWAY BAY HONG KONG",
       "shares": 200,
       "pct": 0.0
+    },
+    {
+      "id": "C00048",
+      "name": "CHIYU BANKING CORPORATION LTD",
+      "address": "10/F LOW BLOCK GRAND MILLENNIUM PLAZA NO. 181 QUEEN'S ROAD CENTRAL  HONG KONG",
+      "shares": 200,
+      "pct": 0.0
     }
   ],
-  "fetchedAt": 1776394992448
+  "fetchedAt": 1776394816677
 }

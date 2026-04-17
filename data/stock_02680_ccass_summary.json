@@ -24,10 +24,10 @@
       "cn_name": "法国巴黎银行",
       "shares": 45058600,
       "pct": 75.09,
-      "dayDeltaPct": 0,
-      "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "dayDeltaPct": 0.04,
+      "dayDeltaShares": 28000,
+      "weekDeltaPct": 0.03,
+      "weekDeltaShares": 18000
     },
     {
       "rank": 2,
@@ -36,10 +36,10 @@
       "cn_name": "富途证券国际(香港)",
       "shares": 4264622,
       "pct": 7.1,
-      "dayDeltaPct": 0,
-      "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "dayDeltaPct": 0.02,
+      "dayDeltaShares": 14000,
+      "weekDeltaPct": 0.02,
+      "weekDeltaShares": 13800
     },
     {
       "rank": 3,
@@ -48,10 +48,10 @@
       "cn_name": "创升证券",
       "shares": 1905554,
       "pct": 3.17,
-      "dayDeltaPct": 0,
-      "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "dayDeltaPct": 0.0,
+      "dayDeltaShares": -2000,
+      "weekDeltaPct": -0.03,
+      "weekDeltaShares": -18000
     },
     {
       "rank": 4,
@@ -60,10 +60,10 @@
       "cn_name": "中国银行(香港)",
       "shares": 1501300,
       "pct": 2.5,
-      "dayDeltaPct": 0,
-      "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "dayDeltaPct": -0.03,
+      "dayDeltaShares": -17800,
+      "weekDeltaPct": -0.09,
+      "weekDeltaShares": -53200
     },
     {
       "rank": 5,
@@ -84,10 +84,10 @@
       "cn_name": "辉立证券(香港)",
       "shares": 708305,
       "pct": 1.18,
-      "dayDeltaPct": 0,
-      "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "dayDeltaPct": 0.0,
+      "dayDeltaShares": -2000,
+      "weekDeltaPct": -0.01,
+      "weekDeltaShares": -7100
     },
     {
       "rank": 7,
@@ -96,10 +96,10 @@
       "cn_name": "盈透证券(香港)",
       "shares": 566600,
       "pct": 0.94,
-      "dayDeltaPct": 0,
-      "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "dayDeltaPct": 0.01,
+      "dayDeltaShares": 4000,
+      "weekDeltaPct": 0.04,
+      "weekDeltaShares": 22000
     },
     {
       "rank": 8,
@@ -108,10 +108,10 @@
       "cn_name": "汇丰银行",
       "shares": 555600,
       "pct": 0.92,
-      "dayDeltaPct": 0,
-      "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "dayDeltaPct": -0.01,
+      "dayDeltaShares": -7700,
+      "weekDeltaPct": 0.01,
+      "weekDeltaShares": 8300
     },
     {
       "rank": 9,
@@ -122,8 +122,8 @@
       "pct": 0.82,
       "dayDeltaPct": 0,
       "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "weekDeltaPct": -0.01,
+      "weekDeltaShares": -8000
     },
     {
       "rank": 10,
@@ -158,8 +158,8 @@
       "pct": 0.44,
       "dayDeltaPct": 0,
       "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "weekDeltaPct": 0.01,
+      "weekDeltaShares": 7000
     },
     {
       "rank": 13,
@@ -182,8 +182,8 @@
       "pct": 0.32,
       "dayDeltaPct": 0,
       "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "weekDeltaPct": 0.03,
+      "weekDeltaShares": 14000
     },
     {
       "rank": 15,
@@ -194,8 +194,8 @@
       "pct": 0.32,
       "dayDeltaPct": 0,
       "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "weekDeltaPct": 0.01,
+      "weekDeltaShares": 2000
     },
     {
       "rank": 16,
@@ -206,8 +206,8 @@
       "pct": 0.3,
       "dayDeltaPct": 0,
       "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "weekDeltaPct": -0.01,
+      "weekDeltaShares": -600
     },
     {
       "rank": 17,
@@ -228,10 +228,10 @@
       "cn_name": "耀才证券(国际)",
       "shares": 183800,
       "pct": 0.3,
-      "dayDeltaPct": 0,
-      "dayDeltaShares": 0,
-      "weekDeltaPct": 0,
-      "weekDeltaShares": 0
+      "dayDeltaPct": 0.0,
+      "dayDeltaShares": -2000,
+      "weekDeltaPct": -0.01,
+      "weekDeltaShares": -4000
     },
     {
       "rank": 19,
@@ -259,15 +259,300 @@
     }
   ],
   "movers7d": {
-    "up": [],
-    "down": []
+    "up": [
+      {
+        "id": "B01590",
+        "name": "INTERACTIVE BROKERS HONG KONG LTD",
+        "cn_name": "盈透证券(香港)",
+        "deltaPct": 0.04,
+        "deltaShares": 22000,
+        "prevPct": 0.9,
+        "currPct": 0.94,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "C00093",
+        "name": "BNP PARIBAS",
+        "cn_name": "法国巴黎银行",
+        "deltaPct": 0.03,
+        "deltaShares": 18000,
+        "prevPct": 75.06,
+        "currPct": 75.09,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "C00042",
+        "name": "CMB WING LUNG BANK LTD",
+        "cn_name": "招商永隆银行",
+        "deltaPct": 0.03,
+        "deltaShares": 14000,
+        "prevPct": 0.29,
+        "currPct": 0.32,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01955",
+        "name": "FUTU SECURITIES INTERNATIONAL",
+        "cn_name": "富途证券国际(香港)",
+        "deltaPct": 0.02,
+        "deltaShares": 13800,
+        "prevPct": 7.08,
+        "currPct": 7.1,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01181",
+        "name": "FOSUN INTERNATIONAL SECURITIES LTD",
+        "cn_name": "复星国际证券",
+        "deltaPct": 0.02,
+        "deltaShares": 10000,
+        "prevPct": 0.06,
+        "currPct": 0.08,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01224",
+        "name": "MERRILL LYNCH FAR EAST LTD",
+        "cn_name": "美林远东",
+        "deltaPct": 0.02,
+        "deltaShares": 12000,
+        "prevPct": 0.01,
+        "currPct": 0.03,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "C00019",
+        "name": "THE HONGKONG AND SHANGHAI BANKING",
+        "cn_name": "汇丰银行",
+        "deltaPct": 0.01,
+        "deltaShares": 8300,
+        "prevPct": 0.91,
+        "currPct": 0.92,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "C00039",
+        "name": "STANDARD CHARTERED BANK (HONG KONG) LTD",
+        "cn_name": "渣打银行(香港)",
+        "deltaPct": 0.01,
+        "deltaShares": 7000,
+        "prevPct": 0.43,
+        "currPct": 0.44,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B02142",
+        "name": "TIGER BROKERS (HK) GLOBAL LTD",
+        "cn_name": "老虎证券(香港)",
+        "deltaPct": 0.01,
+        "deltaShares": 2000,
+        "prevPct": 0.31,
+        "currPct": 0.32,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "C00010",
+        "name": "CITIBANK N.A.",
+        "cn_name": "花旗银行",
+        "deltaPct": 0.01,
+        "deltaShares": 8000,
+        "prevPct": 0.11,
+        "currPct": 0.12,
+        "isNew": false,
+        "isExit": false
+      }
+    ],
+    "down": [
+      {
+        "id": "C00033",
+        "name": "BANK OF CHINA (HONG KONG) LTD",
+        "cn_name": "中国银行(香港)",
+        "deltaPct": -0.09,
+        "deltaShares": -53200,
+        "prevPct": 2.59,
+        "currPct": 2.5,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01227",
+        "name": "HOORAY SECURITIES LTD",
+        "cn_name": "海誉证券",
+        "deltaPct": -0.05,
+        "deltaShares": -34000,
+        "prevPct": 0.05,
+        "currPct": 0,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B02075",
+        "name": "INNOVAX SECURITIES LTD",
+        "cn_name": "创升证券",
+        "deltaPct": -0.03,
+        "deltaShares": -18000,
+        "prevPct": 3.2,
+        "currPct": 3.17,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01275",
+        "name": "SANFULL SECURITIES LTD",
+        "cn_name": "SANFULL SECURITIES LTD",
+        "deltaPct": -0.02,
+        "deltaShares": -12000,
+        "prevPct": 0.02,
+        "currPct": 0,
+        "isNew": false,
+        "isExit": true
+      },
+      {
+        "id": "B01345",
+        "name": "PHILLIP SECURITIES (HONG KONG) LTD",
+        "cn_name": "辉立证券(香港)",
+        "deltaPct": -0.01,
+        "deltaShares": -7100,
+        "prevPct": 1.19,
+        "currPct": 1.18,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B02195",
+        "name": "LONG BRIDGE HK LTD",
+        "cn_name": "长桥证券(香港)",
+        "deltaPct": -0.01,
+        "deltaShares": -8000,
+        "prevPct": 0.83,
+        "currPct": 0.82,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01284",
+        "name": "HANG SENG SECURITIES LTD",
+        "cn_name": "恒生证券",
+        "deltaPct": -0.01,
+        "deltaShares": -600,
+        "prevPct": 0.31,
+        "currPct": 0.3,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01668",
+        "name": "BRIGHT SMART SECURITIES INTERNATIONAL",
+        "cn_name": "耀才证券(国际)",
+        "deltaPct": -0.01,
+        "deltaShares": -4000,
+        "prevPct": 0.31,
+        "currPct": 0.3,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01904",
+        "name": "VALUABLE CAPITAL LTD",
+        "cn_name": "Valuable Capital",
+        "deltaPct": -0.01,
+        "deltaShares": -8000,
+        "prevPct": 0.11,
+        "currPct": 0.1,
+        "isNew": false,
+        "isExit": false
+      },
+      {
+        "id": "B01842",
+        "name": "BOCOM INTERNATIONAL SECURITIES LTD",
+        "cn_name": "交银国际证券",
+        "deltaPct": -0.01,
+        "deltaShares": -4000,
+        "prevPct": 0.03,
+        "currPct": 0.02,
+        "isNew": false,
+        "isExit": false
+      }
+    ]
   },
   "insights": [
-    "**集中度 · 高度集中** — HHI 5713.44,Top 10 占比 93.92%,第一大户占 75.09%。(暂无历史对比数据)",
+    "**集中度 · 高度集中** — HHI 5713.44(+4.22),Top 10 占比 93.92%(-0.04%),第一大户占 75.09%(+0.03%)。近 7 日集中度 **基本稳定**。",
     "**整体判断** — 第一大户持股 75.09%,公众流通盘极薄,股价易被单家机构行为主导;Top 10 吃掉九成以上筹码,散户实际可交易盘极少"
   ],
-  "historyDays": 1,
+  "historyDays": 8,
   "trend": [
+    {
+      "date": "2026-04-02",
+      "shares": 59999048,
+      "pct": 99.99,
+      "participants": 109,
+      "top1Pct": 75.06,
+      "top10Pct": 93.96,
+      "hhi": 5709.22
+    },
+    {
+      "date": "2026-04-08",
+      "shares": 59999048,
+      "pct": 99.99,
+      "participants": 109,
+      "top1Pct": 75.07,
+      "top10Pct": 93.98,
+      "hhi": 5710.78
+    },
+    {
+      "date": "2026-04-09",
+      "shares": 59999048,
+      "pct": 99.99,
+      "participants": 107,
+      "top1Pct": 75.07,
+      "top10Pct": 93.99,
+      "hhi": 5711.17
+    },
+    {
+      "date": "2026-04-10",
+      "shares": 59999048,
+      "pct": 99.99,
+      "participants": 108,
+      "top1Pct": 75.06,
+      "top10Pct": 93.99,
+      "hhi": 5710.16
+    },
+    {
+      "date": "2026-04-13",
+      "shares": 59999048,
+      "pct": 99.99,
+      "participants": 109,
+      "top1Pct": 75.05,
+      "top10Pct": 93.96,
+      "hhi": 5708.47
+    },
+    {
+      "date": "2026-04-14",
+      "shares": 59999048,
+      "pct": 99.99,
+      "participants": 107,
+      "top1Pct": 75.06,
+      "top10Pct": 93.95,
+      "hhi": 5708.99
+    },
+    {
+      "date": "2026-04-15",
+      "shares": 59999048,
+      "pct": 99.99,
+      "participants": 107,
+      "top1Pct": 75.05,
+      "top10Pct": 93.89,
+      "hhi": 5707.3
+    },
     {
       "date": "2026-04-16",
       "shares": 59999048,
