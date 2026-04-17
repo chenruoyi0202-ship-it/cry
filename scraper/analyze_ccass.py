@@ -7,7 +7,7 @@ CCASS 持股分析报告生成
   data/stock_XXXXX_ccass_report.md    - 中文 markdown 报告
   data/stock_XXXXX_ccass_summary.json - 前端用的结构化摘要
 
-报告包含四大板块:
+报告包含四大板块 (+ 可选的 AI 深度分析):
   一、Top 20 持股及最近变化
   二、近期加仓榜
   三、近期减仓榜
