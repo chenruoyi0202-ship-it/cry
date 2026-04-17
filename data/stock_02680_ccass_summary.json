@@ -1,7 +1,7 @@
 {
   "stockCode": "02680",
   "shareholdingDate": "2026-04-16",
-  "fetchedAt": 1776388603089,
+  "fetchedAt": 1776390809423,
   "totalIssued": 60000000,
   "totalInCCASS": {
     "shares": 59999048,
@@ -9,185 +9,273 @@
   },
   "participantCount": 109,
   "concentration": {
+    "top1_pct_of_issued": 75.09,
     "top5_pct_of_issued": 89.52,
     "top10_pct_of_issued": 93.92,
     "top20_pct_of_issued": 97.24,
     "hhi": 5713.44,
-    "total_covered_pct": 99.52
+    "label": "高度集中"
   },
   "top20": [
     {
+      "rank": 1,
       "id": "C00093",
       "name": "BNP PARIBAS",
+      "cn_name": "法国巴黎银行",
       "shares": 45058600,
       "pct": 75.09,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 2,
       "id": "B01955",
       "name": "FUTU SECURITIES INTERNATIONAL",
+      "cn_name": "富途证券国际(香港)",
       "shares": 4264622,
       "pct": 7.1,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 3,
       "id": "B02075",
       "name": "INNOVAX SECURITIES LTD",
+      "cn_name": "创升证券",
       "shares": 1905554,
       "pct": 3.17,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 4,
       "id": "C00033",
       "name": "BANK OF CHINA (HONG KONG) LTD",
+      "cn_name": "中国银行(香港)",
       "shares": 1501300,
       "pct": 2.5,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 5,
       "id": "B01925",
       "name": "BMI SECURITIES LTD",
+      "cn_name": "博美证券",
       "shares": 999100,
       "pct": 1.66,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 6,
       "id": "B01345",
       "name": "PHILLIP SECURITIES (HONG KONG) LTD",
+      "cn_name": "辉立证券(香港)",
       "shares": 708305,
       "pct": 1.18,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 7,
       "id": "B01590",
       "name": "INTERACTIVE BROKERS HONG KONG LTD",
+      "cn_name": "盈透证券(香港)",
       "shares": 566600,
       "pct": 0.94,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 8,
       "id": "C00019",
       "name": "THE HONGKONG AND SHANGHAI BANKING",
+      "cn_name": "汇丰银行",
       "shares": 555600,
       "pct": 0.92,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 9,
       "id": "B02195",
       "name": "LONG BRIDGE HK LTD",
+      "cn_name": "长桥证券(香港)",
       "shares": 494300,
       "pct": 0.82,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 10,
       "id": "B01852",
       "name": "ARTA GLOBAL MARKETS LTD",
+      "cn_name": "天辰国际证券",
       "shares": 324400,
       "pct": 0.54,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 11,
       "id": "B01086",
       "name": "EVERBRIGHT SECURITIES INVESTMENT",
+      "cn_name": "光大证券投资服务",
       "shares": 308600,
       "pct": 0.51,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 12,
       "id": "C00039",
       "name": "STANDARD CHARTERED BANK (HONG KONG) LTD",
+      "cn_name": "渣打银行(香港)",
       "shares": 267725,
       "pct": 0.44,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 13,
       "id": "B01423",
       "name": "PRUDENTIAL BROKERAGE LTD",
+      "cn_name": "保诚证券",
       "shares": 255608,
       "pct": 0.42,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 14,
       "id": "C00042",
       "name": "CMB WING LUNG BANK LTD",
+      "cn_name": "招商永隆银行",
       "shares": 192790,
       "pct": 0.32,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 15,
       "id": "B02142",
       "name": "TIGER BROKERS (HK) GLOBAL LTD",
+      "cn_name": "老虎证券(香港)",
       "shares": 192000,
       "pct": 0.32,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 16,
       "id": "B01284",
       "name": "HANG SENG SECURITIES LTD",
+      "cn_name": "恒生证券",
       "shares": 185400,
       "pct": 0.3,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 17,
       "id": "B01565",
       "name": "GUOTAI JUNAN SECURITIES (HONG KONG) LTD",
+      "cn_name": "国泰君安证券(香港)",
       "shares": 184000,
       "pct": 0.3,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 18,
       "id": "B01668",
       "name": "BRIGHT SMART SECURITIES INTERNATIONAL",
+      "cn_name": "耀才证券(国际)",
       "shares": 183800,
       "pct": 0.3,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 19,
       "id": "B01938",
       "name": "CHINA INDUSTRIAL SECURITIES",
+      "cn_name": "兴业证券(香港)",
       "shares": 129800,
       "pct": 0.21,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     },
     {
+      "rank": 20,
       "id": "B01184",
       "name": "QUAM SECURITIES LTD",
+      "cn_name": "华富证券",
       "shares": 120000,
       "pct": 0.2,
       "dayDeltaPct": 0,
-      "dayDeltaShares": 0
+      "dayDeltaShares": 0,
+      "weekDeltaPct": 0,
+      "weekDeltaShares": 0
     }
   ],
   "movers7d": {
-    "top": [],
-    "bottom": []
+    "up": [],
+    "down": []
   },
+  "insights": [
+    "**集中度 · 高度集中** — HHI 5713.44,Top 10 占比 93.92%,第一大户占 75.09%。(暂无历史对比数据)",
+    "**整体判断** — 第一大户持股 75.09%,公众流通盘极薄,股价易被单家机构行为主导;Top 10 吃掉九成以上筹码,散户实际可交易盘极少"
+  ],
+  "historyDays": 1,
   "trend": [
     {
       "date": "2026-04-16",
       "shares": 59999048,
       "pct": 99.99,
-      "participants": 109
+      "participants": 109,
+      "top1Pct": 75.09,
+      "top10Pct": 93.92,
+      "hhi": 5713.44
     }
-  ],
-  "alerts": []
+  ]
 }
