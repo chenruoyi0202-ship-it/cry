@@ -196,14 +196,19 @@ def get_viewstate_fields(session):
     r.raise_for_status()
     soup = BeautifulSoup(r.text, 'html.parser')
     fields = {}
-    for name in ('__VIEWSTATE', '__VIEWSTATEGENERATOR', '__EVENTVALIDATION', '__EVENTTARGET', '__EVENTARGUMENT'):
-        el = soup.select_one(f'input[name="{name}"]')
-        fields[name] = el.get('value', '') if el else ''
-    # 语言
-    for el in soup.select('input[type="hidden"]'):
+    # Extract every named form input (hidden + text) with its default value.
+    form = soup.select_one('form#form1') or soup
+    for el in form.select('input[name]'):
         n = el.get('name')
-        if n and n not in fields:
-            fields[n] = el.get('value', '')
+        t = (el.get('type') or 'text').lower()
+        if t in ('submit', 'image', 'button'):
+            continue
+        if n not in fields:
+            fields[n] = el.get('value', '') or ''
+    # Ensure standard WebForm fields exist even if missing on page.
+    for k in ('__EVENTTARGET', '__EVENTARGUMENT', '__VIEWSTATE',
+              '__VIEWSTATEGENERATOR', '__EVENTVALIDATION'):
+        fields.setdefault(k, '')
     return fields
 
 
@@ -228,15 +233,19 @@ def fetch_ccass(stock_code='02680', shareholding_date=None, retries=3):
             with requests.Session() as s:
                 s.headers.update(HEADERS)
                 fields = get_viewstate_fields(s)
+                # The "Search" button is an <a> calling __doPostBack('btnSearch','')
+                fields['__EVENTTARGET'] = 'btnSearch'
+                fields['__EVENTARGUMENT'] = ''
                 fields['txtStockCode'] = stock_code
                 fields['txtShareholdingDate'] = shareholding_date
                 fields['today'] = datetime.now(HKT).strftime('%Y%m%d')
                 fields['sortBy'] = 'shareholding'
                 fields['sortDirection'] = 'desc'
-                fields['btnSearch.x'] = '10'
-                fields['btnSearch.y'] = '10'
 
-                r = s.post(BASE_URL, data=fields, headers=HEADERS, timeout=45)
+                post_headers = dict(HEADERS)
+                post_headers['Referer'] = BASE_URL
+                post_headers['Origin'] = 'https://www3.hkexnews.hk'
+                r = s.post(BASE_URL, data=fields, headers=post_headers, timeout=45)
                 r.raise_for_status()
                 print(f'  响应 {r.status_code}, {len(r.text)} 字节', flush=True)
                 data = parse_ccass_page(r.text)
