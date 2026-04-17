@@ -60,7 +60,7 @@ jobs:
           retention-days: 7
 
       - name: Commit debug HTML on failure (for diagnostics)
-        if: steps.scrape.outcome == 'failure'
+        if: always() && steps.scrape.outcome == 'failure'
         run: |
           mkdir -p data/_debug
           mv data/ccass_history/_debug_*.html data/_debug/ 2>/dev/null || true
