@@ -59,6 +59,25 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Commit debug HTML on failure (for diagnostics)
+        if: steps.scrape.outcome == 'failure'
+        run: |
+          mkdir -p data/_debug
+          mv data/ccass_history/_debug_*.html data/_debug/ 2>/dev/null || true
+          # 只保留最新一份，避免撑大仓库
+          ls -t data/_debug/*.html 2>/dev/null | tail -n +2 | xargs -r rm -f
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/_debug/
+          if git diff --cached --quiet; then
+            echo "No debug html to commit"
+          else
+            git commit -m "debug(ccass): capture HKEX response for diagnosis"
+            for i in 1 2 3 4; do
+              git push && break || sleep $((2 ** i))
+            done
+          fi
+
       - name: Generate analysis report
         if: steps.scrape.outcome == 'success'
         run: |
