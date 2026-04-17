@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       days:
-        description: '回填多少天工作日(从今天往前推,HKEX 限制 12 个月 ≈ 260 天)'
+        description: '回填多少个工作日(从今天往前推)'
         required: false
-        default: '365'
+        default: '10'
       stock_code:
         description: '股票代码'
         required: false
@@ -29,7 +29,7 @@ concurrency:
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,7 +47,7 @@ jobs:
       - name: Backfill CCASS history
         run: |
           python scraper/backfill_ccass.py \
-            "${{ github.event.inputs.days || '365' }}" \
+            "${{ github.event.inputs.days || '10' }}" \
             "${{ github.event.inputs.stock_code || '02680' }}"
 
       - name: Regenerate analysis report
