@@ -23,6 +23,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   scrape:
@@ -100,3 +101,28 @@ jobs:
               git push && break || sleep $((2 ** i))
             done
           fi
+
+      - name: Post daily report to GitHub Issue
+        if: steps.scrape.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          STOCK_CODE: '02680'
+          TITLE: '📊 02680 创陞控股 · CCASS 每日报告'
+        run: |
+          REPORT_PATH="data/stock_${STOCK_CODE}_ccass_report.md"
+          if [ ! -f "$REPORT_PATH" ]; then
+            echo "Report file missing, skip"
+            exit 0
+          fi
+          # 查找置顶的追踪 issue(按标题精确匹配,只看 open 状态)
+          ISSUE_NUMBER=$(gh issue list --repo "$REPO" --search "\"$TITLE\" in:title" --state open --json number,title --jq '.[] | select(.title == "'"$TITLE"'") | .number' | head -1)
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "Creating tracking issue..."
+            URL=$(gh issue create --repo "$REPO" --title "$TITLE" \
+              --body "这是 02680 创陞控股 CCASS 每日报告的追踪 issue。每个工作日 HKT 17:30 后会以评论形式追加当天的分析。订阅这个 issue 即可每天收到邮件通知。")
+            ISSUE_NUMBER=$(echo "$URL" | grep -oE '[0-9]+$')
+            echo "Created issue #$ISSUE_NUMBER"
+          fi
+          echo "Posting report to issue #$ISSUE_NUMBER"
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$REPORT_PATH"
