@@ -49,8 +49,16 @@ def normalize_number(s):
         return None
 
 
+def _cell_body(td):
+    """从 HKEX 单元格中抽出值(忽略 mobile-list-heading 的列标签)。"""
+    body = td.select_one('.mobile-list-body')
+    if body:
+        return body.get_text(' ', strip=True)
+    return td.get_text(' ', strip=True)
+
+
 def parse_ccass_page(html):
-    """解析 CCASS 搜索结果页面"""
+    """解析 CCASS 搜索结果页面 (HKEX searchsdw.aspx 结果页)"""
     soup = BeautifulSoup(html, 'html.parser')
     result = {
         'shareholdingDate': None,
@@ -64,129 +72,85 @@ def parse_ccass_page(html):
         'participants': [],
     }
 
-    # 顶部标题信息 (shareholding date, stock code, total issued)
-    for div in soup.select('.ccass-search-datebox, .ccass-search-result, .summary-header'):
-        pass  # fallback, we also scan labels below
-
-    # 通用扫描: 查找 "持股日期" / "Shareholding Date"
-    text_blocks = soup.find_all(['div', 'span', 'td'])
-    for el in text_blocks:
-        t = el.get_text(' ', strip=True)
-        m = re.search(r'(\d{2}/\d{2}/\d{4})', t)
-        if m and ('持股日期' in t or 'Shareholding Date' in t):
-            # 日期格式 DD/MM/YYYY -> YYYY-MM-DD
-            d, mo, y = m.group(1).split('/')
-            result['shareholdingDate'] = f'{y}-{mo}-{d}'
-            break
-
-    # 股票代码 & 名称
-    for el in soup.select('#txt_stock_name, #txt_stock_code'):
-        val = el.get_text(strip=True) or el.get('value', '')
-        if 'name' in el.get('id', '').lower():
-            result['stockName'] = val.strip(':：').strip()
-        else:
-            result['stockCode'] = val.strip(':：').strip()
-
-    # 如果没找到，从页面文字中找
-    if not result['stockCode']:
-        body_text = soup.get_text(' ', strip=True)
-        m = re.search(r'(?:股份代号|Stock Code)[:：\s]*(\d{4,5})', body_text)
-        if m:
-            result['stockCode'] = m.group(1).zfill(5)
-        m = re.search(r'(?:股份名称|Stock Name)[:：\s]*([^\s,，]+)', body_text)
-        if m:
-            result['stockName'] = m.group(1)
-
-    # 汇总区域: Total Issued Shares / Shareholding in CCASS
-    for el in soup.select('.ccass-search-totalsharesbox, .summary-row, td'):
-        t = el.get_text(' ', strip=True)
-        m = re.search(r'(?:已发行股份总数|Total Number of Issued Shares)[^\d]*([\d,]+)', t)
-        if m:
-            result['totalIssued'] = normalize_number(m.group(1))
-        m = re.search(r'(?:中央结算系统的存管股份总数|Total number of shares in CCASS)[^\d]*([\d,]+)', t)
-        if m:
-            result['totalInCCASS']['shares'] = normalize_number(m.group(1))
-        m = re.search(r'(?:占已发行股份百分比|as percentage of the total number of Issued Shares)[^\d]*([\d.]+)\s*%', t)
-        if m:
-            result['totalInCCASS']['pct'] = normalize_number(m.group(1))
-
-    # 参与者表格
-    # 表头: Participant ID | Name of CCASS Participant | Address | Shareholding | % of Total...
-    table = None
-    for tbl in soup.find_all('table'):
-        headers = [th.get_text(strip=True) for th in tbl.find_all('th')]
-        joined = ' '.join(headers).lower()
-        if 'participant' in joined or '参与者' in ''.join(headers) or 'shareholding' in joined or '持股量' in ''.join(headers):
-            table = tbl
-            break
-
-    if table:
-        rows = table.find_all('tr')
-        for tr in rows:
-            cells = tr.find_all(['td', 'th'])
-            if len(cells) < 3:
-                continue
-            texts = [c.get_text(' ', strip=True) for c in cells]
-            # 典型结构: [ID, Name, Address, Shareholding, %]  或  [Name, Shareholding, %]
-            # 针对 HKEX 的实际 DOM: 每行内部有 .mobile-list-heading + .mobile-list-body
-            # 这里提取数字列
-            pid = None
-            name = None
-            address = None
-            shares = None
-            pct = None
-
-            # 有 data-cell attribute 标注列含义
-            for cell in cells:
-                k = (cell.get('class') or [''])[0]
-                v = cell.get_text(' ', strip=True)
-                # 数字识别
-                if re.match(r'^[\d,]+$', v.replace(' ', '')):
-                    if shares is None:
-                        shares = normalize_number(v)
-                elif re.match(r'^[\d.]+\s*%$', v):
-                    pct = normalize_number(v)
-                elif re.match(r'^[A-Z]\d{5}$', v) or re.match(r'^\d{5,}$', v):
-                    pid = v
-                elif len(v) > 2 and not v.replace(',', '').isdigit():
-                    if name is None:
-                        name = v
-                    elif address is None and len(v) > len(name or ''):
-                        address = v
-
-            if name and shares is not None:
-                result['participants'].append({
-                    'id': pid,
-                    'name': name,
-                    'address': address,
-                    'shares': shares,
-                    'pct': pct,
-                })
-
-    # 类别汇总 (Market Intermediaries / Investor Participants)
-    for el in soup.find_all(text=re.compile(r'市场中介|Market Intermediaries|投资者户口|Investor Participants', re.I)):
-        parent = el.parent
-        if not parent:
-            continue
-        row_text = parent.get_text(' ', strip=True) if hasattr(parent, 'get_text') else str(el)
-        m_shares = re.search(r'([\d,]{4,})', row_text)
-        m_pct = re.search(r'([\d.]+)\s*%', row_text)
-        m_count = re.search(r'(\d+)\s*(?:个|家|of)', row_text)
-        target = None
-        if 'Market Intermediaries' in row_text or '市场中介' in row_text:
-            target = result['marketIntermediaries']
-        elif 'Consenting' in row_text or '同意' in row_text:
-            if 'Non' in row_text or '非' in row_text or '不' in row_text:
-                target = result['nonConsentingInvestors']
+    # Shareholding Date — 标题栏 <b>Shareholding Date:</b> DD/MM/YYYY
+    for b in soup.find_all('b'):
+        t = b.get_text(strip=True)
+        if 'Shareholding Date' in t or '持股日期' in t:
+            after = (b.next_sibling or '').strip() if b.next_sibling else ''
+            m = re.search(r'(\d{4})/(\d{2})/(\d{2})', after)
+            if m:
+                result['shareholdingDate'] = f'{m.group(1)}-{m.group(2)}-{m.group(3)}'
             else:
-                target = result['consentingInvestors']
-        if target:
-            if m_shares:
-                target['shares'] = normalize_number(m_shares.group(1))
-            if m_pct:
-                target['pct'] = normalize_number(m_pct.group(1))
-            if m_count:
-                target['count'] = normalize_number(m_count.group(1))
+                m = re.search(r'(\d{2})/(\d{2})/(\d{4})', after)
+                if m:
+                    result['shareholdingDate'] = f'{m.group(3)}-{m.group(2)}-{m.group(1)}'
+            break
+
+    # Stock Code / Name — 从 form 中或标题栏
+    code_input = soup.select_one('input#txtStockCode')
+    if code_input and code_input.get('value'):
+        result['stockCode'] = code_input['value'].strip().zfill(5)
+    name_input = soup.select_one('input#txtStockName')
+    if name_input and name_input.get('value'):
+        result['stockName'] = name_input['value'].strip()
+
+    # Total Issued Shares — .ccass-search-remarks .summary-value
+    issued = soup.select_one('.ccass-search-remarks .summary-value')
+    if issued:
+        result['totalIssued'] = normalize_number(issued.get_text(strip=True))
+
+    # 汇总行: Market Intermediaries / Consenting / Non-consenting / Total
+    for row in soup.select('.ccass-search-summary-table .ccass-search-datarow'):
+        category_el = row.select_one('.summary-category')
+        if not category_el:
+            continue
+        cat = category_el.get_text(' ', strip=True).lower()
+        shares_el = row.select_one('.shareholding .value')
+        count_el = row.select_one('.number-of-participants .value')
+        pct_el = row.select_one('.percent-of-participants .value')
+        shares = normalize_number(shares_el.get_text(strip=True)) if shares_el else None
+        count = normalize_number(count_el.get_text(strip=True)) if count_el else None
+        pct = normalize_number(pct_el.get_text(strip=True)) if pct_el else None
+
+        if 'market intermediaries' in cat:
+            target = result['marketIntermediaries']
+        elif 'non-consenting' in cat or 'non consenting' in cat:
+            target = result['nonConsentingInvestors']
+        elif 'consenting' in cat:
+            target = result['consentingInvestors']
+        elif cat.startswith('total'):
+            result['totalInCCASS']['shares'] = shares
+            result['totalInCCASS']['pct'] = pct
+            continue
+        else:
+            continue
+        target['shares'] = shares
+        target['count'] = count
+        target['pct'] = pct
+
+    # 参与者表: table.table-mobile-list tbody tr
+    for tr in soup.select('table.table-mobile-list tbody tr'):
+        pid_el = tr.select_one('td.col-participant-id')
+        name_el = tr.select_one('td.col-participant-name')
+        addr_el = tr.select_one('td.col-address')
+        shares_el = tr.select_one('td.col-shareholding')
+        pct_el = tr.select_one('td.col-shareholding-percent')
+        if not (pid_el and name_el and shares_el):
+            continue
+        pid = _cell_body(pid_el)
+        name = _cell_body(name_el)
+        addr = _cell_body(addr_el) if addr_el else None
+        shares = normalize_number(_cell_body(shares_el))
+        pct = normalize_number(_cell_body(pct_el)) if pct_el else None
+        if not pid or not name:
+            continue
+        result['participants'].append({
+            'id': pid,
+            'name': name,
+            'address': addr,
+            'shares': shares,
+            'pct': pct,
+        })
 
     return result
 
