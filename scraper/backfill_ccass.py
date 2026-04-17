@@ -6,14 +6,14 @@ CCASS 历史数据回填
 为每个工作日抓一次,跳过已存在的快照。
 
 用法:
-  python scraper/backfill_ccass.py              # 默认回填 365 天
-  python scraper/backfill_ccass.py 180          # 回填 180 天
-  python scraper/backfill_ccass.py 365 02680    # 指定代码
+  python scraper/backfill_ccass.py              # 默认回填 10 个工作日(约 2 周)
+  python scraper/backfill_ccass.py 30           # 回填 30 天
+  python scraper/backfill_ccass.py 10 02680     # 指定代码
 
 行为:
   - 从最近一天向前推,遇到连续 5 天 "无数据"(推断早于上市日)就停止
   - 已有的历史文件跳过,不重抓
-  - 每次请求之间延迟 2.5s,避免打扰 HKEX
+  - 每次请求之间延迟 2.5s
 """
 import os
 import sys
@@ -27,7 +27,7 @@ from scrape_ccass import fetch_ccass, save, HKT, HISTORY_DIR  # noqa: E402
 
 
 def main():
-    days = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1] else 365
+    days = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1] else 10
     stock = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] else '02680'
     delay = float(os.environ.get('BACKFILL_DELAY', '2.5'))
 
