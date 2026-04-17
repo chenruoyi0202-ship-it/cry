@@ -209,8 +209,10 @@ def get_viewstate_fields(session):
 
 def fetch_ccass(stock_code='02680', shareholding_date=None, retries=3):
     """抓取某个股票某日 CCASS 数据"""
+    if not stock_code:
+        stock_code = '02680'
     stock_code = stock_code.zfill(5)
-    if shareholding_date is None:
+    if not shareholding_date:  # None or empty string
         # 最近一个交易日 (周末回退到周五)
         now = datetime.now(HKT)
         if now.hour < 17:  # CCASS 通常 17:00 HKT 后才有当日数据
@@ -218,6 +220,7 @@ def fetch_ccass(stock_code='02680', shareholding_date=None, retries=3):
         while now.weekday() >= 5:
             now = now - timedelta(days=1)
         shareholding_date = now.strftime('%Y/%m/%d')
+    print(f'[CCASS] 请求: code={stock_code} date={shareholding_date}', flush=True)
 
     last_err = None
     for attempt in range(retries):
@@ -235,23 +238,33 @@ def fetch_ccass(stock_code='02680', shareholding_date=None, retries=3):
 
                 r = s.post(BASE_URL, data=fields, headers=HEADERS, timeout=45)
                 r.raise_for_status()
+                print(f'  响应 {r.status_code}, {len(r.text)} 字节', flush=True)
                 data = parse_ccass_page(r.text)
                 data['stockCode'] = stock_code
                 data['fetchedAt'] = int(time.time() * 1000)
                 if not data.get('shareholdingDate'):
-                    # fallback: 用请求日期
-                    d, m, y = None, None, None
                     parts = shareholding_date.split('/')
                     if len(parts) == 3:
                         y, m, d = parts
                         data['shareholdingDate'] = f'{y}-{m}-{d}'
+                print(f'  解析结果: 参与者={len(data["participants"])} '
+                      f'日期={data.get("shareholdingDate")} '
+                      f'CCASS={data["totalInCCASS"].get("shares")}',
+                      flush=True)
                 if not data['participants']:
-                    raise RuntimeError('未解析出参与者数据，页面结构可能已改')
+                    # 失败时保留原始 HTML 供诊断
+                    debug_dir = os.path.join(ROOT, 'data', 'ccass_history')
+                    os.makedirs(debug_dir, exist_ok=True)
+                    debug_path = os.path.join(debug_dir, f'_debug_{stock_code}_{int(time.time())}.html')
+                    with open(debug_path, 'w', encoding='utf-8') as f:
+                        f.write(r.text)
+                    print(f'  原始 HTML 已保存: {debug_path}', flush=True)
+                    raise RuntimeError(f'未解析出参与者数据，HTML 已保存到 {debug_path}')
                 return data
         except Exception as e:
             last_err = e
             wait = 2 ** attempt
-            print(f'  第 {attempt+1} 次尝试失败: {e}，{wait}s 后重试', file=sys.stderr)
+            print(f'  第 {attempt+1} 次尝试失败: {e}，{wait}s 后重试', file=sys.stderr, flush=True)
             time.sleep(wait)
     raise RuntimeError(f'抓取失败: {last_err}')
 
