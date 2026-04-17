@@ -21,7 +21,7 @@ import sys
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from participant_names import to_chinese, display_name
+from participant_names import to_chinese, display_name, categorize, CATEGORY_LABEL
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(ROOT, 'data')
@@ -212,100 +212,258 @@ def build_movers(changes, direction='up', limit=10):
     return out
 
 
+def aggregate_by_category(participants):
+    """聚合各类机构的持股(数 / 股 / 占比)。"""
+    agg = {k: {'count': 0, 'shares': 0, 'pct': 0.0}
+           for k in CATEGORY_LABEL}
+    for p in participants or []:
+        cat = categorize(p.get('id'), p.get('name'))
+        agg[cat]['count'] += 1
+        agg[cat]['shares'] += p.get('shares') or 0
+        agg[cat]['pct'] += p.get('pct') or 0
+    for k in agg:
+        agg[k]['pct'] = round(agg[k]['pct'], 2)
+    return agg
+
+
+def category_flow(prev_snapshot, curr_snapshot):
+    """各类机构 7 日净流入(占比变化 + 股数变化)。"""
+    if not prev_snapshot or prev_snapshot is curr_snapshot:
+        return {}
+    prev_agg = aggregate_by_category(prev_snapshot.get('participants', []))
+    curr_agg = aggregate_by_category(curr_snapshot.get('participants', []))
+    flow = {}
+    for k in CATEGORY_LABEL:
+        flow[k] = {
+            'curr_pct': curr_agg[k]['pct'],
+            'curr_shares': curr_agg[k]['shares'],
+            'curr_count': curr_agg[k]['count'],
+            'delta_pct': round(curr_agg[k]['pct'] - prev_agg[k]['pct'], 2),
+            'delta_shares': curr_agg[k]['shares'] - prev_agg[k]['shares'],
+        }
+    return flow
+
+
+def hhi_trend(snapshots, n=7):
+    """近 N 个快照的 HHI / Top1 / Top10 走势,返回方向描述。"""
+    if len(snapshots) < 3:
+        return None
+    series = snapshots[-n:] if len(snapshots) >= n else snapshots
+    hhis = [concentration(s.get('participants', []))['hhi'] for s in series]
+    top1s = [concentration(s.get('participants', []))['top1_pct_of_issued'] for s in series]
+    if len(hhis) < 2:
+        return None
+    # 简单线性方向: 末值减首值
+    hhi_change = round(hhis[-1] - hhis[0], 2)
+    top1_change = round(top1s[-1] - top1s[0], 2)
+
+    direction = '震荡' if abs(hhi_change) < 50 else ('上行' if hhi_change > 0 else '下行')
+    return {
+        'days': len(hhis),
+        'hhi_first': hhis[0],
+        'hhi_last': hhis[-1],
+        'hhi_change': hhi_change,
+        'top1_change': top1_change,
+        'direction': direction,
+    }
+
+
 def build_insights(snapshots, latest, prev_day, prev_week):
-    """产出文字形式的洞察分析段落。"""
+    """产出多维度的中文洞察。每条以 '**标题** — 内容' 形式。"""
     insights = []
-    conc_now = concentration(latest.get('participants', []))
+    participants = latest.get('participants', [])
+    conc_now = concentration(participants)
+    cat_now = aggregate_by_category(participants)
+    cat_flow = category_flow(prev_week, latest) if prev_week and prev_week is not latest else {}
+    trend = hhi_trend(snapshots)
 
-    # 1) 集中度变化
-    if prev_week and prev_week is not latest:
+    # ============ 1) 集中度 & 趋势 ============
+    label = concentration_label(conc_now['hhi'])
+    line1 = (
+        f'**集中度 · {label}** — HHI {conc_now["hhi"]},'
+        f'第一大户 {conc_now["top1_pct_of_issued"]}%、'
+        f'Top 5 {conc_now["top5_pct_of_issued"]}%、'
+        f'Top 10 {conc_now["top10_pct_of_issued"]}%。'
+    )
+    if trend:
+        line1 += (
+            f'近 {trend["days"]} 日 HHI 由 {trend["hhi_first"]} → {trend["hhi_last"]}'
+            f'({fmt_signed_pct(trend["hhi_change"]).replace("%","")}),整体 **{trend["direction"]}**。'
+        )
+    elif prev_week and prev_week is not latest:
         conc_prev = concentration(prev_week.get('participants', []))
-        d_top1 = round(conc_now['top1_pct_of_issued'] - conc_prev['top1_pct_of_issued'], 2)
-        d_top10 = round(conc_now['top10_pct_of_issued'] - conc_prev['top10_pct_of_issued'], 2)
         d_hhi = round(conc_now['hhi'] - conc_prev['hhi'], 2)
-        trend_word = '加剧' if d_hhi > 100 else ('缓解' if d_hhi < -100 else '基本稳定')
-        insights.append(
-            f'**集中度 · {concentration_label(conc_now["hhi"])}** — HHI {conc_now["hhi"]}({fmt_signed_pct(d_hhi).replace("%","")}',
+        d_top1 = round(conc_now['top1_pct_of_issued'] - conc_prev['top1_pct_of_issued'], 2)
+        line1 += f'近 7 日 HHI {fmt_signed_pct(d_hhi).replace("%","")}、Top 1 {fmt_signed_pct(d_top1)}。'
+    insights.append(line1)
+
+    # ============ 2) 筹码结构(按机构性质) ============
+    rows = []
+    order = ['custodian', 'retail', 'china', 'international', 'hk_local']
+    for k in order:
+        v = cat_now[k]
+        if v['count'] == 0:
+            continue
+        flow = cat_flow.get(k, {})
+        flow_str = ''
+        if flow:
+            d_pct = flow.get('delta_pct', 0)
+            if d_pct != 0:
+                flow_str = f'(7日 {fmt_signed_pct(d_pct)})'
+        rows.append(f'{CATEGORY_LABEL[k]} **{v["pct"]}%** ({v["count"]}家){flow_str}')
+    insights.append('**筹码结构** — ' + ';'.join(rows))
+
+    # ============ 3) 散户 vs 机构方向 ============
+    if cat_flow:
+        retail_d = cat_flow.get('retail', {}).get('delta_pct', 0)
+        custodian_d = cat_flow.get('custodian', {}).get('delta_pct', 0)
+        china_d = cat_flow.get('china', {}).get('delta_pct', 0)
+        # 大户 = 托管 + 中资 + 外资
+        big_d = (
+            cat_flow.get('custodian', {}).get('delta_pct', 0)
+            + cat_flow.get('china', {}).get('delta_pct', 0)
+            + cat_flow.get('international', {}).get('delta_pct', 0)
         )
-        insights[-1] += (
-            f'),Top 10 占比 {conc_now["top10_pct_of_issued"]}%({fmt_signed_pct(d_top10)}),'
-            f'第一大户占 {conc_now["top1_pct_of_issued"]}%({fmt_signed_pct(d_top1)})。'
-            f'近 7 日集中度 **{trend_word}**。'
-        )
-    else:
+        big_d = round(big_d, 2)
+        verdict = None
+        if retail_d > 0.1 and big_d < -0.1:
+            verdict = '⚠️ **疑似派发** — 散户加仓而大户(托管/中资/外资)在减仓,常见于阶段性高位'
+        elif retail_d < -0.1 and big_d > 0.1:
+            verdict = '✅ **疑似吸纳** — 散户减仓而大户在加仓,常见于阶段性低位'
+        elif retail_d > 0.1 and big_d > 0.1:
+            verdict = '📈 **共识看多** — 散户和机构同步加仓'
+        elif retail_d < -0.1 and big_d < -0.1:
+            verdict = '📉 **共识看空** — 散户和机构同步减仓'
+        else:
+            verdict = '➖ **横盘整理** — 散户与大户均无明显方向,筹码相对稳定'
         insights.append(
-            f'**集中度 · {concentration_label(conc_now["hhi"])}** — HHI {conc_now["hhi"]},'
-            f'Top 10 占比 {conc_now["top10_pct_of_issued"]}%,第一大户占 '
-            f'{conc_now["top1_pct_of_issued"]}%。(暂无历史对比数据)'
+            f'**资金性质** — 散户 {fmt_signed_pct(retail_d)}、大户合计 {fmt_signed_pct(big_d)};{verdict}'
         )
 
-    # 2) 新进 Top 20 / 退出 Top 20
+    # ============ 4) 大户(Top 3)行为 ============
+    top_n = sorted(participants, key=lambda p: p.get('pct') or 0, reverse=True)[:3]
     if prev_week and prev_week is not latest:
-        prev_top20_ids = set()
-        for p in sorted(prev_week.get('participants', []),
-                        key=lambda p: p.get('pct') or 0, reverse=True)[:20]:
-            prev_top20_ids.add(p.get('id') or p.get('name'))
-        curr_top20_list = sorted(latest.get('participants', []),
-                                 key=lambda p: p.get('pct') or 0, reverse=True)[:20]
+        prev_idx = index_by_key(prev_week.get('participants', []))
+        big_lines = []
+        for p in top_n:
+            key = p.get('id') or p.get('name')
+            prev_p = prev_idx.get(key)
+            if not prev_p:
+                continue
+            d_pct = round((p.get('pct') or 0) - (prev_p.get('pct') or 0), 4)
+            d_shares = (p.get('shares') or 0) - (prev_p.get('shares') or 0)
+            if d_pct == 0:
+                act = '持股不变'
+            elif d_pct > 0:
+                act = f'加仓 {fmt_signed_pct(d_pct)} ({fmt_signed_shares(d_shares)})'
+            else:
+                act = f'减仓 {fmt_signed_pct(d_pct)} ({fmt_signed_shares(d_shares)})'
+            big_lines.append(
+                f'{to_chinese(p.get("id"), p.get("name"))}({p.get("pct")}%):{act}'
+            )
+        if big_lines:
+            insights.append('**Top 3 大户动向** — ' + ';'.join(big_lines))
+
+    # ============ 5) 流通盘估算 ============
+    total_issued = latest.get('totalIssued') or 0
+    ccass_shares = (latest.get('totalInCCASS') or {}).get('shares') or 0
+    top1 = top_n[0] if top_n else None
+    if total_issued and ccass_shares and top1:
+        # 假设 top1(若为托管或大额单户)是大股东托管,真实可流通 ≈ CCASS - top1
+        top1_shares = top1.get('shares') or 0
+        free_float = ccass_shares - top1_shares
+        free_float_pct = round(free_float / total_issued * 100, 2)
+        top1_name = to_chinese(top1.get('id'), top1.get('name'))
+        insights.append(
+            f'**流通盘估算** — 假设 {top1_name}({top1.get("pct")}%) 为大股东/控制人托管,'
+            f'真实可交易盘 ≈ {fmt_shares(free_float)} 股(约 **{free_float_pct}%**)。'
+            f'注:仅为推断,实际控股结构以披露文件为准。'
+        )
+
+    # ============ 6) 新进 / 退出 Top 20 ============
+    if prev_week and prev_week is not latest:
+        prev_top20_ids = {(p.get('id') or p.get('name')) for p in
+                          sorted(prev_week.get('participants', []),
+                                 key=lambda p: p.get('pct') or 0, reverse=True)[:20]}
+        curr_top20_list = sorted(participants, key=lambda p: p.get('pct') or 0, reverse=True)[:20]
         curr_top20_ids = {(p.get('id') or p.get('name')) for p in curr_top20_list}
 
         new_in = [p for p in curr_top20_list
                   if (p.get('id') or p.get('name')) not in prev_top20_ids]
         exit_out_ids = prev_top20_ids - curr_top20_ids
 
+        movements = []
         if new_in:
             names = '、'.join(
-                f'**{to_chinese(p.get("id"), p.get("name"))}** ({fmt_pct(p.get("pct"))})'
+                f'{to_chinese(p.get("id"), p.get("name"))}({fmt_pct(p.get("pct"))})'
                 for p in new_in[:5]
             )
-            insights.append(f'**新进 Top 20** — {names}')
+            movements.append(f'🆕 新进 {len(new_in)} 家:{names}')
         if exit_out_ids:
             prev_idx = index_by_key(prev_week.get('participants', []))
             names = '、'.join(
-                f'**{to_chinese(k, prev_idx[k].get("name"))}**'
+                to_chinese(k, prev_idx[k].get('name'))
                 for k in list(exit_out_ids)[:5]
             )
-            insights.append(f'**退出 Top 20** — {names}')
+            movements.append(f'🚪 退出 {len(exit_out_ids)} 家:{names}')
+        if movements:
+            insights.append('**Top 20 进出** — ' + ';'.join(movements))
 
-    # 3) 异常信号(单日 ≥ 1% 或 7 日 ≥ 2%)
+    # ============ 7) 异常信号(单日 ≥1% 或 7 日 ≥2%) ============
     alerts = []
+    seen_names = set()
     if prev_day and prev_day is not latest:
-        for c in diff_snapshots(prev_day, latest):
+        for c in sorted(diff_snapshots(prev_day, latest),
+                        key=lambda x: -abs(x['delta_pct'])):
             if abs(c['delta_pct']) >= 1.0:
                 verb = '增仓' if c['delta_pct'] > 0 else '减仓'
+                cn = to_chinese(c.get('id'), c.get('name'))
                 alerts.append(
-                    f'**{to_chinese(c.get("id"), c.get("name"))}** 单日{verb} '
-                    f'**{fmt_signed_pct(c["delta_pct"])}**({fmt_signed_shares(c["delta_shares"])} 股)'
+                    f'**{cn}** 单日{verb} {fmt_signed_pct(c["delta_pct"])}'
+                    f'({fmt_signed_shares(c["delta_shares"])})'
                 )
+                seen_names.add(cn)
     if prev_week and prev_week is not latest:
-        for c in diff_snapshots(prev_week, latest):
-            if abs(c['delta_pct']) >= 2.0 and not any(
-                to_chinese(c.get('id'), c.get('name')) in a for a in alerts
-            ):
-                verb = '累计增仓' if c['delta_pct'] > 0 else '累计减仓'
-                alerts.append(
-                    f'**{to_chinese(c.get("id"), c.get("name"))}** 近 7 日{verb} '
-                    f'**{fmt_signed_pct(c["delta_pct"])}**'
-                )
+        for c in sorted(diff_snapshots(prev_week, latest),
+                        key=lambda x: -abs(x['delta_pct'])):
+            cn = to_chinese(c.get('id'), c.get('name'))
+            if abs(c['delta_pct']) >= 2.0 and cn not in seen_names:
+                verb = '累计加仓' if c['delta_pct'] > 0 else '累计减仓'
+                alerts.append(f'**{cn}** 7 日{verb} {fmt_signed_pct(c["delta_pct"])}')
+                seen_names.add(cn)
     if alerts:
-        insights.append('**异常信号** — ' + ';'.join(alerts[:8]))
+        insights.append('**异常信号** — ' + ';'.join(alerts[:6]))
 
-    # 4) 整体判断
+    # ============ 8) 整体判断 & 风险提示 ============
     judgement = []
-    top1 = conc_now['top1_pct_of_issued']
-    if top1 > 50:
-        judgement.append(f'第一大户持股 {top1}%,公众流通盘极薄,股价易被单家机构行为主导')
-    elif top1 > 30:
-        judgement.append(f'第一大户持股 {top1}%,筹码较为集中,需关注其动向')
+    top1_pct = conc_now['top1_pct_of_issued']
+    if top1_pct > 70:
+        judgement.append(
+            f'第一大户独占 {top1_pct}%,典型"老千股 / 高度控盘"特征,'
+            '股价对该机构行为高度敏感'
+        )
+    elif top1_pct > 50:
+        judgement.append(f'第一大户持股 {top1_pct}%,筹码极度集中,公众流通盘很薄')
+    elif top1_pct > 30:
+        judgement.append(f'第一大户持股 {top1_pct}%,筹码较为集中')
+
     if conc_now['top10_pct_of_issued'] > 90:
-        judgement.append('Top 10 吃掉九成以上筹码,散户实际可交易盘极少')
+        judgement.append('Top 10 吃掉九成以上,真实可交易盘十分稀缺,买卖盘容易出现大幅波动')
+
     ccass_pct = (latest.get('totalInCCASS') or {}).get('pct') or 0
     if ccass_pct < 50:
         judgement.append(
-            f'CCASS 存管占比仅 {ccass_pct}%,大部分股份未进入中央结算(可能在大股东或信托手中)'
+            f'CCASS 存管占比仅 {ccass_pct}%,大部分股份未在中央结算,可能在大股东或信托手中'
         )
+
+    if cat_now.get('retail', {}).get('pct', 0) > 30:
+        judgement.append(
+            f'散户/互联网经纪持股达 {cat_now["retail"]["pct"]}%,'
+            '散户参与度高,情绪驱动明显'
+        )
+
     if judgement:
-        insights.append('**整体判断** — ' + ';'.join(judgement))
+        insights.append('**整体判断与风险** — ' + ';'.join(judgement))
 
     return insights
 
