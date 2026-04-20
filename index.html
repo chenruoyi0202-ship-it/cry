@@ -3125,38 +3125,35 @@
 
         // --- Preset plans for 02680 ---
         function loadPresetPlans() {
+            if (localStorage.getItem('cry_presets_loaded')) return;
             const plans = getPlans();
-            if (plans['02680 方案A·一步到位'] && plans['02680 方案B·分批出货']) return;
 
             const base = { stock: '02680 INNOVAX', costPrice: '11.70', totalShares: '74000', market: 'HK', lotSize: '2000', feeRate: '' };
 
-            if (!plans['02680 方案A·一步到位']) {
-                plans['02680 方案A·一步到位'] = {
-                    ...base,
-                    manualPrice: '14.58',
-                    records: [
-                        { price: 16.00, shares: 74000, type: 'plan' }
-                    ],
-                    savedAt: '2026-04-20T00:00:00Z'
-                };
-            }
+            plans['02680 方案A·一步到位'] = {
+                ...base,
+                manualPrice: '14.58',
+                records: [
+                    { price: 16.00, shares: 74000, type: 'plan' }
+                ],
+                savedAt: '2026-04-20T00:00:00Z'
+            };
 
-            if (!plans['02680 方案B·分批出货']) {
-                plans['02680 方案B·分批出货'] = {
-                    ...base,
-                    manualPrice: '14.58',
-                    records: [
-                        { price: 14.50, shares: 18000, type: 'plan' },
-                        { price: 15.50, shares: 20000, type: 'plan' },
-                        { price: 16.50, shares: 22000, type: 'plan' },
-                        { price: 17.50, shares: 10000, type: 'plan' },
-                        { price: 18.50, shares: 4000,  type: 'plan' },
-                    ],
-                    savedAt: '2026-04-20T00:00:01Z'
-                };
-            }
+            plans['02680 方案B·分批出货'] = {
+                ...base,
+                manualPrice: '14.58',
+                records: [
+                    { price: 14.50, shares: 18000, type: 'plan' },
+                    { price: 15.50, shares: 20000, type: 'plan' },
+                    { price: 16.50, shares: 22000, type: 'plan' },
+                    { price: 17.50, shares: 10000, type: 'plan' },
+                    { price: 18.50, shares: 4000,  type: 'plan' },
+                ],
+                savedAt: '2026-04-20T00:00:01Z'
+            };
 
             localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+            localStorage.setItem('cry_presets_loaded', '1');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
