@@ -22,7 +22,7 @@
     <meta name="theme-color" content="#050505">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -141,8 +141,7 @@
             padding: 5px 14px;
             border-radius: 20px;
             margin: 0 auto 12px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
+            letter-spacing: 3px;
             border: 1px solid rgba(202,138,4,0.12);
         }
         .badge::before {
@@ -156,14 +155,15 @@
 
         .header { text-align: center; margin-bottom: 22px; }
         .header h1 {
+            font-family: 'Noto Serif SC', serif;
             font-size: 22px;
             font-weight: 700;
             color: #fff;
             margin-bottom: 6px;
-            letter-spacing: 3px;
+            letter-spacing: 6px;
             text-shadow: 0 0 30px rgba(202,138,4,0.15);
         }
-        .header .sub { font-size: 12px; color: #52607A; line-height: 1.6; }
+        .header .sub { font-size: 12px; color: #52607A; line-height: 1.6; letter-spacing: 2px; }
 
         /* Real-time price */
         .realtime-bar {
@@ -203,14 +203,14 @@
 
         /* Section titles */
         .section-title {
+            font-family: 'Noto Serif SC', serif;
             font-size: 13px;
-            font-weight: 700;
+            font-weight: 600;
             color: #8896AB;
             margin-bottom: 14px;
             padding-left: 12px;
             border-left: 2px solid #CA8A04;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            letter-spacing: 3px;
         }
 
         /* Input Groups */
@@ -345,12 +345,12 @@
             padding: 3px 10px;
             border-radius: 6px;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 2px;
         }
         .tag-done { background: rgba(76,175,80,0.15); color: #4caf50; }
         .tag-plan { background: rgba(202,138,4,0.15); color: #FBBF24; }
 
-        .rec-price { font-size: 18px; font-weight: 700; color: #F8FAFC; }
+        .rec-price { font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 700; color: #F8FAFC; }
 
         .rec-pct { display: flex; gap: 6px; }
         .rec-pct span {
@@ -472,13 +472,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 0;
+            padding: 8px 0;
             font-size: 13px;
             color: #64748B;
             border-bottom: 1px solid rgba(255,255,255,0.04);
+            letter-spacing: 1px;
         }
         .result-row:last-child { border-bottom: none; }
-        .result-row .rv { color: #E2E8F0; font-weight: 600; }
+        .result-row .rv { color: #E2E8F0; font-weight: 600; font-variant-numeric: tabular-nums; }
 
         .result-big {
             text-align: center;
@@ -486,8 +487,9 @@
             border-bottom: 1px solid rgba(255,255,255,0.06);
             margin-bottom: 12px;
         }
-        .result-big .rb-label { font-size: 12px; color: #64748B; margin-bottom: 4px; }
+        .result-big .rb-label { font-size: 12px; color: #64748B; margin-bottom: 4px; letter-spacing: 3px; }
         .result-big .rb-value {
+            font-family: 'Noto Serif SC', serif;
             font-size: 36px;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
@@ -842,9 +844,11 @@
         }
         .auth-box h2 {
             text-align: center;
+            font-family: 'Noto Serif SC', serif;
             font-size: 20px;
             color: #F8FAFC;
             margin-bottom: 20px;
+            letter-spacing: 4px;
         }
         .auth-box .field { margin-bottom: 14px; }
         .auth-box .field label { font-size: 13px; color: #94A3B8; }
@@ -937,12 +941,12 @@
         .compare-table .ct-header {
             background: rgba(202,138,4,0.08);
             color: #FBBF24;
+            font-family: 'Noto Serif SC', serif;
             font-weight: 700;
             font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 3px;
         }
-        .compare-table .ct-label { color: #64748B; font-weight: 500; }
+        .compare-table .ct-label { color: #64748B; font-weight: 500; letter-spacing: 2px; }
         .compare-table .ct-value { color: #F1F5F9; font-weight: 700; font-variant-numeric: tabular-nums; }
         .compare-table .ct-value.pos { color: #4caf50; }
         .compare-table .ct-value.neg { color: #f44336; }
@@ -2968,7 +2972,44 @@
             refreshTagBar();
         };
 
+        // --- Preset plans for 02680 ---
+        function loadPresetPlans() {
+            const plans = getPlans();
+            if (plans['02680 方案A·一步到位'] && plans['02680 方案B·分批出货']) return;
+
+            const base = { stock: '02680 INNOVAX', costPrice: '11.70', totalShares: '74000', market: 'HK', lotSize: '2000', feeRate: '' };
+
+            if (!plans['02680 方案A·一步到位']) {
+                plans['02680 方案A·一步到位'] = {
+                    ...base,
+                    manualPrice: '14.58',
+                    records: [
+                        { price: 16.00, shares: 74000, type: 'plan' }
+                    ],
+                    savedAt: '2026-04-20T00:00:00Z'
+                };
+            }
+
+            if (!plans['02680 方案B·分批出货']) {
+                plans['02680 方案B·分批出货'] = {
+                    ...base,
+                    manualPrice: '14.58',
+                    records: [
+                        { price: 14.50, shares: 18000, type: 'plan' },
+                        { price: 15.50, shares: 20000, type: 'plan' },
+                        { price: 16.50, shares: 22000, type: 'plan' },
+                        { price: 17.50, shares: 10000, type: 'plan' },
+                        { price: 18.50, shares: 4000,  type: 'plan' },
+                    ],
+                    savedAt: '2026-04-20T00:00:01Z'
+                };
+            }
+
+            localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans));
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            loadPresetPlans();
             refreshPlanSelect();
             refreshTagBar();
             fetchFxRates();
