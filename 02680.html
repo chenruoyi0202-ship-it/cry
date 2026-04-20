@@ -424,28 +424,65 @@ const SYNC_DATA_PATH = 'data/stock_02680_encrypted.json';
 // ==================== Storage ====================
 function loadAnalyses() { try { analyses = JSON.parse(localStorage.getItem(ANALYSES_KEY)) || []; } catch { analyses = []; } }
 function dedupeAnalyses(list) {
-  // Dedupe by date + body hash, keep the one with earlier createdAt (original)
-  const map = new Map();
+  // First pass: dedupe by ID (keep newer updatedAt). Handles edits.
+  const byId = new Map();
   for (const a of list) {
+    if (!a.id) continue;
+    const existing = byId.get(a.id);
+    if (!existing || (a.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byId.set(a.id, a);
+    }
+  }
+  // Second pass: dedupe by content (date + body prefix). Handles accidental dupes
+  // created before tombstones were in place.
+  const map = new Map();
+  for (const a of byId.values()) {
     const key = (a.date || '') + '|' + (a.body || '').substring(0, 80);
     const existing = map.get(key);
-    if (!existing || (a.createdAt || 0) < (existing.createdAt || 0)) {
+    if (!existing || (a.updatedAt || 0) > (existing.updatedAt || 0)) {
       map.set(key, a);
     }
   }
   return Array.from(map.values());
 }
 function dedupeEvents(list) {
-  // Dedupe by title + description
-  const map = new Map();
+  // Dedupe by ID first (keep newer updatedAt), then by title.
+  const byId = new Map();
   for (const e of list) {
-    const key = (e.title || '') + '|' + (e.description || '').substring(0, 80);
-    const existing = map.get(key);
-    if (!existing || (e.createdAt || 0) < (existing.createdAt || 0)) {
-      map.set(key, e);
+    if (!e.id) continue;
+    const existing = byId.get(e.id);
+    if (!existing || (e.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byId.set(e.id, e);
     }
   }
-  return Array.from(map.values());
+  const byTitle = new Map();
+  for (const e of byId.values()) {
+    const t = e.title || '';
+    const existing = byTitle.get(t);
+    if (!existing || (e.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byTitle.set(t, e);
+    }
+  }
+  return Array.from(byTitle.values());
+}
+function dedupeTimeline(list) {
+  const byId = new Map();
+  for (const t of list) {
+    if (!t.id) continue;
+    const existing = byId.get(t.id);
+    if (!existing || (t.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byId.set(t.id, t);
+    }
+  }
+  const byTitle = new Map();
+  for (const t of byId.values()) {
+    const title = t.title || '';
+    const existing = byTitle.get(title);
+    if (!existing || (t.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byTitle.set(title, t);
+    }
+  }
+  return Array.from(byTitle.values());
 }
 function saveAnalyses() { localStorage.setItem(ANALYSES_KEY, JSON.stringify(analyses)); }
 function loadEvents() { try { events = JSON.parse(localStorage.getItem(EVENTS_KEY)) || []; } catch { events = []; } }
@@ -2352,13 +2389,7 @@ async function pullFromCloud() {
   if (parsed.timeline) {
     try {
       const cloudTimeline = await decryptData(parsed.timeline, syncConfig.password);
-      const map = new Map();
-      [...timeline, ...cloudTimeline].forEach(t => {
-        const key = (t.title || '') + '|' + (t.date || '');
-        const existing = map.get(key);
-        if (!existing || (t.updatedAt || 0) > (existing.updatedAt || 0)) map.set(key, t);
-      });
-      timeline = Array.from(map.values()).filter(t => !deletedIds.has(t.id));
+      timeline = dedupeTimeline([...timeline, ...cloudTimeline]).filter(t => !deletedIds.has(t.id));
       saveTimelineStorage();
     } catch {}
   }
@@ -2594,7 +2625,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const beforeA = analyses.length, beforeE = events.length, beforeT = timeline.length;
   analyses = dedupeAnalyses(analyses).filter(a => !deletedIds.has(a.id));
   events = dedupeEvents(events).filter(e => !deletedIds.has(e.id));
-  timeline = timeline.filter(t => !deletedIds.has(t.id));
+  timeline = dedupeTimeline(timeline).filter(t => !deletedIds.has(t.id));
   if (timeline.length !== beforeT) saveTimelineStorage();
   let tagged = 0;
   analyses.forEach(a => {
