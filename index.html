@@ -1471,9 +1471,17 @@
             list.querySelectorAll('.record-item').forEach(el => el.remove());
 
             const costPrice = parseFloat(document.getElementById('costPrice').value) || 0;
+            const totalShares = parseInt(document.getElementById('totalShares').value) || 0;
+            const totalCost = costPrice * totalShares;
+            const cur = getCurrency();
 
+            let accRev = 0, accSh = 0;
             records.forEach((rec, i) => {
-                const profit = costPrice > 0 ? (rec.price - costPrice) * rec.shares : 0;
+                accRev += rec.price * rec.shares;
+                accSh += rec.shares;
+                const remSh = totalShares - accSh;
+                // Floating profit at this node = accumulated revenue + remaining valued at this price - total cost
+                const floatingProfit = costPrice > 0 && totalShares > 0 ? (accRev + remSh * rec.price) - totalCost : 0;
                 const vsCost = costPrice > 0 ? ((rec.price - costPrice) / costPrice * 100) : null;
                 const vsNow = currentRtPrice ? ((rec.price - currentRtPrice) / currentRtPrice * 100) : null;
                 const div = document.createElement('div');
@@ -1485,7 +1493,7 @@
                         <div class="record-top-left">
                             <span class="drag-handle" title="拖拽排序"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg></span>
                             <span class="record-tag ${rec.type === 'done' ? 'tag-done' : 'tag-plan'}">${rec.type === 'done' ? '已卖出' : '计划卖出'}</span>
-                            <span class="rec-price">${rec.price.toFixed(3)}</span>
+                            <span class="rec-price">${rec.price.toFixed(3)} <small style="color:#64748B;font-size:11px">${cur}</small></span>
                             <span class="rec-pct">
                                 ${vsCost !== null ? `<span class="${vsCost >= 0 ? 'pos' : 'neg'}">成本${vsCost >= 0 ? '+' : ''}${vsCost.toFixed(1)}%</span>` : ''}
                                 ${vsNow !== null ? `<span class="${vsNow >= 0 ? 'pos' : 'neg'}">现价${vsNow >= 0 ? '+' : ''}${vsNow.toFixed(1)}%</span>` : ''}
@@ -1499,7 +1507,7 @@
                     <div class="record-bottom">
                         <span class="rec-details">
                             <span class="rec-shares">${rec.shares.toLocaleString()} 股</span>
-                            <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) + ' <small style="color:#475569">' + fmtCNY(profit) + '</small>' : '--'}</span>
+                            <span class="rec-profit ${floatingProfit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? '浮盈 ' + (floatingProfit >= 0 ? '+' : '') + formatMoney(floatingProfit) + ' ' + cur + ' <small style="color:#475569">' + fmtCNY(floatingProfit) + '</small>' : '--'}</span>
                         </span>
                     </div>
                 `;
@@ -1651,10 +1659,10 @@
                                 <div class="bv-item ${r.type === 'done' ? 'bv-done' : 'bv-plan'}">
                                     <div class="bv-num">${r.type === 'done' ? '✓' : (i + 1)}</div>
                                     <div class="bv-info">
-                                        <strong>${r.price.toFixed(3)}</strong> × ${r.shares.toLocaleString()}股
-                                        = ${formatMoney(r.price * r.shares)}
+                                        <strong>${r.price.toFixed(3)}</strong> ${cur} × ${r.shares.toLocaleString()}股
+                                        = ${formatMoney(r.price * r.shares)} ${cur}
                                         <div style="font-size:11px;color:#64748B;margin-top:2px;">
-                                            盈亏 <span style="color:${batchProfit >= 0 ? '#4caf50' : '#f44336'}">${batchProfit >= 0 ? '+' : ''}${formatMoney(batchProfit)}</span>
+                                            盈亏 <span style="color:${batchProfit >= 0 ? '#4caf50' : '#f44336'}">${batchProfit >= 0 ? '+' : ''}${formatMoney(batchProfit)} ${cur}</span>
                                             <span style="color:#475569">${fmtCNY(batchProfit)}</span>
                                         </div>
                                         <div>
@@ -1663,7 +1671,7 @@
                                     </div>
                                     <div style="text-align:right;">
                                         <div class="bv-profit ${floatingProfit >= 0 ? 'pos' : 'neg'}">
-                                            ${floatingProfit >= 0 ? '+' : ''}${formatMoney(floatingProfit)}
+                                            ${floatingProfit >= 0 ? '+' : ''}${formatMoney(floatingProfit)} ${cur}
                                         </div>
                                         <div style="font-size:10px;color:#475569;">浮盈 ${fmtCNY(floatingProfit)}</div>
                                     </div>
@@ -1677,7 +1685,7 @@
                                 剩余 <strong>${remainShares.toLocaleString()}股</strong> 按实时价 ${currentRtPrice.toFixed(3)}
                             </div>
                             <div class="bv-profit ${remainProfit >= 0 ? 'pos' : 'neg'}">
-                                ${remainProfit >= 0 ? '+' : ''}${formatMoney(remainProfit)} <small style="color:#475569">${fmtCNY(remainProfit)}</small>
+                                ${remainProfit >= 0 ? '+' : ''}${formatMoney(remainProfit)} ${cur} <small style="color:#475569">${fmtCNY(remainProfit)}</small>
                             </div>
                         </div>` : ''}
                     </div>` : ''}
@@ -2114,8 +2122,16 @@
             empty.style.display = 'none';
             list.querySelectorAll('.record-item').forEach(el => el.remove());
 
+            const totalSharesQ = parseInt(document.getElementById('totalShares').value) || 0;
+            const totalCostQ = costPrice * totalSharesQ;
+            const curQ = getCurrency();
+            let accRevQ = 0, accShQ = 0;
+
             records.forEach((rec) => {
-                const profit = costPrice > 0 ? (rec.price - costPrice) * rec.shares : 0;
+                accRevQ += rec.price * rec.shares;
+                accShQ += rec.shares;
+                const remShQ = totalSharesQ - accShQ;
+                const floatingProfit = costPrice > 0 && totalSharesQ > 0 ? (accRevQ + remShQ * rec.price) - totalCostQ : 0;
                 const vsCost = costPrice > 0 ? ((rec.price - costPrice) / costPrice * 100) : null;
                 const vsNow = currentRtPrice ? ((rec.price - currentRtPrice) / currentRtPrice * 100) : null;
                 const div = document.createElement('div');
@@ -2127,7 +2143,7 @@
                         <div class="record-top-left">
                             <span class="drag-handle" title="拖拽排序"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg></span>
                             <span class="record-tag ${rec.type === 'done' ? 'tag-done' : 'tag-plan'}">${rec.type === 'done' ? '已卖出' : '计划卖出'}</span>
-                            <span class="rec-price">${rec.price.toFixed(3)}</span>
+                            <span class="rec-price">${rec.price.toFixed(3)} <small style="color:#64748B;font-size:11px">${curQ}</small></span>
                             <span class="rec-pct">
                                 ${vsCost !== null ? `<span class="${vsCost >= 0 ? 'pos' : 'neg'}">成本${vsCost >= 0 ? '+' : ''}${vsCost.toFixed(1)}%</span>` : ''}
                                 ${vsNow !== null ? `<span class="${vsNow >= 0 ? 'pos' : 'neg'}">现价${vsNow >= 0 ? '+' : ''}${vsNow.toFixed(1)}%</span>` : ''}
@@ -2141,7 +2157,7 @@
                     <div class="record-bottom">
                         <span class="rec-details">
                             <span class="rec-shares">${rec.shares.toLocaleString()} 股</span>
-                            <span class="rec-profit ${profit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? (profit >= 0 ? '+' : '') + formatMoney(profit) + ' <small style="color:#475569">' + fmtCNY(profit) + '</small>' : '--'}</span>
+                            <span class="rec-profit ${floatingProfit >= 0 ? 'pos' : 'neg'}">${costPrice > 0 ? '浮盈 ' + (floatingProfit >= 0 ? '+' : '') + formatMoney(floatingProfit) + ' ' + curQ + ' <small style="color:#475569">' + fmtCNY(floatingProfit) + '</small>' : '--'}</span>
                         </span>
                     </div>
                 `;
