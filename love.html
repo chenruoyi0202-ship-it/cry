@@ -109,7 +109,58 @@
 
         /* Header */
         .app-header { text-align: center; padding: 24px 0 0; position: relative; }
-        .couple-names { font-size: 28px; font-weight: 700; color: var(--accent); text-transform: lowercase; position: relative; }
+        .couple-names { font-size: 28px; font-weight: 700; color: var(--accent); text-transform: lowercase; position: relative; display: none; }
+
+        /* Hero Homepage */
+        .hero {
+            text-align: center; padding: 40px 20px 32px; position: relative;
+            background: linear-gradient(180deg, rgba(192,132,252,0.08) 0%, transparent 100%);
+            border-radius: 0 0 32px 32px; margin: 0 -16px 20px;
+        }
+        .hero-avatars {
+            display: flex; justify-content: center; align-items: center; gap: 16px;
+            margin-bottom: 16px;
+        }
+        .hero-avatar {
+            width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--accent); box-shadow: 0 4px 16px rgba(192,132,252,0.3);
+        }
+        .hero-avatar-placeholder {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; color: #fff; font-weight: 700;
+            border: 3px solid var(--card); box-shadow: 0 4px 16px rgba(192,132,252,0.3);
+        }
+        .hero-heart { font-size: 24px; animation: heartbeat 1.5s ease-in-out infinite; }
+        .hero-names {
+            font-size: 24px; font-weight: 700; color: var(--text);
+            margin-bottom: 4px;
+        }
+        .hero-days {
+            font-size: 42px; font-weight: 800; color: var(--accent);
+            line-height: 1.1; margin: 8px 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero-days-label { font-size: 14px; color: var(--text2); margin-bottom: 16px; }
+        .hero-next {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 10px 20px; font-size: 13px; color: var(--text2);
+            box-shadow: 0 2px 12px var(--card-shadow);
+        }
+        .hero-next-icon { font-size: 18px; }
+        .hero-next-days { font-weight: 700; color: var(--accent); }
+        .hero-recent {
+            margin-top: 16px; padding: 12px 16px;
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+            text-align: left; font-size: 13px; color: var(--text2);
+            box-shadow: 0 2px 8px var(--card-shadow); cursor: pointer;
+        }
+        .hero-recent:hover { box-shadow: 0 4px 16px var(--card-shadow); }
+        .hero-recent-title { font-weight: 600; color: var(--text); margin-bottom: 2px; }
+        .hero-recent-date { font-size: 11px; color: var(--text3); }
 
         /* Tab Bar */
         .tab-bar {
@@ -707,6 +758,26 @@
             <div class="couple-names" id="coupleNames"></div>
             <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
         </header>
+
+        <!-- Hero Homepage -->
+        <div class="hero" id="heroSection">
+            <div class="hero-avatars">
+                <div class="hero-avatar-placeholder" id="heroAvatar1">C</div>
+                <div class="hero-heart">💕</div>
+                <div class="hero-avatar-placeholder" id="heroAvatar2">X</div>
+            </div>
+            <div class="hero-names" id="heroNames">CRY & XYX</div>
+            <div class="hero-days" id="heroDays">--</div>
+            <div class="hero-days-label" id="heroDaysLabel">在一起的日子</div>
+            <div class="hero-next" id="heroNext" style="display:none;">
+                <span class="hero-next-icon">🎯</span>
+                <span id="heroNextText"></span>
+            </div>
+            <div class="hero-recent" id="heroRecent" style="display:none;" onclick="switchTab(1)">
+                <div class="hero-recent-date" id="heroRecentDate"></div>
+                <div class="hero-recent-title" id="heroRecentTitle"></div>
+            </div>
+        </div>
 
         <div class="tab-bar">
             <button class="tab-btn active" onclick="switchTab(0)">纪念日</button>
@@ -1447,6 +1518,36 @@
     function renderHeader() {
         const c = appData.couple;
         document.getElementById('coupleNames').textContent = c.person1 + ' \u2764\uFE0F ' + c.person2;
+        renderHero();
+    }
+
+    function renderHero() {
+        var c = appData.couple, now = new Date();
+        document.getElementById('heroNames').textContent = c.person1 + ' & ' + c.person2;
+        document.getElementById('heroAvatar1').textContent = (c.person1 || 'C')[0].toUpperCase();
+        document.getElementById('heroAvatar2').textContent = (c.person2 || 'X')[0].toUpperCase();
+        var tog = appData.anniversaries.find(function(a){ return a.type === 'countup'; });
+        if (tog) {
+            document.getElementById('heroDays').textContent = daysBetween(new Date(tog.date), now);
+            document.getElementById('heroDaysLabel').textContent = tog.title;
+        }
+        var ups = appData.anniversaries
+            .filter(function(a){ return a.type === 'countdown'; })
+            .map(function(a){ return {t:a.title, i:a.icon, d:daysBetween(now, new Date(a.date))}; })
+            .filter(function(a){ return a.d >= 0; })
+            .sort(function(a,b){ return a.d - b.d; });
+        var hn = document.getElementById('heroNext');
+        if (ups.length) {
+            document.getElementById('heroNextText').innerHTML = ups[0].i+' '+esc(ups[0].t)+' <span class="hero-next-days">\u8fd8\u6709 '+ups[0].d+' \u5929</span>';
+            hn.style.display = '';
+        } else { hn.style.display = 'none'; }
+        var ds = appData.diary.slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+        var hr = document.getElementById('heroRecent');
+        if (ds.length) {
+            document.getElementById('heroRecentDate').textContent = '\ud83d\udcdd \u6700\u8fd1\u52a8\u6001 \u00b7 '+ds[0].date;
+            document.getElementById('heroRecentTitle').textContent = ds[0].title+(ds[0].content?' \u2014 '+ds[0].content.substring(0,30):'');
+            hr.style.display = '';
+        } else { hr.style.display = 'none'; }
     }
 
     function daysBetween(a, b) { return Math.floor((b - a) / 86400000); }
