@@ -111,56 +111,69 @@
         .app-header { text-align: center; padding: 24px 0 0; position: relative; }
         .couple-names { font-size: 28px; font-weight: 700; color: var(--accent); text-transform: lowercase; position: relative; display: none; }
 
-        /* Hero Homepage */
+        /* Hero Homepage (full screen, separate from tabs) */
         .hero {
-            text-align: center; padding: 40px 20px 32px; position: relative;
-            background: linear-gradient(180deg, rgba(192,132,252,0.08) 0%, transparent 100%);
-            border-radius: 0 0 32px 32px; margin: 0 -16px 20px;
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center; padding: 40px 20px; position: relative;
+            background: linear-gradient(180deg, rgba(192,132,252,0.06) 0%, transparent 60%);
         }
         .hero-avatars {
             display: flex; justify-content: center; align-items: center; gap: 16px;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         .hero-avatar {
-            width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
-            border: 3px solid var(--accent); box-shadow: 0 4px 16px rgba(192,132,252,0.3);
+            width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--accent); box-shadow: 0 4px 20px rgba(192,132,252,0.3);
         }
         .hero-avatar-placeholder {
-            width: 72px; height: 72px; border-radius: 50%;
+            width: 80px; height: 80px; border-radius: 50%;
             background: linear-gradient(135deg, var(--accent), var(--accent2));
             display: flex; align-items: center; justify-content: center;
-            font-size: 28px; color: #fff; font-weight: 700;
-            border: 3px solid var(--card); box-shadow: 0 4px 16px rgba(192,132,252,0.3);
+            font-size: 32px; color: #fff; font-weight: 700;
+            border: 3px solid var(--card); box-shadow: 0 4px 20px rgba(192,132,252,0.3);
         }
-        .hero-heart { font-size: 24px; animation: heartbeat 1.5s ease-in-out infinite; }
+        .hero-heart { font-size: 28px; animation: heartbeat 1.5s ease-in-out infinite; }
         .hero-names {
-            font-size: 24px; font-weight: 700; color: var(--text);
-            margin-bottom: 4px;
+            font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px;
         }
         .hero-days {
-            font-size: 42px; font-weight: 800; color: var(--accent);
-            line-height: 1.1; margin: 8px 0;
+            font-size: 56px; font-weight: 800; color: var(--accent);
+            line-height: 1.1; margin: 12px 0 4px;
             background: linear-gradient(135deg, var(--accent), var(--accent2));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .hero-days-label { font-size: 14px; color: var(--text2); margin-bottom: 16px; }
+        .hero-days-label { font-size: 15px; color: var(--text2); margin-bottom: 24px; }
         .hero-next {
             display: inline-flex; align-items: center; gap: 8px;
-            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-            padding: 10px 20px; font-size: 13px; color: var(--text2);
-            box-shadow: 0 2px 12px var(--card-shadow);
+            background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+            padding: 12px 24px; font-size: 14px; color: var(--text2);
+            box-shadow: 0 2px 16px var(--card-shadow); margin-bottom: 12px;
         }
         .hero-next-icon { font-size: 18px; }
         .hero-next-days { font-weight: 700; color: var(--accent); }
         .hero-recent {
-            margin-top: 16px; padding: 12px 16px;
+            margin-top: 8px; padding: 14px 20px; max-width: 320px; width: 100%;
             background: var(--card); border: 1px solid var(--border); border-radius: 16px;
             text-align: left; font-size: 13px; color: var(--text2);
-            box-shadow: 0 2px 8px var(--card-shadow); cursor: pointer;
+            box-shadow: 0 2px 12px var(--card-shadow); cursor: pointer;
         }
-        .hero-recent:hover { box-shadow: 0 4px 16px var(--card-shadow); }
+        .hero-recent:hover { box-shadow: 0 4px 20px var(--card-shadow); }
         .hero-recent-title { font-weight: 600; color: var(--text); margin-bottom: 2px; }
         .hero-recent-date { font-size: 11px; color: var(--text3); }
+        .hero-enter {
+            margin-top: 32px; color: var(--text3); font-size: 13px;
+            animation: heroBounce 2s ease-in-out infinite;
+        }
+        @keyframes heroBounce {
+            0%, 100% { transform: translateY(0); opacity: 0.5; }
+            50% { transform: translateY(8px); opacity: 1; }
+        }
+        .hero.hidden { display: none; }
+
+        /* Tab area hidden until entered */
+        .tab-area { display: none; }
+        .tab-area.show { display: block; }
 
         /* Tab Bar */
         .tab-bar {
@@ -773,18 +786,21 @@
                 <span class="hero-next-icon">🎯</span>
                 <span id="heroNextText"></span>
             </div>
-            <div class="hero-recent" id="heroRecent" style="display:none;" onclick="switchTab(1)">
+            <div class="hero-recent" id="heroRecent" style="display:none;" onclick="enterTabs();switchTab(1)">
                 <div class="hero-recent-date" id="heroRecentDate"></div>
                 <div class="hero-recent-title" id="heroRecentTitle"></div>
             </div>
+            <div class="hero-enter" onclick="enterTabs()">👇 查看更多</div>
         </div>
 
-        <div class="tab-bar">
-            <button class="tab-btn active" onclick="switchTab(0)">纪念日</button>
-            <button class="tab-btn" onclick="switchTab(1)">点滴</button>
-            <button class="tab-btn" onclick="switchTab(2)">相册</button>
-            <button class="tab-btn" onclick="switchTab(3)">足迹</button>
-        </div>
+        <!-- Tab Area (hidden until entered from hero) -->
+        <div class="tab-area" id="tabArea">
+            <div class="tab-bar">
+                <button class="tab-btn active" onclick="switchTab(0)">纪念日</button>
+                <button class="tab-btn" onclick="switchTab(1)">点滴</button>
+                <button class="tab-btn" onclick="switchTab(2)">相册</button>
+                <button class="tab-btn" onclick="switchTab(3)">足迹</button>
+            </div>
 
         <div class="tab-content" id="tabContent">
             <!-- Tab 0: Anniversaries -->
@@ -819,6 +835,7 @@
         </div>
 
         <footer class="app-footer">Made with &#x2764;&#xFE0F; <span id="dataTime" style="opacity:0.7;font-size:12px;">数据更新：--</span></footer>
+        </div><!-- /tab-area -->
     </div>
 
     <!-- Diary Detail View -->
@@ -1485,15 +1502,20 @@
 
     // ===== Tabs =====
     let currentTab = 0;
+    function enterTabs() {
+        document.getElementById('heroSection').classList.add('hidden');
+        document.getElementById('tabArea').classList.add('show');
+        window.scrollTo(0, 0);
+    }
+
     function switchTab(idx) {
+        enterTabs();
         currentTab = idx;
         document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
         document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
         if (idx === 2 && !galleryRendered) renderGallery();
         if (idx === 3) initMap();
     }
-
-    // Swipe to switch tabs disabled - only tap tab buttons
 
     // ===== Render =====
     function renderAll() {
