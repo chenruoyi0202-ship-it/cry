@@ -111,67 +111,84 @@
         .app-header { text-align: center; padding: 24px 0 0; position: relative; }
         .couple-names { font-size: 28px; font-weight: 700; color: var(--accent); text-transform: lowercase; position: relative; display: none; }
 
-        /* Hero Homepage (full screen, separate from tabs) */
+        /* Hero Homepage */
         .hero {
-            min-height: 100vh; display: flex; flex-direction: column;
+            min-height: 100vh; min-height: 100dvh;
+            display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             text-align: center; padding: 40px 20px; position: relative;
-            background: linear-gradient(180deg, rgba(192,132,252,0.06) 0%, transparent 60%);
+            overflow: hidden;
         }
+        .hero-bg {
+            position: absolute; inset: -20px; z-index: 0;
+            background-size: cover; background-position: center;
+            filter: blur(30px) brightness(0.5) saturate(1.4);
+            transform: scale(1.15);
+        }
+        .hero-overlay {
+            position: absolute; inset: 0; z-index: 1;
+            background: linear-gradient(180deg,
+                rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 40%,
+                rgba(0,0,0,0.3) 100%);
+        }
+        .hero-content { position: relative; z-index: 2; width: 100%; max-width: 380px; }
         .hero-avatars {
-            display: flex; justify-content: center; align-items: center; gap: 16px;
-            margin-bottom: 20px;
-        }
-        .hero-avatar {
-            width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
-            border: 3px solid var(--accent); box-shadow: 0 4px 20px rgba(192,132,252,0.3);
+            display: flex; justify-content: center; align-items: center; gap: 20px;
+            margin-bottom: 24px;
         }
         .hero-avatar-placeholder {
-            width: 80px; height: 80px; border-radius: 50%;
+            width: 76px; height: 76px; border-radius: 50%;
             background: linear-gradient(135deg, var(--accent), var(--accent2));
             display: flex; align-items: center; justify-content: center;
-            font-size: 32px; color: #fff; font-weight: 700;
-            border: 3px solid var(--card); box-shadow: 0 4px 20px rgba(192,132,252,0.3);
+            font-size: 28px; color: #fff; font-weight: 700;
+            border: 3px solid rgba(255,255,255,0.3);
+            box-shadow: 0 8px 32px rgba(192,132,252,0.4);
         }
-        .hero-heart { font-size: 28px; animation: heartbeat 1.5s ease-in-out infinite; }
+        .hero-heart { font-size: 24px; animation: heartbeat 1.5s ease-in-out infinite; }
         .hero-names {
-            font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px;
+            font-size: 20px; font-weight: 600; color: #fff;
+            letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            margin-bottom: 8px;
         }
         .hero-days {
-            font-size: 56px; font-weight: 800; color: var(--accent);
-            line-height: 1.1; margin: 12px 0 4px;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 64px; font-weight: 800; line-height: 1;
+            margin: 8px 0 2px; color: #fff;
+            text-shadow: 0 4px 24px rgba(192,132,252,0.5);
         }
-        .hero-days-label { font-size: 15px; color: var(--text2); margin-bottom: 24px; }
+        .hero-days-label {
+            font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 28px;
+            letter-spacing: 1px;
+        }
+        .hero-glass {
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 20px;
+            padding: 16px 20px; margin-bottom: 12px; width: 100%;
+        }
+        [data-theme="dark"] .hero-glass { background: rgba(255,255,255,0.06); }
         .hero-next {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: var(--card); border: 1px solid var(--border); border-radius: 20px;
-            padding: 12px 24px; font-size: 14px; color: var(--text2);
-            box-shadow: 0 2px 16px var(--card-shadow); margin-bottom: 12px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 14px; color: rgba(255,255,255,0.85);
         }
         .hero-next-icon { font-size: 18px; }
-        .hero-next-days { font-weight: 700; color: var(--accent); }
+        .hero-next-days { font-weight: 700; color: #fff; }
         .hero-recent {
-            margin-top: 8px; padding: 14px 20px; max-width: 320px; width: 100%;
-            background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-            text-align: left; font-size: 13px; color: var(--text2);
-            box-shadow: 0 2px 12px var(--card-shadow); cursor: pointer;
+            cursor: pointer; text-align: left;
+            font-size: 13px; color: rgba(255,255,255,0.7);
         }
-        .hero-recent:hover { box-shadow: 0 4px 20px var(--card-shadow); }
-        .hero-recent-title { font-weight: 600; color: var(--text); margin-bottom: 2px; }
-        .hero-recent-date { font-size: 11px; color: var(--text3); }
-        .hero-enter {
-            margin-top: 32px; color: var(--text3); font-size: 13px;
-            animation: heroBounce 2s ease-in-out infinite;
+        .hero-recent-title { font-weight: 600; color: #fff; margin-bottom: 2px; }
+        .hero-recent-date { font-size: 11px; color: rgba(255,255,255,0.5); }
+        .hero-cta {
+            margin-top: 28px; padding: 14px 40px; border: none; border-radius: 28px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff; font-size: 16px; font-weight: 600; letter-spacing: 2px;
+            cursor: pointer; position: relative; overflow: hidden;
+            box-shadow: 0 4px 24px rgba(192,132,252,0.4), 0 0 48px rgba(192,132,252,0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
         }
-        @keyframes heroBounce {
-            0%, 100% { transform: translateY(0); opacity: 0.5; }
-            50% { transform: translateY(8px); opacity: 1; }
-        }
+        .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(192,132,252,0.5); }
+        .hero-cta:active { transform: scale(0.97); }
         .hero.hidden { display: none; }
-
-        /* Tab area hidden until entered */
         .tab-area { display: none; }
         .tab-area.show { display: block; }
 
@@ -774,23 +791,29 @@
 
         <!-- Hero Homepage -->
         <div class="hero" id="heroSection">
-            <div class="hero-avatars">
-                <div class="hero-avatar-placeholder" id="heroAvatar1">C</div>
-                <div class="hero-heart">💕</div>
-                <div class="hero-avatar-placeholder" id="heroAvatar2">X</div>
+            <div class="hero-bg" id="heroBg"></div>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="hero-avatars">
+                    <div class="hero-avatar-placeholder" id="heroAvatar1">C</div>
+                    <div class="hero-heart">✨</div>
+                    <div class="hero-avatar-placeholder" id="heroAvatar2">X</div>
+                </div>
+                <div class="hero-names" id="heroNames">CRY & XYX</div>
+                <div class="hero-days" id="heroDays">--</div>
+                <div class="hero-days-label" id="heroDaysLabel">days together</div>
+                <div class="hero-glass" id="heroNext" style="display:none;">
+                    <div class="hero-next">
+                        <span class="hero-next-icon"></span>
+                        <span id="heroNextText"></span>
+                    </div>
+                </div>
+                <div class="hero-glass hero-recent" id="heroRecent" style="display:none;" onclick="enterTabs();switchTab(1)">
+                    <div class="hero-recent-date" id="heroRecentDate"></div>
+                    <div class="hero-recent-title" id="heroRecentTitle"></div>
+                </div>
+                <button class="hero-cta" onclick="enterTabs()">Enter Memory</button>
             </div>
-            <div class="hero-names" id="heroNames">CRY & XYX</div>
-            <div class="hero-days" id="heroDays">--</div>
-            <div class="hero-days-label" id="heroDaysLabel">在一起的日子</div>
-            <div class="hero-next" id="heroNext" style="display:none;">
-                <span class="hero-next-icon">🎯</span>
-                <span id="heroNextText"></span>
-            </div>
-            <div class="hero-recent" id="heroRecent" style="display:none;" onclick="enterTabs();switchTab(1)">
-                <div class="hero-recent-date" id="heroRecentDate"></div>
-                <div class="hero-recent-title" id="heroRecentTitle"></div>
-            </div>
-            <div class="hero-enter" onclick="enterTabs()">👇 查看更多</div>
         </div>
 
         <!-- Tab Area (hidden until entered from hero) -->
@@ -1548,11 +1571,22 @@
         document.getElementById('heroNames').textContent = c.person1 + ' & ' + c.person2;
         document.getElementById('heroAvatar1').textContent = (c.person1 || 'C')[0].toUpperCase();
         document.getElementById('heroAvatar2').textContent = (c.person2 || 'X')[0].toUpperCase();
+        // Random photo as blurred background
+        var bgEl = document.getElementById('heroBg');
+        if (bgEl) {
+            var ids = Object.keys(photoStore);
+            if (ids.length) {
+                var src = photoStore[ids[Math.floor(Math.random() * ids.length)]];
+                if (src) bgEl.style.backgroundImage = 'url(' + src + ')';
+            }
+        }
+        // Days together
         var tog = appData.anniversaries.find(function(a){ return a.type === 'countup'; });
         if (tog) {
             document.getElementById('heroDays').textContent = daysBetween(new Date(tog.date), now);
             document.getElementById('heroDaysLabel').textContent = tog.title;
         }
+        // Next countdown
         var ups = appData.anniversaries
             .filter(function(a){ return a.type === 'countdown'; })
             .map(function(a){ return {t:a.title, i:a.icon, d:daysBetween(now, new Date(a.date))}; })
@@ -1563,6 +1597,7 @@
             document.getElementById('heroNextText').innerHTML = ups[0].i+' '+esc(ups[0].t)+' <span class="hero-next-days">\u8fd8\u6709 '+ups[0].d+' \u5929</span>';
             hn.style.display = '';
         } else { hn.style.display = 'none'; }
+        // Latest diary
         var ds = appData.diary.slice().sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
         var hr = document.getElementById('heroRecent');
         if (ds.length) {
