@@ -1,0 +1,2892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>02680 创陞控股 · 分析追踪</title>
+<meta property="og:title" content="02680 创陞控股 · 分析追踪">
+<meta property="og:description" content="港股02680创陞控股分析追踪，记录盘中分析、重要线索与实时行情。">
+<meta property="og:image" content="https://chenruoyi0202-ship-it.github.io/cry/02680-icon.png">
+<meta property="og:url" content="https://chenruoyi0202-ship-it.github.io/cry/02680.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>📈</text></svg>">
+<link rel="apple-touch-icon" sizes="180x180" href="02680-apple-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="02680 创陞">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050505;--card:#0e0e14;--border:rgba(255,255,255,0.08);
+  --text:#e8eaf0;--text-muted:#8892b0;--radius:16px;
+  --gold:#eab308;--gold-light:#fcd34d;
+  --green:#22c55e;--red:#ef4444;--orange:#f97316;--gray:#6b7280;
+}
+[data-theme="light"]{
+  --bg:#f5f5f7;--card:#ffffff;--border:rgba(0,0,0,0.08);
+  --text:#1a1a1a;--text-muted:#6b7280;
+  --gold:#a16207;--gold-light:#ca8a04;
+  --green:#16a34a;--red:#dc2626;--orange:#ea580c;--gray:#9ca3af;
+}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+.page{max-width:760px;margin:0 auto;padding:16px 12px 60px}
+
+/* Settings button */
+.settings-btn{position:absolute;top:16px;right:0;width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s;z-index:10}
+.settings-btn:hover{background:rgba(255,255,255,0.1)}
+.settings-btn svg{width:16px;height:16px;stroke:var(--text-muted);fill:none;stroke-width:1.5}
+.sync-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.sync-modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:400px;width:100%}
+.sync-modal h3{font-size:16px;font-weight:600;color:var(--gold-light);margin-bottom:12px}
+.sync-modal .close-btn{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer}
+
+/* Stock header */
+.stock-header{padding:16px 0 8px;position:relative}
+.stock-name-row{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+.stock-code{font-size:18px;font-weight:700;color:var(--text)}
+.stock-name{font-size:18px;font-weight:700;color:var(--text)}
+.stock-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(202,138,4,0.15);color:var(--gold-light);font-weight:500}
+.stock-status{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+/* Price section */
+.price-section{padding:8px 0 12px}
+.price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.price-now{font-size:36px;font-weight:700;font-variant-numeric:tabular-nums}
+.price-now.up{color:var(--red)}.price-now.down{color:var(--green)}.price-now.flat{color:var(--text)}
+.price-change{font-size:14px;font-weight:500}
+.price-change.up{color:var(--red)}.price-change.down{color:var(--green)}.price-change.flat{color:var(--gray)}
+
+/* Stats row */
+.stats-row{display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 0;margin:4px 0 8px;font-size:12px;align-items:center}
+.stat-inline{display:inline-flex;align-items:center;gap:3px}
+.stat-label{color:var(--text-muted);font-size:11px}
+.stat-value{font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.stat-value.up{color:var(--red)}.stat-value.down{color:var(--green)}
+.cost-edit-btn{cursor:pointer;font-size:12px;color:var(--text-muted);opacity:.6;transition:opacity .2s}
+.cost-edit-btn:hover{opacity:1}
+.cost-line{stroke:var(--orange);stroke-width:1;stroke-dasharray:6,3;opacity:.7}
+.analysis-marker{cursor:pointer}
+.analysis-marker-hit{cursor:pointer;fill:transparent}
+.marker-popup{position:fixed;background:var(--card);border:1px solid var(--gold);border-radius:8px;padding:10px 14px;max-width:320px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.4);font-size:13px;line-height:1.6;color:var(--text-muted);display:none}
+.marker-popup .mp-date{font-weight:600;color:var(--gold-light);margin-bottom:4px}
+.marker-popup .mp-close{position:absolute;top:4px;right:8px;color:var(--text-muted);cursor:pointer;font-size:14px}
+.marker-popup .mp-view-full{display:inline-block;margin-top:8px;padding:4px 10px;background:var(--gold);color:#000;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
+.record-highlight{animation:recordHighlight 2s ease-out;border-color:var(--gold)!important;box-shadow:0 0 20px rgba(252,211,77,0.4)}
+@keyframes recordHighlight{0%{background:rgba(252,211,77,0.25)}100%{background:var(--card)}}
+
+/* Timeline */
+.timeline-wrap{position:relative;padding-left:24px}
+.timeline-wrap::before{content:'';position:absolute;left:8px;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--gold),rgba(234,179,8,0.1))}
+.timeline-item{position:relative;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;transition:border-color .2s}
+.timeline-item:hover{border-color:rgba(234,179,8,0.3)}
+.timeline-item::before{content:'';position:absolute;left:-22px;top:18px;width:12px;height:12px;border-radius:50%;background:var(--gold);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--gold)}
+.timeline-item.done::before{background:var(--gray);box-shadow:0 0 0 2px var(--gray)}
+.timeline-item.ongoing::before{background:var(--orange);box-shadow:0 0 0 2px var(--orange);animation:pulse 1.5s infinite}
+.timeline-item.pending::before{background:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.timeline-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.timeline-date{font-size:12px;font-weight:600;color:var(--gold-light);font-variant-numeric:tabular-nums}
+.timeline-status{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.timeline-status.done{background:rgba(107,114,128,0.2);color:var(--gray)}
+.timeline-status.ongoing{background:rgba(249,115,22,0.2);color:var(--orange)}
+.timeline-status.pending{background:rgba(234,179,8,0.15);color:var(--gold-light)}
+.timeline-title{font-size:15px;font-weight:700;color:var(--text);flex:1;min-width:0}
+.timeline-desc{font-size:13px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.timeline-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.timeline-actions .btn{padding:3px 10px;font-size:11px;opacity:.5}
+.timeline-item:hover .timeline-actions .btn{opacity:1}
+
+/* Chart tabs */
+.chart-tabs{display:flex;gap:0;margin-bottom:4px}
+.chart-tab{padding:5px 14px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;border-radius:6px;transition:all .2s}
+.chart-tab.active{background:rgba(202,138,4,0.15);color:var(--gold-light)}
+
+/* Chart */
+.price-chart-wrap{width:100%;margin-bottom:8px;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
+.price-chart-wrap svg{width:100%;display:block}
+.chart-time-axis{display:flex;justify-content:space-between;padding:2px 4px 0;font-size:10px;color:var(--text-muted)}
+.chart-tooltip{position:absolute;top:0;left:0;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:5;white-space:nowrap;display:none;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.chart-tooltip .tt-time{color:var(--text-muted);margin-bottom:2px}
+.chart-tooltip .tt-price{font-weight:600;font-size:13px}
+.chart-tooltip .tt-change{font-size:11px;margin-top:1px}
+.chart-crosshair{position:absolute;top:0;width:1px;background:var(--text-muted);opacity:0.4;pointer-events:none;display:none}
+.price-status{font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px}
+.price-status a{color:var(--gold);cursor:pointer;text-decoration:underline}
+
+/* Sync bar */
+.sync-bar{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;font-size:12px;color:var(--text-muted);cursor:pointer;padding:6px 0}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#6b7280}
+.sync-dot.connected{background:var(--green)}.sync-dot.syncing{background:#e6a23c;animation:pulse 1s infinite}.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.info-box{background:rgba(202,138,4,0.08);border:1px solid rgba(202,138,4,0.2);border-radius:8px;padding:12px;font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:12px}
+.hint{font-size:11px;color:var(--text-muted);margin-top:2px;opacity:.7}
+.btn-danger{background:rgba(239,68,68,0.15);color:var(--red);padding:8px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-danger:hover{background:rgba(239,68,68,0.25)}
+
+/* Tabs */
+.tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;background:var(--bg);padding-top:8px}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:14px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:var(--gold-light);border-bottom-color:var(--gold)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* Form */
+.form-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.form-title{font-size:14px;font-weight:600;color:var(--gold-light);margin-bottom:12px;padding-left:8px;border-left:3px solid var(--gold)}
+.form-row{display:grid;gap:8px;margin-bottom:8px}
+.form-row.two{grid-template-columns:1fr 1fr}.form-row.three{grid-template-columns:1fr 1fr 1fr}
+.form-group label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;
+  padding:8px 10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+.form-group textarea{min-height:100px;resize:vertical}
+.form-group select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7394'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.form-actions{display:flex;gap:8px;margin-top:12px}
+.btn{padding:8px 20px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#000}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-secondary{background:rgba(255,255,255,0.06);color:var(--text-muted)}
+.btn-secondary:hover{background:rgba(255,255,255,0.1)}
+
+/* Search */
+.search-bar{margin-bottom:12px}
+.search-bar input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none}
+.search-bar input:focus{border-color:var(--gold)}
+.search-bar input::placeholder{color:var(--text-muted)}
+
+/* Filter bar for events */
+.filter-bar{margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap}
+.filter-chip{padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;background:rgba(255,255,255,0.04);color:var(--text-muted);border:1px solid transparent;transition:all .2s}
+.filter-chip.active{background:rgba(202,138,4,0.15);color:var(--gold-light);border-color:rgba(202,138,4,0.3)}
+
+/* List */
+.list-empty{text-align:center;color:var(--text-muted);padding:40px 0;font-size:14px}
+.record{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;transition:border-color .2s}
+.record:hover{border-color:rgba(255,255,255,0.1)}
+.record-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.record-date{font-size:12px;color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums}
+.record-title{font-size:14px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;text-transform:uppercase}
+.badge-strong_buy{background:rgba(34,197,94,0.15);color:#22c55e}
+.badge-buy{background:rgba(74,222,128,0.15);color:#4ade80}
+.badge-hold{background:rgba(107,114,128,0.15);color:#9ca3af}
+.badge-sell{background:rgba(249,115,22,0.15);color:#f97316}
+.badge-strong_sell{background:rgba(239,68,68,0.15);color:#ef4444}
+.badge-positive{background:rgba(34,197,94,0.15);color:#22c55e}
+.badge-neutral{background:rgba(107,114,128,0.15);color:#9ca3af}
+.badge-negative{background:rgba(239,68,68,0.15);color:#ef4444}
+.badge-type{background:rgba(202,138,4,0.15);color:var(--gold-light)}
+.badge-legacy{background:rgba(139,92,246,0.15);color:#a78bfa}
+.record-preview{font-size:15px;color:var(--text-muted);line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:calc(15px * 1.7 * 10);overflow:hidden;position:relative}
+.record-preview::after{content:'';position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(180deg,transparent,var(--card));pointer-events:none}
+.record-preview.expanded{max-height:none;overflow:visible}
+.record-preview.expanded::after{display:none}
+.expand-toggle{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 0;font-size:12px;color:var(--gold-light);cursor:pointer;border-top:1px solid var(--border);margin-top:6px;opacity:.7;transition:opacity .2s}
+.expand-toggle:hover{opacity:1}
+.record-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.record-actions .btn{padding:3px 10px;font-size:11px;opacity:.5;transition:opacity .2s}
+.record:hover .record-actions .btn,.record-actions .btn:focus{opacity:1}
+
+/* Clue grid */
+.clue-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.clue-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;cursor:grab;transition:box-shadow .2s,transform .2s;position:relative}
+.clue-card:active{cursor:grabbing}
+.clue-card.dragging{opacity:.5;transform:scale(.96)}
+.clue-card.drag-over{box-shadow:0 0 0 2px var(--gold);transform:scale(1.02)}
+.clue-card .clue-title{font-size:14px;font-weight:700;color:var(--gold-light);margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid rgba(202,138,4,0.2)}
+.clue-card .clue-body{font-size:13px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.clue-card .clue-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+.clue-card .clue-actions .btn{padding:2px 8px;font-size:10px;opacity:.4}
+.clue-card:hover .clue-actions .btn{opacity:1}
+.clue-card .drag-handle{position:absolute;top:6px;left:8px;font-size:10px;color:var(--text-muted);opacity:.3;cursor:grab}
+
+/* Guest lock screen */
+.lock-overlay{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center}
+.lock-box{text-align:center;max-width:300px;padding:20px}
+.lock-box h2{font-size:20px;color:var(--gold-light);margin-bottom:6px}
+.lock-box p{font-size:13px;color:var(--text-muted);margin-bottom:16px}
+.lock-box input{width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text);font-size:16px;text-align:center;outline:none;margin-bottom:10px}
+.lock-box input:focus{border-color:var(--gold)}
+.lock-box .lock-btn{width:100%;padding:10px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#000;font-size:14px;font-weight:600;cursor:pointer}
+.lock-box .lock-error{color:var(--red);font-size:12px;margin-top:6px;display:none}
+/* Guest mode: hide all edit controls */
+.guest-mode #aToggleBtn,.guest-mode #eToggleBtn,.guest-mode #tToggleBtn,.guest-mode .record-actions,.guest-mode .clue-actions,.guest-mode .timeline-actions,.guest-mode .cost-edit-btn,.guest-mode .drag-handle,.guest-mode .search-bar,.guest-mode #analysisFormSection,.guest-mode #eventFormSection,.guest-mode #timelineFormSection,.guest-mode .page>.form-section .btn-primary{display:none!important}
+.record-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.tag{padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,0.04);color:var(--text-muted)}
+.auto-tag{padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(234,179,8,0.12);color:var(--gold-light);cursor:pointer;transition:all .2s;border:1px solid rgba(234,179,8,0.2)}
+.auto-tag:hover{background:rgba(234,179,8,0.2)}
+.auto-tag.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:600}
+.filter-status{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:var(--text-muted)}
+.filter-status .clear-filter{padding:2px 10px;background:rgba(234,179,8,0.15);color:var(--gold-light);border:1px solid rgba(234,179,8,0.3);border-radius:10px;cursor:pointer;font-size:11px}
+.filter-status .clear-filter:hover{background:rgba(234,179,8,0.25)}
+
+/* Skeleton loader */
+.skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.03) 75%);background-size:200% 100%;animation:skeleton 1.4s ease-in-out infinite;border-radius:8px}
+@keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.record-actions{display:flex;gap:6px;margin-top:8px}
+.record-actions .btn{padding:4px 12px;font-size:11px}
+.record-linked{font-size:11px;color:var(--text-muted);margin-top:4px;font-style:italic}
+
+/* Stats bar */
+.stats-bar{font-size:12px;color:var(--text-muted);margin-bottom:8px;display:flex;justify-content:space-between}
+
+/* CCASS */
+.ccass-overview{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.ccass-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+.ccass-card .ccass-label{font-size:11px;color:var(--text-muted);margin-bottom:4px;letter-spacing:.3px}
+.ccass-card .ccass-value{font-size:16px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.ccass-card .ccass-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.ccass-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px}
+.ccass-section h4{font-size:13px;font-weight:600;color:var(--gold-light);margin-bottom:10px;padding-left:8px;border-left:3px solid var(--gold)}
+.ccass-table{width:100%;border-collapse:collapse;font-size:12px}
+.ccass-table th{text-align:left;padding:6px 6px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:11px}
+.ccass-table td{padding:6px 6px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);font-variant-numeric:tabular-nums}
+.ccass-table td.num,.ccass-table th.num{text-align:right}
+.ccass-table tr:hover td{background:rgba(255,255,255,0.02)}
+.ccass-delta-up{color:var(--red);font-weight:600}
+.ccass-delta-down{color:var(--green);font-weight:600}
+.ccass-delta-flat{color:var(--text-muted)}
+.ccass-alert{background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:var(--text);line-height:1.6}
+.ccass-note{font-size:12px;color:var(--text-muted);padding:8px 0;font-style:italic;opacity:.7}
+.ccass-insights{list-style:none;padding:0;margin:0;font-size:13px;line-height:1.7}
+.ccass-insights li{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text)}
+.ccass-insights li:last-child{border-bottom:none}
+.ccass-insights strong{color:var(--gold-light);font-weight:600}
+.ccass-meta{font-size:11px;color:var(--text-muted);text-align:center;margin-top:10px}
+.ccass-meta a{color:var(--gold);text-decoration:none}
+@media(max-width:480px){
+  .ccass-overview{grid-template-columns:1fr 1fr}
+  .ccass-table th:nth-child(4),.ccass-table td:nth-child(4){display:none}
+}
+
+/* Responsive */
+@media(max-width:480px){
+  .form-row.two,.form-row.three{grid-template-columns:1fr}
+  .clue-grid{grid-template-columns:1fr}
+}
+@media(min-width:768px){
+  .page{padding:32px 24px 80px}
+  .header h1{font-size:32px}
+}
+</style>
+</head>
+<body>
+<!-- Lock Screen for Guests -->
+<div class="lock-overlay" id="lockOverlay" style="display:none">
+  <div class="lock-box">
+    <h2>02680 创陞控股</h2>
+    <p>输入密码查看分析内容</p>
+    <input type="text" id="lockPassword" placeholder="输入密码" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')unlockPage()" style="-webkit-text-security:disc">
+    <button class="lock-btn" onclick="unlockPage()">进入</button>
+    <div class="lock-error" id="lockError">密码错误</div>
+  </div>
+</div>
+<div class="page">
+
+<!-- Stock Header (Futu style) -->
+<div class="stock-header">
+  <div class="settings-btn" onclick="toggleTheme()" title="切换主题" style="right:40px" id="themeBtn">
+    <svg viewBox="0 0 24 24" id="themeIcon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+  </div>
+  <div class="settings-btn" onclick="toggleSyncModal()" title="同步设置">
+    <svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+  </div>
+  <div class="stock-name-row">
+    <span class="stock-code">02680</span>
+    <span class="stock-name">创陞控股</span>
+    <span class="stock-tag">港股</span>
+  </div>
+  <div class="stock-status" id="stockStatus">获取行情中...</div>
+</div>
+
+<!-- Price -->
+<div class="price-section">
+  <div class="price-row">
+    <span class="price-now flat" id="priceNow">--</span>
+    <span class="price-change flat" id="priceChange"></span>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row" id="statsGrid">
+  <span class="stat-inline"><span class="stat-label">高</span> <span class="stat-value" id="statHigh">--</span></span>
+  <span class="stat-inline"><span class="stat-label">低</span> <span class="stat-value" id="statLow">--</span></span>
+  <span class="stat-inline"><span class="stat-label">开</span> <span class="stat-value" id="statOpen">--</span></span>
+  <span class="stat-inline"><span class="stat-label">昨收</span> <span class="stat-value" id="statPrevClose">--</span></span>
+  <span class="stat-inline"><span class="stat-label">成本</span> <span class="stat-value" id="statCost">--</span> <span class="cost-edit-btn" onclick="editCostPrice()" title="设置成本价">&#9998;</span></span>
+</div>
+
+<!-- Chart -->
+<div class="chart-tabs">
+  <div class="chart-tab active" onclick="switchChartPeriod('1d')">分时</div>
+  <div class="chart-tab" onclick="switchChartPeriod('daily')">日K</div>
+</div>
+<div class="price-chart-wrap" id="priceChartWrap">
+  <div class="skeleton" id="chartSkeleton" style="width:100%;height:140px"></div>
+  <svg id="priceChart" viewBox="0 0 700 140" preserveAspectRatio="xMidYMid meet" style="height:140px;display:none"></svg>
+  <div class="chart-time-axis" id="chartTimeAxis"></div>
+  <div class="chart-crosshair" id="chartCrosshair"></div>
+  <div class="chart-tooltip" id="chartTooltip"><div class="tt-time"></div><div class="tt-price"></div><div class="tt-change"></div></div>
+</div>
+<div class="marker-popup" id="markerPopup">
+  <span class="mp-close" onclick="closeMarkerPopup()">✕</span>
+  <div class="mp-date"></div>
+  <div class="mp-body"></div>
+  <span class="mp-view-full" onclick="jumpFromPopup()">查看完整 →</span>
+</div>
+<div class="price-status" id="priceStatus"></div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('analyses')">祖哥分析</div>
+  <div class="tab" onclick="switchTab('events')">重要线索</div>
+  <div class="tab" onclick="switchTab('timeline')">后续推演</div>
+  <div class="tab" onclick="switchTab('ccass')">CCASS</div>
+</div>
+
+<!-- Tab 1: Analyses -->
+<div class="tab-content active" id="tabAnalyses">
+  <button class="btn btn-primary" id="aToggleBtn" onclick="toggleAnalysisForm()" style="margin-bottom:12px;width:100%">+ 新增分析</button>
+  <div class="form-section" id="analysisFormSection" style="display:none">
+    <div class="form-group" style="margin-bottom:8px"><label>日期</label><input type="date" id="aDate"></div>
+    <div class="form-group"><label>正文</label><textarea id="aBody" placeholder="分析内容..." style="min-height:120px"></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="aSaveBtn" onclick="saveAnalysis()">保存</button>
+      <button class="btn btn-secondary" id="aCancelBtn" onclick="cancelEditAnalysis()">取消</button>
+    </div>
+  </div>
+  <div class="search-bar"><input type="text" id="aSearch" placeholder="搜索..." oninput="renderAnalyses()"></div>
+  <div class="stats-bar"><span id="aStats"></span></div>
+  <div id="analysisList"></div>
+</div>
+
+<!-- Tab 2: Clues -->
+<div class="tab-content" id="tabEvents">
+  <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;opacity:.6">根据祖哥分析 AI 生成</div>
+  <button class="btn btn-primary" id="eToggleBtn" onclick="toggleEventForm()" style="margin-bottom:12px;width:100%">+ 新增线索</button>
+  <div class="form-section" id="eventFormSection" style="display:none">
+    <div class="form-group" style="margin-bottom:8px"><label>标题</label><input type="text" id="eTitle" placeholder="简短标题"></div>
+    <div class="form-group"><label>内容</label><textarea id="eDesc" placeholder="写下重要线索..." style="min-height:80px"></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="eSaveBtn" onclick="saveEvent()">保存</button>
+      <button class="btn btn-secondary" id="eCancelBtn" onclick="cancelEditEvent()">取消</button>
+    </div>
+  </div>
+  <div class="stats-bar"><span id="eStats"></span></div>
+  <div id="eventList" class="clue-grid"></div>
+</div>
+
+<!-- Tab 3: Timeline -->
+<div class="tab-content" id="tabTimeline">
+  <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;opacity:.6">根据祖哥分析 AI 推演的后续重要节点</div>
+  <button class="btn btn-primary" id="tToggleBtn" onclick="toggleTimelineForm()" style="margin-bottom:12px;width:100%">+ 新增节点</button>
+  <div class="form-section" id="timelineFormSection" style="display:none">
+    <div class="form-row two">
+      <div class="form-group"><label>预期时间</label><input type="text" id="tDate" placeholder="例：2026-04-29 或 5 月中"></div>
+      <div class="form-group"><label>状态</label>
+        <select id="tStatus"><option value="pending">待发生</option><option value="ongoing">进行中</option><option value="done">已发生</option></select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:8px"><label>节点名称</label><input type="text" id="tTitle" placeholder="例：邀约结束"></div>
+    <div class="form-group"><label>影响 / 描述</label><textarea id="tDesc" placeholder="对股价/基本面的预期影响..." style="min-height:80px"></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="tSaveBtn" onclick="saveTimeline()">保存</button>
+      <button class="btn btn-secondary" id="tCancelBtn" onclick="cancelEditTimeline()">取消</button>
+    </div>
+  </div>
+  <div id="timelineList"></div>
+</div>
+
+<!-- Tab 4: CCASS -->
+<div class="tab-content" id="tabCCASS">
+  <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;opacity:.6">
+    港交所 CCASS 中央结算系统持股分布 · 每交易日 17:30 自动更新
+  </div>
+  <div id="ccassContent">
+    <div class="list-empty">加载中...</div>
+  </div>
+</div>
+
+</div><!-- .page -->
+
+<!-- Sync Modal -->
+<div class="sync-modal-overlay" id="syncModal" style="display:none" onclick="if(event.target===this)toggleSyncModal()">
+  <div class="sync-modal">
+    <h3>同步设置</h3>
+    <div class="info-box" style="margin-bottom:12px">填入 Token 即可在多个设备间同步数据（AES-256 加密）</div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>GitHub Token</label>
+      <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="saveSyncConfig()">保存</button>
+      <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
+      <button class="btn btn-danger" onclick="clearSyncConfig()">清除</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text-muted)" id="syncStatusText"></div>
+  </div>
+</div>
+
+<script>
+// ==================== Constants ====================
+const ANALYSES_KEY = 'stock_02680_analyses_v1';
+const EVENTS_KEY = 'stock_02680_events_v1';
+const TIMELINE_KEY = 'stock_02680_timeline_v1';
+const DELETED_KEY = 'stock_02680_deleted_v1';
+const SEEDED_KEY = 'stock_02680_seeded_v1';
+const QUOTE_CACHE_KEY = 'stock_02680_quote_cache';
+const QUOTE_CACHE_PATH = 'data/stock_02680_quote.json';
+const SYMBOL = '2680.HK';
+
+const RATING_LABELS = {strong_buy:'强烈看多',buy:'看多',hold:'中性',sell:'看空',strong_sell:'强烈看空'};
+const EVENT_TYPE_LABELS = {announcement:'公告',earnings:'业绩',shareholder:'股东变动',regulatory:'监管批复',tender:'邀约收购',rename:'改名',dividend:'派息',placement:'配股',industry:'行业新闻',price:'价格异动',other:'其他'};
+const IMPACT_LABELS = {positive:'正面',neutral:'中性',negative:'负面'};
+
+// ==================== State ====================
+let analyses = [];
+let events = [];
+let timeline = [];
+let deletedIds = new Set();
+let editingAnalysisId = null;
+let editingEventId = null;
+let editingTimelineId = null;
+let activeEventFilter = '';
+let activeTagFilter = '';
+let syncConfig = null;
+let fileSha = null;
+const SYNC_CONFIG_KEY = 'stock_02680_sync_config';
+const SYNC_DATA_PATH = 'data/stock_02680_encrypted.json';
+
+// ==================== Storage ====================
+function loadAnalyses() { try { analyses = JSON.parse(localStorage.getItem(ANALYSES_KEY)) || []; } catch { analyses = []; } }
+function dedupeAnalyses(list) {
+  // First pass: dedupe by ID (keep newer updatedAt). Handles edits.
+  const byId = new Map();
+  for (const a of list) {
+    if (!a.id) continue;
+    const existing = byId.get(a.id);
+    if (!existing || (a.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byId.set(a.id, a);
+    }
+  }
+  // Second pass: dedupe by content (date + body prefix). Handles accidental dupes
+  // created before tombstones were in place.
+  const map = new Map();
+  for (const a of byId.values()) {
+    const key = (a.date || '') + '|' + (a.body || '').substring(0, 80);
+    const existing = map.get(key);
+    if (!existing || (a.updatedAt || 0) > (existing.updatedAt || 0)) {
+      map.set(key, a);
+    }
+  }
+  return Array.from(map.values());
+}
+function dedupeEvents(list) {
+  // Dedupe by ID first (keep newer updatedAt), then by title.
+  const byId = new Map();
+  for (const e of list) {
+    if (!e.id) continue;
+    const existing = byId.get(e.id);
+    if (!existing || (e.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byId.set(e.id, e);
+    }
+  }
+  const byTitle = new Map();
+  for (const e of byId.values()) {
+    const t = e.title || '';
+    const existing = byTitle.get(t);
+    if (!existing || (e.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byTitle.set(t, e);
+    }
+  }
+  return Array.from(byTitle.values());
+}
+function dedupeTimeline(list) {
+  const byId = new Map();
+  for (const t of list) {
+    if (!t.id) continue;
+    const existing = byId.get(t.id);
+    if (!existing || (t.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byId.set(t.id, t);
+    }
+  }
+  const byTitle = new Map();
+  for (const t of byId.values()) {
+    const title = t.title || '';
+    const existing = byTitle.get(title);
+    if (!existing || (t.updatedAt || 0) > (existing.updatedAt || 0)) {
+      byTitle.set(title, t);
+    }
+  }
+  return Array.from(byTitle.values());
+}
+function saveAnalyses() { localStorage.setItem(ANALYSES_KEY, JSON.stringify(analyses)); }
+function loadEvents() { try { events = JSON.parse(localStorage.getItem(EVENTS_KEY)) || []; } catch { events = []; } }
+function saveEvents() { localStorage.setItem(EVENTS_KEY, JSON.stringify(events)); }
+function loadTimeline() { try { timeline = JSON.parse(localStorage.getItem(TIMELINE_KEY)) || []; } catch { timeline = []; } }
+function saveTimelineStorage() { localStorage.setItem(TIMELINE_KEY, JSON.stringify(timeline)); }
+function loadDeletedIds() { try { deletedIds = new Set(JSON.parse(localStorage.getItem(DELETED_KEY)) || []); } catch { deletedIds = new Set(); } }
+function saveDeletedIds() {
+  // Cap at 500 most recent tombstones to prevent unbounded growth
+  let arr = Array.from(deletedIds);
+  if (arr.length > 500) { arr = arr.slice(-500); deletedIds = new Set(arr); }
+  localStorage.setItem(DELETED_KEY, JSON.stringify(arr));
+}
+function tombstoneDelete(id) {
+  deletedIds.add(id);
+  saveDeletedIds();
+}
+
+// ==================== Seed Data ====================
+const SEED_ANALYSES = [
+  {
+    "date": "2026-04-09",
+    "title": "2680创升长桥一直在右侧，看起来是不是得等到邀约结束",
+    "body": "2680创升长桥一直在右侧，看起来是不是得等到邀约结束\n是 现在横盘为主\n也下不去了\n2680现在邀约在压盘横盘概率大，4月底左右结束，接受后换人改名，注入业务，后面派息两个都是不错的标的，洗盘不用慌",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-04-08",
+    "title": "2680今天开始邀约了，4月29结束。这个接下去不用去看了，没什么好担心的了。我",
+    "body": "2680今天开始邀约了，4月29结束。这个接下去不用去看了，没什么好担心的了。我知道王庭发八块成本就没什么怕的了\n@所有人 2680不用慌，震荡最后一洗。可做长线，收购邀约结束后会改名，注入金融业务，配股引入投资者，再后面会派息，或者有拉高会拆股 这个不要用仙股视角看待。第二个3928后劲会很猛\n4月底邀约结束，你们可以插眼看看是不是我预测的这些流程。\n跟你们说个好笑的，这周跟王庭发泡茶的时候，他说他知道有人在造谣他资金盘，然后被限高没办法离境，他说他自己看了都想笑，全部让法务去处理了，这些人为了制造恐慌吃筹码直接造谣 他自己也说这是有人要建仓去散播假消息\n他说他一周一半时间在香港，一半时间在厦门两地跑，怎么会限制出境",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-04-07",
+    "title": "2680有好消息（不要对外发） 一个月后你们可以印证。会派息！！！ 这",
+    "body": "@所有人 2680有好消息（不要对外发） 一个月后你们可以印证。会派息！！！ 这支我应该会放长线，半年一年以上那种，属于以后有急用钱才慢慢从上面减做理财型那种。\n前天回去扫墓，约了王庭发泡茶，他大概说了一下 他收购创升不止用了两亿七，那只是对外的，实际现金总共拿了四亿多，因为创升里面有净资产，要做等价收购，所以王庭发持仓成本差不多也要八块，八块铁底，十块是非常强的支撑位，洗盘也不用怕的那种。\n而且这是金融壳里的主板有一个牌照来着，所以短期是可以注入业务，不需要等三年，收购后会把金融业务注入！！收购邀约后会改名，然后我问了，不是改成金母鸡，要改成什么暂时还没定，但是一定不会是金母鸡，因为金母鸡是在厦门，上市的主体要跟金母鸡区分开，上市的意义是要把2680做一个基金的主体，然后拿2680去接PI以上的800万高级客户认购基金，目前这个基金规模十亿美金，然而市值才多少，完全被低估。\n可以把2680的未来比喻成中国的巴菲特，伯克希尔，高盛，摩根这种投行，他做黄金/外汇量化交易的基金年化率30-70%区间\n还有最重要的一点，创升现在手上还有8个帮人上市的IPO项目，今年会上两个，然后公司现在是赚钱的，这个壳非常干净，没有任何物业资产，所有的资产全部都是实打实的现金，他们的物业都是租赁的，所以可以这么说2680账户上躺着冰冷的两个亿现金。\n如果对高强度频繁交易，跟不上节奏的兄弟，2680可以拿着做理财，拿个半年以上，能领派息，以后急用钱或者拉高就慢慢减一点，这个可能后劲会比3928还强，证券转型做投行，我目前就没有看到市值那么低的投行，然后2680后面会定增配股！！！至于怎么配没说，我自己再猜他收了75%股份，邀约的时候，创升/邦盟可能会邀约给他，如果有人邀约给他，就会变成超过公众最低持股量，变成要停牌配股，有可能会这样操作。\n然后还有，发哥说未来会拆股，拆股属于非日大的利好，正常来说拆股之前大概率会拉高在拆\n1875，2680。这两个都适合长持，不要把这两个当做仙股去看。\n过两天开始邀约了，如果邀约有机会洗盘到9-10块 我还会继续吃。\n估计是下不了了，大概率在12左右横，横到邀约结束后才开始拉了",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-04-02",
+    "title": "2680越看越像3928翻版，无论是走势还是控盘手法。3928之前也是主力不拉，",
+    "body": "2680越看越像3928翻版，无论是走势还是控盘手法。3928之前也是主力不拉，买盘就空，然后散户自由落体，后面邀约结束后也是一动不动，然后换人后，新城晋峰主力出来建仓，然后从四块涨到18.....用了四个月 2680后面后劲不会太小，就看王庭发怎么操作\n2680应该是晚上会发公告开始邀约",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-04-01",
+    "title": "2680右边0卖盘，说明洗的很干净了，只要机构不压也没什么想卖的盘了，我们已经给",
+    "body": "2680右边0卖盘，说明洗的很干净了，只要机构不压也没什么想卖的盘了，我们已经给出诚意，该做的都做了，接下去就是看王庭发了",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-31",
+    "title": "2680跟我昨天预测的一样，12.5铁底下不去了，昨天没护盘，砸到12.5马上有",
+    "body": "2680跟我昨天预测的一样，12.5铁底下不去了，昨天没护盘，砸到12.5马上有50K大单出来护盘顶着，支撑一直在前移，未邀约前支撑从8移到10 邀约后支撑移到12-12.5 这个基本没什么好说的了，股权那么集中，阿发要涨说难听的也要看我们脸色，这两天一直在震盘洗获利盘，套牢盘其实上次邀约批准前那两波已经洗过了。\n1875，2680，都是晚上开始邀约，今天震仓\n晚上开始邀约，4.20左右结束，然后改名，换人。金母鸡完成入场正式控股\n2680邀约这段时间可能会横盘或者拉升一波 破10再深洗的概率很低很低了\n他其实做基金的，拉高让自己的基金进场接的概率大",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-30",
+    "title": "2680现在第二浪在洗，批准之前洗第一波洗不下十块，拉了三天涨了四十个点，回调两",
+    "body": "2680现在第二浪在洗，批准之前洗第一波洗不下十块，拉了三天涨了四十个点，回调两天属于正常\n看看2680，今天我估计洗不破12.5 估计下午也要转灯\n2680今天跟我说的一样，12.5应该破不了会反弹上去，马上就出来大单护盘了",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-27",
+    "title": "2680 之前没批洗盘主要是担心收购失败，现在批了，爱洗就让他洗了，反正铁底10",
+    "body": "2680 之前没批洗盘主要是担心收购失败，现在批了，爱洗就让他洗了，反正铁底10，强支撑12-13 如果下来我估计还会补一点 现在就等邀约结束换人改名\n2680今天的成交都是机构左右倒控盘\n没见散户\n2680不用看了，13都有护盘 长桥（挂了20k的单）就是金母鸡，金母鸡借牌长桥",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-26",
+    "title": "今天看2680表演，就是我上面说的两种分析，也私聊你们了",
+    "body": "今天看2680表演，就是我上面说的两种分析，也私聊你们了\n很大概率卖盘空，然后一旦大单拉直线\n机构开始抢筹了，阿发真贱，3.24就批了 那天还洗到9.9拉了个金针探底\n现在升浪开始，卖盘就算一座山，王庭发也能给他啃了，股权90%以上，他筹码收的很齐\n2680，通过了，就不用慌了。现在又在洗，等等下午又要爆拉\n发哥压着，不给他上\n接下去2680的主力大概率是长桥/光大/国泰，长桥是金母鸡证券借的牌照\n王庭发13块还在吃筹码\n早上2680 洗了一下到13，然后洗不下去，这是底部确认的信号，支撑现在变成13了，然后尾盘临近中午要开始拉升，这种会涨很高\n今天这种情况，就是我昨天复盘的分析1里面的第二种情况，不温不热，说明王庭发不是要急着拉升出货割韭菜，而是要循序渐进，边拉边洗，后劲值得期待。\n今天早上机构抢筹，拉到14.8，我以为要像预测那样高开三四十点，然后开始准备慢慢减点，但是到15，创升，光大直接出来压，从15洗到13，这期间又骗了点散户，到13发现卖盘意愿不大，金母鸡又出来护盘，结合一些机构临近十二点又拉上去，主力意图已经很明显，13块是新的支撑位，现在要从13开始筑底，慢慢边洗边拉，到邀约结束，改名，换人，这期间可能会有好几波涨势，现在属于主升浪开始，第一波 这波应该会破顶，破顶之后20应该就是一瞬间的事情\n量还是没放出来，只是主力在吸筹 上方几乎没有压力\n今天我连减仓的想法都没有\n现在2680不是洗止损盘了，慢慢拉是在洗获利盘\n我估计这个我们后面就算拿到30卖完，都可能算卖飞\n3928我真的自以为 八九块卖完无敌了，结果涨到18去了",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-25",
+    "title": "真要起飞了，连富途14K都一口闷",
+    "body": "真要起飞了，连富途14K都一口闷\n真的洗完了，苦日子到头了，下探十块\n长桥就是金母鸡，估计要一口倒仓上去，然后启动了\n2680今天大单很异常，大家不要买也不要护盘，避免影响我判断\n很像在做量，大单都有人吃\n2680 我连看都没看了 因为洗完了，昨天十块都下不去，还要看什么\n2680大单被一口了\n等放量，上面就是摆一座山，王庭发也会给他啃下去的 这个2680股权非常集中\n起飞最少放量5000万到一亿 1000万都不叫放量\n我模拟一下批准了后的剧本：大概率早上竞价高开30%，然后右边卖盘很空，9.30一开盘，一单大单直接拉直线，四五十点，然后散户机构一直冲，冲多高看情绪\n大家先听我说，2680今天发公告，证监会批准了，开始邀约了，王庭发没有骗我，确实是换个法人，这个月月底批，反正通过了就不用急了，慢慢给他涨\n明天最少高开40个点\n我给你们梳理一下2680的止盈时间线，第一首先证监会已经批准了，收购正常进行，没有什么失败的风险了\n明天可能两种情况：第一种高开三四十个点以上，配合放量，那可以逐步慢慢减。还有一种不温不热，五个点十个点，那这种我是连考虑减仓都不会考虑的\n王庭发收购成功了公司已经被他收购成功了，创升证券现在就是他的了\n我自己的标准是16块之前我一点减仓想法没有，18-20只会减一点点，20-25可能减稍微多一点，25-30区间我可能会陆续全清",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-24",
+    "title": "2680让他自由落体，不用护盘，我看看机构要做什么",
+    "body": "2680让他自由落体，不用护盘，我看看机构要做什么\n这个废物创升在9.3护盘，他就是要把你们的筹码吃在9.3\n基本确定洗完了，2680 11块机构护盘跟上来了\n看这个买盘是谁就知道了，光大，花旗\n2680上次洗到7拉一倍14，然后洗到8拉一倍16，这次洗到10拉一倍20？\n不用说了，2680洗完了。\n光大/国泰都是内地的机构券商，也是金母鸡的内地御用券商 国泰建仓成本12，光大十块出来补仓\n长桥11块摆了2次20K护盘，总共40多万，大概率这个长桥是金母鸡自己人出来吸筹",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-23",
+    "title": "2680上次涨到16之前，洗了一波到9块，这次看看是不是好事将近",
+    "body": "2680上次涨到16之前，洗了一波到9块，这次看看是不是好事将近\n连那个唱衰的，都知道2680货源归边，拉升是早晚的事情了\n创升今天一直出来护盘，下面全是机构，有可能是要批准之前最后一洗\n2680我刚刚有跟王总大概沟通了一下，他说收购正常进行，这周会发延期公告，在变更内地的公司法人事项\n按照我自己这么多年的经验，收购失败概率极低，股权不约而同全部转过去王庭发名下了\n按照证监会五个月审批流程，大多数审批失败的第三个月就会说失败了\n如果批准，当天肯定是最少高开五六十，然后后面改名换人后劲应该不止\n如果上市成功，他会是内地第一只私募基金成功上市",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-22",
+    "title": "不会再洗了，机构自己都在11块护盘",
+    "body": "不会再洗了，机构自己都在11块护盘\n股权过户跟收购是两个独立的环节，香港交易会所，中央结算系统显示，早在9月份股权75%就过户到王庭发那边了\n造谣都不懂收购的基本条例，股权过去了，理论上就是收购成功了\n现在就差一纸公告，公告出来，就没有那么多小丑\n耀才就是很好的参照物",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-20",
+    "title": "2680有大手一笔扫了17万",
+    "body": "2680有大手一笔扫了17万",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-18",
+    "title": "2680那些机构买盘，都是在做量，到时都会被砸破的 现在在控价，做量 一般是要批",
+    "body": "2680那些机构买盘，都是在做量，到时都会被砸破的 现在在控价，做量 一般是要批了才会这样控价\n有脑子的都知道，为什么一直不批但是护盘还那么挺",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-17",
+    "title": "耀才这种那么大压力，批准都能调开60% 2680要是批准了，市值目前少，后劲肯定",
+    "body": "耀才这种那么大压力，批准都能调开60% 2680要是批准了，市值目前少，后劲肯定比耀才更大\n阿发，国泰都出来护盘，就是静默等消息\n2680，耀才都批了，2680这种正常换法人的不应该那么慢",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-13",
+    "title": "2680最后一洗，早上震仓，下午拉升",
+    "body": "2680最后一洗，早上震仓，下午拉升\n花旗也是主席自己人，他那二十几万股也是倒仓过去的，然后现在压价下来，吓死那些散户了，结果全部又被创升收走 这就是经典洗盘\n花旗二十万股，压完起飞\n2680花旗力竭了。20万股空了\n我从盘面能解读出来的意思就是洗不下去了，300万，砸不穿11，尾盘收红",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-12",
+    "title": "这两周是港交所大量批准日 所以阿发的2680这两周甚至这周五批准的概率很大",
+    "body": "这两周是港交所大量批准日 所以阿发的2680这两周甚至这周五批准的概率很大\n国泰都来了，国泰君安是内地的那些投资者\n今天比较不一样的是，机构吃了8K一口，连散户得卖盘都吃，可能好事将近\n国泰今天在建仓，砸掉又来，无限子弹了\n2680今天机构护盘非常频繁异常，大概率也是这一两周好事将近\n2680今天这样砸都没砸穿12 可想而知多硬",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-10",
+    "title": "2680我今天连看都没看，下面一排全是机构，典型的等消息拉直线",
+    "body": "2680我今天连看都没看，下面一排全是机构，典型的等消息拉直线\n11.8这个护城河都不用我们护，护的那么好\n还记得3928那时候跟你们说最少十块，看来还是保守了，2680我现在说20，不知道会不会保守\n边拉边洗，拉的才高，高开到20，然后洗到14 15 洗完横盘继续拉，拉到25 26 然后30",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-09",
+    "title": "之前有几支这种收购等批准的，都是五个月期限，然后都是卡着四个半月",
+    "body": "之前有几支这种收购等批准的，都是五个月期限，然后都是卡着四个半月\n按时间的话 2680 3.13附近是刚好的",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-08",
+    "title": "发哥大晚上给我发消息，是不是好事将近",
+    "body": "发哥大晚上给我发消息，是不是好事将近\n他想做我生意，一直给我透露。让我拿两个亿给他操盘\n他抽点很高的，抽利润的40% 每个月3%管理费 平均70%年收益",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-06",
+    "title": "2680主席6块都是溢价好几倍找原股东收的，他不会怎么大洗",
+    "body": "2680主席6块都是溢价好几倍找原股东收的，他不会怎么大洗\n在控价 避免利好落地变成利空，现在控着压利好做弹簧\n2680 证监会批准，开始邀约起飞一波，然后横盘，邀约结束在起飞一波，然后改名金母鸡再起飞一波，这三波是能预估到的\n2680属于比较柔和，只横盘，不深洗\n他现在为什么一直控在12，临近邀约，压太低会白送很多低价筹码\n2680 一亿以上成交，就是庄家出货的时候",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-05",
+    "title": "2680是不是不需要护盘了",
+    "body": "2680是不是不需要护盘了\n是，想吃的正常吃，吃够的不用护盘了，机构自己在护了",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-04",
+    "title": "2680我觉得 20应该是最少",
+    "body": "2680我觉得 20应该是最少\n左右都是创升，爆升之前的控盘\n2680批准走势会跟3928很像",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-03",
+    "title": "2680机构在做成交",
+    "body": "2680机构在做成交\n3.13号左右，王庭发跟我说的具体时间",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-03-02",
+    "title": "2680不用护了，机构自己在左右手做成交了，批准在即，我自己算的时间是3月13号",
+    "body": "2680不用护了，机构自己在左右手做成交了，批准在即，我自己算的时间是3月13号附近",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-02-27",
+    "title": "2680可以不用看了，临近审批日程，主席都自己出来护盘做量了，在控价",
+    "body": "2680可以不用看了，临近审批日程，主席都自己出来护盘做量了，在控价\n刚刚2680主席王庭发突然给我发了个私信，他说他跟香港证监会的一个人确认了，三月份就会批准\n我准备排单给阿发抢货了\n晚上2680会发二月份牌照进度",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-02-26",
+    "title": "好事将近，创升频繁出来倒仓 护盘",
+    "body": "好事将近，创升频繁出来倒仓 护盘\n这个跟3928其实有点像 也是拉洗，横盘，然后拉洗 后面后劲可能会很大",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-02-25",
+    "title": "2680洗完了",
+    "body": "2680洗完了\n王庭发自己量化盘在做成交 要涨了 华盛/创升/花旗/法巴/工行/汇丰/这些全部都是他自己的人\n2680开始在倒仓了，前面几次起飞全部都是倒完仓起飞\n2680不会平白无故做量的，第一波10涨到14也是倒仓开始，然后14洗到9 又是倒仓开始到16",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2026-02-24",
+    "title": "2680今天最后一洗，感觉来了。",
+    "body": "@所有人 2680今天最后一洗，感觉来了。\n创升出来护盘了 最后一洗\n机构洗盘向下砸，是为了做T 吃筹码 吓散户\n2680 三月中旬要批准通过起飞\n2680要批准了，机构在控盘，震仓。批准下来之前压弹簧不让他上去\n放假期间跟王廷发又泡了茶，牌照总共需要四次补充材料，上个月已经做了最后的递交，大概三月中旬会有结果",
+    "tags": [
+      "种子数据"
+    ]
+  },
+  {
+    "date": "2025-11-01",
+    "title": "历史内容（无日期汇总）",
+    "body": "2680要护住，今天休市再开就是三月份，三月就要通过了。如果不控在批准之前又新高16 17块，那批准了会变成利好落地，变成一大堆人在抢着出货。\n\n三月份应该会批准很多牌照，金融股会蓄势待发，2680也是金融股。\n\n金母鸡王庭发主要是做美元，金银。股票做的比较少，今年收购2680就是要开展港股业务的。\n\n2680火候到位的话，就等临门一脚放量，到时那一把最大的火，我来烧，我会直接十万股扫上去，启动把阻力扫破。\n\n今天我们算成功点火，把机构逼急眼出来抢筹了。13块算突破开启升浪。\n\n2680证监会批准这个问题，不用去担心了，百分百通过的，后面一定改名金母鸡国际的。\n\n今天受2680主席王庭发邀请来参加他的企业年会。证监会批准基本上可以说是百分百板上钉钉。邀约后会把董事全部变更，把金母鸡金融证券这套班底全部装进去，然后会改名成金母鸡国际。\n金母鸡国际背后的金主是香港美林证券主席，斯伦贝谢能源中国区总裁许成祝。\n金母鸡证券在香港上市，目前旗下基金总共有10亿美金的规模，稳定每年收益率30%以上，最高峰一年做到89%的年化率。\n整个公司规模不错，北京，沈阳，天津，厦门，香港都有总部。几百个操盘手，主席王庭发是技术党，白手起家做到身价几十亿。\n年会也来了不少大佬站台，美图老板蔡文胜，红衫资本的沈南鹏还有高甄资本的张磊。\n\n2680走势跟3928有异曲同工之妙。先拉高破顶，在不护盘自由落体，然后在拉高，落体到机构出来护盘。3928的机构是新城晋峰，2680机构是创升。\n\n2680的话有庄家在控盘，十一块下不去，券商最近熄火回撤，他跟无事人一样，持股待涨。\n\n我自己可能看到20左右。3928我在三块多的时候说我看到10块，最后也确实到10块了。\n\n2680之前是14块是压力，现在变成前面的压力作为现在的支撑，没有大资金流出，全部都是机构在抢筹。牌照批准下来，当天高开30-50%基本上板上钉钉。\n\n2680参考一下3938，暴涨一倍多，同样做量化，都是基金经理收购，要是证监会批准了不可估量。\n\n王庭发收了75%，原股东都0.6成本，他6块收购。股权集中加上股东没有套牢盘。只要一批准，大概率剧情会是本来空荡荡的买盘会被各种机构进场爆炒。\n\n本周港股/美股/币复盘：这周六我约见了王廷发，他跟我说去年他们公司下半年赚了两亿多，然后公司现金有一百多亿，这个金融牌照预计二月份会批下来，他们除了申请这个金融牌照还会申请一号稳定币牌照。\n\n我刚刚给王庭发打了个电话，他说他们公司现在账上有一百多亿现金，他的基金每年平均有80%的收益，客户都是高净值客户，一百万以上起步认购。这个收购是百分百成功的，大概二月份就会审批成功。\n\n2680我倒是一点不担心，王庭发本身自己就是炒股出身，做量化一年赚几个亿，自己公司溢价6块，2.7亿现金收购75%股份。\n\n2680我自己可能看到20+，但是要根据具体情况去。\n\n2680还是很看好，每次上升都是带量，回调都是缩量，主力一直还在。\n\n12.5号有股东大会出售前公司资产以及确定一些事情。\n\n2680我的目标位是20-25。\n\n2680是这样的，今天1000万成交还不算放量，正常明天还会有一根20个点。破顶之后就是每天新高。\n\n2680这两天支撑一直上移，一直在横盘待放量突破。\n\n2680看着要启动了。晚上财报可能有点东西，机构又开始出来扫了。\n\n2680今天算回调结束了，基本上没有11块以下的了，接下去应该就是这个接着收钱了。",
+    "tags": [
+      "历史内容",
+      "种子数据"
+    ],
+    "isLegacy": true
+  }
+];
+
+const SEED_CLUES = [
+  {"title": "目标价 & 减仓计划", "description": "目标价 20-25（保守），30-40 可幻想\n减仓节奏：16 以下不减 → 18-20 少减 → 20-25 多减 → 25-30 全清\n出货信号：成交量超 1 亿 = 庄家出货，两三千万只是消化获利盘"},
+  {"title": "主席成本 & 股权结构", "description": "王庭发实际成本 ~8 块（总共拿了 4 亿多现金收购）\n8 块铁底，10 块强支撑\n股权 90%+ 集中：王庭发 75% + 金主朋友 ~15%，公众仅 ~10%\n货源归边，拉多少他说了算"},
+  {"title": "三波行情 & 邀约时间线", "description": "三波预测：① 批准→邀约（已完成）② 换人换董事 ③ 改名注入业务\n邀约 4/8 开始，4/29 结束，期间横盘为主\n结束后：改名（不叫金母鸡，新名待定）→ 董事全部换成金母鸡班底"},
+  {"title": "未来催化剂", "description": "派息：4/7 王庭发亲口确认\n拆股：发哥说未来会拆，拆前先拉高\n配股：引入投资者，可能停牌配股\n稳定币牌照：金融牌照批完马上申请，预计 4-5 月\n注入金融业务：主板金融壳有牌照，短期可注入不用等三年"},
+  {"title": "公司基本面", "description": "基金规模 10 亿美金，年化 30-70%（最高 89%）\n账上 2 亿现金，壳干净无物业全是现金\n8 个 IPO 项目在手，今年上 2 个，公司在赚钱\n2680 定位：做基金主体，接 PI 以上 800 万高级客户"},
+  {"title": "背后实力", "description": "金主：香港美林证券主席、斯伦贝谢中国区总裁许成祝\n年会站台：蔡文胜（美图）、沈南鹏（红杉）、张磊（高瓴）\n公司规模：北京/沈阳/天津/厦门/香港，几百个操盘手"},
+  {"title": "参照标的", "description": "3928：走势最像，4→18 用 4 个月，边拉边洗后爆拉\n2442：基金经理几千万收购，涨了 30 倍\n3938：基金经理 0.6 收购，涨了 5 倍，同做量化\n耀才：延期一年多最终批准，两天涨 1.5 倍"},
+  {"title": "主力券商识别", "description": "创升 — 明牌自己人\n长桥 — 金母鸡借牌\n法巴 — 主席持有\n光大/国泰 — 内地御用券商\n华盛/花旗/汇丰 — 打手操盘号\n富途/老虎 — 散户盘"},
+  {"title": "庄家操盘逻辑", "description": "控价不拉：批准前压弹簧，避免利好落地变利空\n边拉边洗：不急拉出货，循序渐进后劲大\n洗盘手法：上面压单+下面护盘，中间吃散户血筹码\n王庭发 2.7 亿进场，要全身而退最少拉到 30"},
+  {"title": "风险提示", "description": "仙股流动性差，买卖盘跳空大\n邀约期间横盘煎熬，耐心是关键\n别追涨杀跌，别砸盘踩踏\n拉升时分批减仓，别一天清完"}
+];
+
+const SEED_TIMELINE = [
+  {"date": "2026-03-25", "title": "证监会批准收购", "status": "done", "description": "证监会正式批准，收购板上钉钉\n影响：消除最大不确定性，股价爆拉，从 10 → 14 区间"},
+  {"date": "2026-04-08", "title": "邀约收购开始", "status": "done", "description": "王庭发按程序开始全面邀约收购剩余 25% 股份\n预期持续到 4/29\n影响：邀约期间以横盘为主，不会大涨大跌"},
+  {"date": "2026-04-29", "title": "邀约结束", "status": "ongoing", "description": "4 月底邀约结束，完成对全部剩余筹码的回收\n影响：结束后市场预期提前兑现，主升浪启动前最后一次震荡"},
+  {"date": "2026-05 初", "title": "换人换董事", "status": "pending", "description": "邀约结束后立即召开股东大会，原班董事全部剔除，金母鸡金融证券班底进场\n影响：正面，市场将重新估值为「量化基金公司」，第二波行情启动"},
+  {"date": "2026-05 初-中", "title": "公司改名", "status": "pending", "description": "改为非金母鸡的新名称（待定），上市主体与厦门金母鸡区分\n影响：改名当天通常有 20-30% 拉升，资金面发酵"},
+  {"date": "2026-05 中-06", "title": "注入金融业务", "status": "pending", "description": "将金母鸡旗下 10 亿美金规模的量化基金业务注入上市主体\n主板金融壳有牌照，短期可注入不用等三年\n影响：估值重构，参考内地证券股平均 PB，市值预期 20-50 亿+"},
+  {"date": "2026-05-06", "title": "稳定币牌照申请", "status": "pending", "description": "金融牌照批完后马上申请一号稳定币牌照\n律师材料已筹备好，预计 4-5 月批下来\n影响：消息面爆点，参考云峰金融/耀才暴涨"},
+  {"date": "2026-06-07", "title": "派息", "status": "pending", "description": "王庭发 4/7 亲口确认会派息，属于真金白银回报\n一个月后可印证\n影响：吸引长线资金，做理财型持有人群扩大"},
+  {"date": "2026-06 以后", "title": "定增配股", "status": "pending", "description": "引入机构投资者，如果邀约再收到超过公众最低持股量需停牌配股\n影响：短期承压但长期引入机构背书，为拉升准备子弹"},
+  {"date": "待定", "title": "拆股", "status": "pending", "description": "发哥说未来会拆股（重大利好）\n正常拆股之前会先拉高再拆\n影响：拆股信号意味着管理层认为股价已经进入「贵」的阶段，是阶段性顶部信号"},
+  {"date": "2026 年内", "title": "IPO 项目上市", "status": "pending", "description": "公司手上 8 个 IPO 项目，今年会上 2 个\n影响：作为投行业务验证，支撑估值提升"},
+  {"date": "阶段目标", "title": "主升浪 → 目标价 20-25", "status": "pending", "description": "保守目标 20-25，乐观目标 30-40\n减仓节奏：16 以下不减 → 18-20 少减 → 20-25 多减 → 25-30 全清\n出货信号：成交量超 1 亿 = 庄家出货"}
+];
+
+const TIMELINE_SEEDED_KEY = 'stock_02680_timeline_seeded_v1';
+
+function seedIfNeeded() {
+  // Seed timeline independently (even for users with old SEEDED_KEY already set)
+  if (!localStorage.getItem(TIMELINE_SEEDED_KEY)) {
+    loadTimeline();
+    if (timeline.length === 0 && SEED_TIMELINE.length > 0) {
+      timeline = SEED_TIMELINE.map((s, i) => ({
+        id: crypto.randomUUID(),
+        date: s.date,
+        title: s.title,
+        status: s.status,
+        description: s.description,
+        order: i,
+        createdAt: Date.now() - (SEED_TIMELINE.length - i) * 1000,
+        updatedAt: Date.now() - (SEED_TIMELINE.length - i) * 1000
+      }));
+      saveTimelineStorage();
+    }
+    localStorage.setItem(TIMELINE_SEEDED_KEY, '1');
+  }
+  // Main seed flow (analyses + clues)
+  if (localStorage.getItem(SEEDED_KEY)) return;
+  if (SEED_ANALYSES.length === 0 && SEED_CLUES.length === 0) return;
+  loadAnalyses();
+  if (analyses.length === 0) {
+    analyses = SEED_ANALYSES.map((s, i) => ({
+      id: crypto.randomUUID(),
+      date: s.date,
+      title: s.title,
+      rating: s.rating || '',
+      targetLow: null, targetHigh: null,
+      body: s.body,
+      tags: s.tags || ['种子数据'],
+      isLegacy: s.isLegacy || false,
+      createdAt: Date.now() - (SEED_ANALYSES.length - i) * 1000,
+      updatedAt: Date.now() - (SEED_ANALYSES.length - i) * 1000
+    }));
+    saveAnalyses();
+  }
+  loadEvents();
+  if (events.length === 0) {
+    events = SEED_CLUES.map((s, i) => ({
+      id: crypto.randomUUID(),
+      title: s.title || '',
+      description: s.description,
+      order: i,
+      createdAt: Date.now() - (SEED_CLUES.length - i) * 1000,
+      updatedAt: Date.now() - (SEED_CLUES.length - i) * 1000
+    }));
+    saveEvents();
+  }
+  localStorage.setItem(SEEDED_KEY, '1');
+}
+
+// ==================== Tab Switch ====================
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  if (name === 'analyses') {
+    document.getElementById('tabAnalyses').classList.add('active');
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    renderAnalyses();
+  } else if (name === 'events') {
+    document.getElementById('tabEvents').classList.add('active');
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    renderEvents();
+  } else if (name === 'timeline') {
+    document.getElementById('tabTimeline').classList.add('active');
+    document.querySelectorAll('.tab')[2].classList.add('active');
+    renderTimeline();
+  } else if (name === 'ccass') {
+    document.getElementById('tabCCASS').classList.add('active');
+    document.querySelectorAll('.tab')[3].classList.add('active');
+    renderCCASS();
+  }
+}
+
+// ==================== CCASS ====================
+const CCASS_SUMMARY_PATH = 'data/stock_02680_ccass_summary.json';
+let _ccassLoaded = false;
+let _ccassData = null;
+
+function fmtShares(n) {
+  if (n === null || n === undefined || n === 0) return n === 0 ? '0' : '-';
+  const abs = Math.abs(n);
+  if (abs >= 1e8) return (n / 1e8).toFixed(2) + ' 亿';
+  if (abs >= 1e4) return (n / 1e4).toFixed(2) + ' 万';
+  return n.toLocaleString();
+}
+function fmtSignedShares(n) {
+  if (!n) return '0';
+  return (n > 0 ? '+' : '-') + fmtShares(Math.abs(n));
+}
+function fmtPct(p) {
+  if (p === null || p === undefined) return '-';
+  return p.toFixed(2) + '%';
+}
+function fmtSignedPct(p) {
+  if (p === null || p === undefined || p === 0) return '0.00%';
+  return (p > 0 ? '+' : '') + p.toFixed(2) + '%';
+}
+function deltaClass(d) {
+  if (!d) return 'ccass-delta-flat';
+  return d > 0 ? 'ccass-delta-up' : 'ccass-delta-down';
+}
+
+async function renderCCASS() {
+  const container = document.getElementById('ccassContent');
+  if (_ccassLoaded && _ccassData) {
+    container.innerHTML = renderCCASSHTML(_ccassData);
+    return;
+  }
+  container.innerHTML = '<div class="list-empty">加载中...</div>';
+  try {
+    const resp = await fetch(CCASS_SUMMARY_PATH + '?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    _ccassData = await resp.json();
+    _ccassLoaded = true;
+    container.innerHTML = renderCCASSHTML(_ccassData);
+  } catch (e) {
+    container.innerHTML = `
+      <div class="list-empty">
+        暂无 CCASS 数据<br>
+        <span style="font-size:11px;opacity:.7">
+          GitHub Actions 每交易日 17:30 (HKT) 自动抓取<br>
+          可前往 Actions 手动运行 "CCASS 02680 Daily"
+        </span>
+      </div>`;
+  }
+}
+
+function renderCCASSHTML(d) {
+  const conc = d.concentration || {};
+  const total = d.totalInCCASS || {};
+  const updated = d.fetchedAt ? new Date(d.fetchedAt).toLocaleString('zh-CN', {hour12:false}) : '-';
+  const concLabel = conc.label || ((conc.hhi || 0) > 2500 ? '高度集中' : (conc.hhi || 0) > 1500 ? '中度集中' : '分散');
+
+  const nameOf = (p) => p.cn_name || p.name || '-';
+  const mdBold = (s) => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  let html = '';
+  // 概览卡片
+  html += `<div class="ccass-overview">
+    <div class="ccass-card">
+      <div class="ccass-label">持股日期</div>
+      <div class="ccass-value">${d.shareholdingDate || '-'}</div>
+      <div class="ccass-sub">${d.participantCount || 0} 家参与者</div>
+    </div>
+    <div class="ccass-card">
+      <div class="ccass-label">CCASS 存管</div>
+      <div class="ccass-value">${fmtShares(total.shares)}</div>
+      <div class="ccass-sub">占已发行 ${fmtPct(total.pct)}</div>
+    </div>
+    <div class="ccass-card">
+      <div class="ccass-label">Top 10 占比</div>
+      <div class="ccass-value">${conc.top10_pct_of_issued || '-'}%</div>
+      <div class="ccass-sub">Top 1: ${conc.top1_pct_of_issued || '-'}%</div>
+    </div>
+    <div class="ccass-card">
+      <div class="ccass-label">HHI 集中度</div>
+      <div class="ccass-value">${conc.hhi || '-'}</div>
+      <div class="ccass-sub">${concLabel}</div>
+    </div>
+  </div>`;
+
+  // 一、Top 20 最近变化
+  html += `<div class="ccass-section"><h4>一、Top 20 持股及最近变化</h4>`;
+  if ((d.historyDays || 1) < 2) {
+    html += `<div class="ccass-note">首日快照,暂无变化对比数据</div>`;
+  }
+  html += `<table class="ccass-table">
+      <thead><tr>
+        <th>#</th><th>机构</th><th class="num">持股</th><th class="num">占比</th>
+        <th class="num">日变化</th><th class="num">7日变化</th>
+      </tr></thead><tbody>`;
+  (d.top20 || []).forEach((p) => {
+    const dc = p.dayDeltaPct || 0, wc = p.weekDeltaPct || 0;
+    const dStr = dc === 0 ? '—' : fmtSignedPct(dc);
+    const wStr = wc === 0 ? '—' : fmtSignedPct(wc);
+    html += `<tr>
+      <td>${p.rank}</td>
+      <td title="${p.name || ''}">${nameOf(p)}</td>
+      <td class="num">${fmtShares(p.shares)}</td>
+      <td class="num">${fmtPct(p.pct)}</td>
+      <td class="num ${deltaClass(dc)}">${dStr}</td>
+      <td class="num ${deltaClass(wc)}">${wStr}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // 二、加仓榜
+  const m7 = d.movers7d || {};
+  html += `<div class="ccass-section"><h4>二、近期加仓榜 (最近 7 日)</h4>`;
+  if (m7.up && m7.up.length) {
+    html += `<table class="ccass-table">
+      <thead><tr><th>机构</th><th class="num">持股变化</th><th class="num">占比变化</th><th class="num">当前占比</th></tr></thead><tbody>`;
+    m7.up.forEach((c) => {
+      const tag = c.isNew ? '🆕 ' : '';
+      html += `<tr>
+        <td>${tag}${nameOf(c)}</td>
+        <td class="num ccass-delta-up">📈 ${fmtSignedShares(c.deltaShares)}</td>
+        <td class="num ccass-delta-up">${fmtSignedPct(c.deltaPct)}</td>
+        <td class="num">${fmtPct(c.currPct)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    html += `<div class="ccass-note">暂无加仓数据(需要至少 2 天的历史快照)</div>`;
+  }
+  html += `</div>`;
+
+  // 三、减仓榜
+  html += `<div class="ccass-section"><h4>三、近期减仓榜 (最近 7 日)</h4>`;
+  if (m7.down && m7.down.length) {
+    html += `<table class="ccass-table">
+      <thead><tr><th>机构</th><th class="num">持股变化</th><th class="num">占比变化</th><th class="num">当前占比</th></tr></thead><tbody>`;
+    m7.down.forEach((c) => {
+      const tag = c.isExit ? '🚪 ' : '';
+      html += `<tr>
+        <td>${tag}${nameOf(c)}</td>
+        <td class="num ccass-delta-down">📉 ${fmtSignedShares(c.deltaShares)}</td>
+        <td class="num ccass-delta-down">${fmtSignedPct(c.deltaPct)}</td>
+        <td class="num">${fmtPct(c.currPct)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    html += `<div class="ccass-note">暂无减仓数据(需要至少 2 天的历史快照)</div>`;
+  }
+  html += `</div>`;
+
+  // 四、洞察分析
+  html += `<div class="ccass-section"><h4>四、洞察分析</h4>`;
+  if (d.insights && d.insights.length) {
+    html += `<ul class="ccass-insights">`;
+    d.insights.forEach((ins) => {
+      html += `<li>${mdBold(ins)}</li>`;
+    });
+    html += `</ul>`;
+  } else {
+    html += `<div class="ccass-note">暂无可输出的洞察(数据量不足)</div>`;
+  }
+  html += `</div>`;
+
+  // 附:趋势
+  if (d.trend && d.trend.length > 1) {
+    html += `<div class="ccass-section"><h4>附:近期 CCASS 走势</h4>
+      <table class="ccass-table">
+        <thead><tr><th>日期</th><th class="num">CCASS</th><th class="num">占比</th><th class="num">Top1</th><th class="num">HHI</th></tr></thead><tbody>`;
+    d.trend.slice(-15).reverse().forEach(t => {
+      html += `<tr>
+        <td>${t.date || '-'}</td>
+        <td class="num">${fmtShares(t.shares)}</td>
+        <td class="num">${fmtPct(t.pct)}</td>
+        <td class="num">${t.top1Pct != null ? t.top1Pct + '%' : '-'}</td>
+        <td class="num">${t.hhi || '-'}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  html += `<div class="ccass-meta">
+    数据更新: ${updated}　历史快照: ${d.historyDays || 1} 天<br>
+    来源: <a href="https://www3.hkexnews.hk/sdw/search/searchsdw.aspx?stockId=02680" target="_blank">港交所 CCASS</a>
+    · <a href="data/stock_02680_ccass_report.md" target="_blank">完整 Markdown 报告</a>
+  </div>`;
+
+  return html;
+}
+
+function toggleSyncModal() {
+  const modal = document.getElementById('syncModal');
+  modal.style.display = modal.style.display === 'none' ? '' : 'none';
+}
+
+// ==================== Analysis CRUD ====================
+function toggleAnalysisForm() {
+  const form = document.getElementById('analysisFormSection');
+  const btn = document.getElementById('aToggleBtn');
+  if (form.style.display === 'none') {
+    form.style.display = '';
+    btn.style.display = 'none';
+  } else {
+    form.style.display = 'none';
+    btn.style.display = '';
+    editingAnalysisId = null;
+  }
+}
+
+function resetAnalysisForm() {
+  editingAnalysisId = null;
+  document.getElementById('aDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('aBody').value = '';
+  document.getElementById('aSaveBtn').textContent = '保存';
+  document.getElementById('analysisFormSection').style.display = 'none';
+  document.getElementById('aToggleBtn').style.display = '';
+}
+
+function saveAnalysis() {
+  const date = document.getElementById('aDate').value;
+  const body = document.getElementById('aBody').value.trim();
+  if (!date || !body) { alert('日期和正文为必填项'); return; }
+
+  const title = body.split('\n')[0].substring(0, 40);
+  const autoTags = extractTags(body);
+
+  if (editingAnalysisId) {
+    const idx = analyses.findIndex(a => a.id === editingAnalysisId);
+    if (idx >= 0) {
+      analyses[idx] = { ...analyses[idx], date, title, body, tags: autoTags, updatedAt: Date.now() };
+    }
+  } else {
+    analyses.push({ id: crypto.randomUUID(), date, title, rating: '', targetLow: null, targetHigh: null, body, tags: autoTags, isLegacy: false, createdAt: Date.now(), updatedAt: Date.now() });
+  }
+  saveAnalyses();
+  resetAnalysisForm();
+  renderAnalyses();
+  autoSync();
+}
+
+function editAnalysis(id) {
+  const a = analyses.find(x => x.id === id);
+  if (!a) return;
+  editingAnalysisId = id;
+  document.getElementById('aDate').value = a.date;
+  document.getElementById('aBody').value = a.body;
+  document.getElementById('aSaveBtn').textContent = '更新';
+  document.getElementById('analysisFormSection').style.display = '';
+  document.getElementById('aToggleBtn').style.display = 'none';
+  document.getElementById('analysisFormSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditAnalysis() { resetAnalysisForm(); }
+
+function deleteAnalysis(id) {
+  if (!confirm('确定删除这条分析？')) return;
+  analyses = analyses.filter(a => a.id !== id);
+  tombstoneDelete(id);
+  saveAnalyses();
+  renderAnalyses();
+  autoSync();
+}
+
+
+function renderAnalyses() {
+  const query = (document.getElementById('aSearch').value || '').toLowerCase();
+  let list = analyses.slice();
+  if (query) {
+    list = list.filter(a => a.title.toLowerCase().includes(query) || a.body.toLowerCase().includes(query) || (a.tags||[]).some(t => t.toLowerCase().includes(query)));
+  }
+  if (activeTagFilter) {
+    list = list.filter(a => (a.tags || []).includes(activeTagFilter));
+  }
+  list.sort((a, b) => {
+    if (a.date !== b.date) return b.date.localeCompare(a.date);
+    return b.createdAt - a.createdAt;
+  });
+
+  const statsText = `共 ${analyses.length} 条分析` + ((query || activeTagFilter) ? `，筛选出 ${list.length} 条` : '');
+  document.getElementById('aStats').innerHTML = activeTagFilter
+    ? `<div class="filter-status">${statsText} · 标签: <span class="clear-filter" onclick="filterByTag('')">${esc(activeTagFilter)} ✕</span></div>`
+    : statsText;
+
+  const container = document.getElementById('analysisList');
+  if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无分析记录</div>'; return; }
+
+  container.innerHTML = list.map(a => {
+    const legacyBadge = a.isLegacy ? ' <span class="badge badge-legacy">历史</span>' : '';
+    const dayStr = getDayOfWeek(a.date);
+    const lineCount = (a.body || '').split('\n').length;
+    const needExpand = lineCount > 10 && !a.isLegacy;
+    const previewClass = a.isLegacy || !needExpand ? 'record-preview expanded' : 'record-preview';
+    const tagsHtml = (a.tags || []).filter(t => t !== '种子数据' && t !== '历史内容').map(t => {
+      const activeCls = t === activeTagFilter ? ' active' : '';
+      return `<span class="auto-tag${activeCls}" onclick="event.stopPropagation();filterByTag('${esc(t)}')">${esc(t)}</span>`;
+    }).join('');
+    const expandToggle = needExpand ? `<div class="expand-toggle" onclick="event.stopPropagation();toggleCardExpand(this.closest('.record'))">展开全文 ▼</div>` : '';
+    return `<div class="record" data-aid="${a.id}">
+      <div class="record-header">
+        <span class="record-date">${esc(a.date)}（${dayStr}）</span>${legacyBadge}
+      </div>
+      <div class="${previewClass}">${highlight(a.body)}</div>
+      ${expandToggle}
+      ${tagsHtml ? `<div class="record-tags">${tagsHtml}</div>` : ''}
+      <div class="record-actions">
+        <button class="btn btn-secondary" onclick="event.stopPropagation();editAnalysis('${a.id}')">编辑</button>
+        <button class="btn btn-secondary" onclick="event.stopPropagation();deleteAnalysis('${a.id}')">删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ==================== Clue CRUD ====================
+function toggleEventForm() {
+  const form = document.getElementById('eventFormSection');
+  const btn = document.getElementById('eToggleBtn');
+  if (form.style.display === 'none') { form.style.display = ''; btn.style.display = 'none'; }
+  else { form.style.display = 'none'; btn.style.display = ''; editingEventId = null; }
+}
+
+function resetEventForm() {
+  editingEventId = null;
+  document.getElementById('eTitle').value = '';
+  document.getElementById('eDesc').value = '';
+  document.getElementById('eSaveBtn').textContent = '保存';
+  document.getElementById('eventFormSection').style.display = 'none';
+  document.getElementById('eToggleBtn').style.display = '';
+}
+
+function saveEvent() {
+  const title = document.getElementById('eTitle').value.trim();
+  const desc = document.getElementById('eDesc').value.trim();
+  if (!desc) { alert('请填写内容'); return; }
+
+  if (editingEventId) {
+    const idx = events.findIndex(e => e.id === editingEventId);
+    if (idx >= 0) events[idx] = { ...events[idx], title: title, description: desc, updatedAt: Date.now() };
+  } else {
+    const maxOrder = events.reduce((m, e) => Math.max(m, e.order || 0), 0);
+    events.push({ id: crypto.randomUUID(), title: title, description: desc, order: maxOrder + 1, createdAt: Date.now(), updatedAt: Date.now() });
+  }
+  saveEvents(); resetEventForm(); renderEvents(); autoSync();
+}
+
+function editEvent(id) {
+  const e = events.find(x => x.id === id);
+  if (!e) return;
+  editingEventId = id;
+  document.getElementById('eTitle').value = e.title || '';
+  document.getElementById('eDesc').value = e.description;
+  document.getElementById('eSaveBtn').textContent = '更新';
+  document.getElementById('eventFormSection').style.display = '';
+  document.getElementById('eToggleBtn').style.display = 'none';
+  document.getElementById('eventFormSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditEvent() { resetEventForm(); }
+
+function deleteEvent(id) {
+  if (!confirm('确定删除这条线索？')) return;
+  events = events.filter(e => e.id !== id);
+  tombstoneDelete(id);
+  saveEvents(); renderEvents(); autoSync();
+}
+
+let dragSrcId = null;
+
+function renderEvents() {
+  let list = events.slice();
+  list.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  document.getElementById('eStats').textContent = `共 ${events.length} 条线索`;
+
+  const container = document.getElementById('eventList');
+  if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无线索</div>'; return; }
+
+  container.innerHTML = list.map(e => `<div class="clue-card" draggable="true" data-id="${e.id}"
+      ondragstart="onClueDragStart(event)" ondragover="onClueDragOver(event)" ondragleave="onClueDragLeave(event)" ondrop="onClueDrop(event)" ondragend="onClueDragEnd(event)"
+      ontouchstart="onClueTouchStart(event, this)" ontouchmove="onClueTouchMove(event)" ontouchend="onClueTouchEnd(event)">
+      <span class="drag-handle">&#9776;</span>
+      ${e.title ? `<div class="clue-title">${esc(e.title)}</div>` : ''}
+      <div class="clue-body">${highlight(e.description)}</div>
+      <div class="clue-actions">
+        <button class="btn btn-secondary" onclick="editEvent('${e.id}')">编辑</button>
+        <button class="btn btn-secondary" onclick="deleteEvent('${e.id}')">删除</button>
+      </div>
+    </div>`).join('');
+}
+
+// Drag & drop reorder (desktop)
+function onClueDragStart(e) {
+  dragSrcId = e.target.closest('.clue-card').dataset.id;
+  e.target.closest('.clue-card').classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onClueDragOver(e) {
+  e.preventDefault();
+  const card = e.target.closest('.clue-card');
+  if (card && card.dataset.id !== dragSrcId) card.classList.add('drag-over');
+}
+function onClueDragLeave(e) {
+  const card = e.target.closest('.clue-card');
+  if (card) card.classList.remove('drag-over');
+}
+function onClueDrop(e) {
+  e.preventDefault();
+  const card = e.target.closest('.clue-card');
+  if (!card || card.dataset.id === dragSrcId) return;
+  card.classList.remove('drag-over');
+  reorderClues(dragSrcId, card.dataset.id);
+}
+function onClueDragEnd(e) {
+  document.querySelectorAll('.clue-card').forEach(c => c.classList.remove('dragging', 'drag-over'));
+  dragSrcId = null;
+}
+
+// Touch drag for mobile
+let touchDragId = null;
+function onClueTouchStart(e, el) { touchDragId = el.dataset.id; }
+function onClueTouchMove(e) { /* allow default scroll */ }
+function onClueTouchEnd(e) { touchDragId = null; }
+
+function reorderClues(fromId, toId) {
+  const sorted = events.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const fromIdx = sorted.findIndex(e => e.id === fromId);
+  const toIdx = sorted.findIndex(e => e.id === toId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  const [moved] = sorted.splice(fromIdx, 1);
+  sorted.splice(toIdx, 0, moved);
+  sorted.forEach((e, i) => { const orig = events.find(x => x.id === e.id); if (orig) orig.order = i; });
+  saveEvents(); renderEvents(); autoSync();
+}
+
+// ==================== Timeline CRUD ====================
+const TIMELINE_STATUS_LABELS = {pending:'待发生', ongoing:'进行中', done:'已发生'};
+
+function toggleTimelineForm() {
+  const form = document.getElementById('timelineFormSection');
+  const btn = document.getElementById('tToggleBtn');
+  if (form.style.display === 'none') { form.style.display = ''; btn.style.display = 'none'; }
+  else { form.style.display = 'none'; btn.style.display = ''; editingTimelineId = null; }
+}
+
+function resetTimelineForm() {
+  editingTimelineId = null;
+  document.getElementById('tDate').value = '';
+  document.getElementById('tTitle').value = '';
+  document.getElementById('tDesc').value = '';
+  document.getElementById('tStatus').value = 'pending';
+  document.getElementById('tSaveBtn').textContent = '保存';
+  document.getElementById('timelineFormSection').style.display = 'none';
+  document.getElementById('tToggleBtn').style.display = '';
+}
+
+function saveTimeline() {
+  const date = document.getElementById('tDate').value.trim();
+  const title = document.getElementById('tTitle').value.trim();
+  const description = document.getElementById('tDesc').value.trim();
+  const status = document.getElementById('tStatus').value;
+  if (!date || !title) { alert('时间和节点名称为必填项'); return; }
+
+  if (editingTimelineId) {
+    const idx = timeline.findIndex(t => t.id === editingTimelineId);
+    if (idx >= 0) timeline[idx] = { ...timeline[idx], date, title, description, status, updatedAt: Date.now() };
+  } else {
+    const maxOrder = timeline.reduce((m, t) => Math.max(m, t.order || 0), 0);
+    timeline.push({ id: crypto.randomUUID(), date, title, description, status, order: maxOrder + 1, createdAt: Date.now(), updatedAt: Date.now() });
+  }
+  saveTimelineStorage(); resetTimelineForm(); renderTimeline(); autoSync();
+}
+
+function editTimeline(id) {
+  const t = timeline.find(x => x.id === id);
+  if (!t) return;
+  editingTimelineId = id;
+  document.getElementById('tDate').value = t.date || '';
+  document.getElementById('tTitle').value = t.title || '';
+  document.getElementById('tDesc').value = t.description || '';
+  document.getElementById('tStatus').value = t.status || 'pending';
+  document.getElementById('tSaveBtn').textContent = '更新';
+  document.getElementById('timelineFormSection').style.display = '';
+  document.getElementById('tToggleBtn').style.display = 'none';
+  document.getElementById('timelineFormSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditTimeline() { resetTimelineForm(); }
+
+function deleteTimeline(id) {
+  if (!confirm('确定删除这个节点？')) return;
+  timeline = timeline.filter(t => t.id !== id);
+  tombstoneDelete(id);
+  saveTimelineStorage(); renderTimeline(); autoSync();
+}
+
+function renderTimeline() {
+  const list = timeline.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const container = document.getElementById('timelineList');
+  if (list.length === 0) { container.innerHTML = '<div class="list-empty">暂无推演节点</div>'; return; }
+  container.innerHTML = '<div class="timeline-wrap">' + list.map(t => {
+    const st = t.status || 'pending';
+    return `<div class="timeline-item ${st}">
+      <div class="timeline-header">
+        <span class="timeline-date">${esc(t.date)}</span>
+        <span class="timeline-status ${st}">${TIMELINE_STATUS_LABELS[st]||st}</span>
+        <span class="timeline-title">${esc(t.title)}</span>
+      </div>
+      <div class="timeline-desc">${highlight(t.description || '')}</div>
+      <div class="timeline-actions">
+        <button class="btn btn-secondary" onclick="editTimeline('${t.id}')">编辑</button>
+        <button class="btn btn-secondary" onclick="deleteTimeline('${t.id}')">删除</button>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ==================== Price Fetch ====================
+let chartPeriod = '1d'; // '1d' = intraday, 'daily' = daily K
+let quoteCache = {}; // { '1d': {...}, 'daily': {...} }
+
+const CHART_CONFIGS = {
+  '1d':    { interval: '5m',  range: '1d' },
+  'daily': { interval: '1d',  range: '6mo' },
+};
+
+function switchChartPeriod(period) {
+  chartPeriod = period;
+  if (period === 'daily') candleViewExplicit = false; // reset to latest on switch
+  document.querySelectorAll('.chart-tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.chart-tab').forEach(el => {
+    if ((period === '1d' && el.textContent === '分时') || (period === 'daily' && el.textContent === '日K')) el.classList.add('active');
+  });
+  const cached = quoteCache[period];
+  if (cached && cached.series && cached.series.length > 1) {
+    renderChart(cached);
+  } else {
+    document.getElementById('priceStatus').textContent = '加载中...';
+    fetchChartData(period, false);
+  }
+}
+
+async function fetchQuote() {
+  // Clear intraday session cache to force fresh data for today
+  sessionStorage.removeItem(QUOTE_CACHE_KEY + '_1d');
+  // 1. Try GitHub cached file first (fast, same-origin)
+  let usedCache = false;
+  try {
+    const resp = await fetch(QUOTE_CACHE_PATH + '?t=' + Date.now(), { signal: AbortSignal.timeout(3000) });
+    if (resp.ok) {
+      const cached = await resp.json();
+      if (cached.daily && cached.daily.series && cached.daily.series.length > 0) {
+        cached.daily.fetchedAt = cached.fetchedAt;
+        cached.daily.period = 'daily';
+        quoteCache['daily'] = cached.daily;
+        renderPriceHeader(cached.daily);
+        if (chartPeriod === 'daily') renderChart(cached.daily);
+        usedCache = true;
+      }
+      if (cached.intraday && cached.intraday.series && cached.intraday.series.length > 0) {
+        // Only use cached intraday if it's from today (HK timezone)
+        const firstT = cached.intraday.series[0].t;
+        const dt = new Date(firstT);
+        const today = new Date();
+        const sameDay = dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
+        if (sameDay) {
+          cached.intraday.fetchedAt = cached.fetchedAt;
+          cached.intraday.period = '1d';
+          quoteCache['1d'] = cached.intraday;
+          renderPriceHeader(cached.intraday);
+          if (chartPeriod === '1d') renderChart(cached.intraday);
+          usedCache = true;
+        }
+      }
+      if (usedCache) {
+        const age = Date.now() - cached.fetchedAt;
+        const mins = Math.round(age / 60000);
+        document.getElementById('stockStatus').textContent += (mins < 60 ? ` · 缓存 ${mins}分钟前` : ` · 缓存 ${Math.round(mins/60)}小时前`);
+      }
+    }
+  } catch {}
+
+  // 2. Try Tencent/Sina for real-time price + intraday + daily K (script tag, no CORS)
+  setTimeout(async () => {
+    await fetchRealtimeQuote();
+    // Fetch daily K and intraday in parallel
+    await Promise.allSettled([
+      fetchTencentDailyK(),
+      fetchTencentMinuteData()
+    ]);
+    // If still no intraday, switch to daily
+    if (!quoteCache['1d'] && quoteCache['daily']) switchChartPeriod('daily');
+    // Push updated cache to GitHub if sync configured
+    if (syncConfig && quoteCache['daily']) pushQuoteCache().catch(() => {});
+  }, 50);
+
+  // 3. Refresh chart data from Yahoo in background
+  setTimeout(() => refreshFromYahoo(usedCache), 200);
+}
+
+// ==================== Tencent/Sina Finance (script tag, no CORS) ====================
+function fetchRealtimeQuote() {
+  return new Promise((resolve) => {
+    // Try Tencent first, then Sina
+    fetchTencentQuote().then(ok => {
+      if (ok) { resolve(true); return; }
+      fetchSinaQuote().then(resolve);
+    });
+  });
+}
+
+function fetchTencentQuote() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 4000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = () => { cleanup(); resolve(false); };
+    // Tencent finance: returns v_r_hk02680="..."
+    script.src = `https://qt.gtimg.cn/q=r_hk02680&_=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const raw = window['v_r_hk02680'];
+        if (!raw) { cleanup(); resolve(false); return; }
+        // Tencent HK format: "name~code~price~prevClose~open~high~low~...~date~time~..."
+        const parts = raw.split('~');
+        if (parts.length < 30) { cleanup(); resolve(false); return; }
+        const price = parseFloat(parts[3]);
+        const prevClose = parseFloat(parts[4]);
+        const open = parseFloat(parts[5]);
+        const high = parseFloat(parts[33]) || parseFloat(parts[6]);
+        const low = parseFloat(parts[34]) || parseFloat(parts[7]);
+        const dateStr = parts[30] || '';
+        const timeStr = parts[31] || '';
+        if (price > 0) {
+          applyQuoteToUI(price, prevClose, open, high, low, `${dateStr} ${timeStr}`);
+        }
+        cleanup();
+        resolve(price > 0);
+      } catch { cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
+  });
+}
+
+function fetchSinaQuote() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 4000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = () => { cleanup(); resolve(false); };
+    script.src = `https://hq.sinajs.cn/list=hk02680&_=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const raw = window['hq_str_hk02680'];
+        if (!raw) { cleanup(); resolve(false); return; }
+        const parts = raw.split(',');
+        if (parts.length < 10) { cleanup(); resolve(false); return; }
+        const price = parseFloat(parts[6]) || parseFloat(parts[3]);
+        const prevClose = parseFloat(parts[3]);
+        const open = parseFloat(parts[2]);
+        const high = parseFloat(parts[4]);
+        const low = parseFloat(parts[5]);
+        const dateStr = parts[17] || '';
+        const timeStr = parts[18] || '';
+        if (price > 0) {
+          applyQuoteToUI(price, prevClose, open, high, low, `${dateStr} ${timeStr}`);
+        }
+        cleanup();
+        resolve(price > 0);
+      } catch { cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
+  });
+}
+
+function applyQuoteToUI(price, prevClose, open, high, low, timeText) {
+  const priceEl = document.getElementById('priceNow');
+  priceEl.textContent = price.toFixed(3);
+  const change = price - prevClose;
+  const pct = prevClose ? (change / prevClose * 100) : 0;
+  const sign = change >= 0 ? '+' : '';
+  const cls = change >= 0 ? 'up' : 'down';
+  priceEl.className = `price-now ${cls}`;
+  document.getElementById('priceChange').textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
+  document.getElementById('priceChange').className = `price-change ${cls}`;
+  if (high) document.getElementById('statHigh').textContent = high.toFixed(3);
+  if (low) document.getElementById('statLow').textContent = low.toFixed(3);
+  if (open) document.getElementById('statOpen').textContent = open.toFixed(3);
+  if (prevClose) document.getElementById('statPrevClose').textContent = prevClose.toFixed(3);
+  if (prevClose) {
+    document.getElementById('statHigh').className = 'stat-value ' + (high >= prevClose ? 'up' : 'down');
+    document.getElementById('statLow').className = 'stat-value ' + (low >= prevClose ? 'up' : 'down');
+    document.getElementById('statOpen').className = 'stat-value ' + (open >= prevClose ? 'up' : 'down');
+  }
+  if (timeText.trim()) document.getElementById('stockStatus').textContent = timeText.trim();
+}
+
+// ==================== Tencent Daily K Data ====================
+function fetchTencentDailyK() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const varName = 'kline_data_hk02680';
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 5000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = () => { cleanup(); resolve(false); };
+    // Tencent kline endpoint with JSONP-style var
+    script.src = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=hk02680,day,,,180,qfq&_var=${varName}&_=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const raw = window[varName];
+        if (!raw || !raw.data || !raw.data.hk02680) { cleanup(); resolve(false); return; }
+        const info = raw.data.hk02680;
+        // Tencent returns either day or qfqday key
+        const klineArr = info.qfqday || info.day;
+        if (!klineArr || !Array.isArray(klineArr) || klineArr.length < 2) { cleanup(); resolve(false); return; }
+
+        // Each entry: [date, open, close, high, low, volume, ...]
+        const series = klineArr.map(row => {
+          const dateStr = row[0]; // "YYYY-MM-DD"
+          const o = parseFloat(row[1]);
+          const c = parseFloat(row[2]);
+          const h = parseFloat(row[3]);
+          const l = parseFloat(row[4]);
+          if (isNaN(c) || isNaN(o)) return null;
+          // Create timestamp at local noon of that day
+          const dt = new Date(dateStr + 'T08:00:00Z'); // UTC 08:00 = HKT 16:00 close time
+          return { t: dt.getTime(), c, o, h, l };
+        }).filter(Boolean);
+
+        if (series.length > 2) {
+          const latest = series[series.length - 1];
+          const prev = series.length > 1 ? series[series.length - 2] : null;
+          const quoteData = {
+            fetchedAt: Date.now(),
+            period: 'daily',
+            price: latest.c,
+            prevClose: prev ? prev.c : latest.o,
+            series: series
+          };
+          quoteCache['daily'] = quoteData;
+          sessionStorage.setItem(QUOTE_CACHE_KEY + '_daily', JSON.stringify(quoteData));
+          candleViewExplicit = false; // new data = reset to latest view
+          if (chartPeriod === 'daily') renderChart(quoteData);
+          cleanup(); resolve(true); return;
+        }
+        cleanup(); resolve(false);
+      } catch(e) { console.warn('Tencent daily K parse error:', e); cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
+  });
+}
+
+// ==================== Tencent Minute Chart Data ====================
+function fetchTencentMinuteData() {
+  return new Promise((resolve) => {
+    // Always fetch fresh intraday data — stale cache is worse than no data
+    // Prefer the 1-minute K-line endpoint (has explicit datetime per entry)
+    fetchTencent1MinKline().then(ok => {
+      if (ok) { resolve(true); return; }
+      // Fallback to minute/query endpoint
+      loadTencentMinute('today').then(ok2 => {
+        if (ok2) { resolve(true); return; }
+        loadTencentMinute('5day').then(resolve);
+      });
+    });
+  });
+}
+
+// 1-minute K-line endpoint — has unambiguous datetime strings so we always
+// get the correct trading day.
+function fetchTencent1MinKline() {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const varName = 'kline_m1_hk02680';
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 5000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = () => { cleanup(); resolve(false); };
+    script.src = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=hk02680,m1,,,500,qfq&_var=${varName}&_=${Date.now()}`;
+    script.onload = () => {
+      try {
+        const raw = window[varName];
+        if (!raw || !raw.data || !raw.data.hk02680) { cleanup(); resolve(false); return; }
+        const info = raw.data.hk02680;
+        const klineArr = info.qfqm1 || info.m1;
+        if (!klineArr || !Array.isArray(klineArr) || klineArr.length < 2) { cleanup(); resolve(false); return; }
+
+        // The latest trading day is the one with the largest datetime prefix
+        const lastEntry = klineArr[klineArr.length - 1];
+        const lastDateTime = lastEntry[0] || '';
+        if (lastDateTime.length < 12) { cleanup(); resolve(false); return; }
+        const lastDate = lastDateTime.substring(0, 8);
+
+        // Keep only entries from that latest day
+        const todayEntries = klineArr.filter(e => (e[0] || '').substring(0, 8) === lastDate);
+
+        const series = todayEntries.map(e => {
+          const dt = e[0];
+          const y = parseInt(dt.substring(0,4));
+          const mo = parseInt(dt.substring(4,6)) - 1;
+          const d = parseInt(dt.substring(6,8));
+          const hh = parseInt(dt.substring(8,10));
+          const mm = parseInt(dt.substring(10,12));
+          const t = new Date(y, mo, d, hh, mm).getTime();
+          return { t, c: parseFloat(e[2]) };
+        }).filter(p => p.c > 0 && !isNaN(p.c));
+
+        if (series.length < 2) { cleanup(); resolve(false); return; }
+
+        // Fetch prevClose from qt data if available
+        let prevClose = null;
+        if (info.qt && info.qt.hk02680 && info.qt.hk02680[4]) {
+          prevClose = parseFloat(info.qt.hk02680[4]) || null;
+        }
+        if (!prevClose) prevClose = series[0].c;
+
+        const quoteData = {
+          fetchedAt: Date.now(),
+          period: '1d',
+          price: series[series.length - 1].c,
+          prevClose: prevClose,
+          dataDate: lastDate,
+          series: series
+        };
+        quoteCache['1d'] = quoteData;
+        if (chartPeriod === '1d') renderChart(quoteData);
+        // Show notice if not today
+        const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; })();
+        if (lastDate !== todayStr) {
+          const mmdd = lastDate.substring(4,6) + '/' + lastDate.substring(6,8);
+          document.getElementById('priceStatus').textContent = `分时数据: ${mmdd}（非今日 · 上游暂未刷新）`;
+        } else {
+          document.getElementById('priceStatus').textContent = '';
+        }
+        cleanup(); resolve(true);
+      } catch(e) { console.warn('Tencent m1 kline parse error:', e); cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
+  });
+}
+
+function loadTencentMinute(mode) {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    const varName = mode === '5day' ? 'min5_data_hk02680' : 'min_data_hk02680';
+    const url = mode === '5day'
+      ? `https://web.ifzq.gtimg.cn/appstock/app/day/query?_var=${varName}&code=hk02680&_=${Date.now()}`
+      : `https://web.ifzq.gtimg.cn/appstock/app/minute/query?_var=${varName}&code=hk02680&_=${Date.now()}`;
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 5000);
+    function cleanup() { clearTimeout(timer); if (script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = () => { cleanup(); resolve(false); };
+    script.src = url;
+    script.onload = () => {
+      try {
+        const raw = window[varName];
+        if (!raw || !raw.data || !raw.data.hk02680) { cleanup(); resolve(false); return; }
+        const info = raw.data.hk02680;
+
+        // Extract prevClose from qt data
+        let prevClose = null;
+        if (info.qt && info.qt.hk02680) {
+          prevClose = parseFloat(info.qt.hk02680[4]) || null;
+        }
+
+        // Find minute data - try multiple possible locations
+        let minutes = null;
+        let dataDate = null; // YYYYMMDD from Tencent response
+        if (info.data && info.data.data) {
+          minutes = info.data.data;
+          dataDate = info.data.date || null;
+        } else if (info.data && Array.isArray(info.data)) {
+          minutes = info.data;
+        }
+
+        // For 5-day mode, find the last day's data
+        if (!minutes && mode === '5day') {
+          // 5-day response has date keys like {"20260410": [...], "20260411": [...]}
+          const dayKeys = Object.keys(info).filter(k => /^\d{8}$/.test(k)).sort();
+          if (dayKeys.length > 0) {
+            const lastDay = dayKeys[dayKeys.length - 1];
+            minutes = info[lastDay];
+            dataDate = lastDay;
+          }
+        }
+
+        if (!minutes || !Array.isArray(minutes) || minutes.length < 2) { cleanup(); resolve(false); return; }
+
+        // Parse date from Tencent response (YYYYMMDD), fall back to today
+        let dataDay;
+        if (dataDate && /^\d{8}$/.test(dataDate)) {
+          dataDay = new Date(parseInt(dataDate.substring(0,4)), parseInt(dataDate.substring(4,6))-1, parseInt(dataDate.substring(6,8)));
+        } else {
+          dataDay = new Date();
+        }
+
+        // Parse: each entry is "HHMM price volume" or similar
+        const series = [];
+        for (const m of minutes) {
+          const parts = typeof m === 'string' ? m.split(' ') : null;
+          if (!parts || parts.length < 2) continue;
+          const timeStr = parts[0];
+          const price = parseFloat(parts[1]);
+          if (!price || isNaN(price)) continue;
+          // timeStr could be "HHMM" or "YYYYMMDDHHMMSS"
+          let hh, mm;
+          if (timeStr.length <= 4) {
+            hh = parseInt(timeStr.substring(0, 2));
+            mm = parseInt(timeStr.substring(2, 4));
+          } else {
+            hh = parseInt(timeStr.substring(8, 10));
+            mm = parseInt(timeStr.substring(10, 12));
+          }
+          const dt = new Date(dataDay.getFullYear(), dataDay.getMonth(), dataDay.getDate(), hh, mm);
+          series.push({ t: dt.getTime(), c: price });
+        }
+
+        if (series.length > 2) {
+          const quoteData = {
+            fetchedAt: Date.now(),
+            period: '1d',
+            price: series[series.length - 1].c,
+            prevClose: prevClose || series[0].c,
+            dataDate: dataDate,
+            series: series
+          };
+          quoteCache['1d'] = quoteData;
+          if (chartPeriod === '1d') renderChart(quoteData);
+          document.getElementById('priceStatus').textContent = '';
+          // If the data isn't from today, show a notice
+          const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; })();
+          if (dataDate && dataDate !== todayStr) {
+            const mmdd = dataDate.substring(4,6) + '/' + dataDate.substring(6,8);
+            document.getElementById('priceStatus').textContent = `分时数据: ${mmdd}（非今日）`;
+          }
+          cleanup(); resolve(true); return;
+        }
+        cleanup(); resolve(false);
+      } catch(e) { console.warn('Tencent minute parse error:', e); cleanup(); resolve(false); }
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function refreshFromYahoo(silent) {
+  let updated = false;
+  // Run both in parallel, don't block each other
+  const results = await Promise.allSettled([
+    fetchChartData('1d', silent),
+    fetchChartData('daily', silent)
+  ]);
+  updated = results.some(r => r.status === 'fulfilled' && r.value === true);
+  if (updated && syncConfig) {
+    pushQuoteCache().catch(() => {});
+  }
+}
+
+async function fetchChartData(period, silent) {
+  const cfg = CHART_CONFIGS[period];
+  const cacheKey = QUOTE_CACHE_KEY + '_' + period;
+
+  // Check sessionStorage (within same session, skip re-fetch within 5 min)
+  const sessionCached = sessionStorage.getItem(cacheKey);
+  if (sessionCached) {
+    try {
+      const c = JSON.parse(sessionCached);
+      if (Date.now() - c.fetchedAt < 5 * 60 * 1000) {
+        quoteCache[period] = c;
+        if (period === chartPeriod) renderChart(c);
+        if (period === '1d') renderPriceHeader(c);
+        return;
+      }
+    } catch {}
+  }
+
+  // Direct Worker proxy (fastest, most reliable)
+  const workerUrl = `https://stock-quote-proxy.chenruoyi0202.workers.dev/?symbol=${SYMBOL}&interval=${cfg.interval}&range=${cfg.range}`;
+  // Fallback: CORS proxies
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}?interval=${cfg.interval}&range=${cfg.range}`;
+  const proxies = [
+    () => workerUrl,
+    () => `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
+    () => `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+  ];
+
+  for (const getUrl of proxies) {
+    try {
+      const resp = await fetch(getUrl(), { signal: AbortSignal.timeout(5000) });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const result = data.chart.result[0];
+      const meta = result.meta;
+      const timestamps = result.timestamp || [];
+      const quote = result.indicators.quote[0];
+      const closes = (quote.close || []).map(v => v === null ? undefined : v);
+      const highs = (quote.high || []).map(v => v === null ? undefined : v);
+      const lows = (quote.low || []).map(v => v === null ? undefined : v);
+      const opens = (quote.open || []).map(v => v === null ? undefined : v);
+      const quoteData = {
+        fetchedAt: Date.now(),
+        period,
+        price: meta.regularMarketPrice,
+        prevClose: meta.chartPreviousClose || meta.previousClose,
+        series: timestamps.map((t, i) => ({ t: t * 1000, c: closes[i], h: highs[i], l: lows[i], o: opens[i] })).filter(p => p.c !== undefined)
+      };
+      sessionStorage.setItem(cacheKey, JSON.stringify(quoteData));
+      quoteCache[period] = quoteData;
+      if (period === chartPeriod) renderChart(quoteData);
+      if (period === '1d') renderPriceHeader(quoteData);
+      return true;
+    } catch { continue; }
+  }
+
+  // If intraday failed but we have daily, auto-switch
+  if (period === '1d' && !quoteCache['1d'] && quoteCache['daily']) {
+    switchChartPeriod('daily');
+    document.getElementById('priceStatus').textContent = '分时数据暂不可用，已切换到日K';
+  } else if (!silent && period === chartPeriod) {
+    document.getElementById('priceStatus').innerHTML = '<a onclick="fetchQuote()">点击重试</a>';
+  }
+  return false;
+}
+
+async function pushQuoteCache() {
+  if (!syncConfig || !quoteCache['1d']) return;
+  try {
+    const branch = await getDefaultBranch();
+    const cacheData = JSON.stringify({
+      fetchedAt: Date.now(),
+      intraday: quoteCache['1d'] || null,
+      daily: quoteCache['daily'] || null
+    });
+    const file = await ghGet(syncConfig.token, syncConfig.repo, QUOTE_CACHE_PATH, branch + '&t=' + Date.now());
+    const sha = file ? file.sha : null;
+    await ghPut(syncConfig.token, syncConfig.repo, QUOTE_CACHE_PATH, cacheData, sha, branch);
+  } catch (e) {
+    console.warn('Quote cache push failed:', e.message);
+  }
+}
+
+function renderPriceHeader(data) {
+  const { price, prevClose, series } = data;
+  const priceEl = document.getElementById('priceNow');
+  priceEl.textContent = price ? price.toFixed(3) : '--';
+
+  if (price && prevClose) {
+    const change = price - prevClose;
+    const pct = (change / prevClose * 100);
+    const sign = change >= 0 ? '+' : '';
+    const cls = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+    priceEl.className = `price-now ${cls}`;
+    document.getElementById('priceChange').textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
+    document.getElementById('priceChange').className = `price-change ${cls}`;
+  }
+
+  if (series && series.length > 0) {
+    const highs = series.map(p => p.h || p.c);
+    const lows = series.map(p => p.l || p.c);
+    const high = Math.max(...highs);
+    const low = Math.min(...lows);
+    const open = series[0].o || series[0].c;
+    document.getElementById('statHigh').textContent = high.toFixed(3);
+    document.getElementById('statLow').textContent = low.toFixed(3);
+    document.getElementById('statOpen').textContent = open.toFixed(3);
+    if (prevClose) {
+      document.getElementById('statHigh').className = 'stat-value ' + (high > prevClose ? 'up' : high < prevClose ? 'down' : '');
+      document.getElementById('statLow').className = 'stat-value ' + (low > prevClose ? 'up' : low < prevClose ? 'down' : '');
+      document.getElementById('statOpen').className = 'stat-value ' + (open > prevClose ? 'up' : open < prevClose ? 'down' : '');
+    }
+  }
+  if (prevClose) document.getElementById('statPrevClose').textContent = prevClose.toFixed(3);
+
+  const time = data.fetchedAt ? new Date(data.fetchedAt).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
+  document.getElementById('stockStatus').textContent = time || '';
+  document.getElementById('priceStatus').textContent = '';
+}
+
+let currentChartSeries = null;
+
+function renderChart(data) {
+  const { series, prevClose } = data;
+  if (!series || series.length < 2) return;
+  currentChartSeries = series;
+
+  // Hide skeleton, show chart
+  const skeleton = document.getElementById('chartSkeleton');
+  const svg = document.getElementById('priceChart');
+  if (skeleton) skeleton.style.display = 'none';
+  if (svg) svg.style.display = '';
+
+  if (chartPeriod === 'daily') {
+    renderCandlestick(data);
+  } else {
+    renderLineChart(data);
+  }
+
+  if (chartPeriod === 'daily') {
+    renderTimeAxis(series.slice(candleViewStart, candleViewStart + candleViewCount));
+  } else {
+    renderTimeAxis(series);
+  }
+  setupCrosshair();
+}
+
+function renderLineChart(data) {
+  const { series, prevClose } = data;
+  const svg = document.getElementById('priceChart');
+  svg.setAttribute('viewBox', '0 0 700 140');
+  svg.style.height = '140px';
+  const W = 700, H = 140, PAD = 6, CHART_H = H - 20;
+  const prices = series.map(p => p.c);
+  const allH = series.map(p => p.h || p.c), allL = series.map(p => p.l || p.c);
+  let minP = Math.min(...prices, ...allL);
+  let maxP = Math.max(...prices, ...allH);
+  // Include prevClose in the range so the reference line is always visible
+  if (prevClose) {
+    minP = Math.min(minP, prevClose);
+    maxP = Math.max(maxP, prevClose);
+  }
+  // Add small padding so the line doesn't touch the top/bottom edges
+  const priceRange = maxP - minP;
+  if (priceRange > 0) {
+    const pad = priceRange * 0.1;
+    minP -= pad;
+    maxP += pad;
+  } else {
+    // All prices identical — widen range by 0.5%
+    minP -= minP * 0.005;
+    maxP += maxP * 0.005;
+  }
+  const range = maxP - minP || 1;
+  const refPrice = prevClose || prices[0];
+  const refY = PAD + (1 - (refPrice - minP) / range) * (CHART_H - 2 * PAD);
+
+  // HK trading session: 9:30-12:00 (morning) + 13:00-16:00 (afternoon) = 330 min total
+  // Use first data point's date to anchor start of day
+  const firstTime = new Date(series[0].t);
+  const dayStart = new Date(firstTime.getFullYear(), firstTime.getMonth(), firstTime.getDate(), 9, 30).getTime();
+  const lunchStart = new Date(firstTime.getFullYear(), firstTime.getMonth(), firstTime.getDate(), 12, 0).getTime();
+  const lunchEnd = new Date(firstTime.getFullYear(), firstTime.getMonth(), firstTime.getDate(), 13, 0).getTime();
+  const dayEnd = new Date(firstTime.getFullYear(), firstTime.getMonth(), firstTime.getDate(), 16, 0).getTime();
+  const TOTAL_MIN = 330; // 150 morning + 180 afternoon
+
+  // Map a timestamp to trading minutes offset (0 to TOTAL_MIN), skipping lunch
+  function timeToMin(t) {
+    if (t <= dayStart) return 0;
+    if (t >= dayEnd) return TOTAL_MIN;
+    if (t >= lunchStart && t <= lunchEnd) return 150; // lunch freeze at end of morning
+    if (t < lunchStart) return Math.round((t - dayStart) / 60000);
+    return 150 + Math.round((t - lunchEnd) / 60000);
+  }
+  function minToX(min) {
+    return PAD + (min / TOTAL_MIN) * (W - 2 * PAD);
+  }
+
+  // Densify: build a price-by-minute array for the full 330-minute trading day.
+  // Carry forward last known price to fill gaps in sparse data.
+  // This makes the step-line continuous without edge cases.
+  const minToPrice = new Array(TOTAL_MIN + 1);
+  const sortedSeries = series.slice().sort((a, b) => a.t - b.t);
+  let lastPrice = sortedSeries[0] ? sortedSeries[0].c : (prevClose || minP);
+  let seriesIdx = 0;
+  for (let m = 0; m <= TOTAL_MIN; m++) {
+    // Advance seriesIdx while the next point is at or before this minute
+    while (seriesIdx < sortedSeries.length && timeToMin(sortedSeries[seriesIdx].t) <= m) {
+      lastPrice = sortedSeries[seriesIdx].c;
+      seriesIdx++;
+    }
+    minToPrice[m] = lastPrice;
+  }
+
+  // Build points array from dense minute data
+  const stepPoints = [];
+  for (let m = 0; m <= TOTAL_MIN; m++) {
+    const x = minToX(m);
+    const y = PAD + (1 - (minToPrice[m] - minP) / range) * (CHART_H - 2 * PAD);
+    stepPoints.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  const allPoints = stepPoints.join(' ');
+  const fillPoints = allPoints + ` ${(W-PAD).toFixed(1)},${CHART_H} ${PAD},${CHART_H}`;
+
+  // Lunch break vertical divider
+  const lunchX = minToX(150);
+
+  let extras = '';
+  if (prevClose) extras += `<line x1="${PAD}" y1="${refY.toFixed(1)}" x2="${W-PAD}" y2="${refY.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4,3" opacity="0.4"/>`;
+  // Lunch break line
+  extras += `<line x1="${lunchX.toFixed(1)}" y1="${PAD}" x2="${lunchX.toFixed(1)}" y2="${CHART_H}" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.3"/>`;
+  if (costPrice && costPrice >= minP && costPrice <= maxP) {
+    const cy = PAD + (1 - (costPrice - minP) / range) * (CHART_H - 2 * PAD);
+    extras += `<line x1="${PAD}" y1="${cy.toFixed(1)}" x2="${W-PAD}" y2="${cy.toFixed(1)}" class="cost-line"/><text x="${PAD+2}" y="${cy.toFixed(1)-3}" font-size="9" fill="var(--orange)" opacity="0.8">成本 ${costPrice.toFixed(3)}</text>`;
+  }
+
+  svg.innerHTML = `<defs>
+    <clipPath id="clipUp"><rect x="0" y="0" width="${W}" height="${refY.toFixed(1)}"/></clipPath>
+    <clipPath id="clipDown"><rect x="0" y="${refY.toFixed(1)}" width="${W}" height="${H}"/></clipPath>
+    <linearGradient id="gradUp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.12"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gradDown" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22c55e" stop-opacity="0"/><stop offset="100%" stop-color="#22c55e" stop-opacity="0.12"/></linearGradient>
+  </defs>
+  ${extras}
+  <text x="${W-2}" y="${PAD+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>
+  <text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>
+  <polygon points="${fillPoints}" fill="url(#gradUp)" clip-path="url(#clipUp)"/>
+  <polygon points="${fillPoints}" fill="url(#gradDown)" clip-path="url(#clipDown)"/>
+  <polyline points="${allPoints}" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linejoin="round" clip-path="url(#clipUp)"/>
+  <polyline points="${allPoints}" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linejoin="round" clip-path="url(#clipDown)"/>`;
+}
+
+// ==================== Candlestick Chart ====================
+let candleViewStart = 0; // index of first visible candle
+let candleViewCount = 60; // number of visible candles
+let candleViewExplicit = false; // true once user zooms/scrolls
+
+function renderCandlestick(data) {
+  const { series } = data;
+  const svg = document.getElementById('priceChart');
+  const W = 700, H = 180, PAD = 6, CHART_H = H - 20;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.style.height = H + 'px';
+
+  // Default to showing the last N candles (most recent). Only respect
+  // existing candleViewStart if it was explicitly set by user zoom.
+  const total = series.length;
+  if (!candleViewExplicit || candleViewStart < 0 || candleViewStart + candleViewCount > total) {
+    candleViewStart = Math.max(0, total - candleViewCount);
+  }
+  const visible = series.slice(candleViewStart, candleViewStart + candleViewCount);
+  if (visible.length < 1) return;
+
+  // Find price range from visible OHLC
+  let minP = Infinity, maxP = -Infinity;
+  visible.forEach(p => {
+    const lo = p.l != null ? p.l : Math.min(p.o || p.c, p.c);
+    const hi = p.h != null ? p.h : Math.max(p.o || p.c, p.c);
+    if (lo < minP) minP = lo;
+    if (hi > maxP) maxP = hi;
+  });
+  const range = maxP - minP || 1;
+  const toY = v => PAD + (1 - (v - minP) / range) * (CHART_H - 2 * PAD);
+
+  const n = visible.length;
+  const candleW = Math.max(2, (W - 2 * PAD) / n * 0.7);
+  const gap = (W - 2 * PAD) / n;
+
+  let candles = '';
+  for (let i = 0; i < n; i++) {
+    const p = visible[i];
+    const o = p.o != null ? p.o : p.c;
+    const c = p.c;
+    const h = p.h != null ? p.h : Math.max(o, c);
+    const l = p.l != null ? p.l : Math.min(o, c);
+    // Compare close vs previous day's close for color (red=up, green=down)
+    const absIdx = candleViewStart + i;
+    const prevClose = absIdx > 0 && series[absIdx - 1] ? series[absIdx - 1].c : o;
+    const isUp = c > prevClose;
+    const isFlat = c === prevClose;
+    const color = isFlat ? '#6b7280' : (isUp ? '#ef4444' : '#22c55e');
+    const cx = PAD + gap * i + gap / 2;
+    const bodyTop = toY(Math.max(o, c));
+    const bodyBot = toY(Math.min(o, c));
+    const bodyH = Math.max(1, bodyBot - bodyTop);
+    const wickTop = toY(h);
+    const wickBot = toY(l);
+
+    candles += `<line x1="${cx.toFixed(1)}" y1="${wickTop.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${wickBot.toFixed(1)}" stroke="${color}" stroke-width="1"/>`;
+    candles += `<rect x="${(cx - candleW/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}" rx="0.5"/>`;
+  }
+
+  // Cost line
+  let extras = '';
+  if (costPrice && costPrice >= minP && costPrice <= maxP) {
+    const cy = toY(costPrice);
+    extras += `<line x1="${PAD}" y1="${cy.toFixed(1)}" x2="${W-PAD}" y2="${cy.toFixed(1)}" class="cost-line"/><text x="${PAD+2}" y="${(cy-3).toFixed(1)}" font-size="9" fill="var(--orange)" opacity="0.8">成本 ${costPrice.toFixed(3)}</text>`;
+  }
+
+  // Price labels
+  extras += `<text x="${W-2}" y="${PAD+10}" text-anchor="end" font-size="9" fill="var(--text-muted)">${maxP.toFixed(3)}</text>`;
+  extras += `<text x="${W-2}" y="${CHART_H-PAD-2}" text-anchor="end" font-size="9" fill="var(--text-muted)">${minP.toFixed(3)}</text>`;
+
+  // Analysis markers: gold dots above candles where analyses exist
+  let markers = '';
+  if (analyses && analyses.length > 0) {
+    const dateToAnalysis = new Map();
+    analyses.forEach(a => { if (a.date && !a.isLegacy) dateToAnalysis.set(a.date, a); });
+    for (let i = 0; i < n; i++) {
+      const p = visible[i];
+      // Try both local and UTC date formats to handle timezone edge cases
+      const dt = new Date(p.t);
+      const localDate = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      const utcDate = dt.toISOString().substring(0, 10);
+      const a = dateToAnalysis.get(localDate) || dateToAnalysis.get(utcDate);
+      if (a) {
+        const cx = PAD + gap * i + gap / 2;
+        // Place above the candle's high (wick top), with small offset
+        const pHigh = p.h != null ? p.h : Math.max(p.o || p.c, p.c);
+        const wickTop = PAD + (1 - (pHigh - minP) / range) * (CHART_H - 2 * PAD);
+        const markerY = Math.max(PAD + 6, wickTop - 6);
+        markers += `<circle cx="${cx.toFixed(1)}" cy="${markerY.toFixed(1)}" r="6" fill="#fcd34d" stroke="#000" stroke-width="1.5" data-aid="${a.id}" class="analysis-marker" style="filter:drop-shadow(0 0 4px rgba(252,211,77,0.9))"/>`;
+        // Larger invisible circle for touch hit target
+        markers += `<circle cx="${cx.toFixed(1)}" cy="${markerY.toFixed(1)}" r="18" data-aid="${a.id}" class="analysis-marker-hit"/>`;
+      }
+    }
+  }
+
+  svg.innerHTML = extras + candles + markers;
+
+  // Attach click/touch handlers to markers — show popup preview
+  svg.querySelectorAll('.analysis-marker, .analysis-marker-hit').forEach(el => {
+    const handler = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const aid = el.dataset.aid;
+      const visible = svg.querySelector(`.analysis-marker[data-aid="${aid}"]`) || el;
+      showMarkerPopup(aid, visible);
+    };
+    el.addEventListener('click', handler);
+    el.addEventListener('touchstart', handler, { passive: false });
+  });
+}
+
+function closeMarkerPopup() {
+  document.getElementById('markerPopup').style.display = 'none';
+}
+
+function showMarkerPopup(analysisId, markerEl) {
+  const a = analyses.find(x => x.id === analysisId);
+  if (!a) return;
+  const popup = document.getElementById('markerPopup');
+  popup.dataset.aid = analysisId;
+  popup.querySelector('.mp-date').textContent = `${a.date}（${getDayOfWeek(a.date)}）`;
+  const preview = (a.body || '').substring(0, 200) + (a.body.length > 200 ? '...' : '');
+  popup.querySelector('.mp-body').innerHTML = highlight(preview);
+  popup.style.display = 'block';
+  const rect = markerEl.getBoundingClientRect();
+  const popupW = 320;
+  let left = rect.left + rect.width / 2 - popupW / 2;
+  if (left < 10) left = 10;
+  if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
+  popup.style.left = left + 'px';
+  popup.style.top = (rect.bottom + 8) + 'px';
+}
+
+function jumpFromPopup() {
+  const popup = document.getElementById('markerPopup');
+  const aid = popup.dataset.aid;
+  closeMarkerPopup();
+  if (aid) jumpToAnalysis(aid);
+}
+
+function jumpToAnalysis(analysisId) {
+  // Switch to analysis tab
+  switchTab('analyses');
+  // Wait for render then scroll to the card
+  setTimeout(() => {
+    const card = document.querySelector(`.record[data-aid="${analysisId}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Highlight animation
+    card.classList.add('record-highlight');
+    setTimeout(() => card.classList.remove('record-highlight'), 2000);
+  }, 80);
+}
+
+function renderTimeAxis(seriesSlice) {
+  const axis = document.getElementById('chartTimeAxis');
+  const s = seriesSlice || currentChartSeries;
+  if (!s || s.length < 2) { axis.innerHTML = ''; return; }
+  if (chartPeriod === '1d') {
+    // Fixed HK trading session labels
+    axis.innerHTML = ['09:30','11:00','12:00/13:00','14:30','16:00'].map(l => `<span>${l}</span>`).join('');
+    return;
+  }
+  const fmt = t => new Date(t).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'});
+  const labels = [0, 0.25, 0.5, 0.75, 1].map(f => {
+    const idx = Math.round(f * (s.length - 1));
+    return fmt(s[idx].t);
+  });
+  axis.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+}
+
+function setupCrosshair() {
+  const wrap = document.getElementById('priceChartWrap');
+  const crosshair = document.getElementById('chartCrosshair');
+  const tooltip = document.getElementById('chartTooltip');
+  const svg = document.getElementById('priceChart');
+
+  function showAt(clientX) {
+    if (!currentChartSeries || currentChartSeries.length < 2) return;
+    const rect = svg.getBoundingClientRect();
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const ratio = x / rect.width;
+
+    // For candlestick, snap to nearest candle center
+    let idx, seriesRef, snapX;
+    if (chartPeriod === 'daily') {
+      const visCount = Math.min(candleViewCount, currentChartSeries.length - candleViewStart);
+      const gap = rect.width / visCount;
+      const visIdx = Math.min(visCount - 1, Math.max(0, Math.round((x - gap / 2) / gap)));
+      idx = candleViewStart + visIdx;
+      seriesRef = currentChartSeries;
+      snapX = gap * visIdx + gap / 2;
+    } else {
+      // Intraday: find nearest data point by time position
+      seriesRef = currentChartSeries;
+      const first = new Date(seriesRef[0].t);
+      const dayStart = new Date(first.getFullYear(), first.getMonth(), first.getDate(), 9, 30).getTime();
+      const lunchStart = new Date(first.getFullYear(), first.getMonth(), first.getDate(), 12, 0).getTime();
+      const lunchEnd = new Date(first.getFullYear(), first.getMonth(), first.getDate(), 13, 0).getTime();
+      const TOTAL_MIN = 330;
+      function t2m(t) {
+        if (t <= dayStart) return 0;
+        if (t >= lunchStart && t <= lunchEnd) return 150;
+        if (t < lunchStart) return (t - dayStart) / 60000;
+        return 150 + (t - lunchEnd) / 60000;
+      }
+      const targetMin = ratio * TOTAL_MIN;
+      let bestIdx = 0, bestDiff = Infinity;
+      for (let i = 0; i < seriesRef.length; i++) {
+        const diff = Math.abs(t2m(seriesRef[i].t) - targetMin);
+        if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+      }
+      idx = bestIdx;
+      snapX = (t2m(seriesRef[idx].t) / TOTAL_MIN) * rect.width;
+    }
+    const p = seriesRef[idx];
+    if (!p) return;
+
+    crosshair.style.display = 'block';
+    crosshair.style.left = snapX + 'px';
+    crosshair.style.height = svg.clientHeight + 'px';
+
+    const fmt = chartPeriod === '1d'
+      ? new Date(p.t).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
+      : new Date(p.t).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
+
+    let ref;
+    if (chartPeriod === '1d') {
+      ref = quoteCache['1d']?.prevClose || currentChartSeries[0].c;
+    } else {
+      ref = idx > 0 ? seriesRef[idx - 1].c : p.c;
+    }
+    const change = p.c - ref;
+    const pct = ref ? (change / ref * 100) : 0;
+    const sign = change >= 0 ? '+' : '';
+    const isUp = change >= 0;
+
+    tooltip.querySelector('.tt-time').textContent = fmt;
+    const priceEl = tooltip.querySelector('.tt-price');
+    // For candlestick show OHLC
+    if (chartPeriod === 'daily' && p.o != null) {
+      priceEl.innerHTML = `开 ${(p.o).toFixed(3)} 收 <span style="color:${isUp?'var(--red)':'var(--green)'}">${p.c.toFixed(3)}</span><br>高 ${(p.h||p.c).toFixed(3)} 低 ${(p.l||p.c).toFixed(3)}`;
+    } else {
+      priceEl.textContent = p.c.toFixed(3);
+      priceEl.style.color = isUp ? 'var(--red)' : 'var(--green)';
+    }
+    const changeEl = tooltip.querySelector('.tt-change');
+    changeEl.textContent = `${sign}${change.toFixed(3)}  ${sign}${pct.toFixed(2)}%`;
+    changeEl.style.color = isUp ? 'var(--red)' : 'var(--green)';
+
+    tooltip.style.display = 'block';
+    const tipW = tooltip.offsetWidth;
+    tooltip.style.left = (x + tipW + 20 > rect.width ? x - tipW - 10 : x + 10) + 'px';
+    tooltip.style.top = '4px';
+  }
+
+  function hide() {
+    crosshair.style.display = 'none';
+    tooltip.style.display = 'none';
+  }
+
+  // Single touch: crosshair
+  wrap.onmousedown = e => showAt(e.clientX);
+  wrap.onmousemove = e => { if (e.buttons) showAt(e.clientX); };
+  wrap.onmouseup = hide;
+  wrap.onmouseleave = hide;
+
+  // Touch: single finger = crosshair, pinch = zoom candlestick
+  let lastPinchDist = 0;
+  wrap.ontouchstart = e => {
+    if (e.touches.length === 1) { e.preventDefault(); showAt(e.touches[0].clientX); }
+    if (e.touches.length === 2) { lastPinchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY); }
+  };
+  wrap.ontouchmove = e => {
+    if (e.touches.length === 1) { e.preventDefault(); showAt(e.touches[0].clientX); }
+    if (e.touches.length === 2 && chartPeriod === 'daily' && currentChartSeries) {
+      e.preventDefault();
+      const dist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+      const delta = dist - lastPinchDist;
+      if (Math.abs(delta) > 8) {
+        if (delta > 0) candleViewCount = Math.max(10, candleViewCount - 4); // zoom in
+        else candleViewCount = Math.min(currentChartSeries.length, candleViewCount + 4); // zoom out
+        candleViewStart = Math.max(0, currentChartSeries.length - candleViewCount);
+        candleViewExplicit = true;
+        lastPinchDist = dist;
+        renderCandlestick(quoteCache['daily']);
+        renderTimeAxis(currentChartSeries.slice(candleViewStart, candleViewStart + candleViewCount));
+      }
+    }
+  };
+  wrap.ontouchend = e => { if (e.touches.length === 0) hide(); };
+
+  // Mouse wheel zoom for desktop
+  wrap.onwheel = e => {
+    if (chartPeriod !== 'daily' || !currentChartSeries) return;
+    e.preventDefault();
+    if (e.deltaY < 0) candleViewCount = Math.max(10, candleViewCount - 3);
+    else candleViewCount = Math.min(currentChartSeries.length, candleViewCount + 3);
+    candleViewStart = Math.max(0, currentChartSeries.length - candleViewCount);
+    candleViewExplicit = true;
+    renderCandlestick(quoteCache['daily']);
+    renderTimeAxis(currentChartSeries.slice(candleViewStart, candleViewStart + candleViewCount));
+  };
+}
+
+// ==================== AES-256-GCM Encryption ====================
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+async function encryptData(data, password) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
+  const buf = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+  buf.set(salt, 0);
+  buf.set(iv, salt.length);
+  buf.set(new Uint8Array(encrypted), salt.length + iv.length);
+  return btoa(String.fromCharCode(...buf));
+}
+async function decryptData(base64, password) {
+  const buf = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  const salt = buf.slice(0, 16);
+  const iv = buf.slice(16, 28);
+  const data = buf.slice(28);
+  const key = await deriveKey(password, salt);
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+  return JSON.parse(new TextDecoder().decode(decrypted));
+}
+
+// ==================== GitHub API ====================
+function ghAuth(token) {
+  // GitHub now recommends Bearer for both classic and fine-grained tokens
+  return { 'Authorization': `Bearer ${token.trim()}`, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+}
+async function ghGetDefaultBranch(token, repo) {
+  const res = await fetch(`https://api.github.com/repos/${repo}`, { headers: ghAuth(token) });
+  if (!res.ok) {
+    let errText = '';
+    try { const err = await res.json(); errText = err.message || ''; } catch {}
+    if (res.status === 401) throw new Error('Token 无效 (401) ' + errText);
+    if (res.status === 403) throw new Error('Token 权限不足 (403) ' + errText);
+    if (res.status === 404) throw new Error('仓库不存在或无访问权限: ' + repo + ' (404)');
+    throw new Error('获取仓库失败: ' + res.status + ' ' + errText);
+  }
+  return (await res.json()).default_branch;
+}
+async function ghGet(token, repo, path, branch) {
+  const url = `https://api.github.com/repos/${repo}/contents/${path}` + (branch ? `?ref=${branch}` : '');
+  const res = await fetch(url, { headers: ghAuth(token), cache: 'no-store' });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GitHub GET failed: ${res.status}`);
+  return res.json();
+}
+async function ghPut(token, repo, path, content, sha, branch) {
+  const msg = path.includes('quote') ? 'Update 02680 quote cache' : 'Update stock 02680 data';
+  const body = { message: msg, content: btoa(unescape(encodeURIComponent(content))) };
+  if (sha) body.sha = sha;
+  if (branch) body.branch = branch;
+  const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: { ...ghAuth(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `GitHub PUT failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+// ==================== Sync Logic ====================
+const SYNC_REPO = 'chenruoyi0202-ship-it/cry';
+const SYNC_PASSWORD = 'cry-02680-sync-2026';
+
+function loadSyncConfig() {
+  try { syncConfig = JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY)); } catch { syncConfig = null; }
+  if (syncConfig) {
+    syncConfig.repo = SYNC_REPO;
+    syncConfig.password = SYNC_PASSWORD;
+    document.getElementById('inputToken').value = syncConfig.token || '';
+  }
+  updateSyncBar();
+}
+function updateSyncBar() {
+  const el = document.getElementById('syncStatusText');
+  if (el) el.textContent = syncConfig ? '已连接' : '未配置';
+}
+function setSyncStatus(status, text) {
+  const el = document.getElementById('syncStatusText');
+  if (el) el.textContent = text;
+}
+function saveSyncConfig() {
+  const token = document.getElementById('inputToken').value.trim();
+  if (!token) { alert('请填写 Token'); return; }
+  syncConfig = { token, repo: SYNC_REPO, password: SYNC_PASSWORD };
+  localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(syncConfig));
+  markAsOwner();
+  document.body.classList.remove('guest-mode');
+  updateSyncBar();
+  alert('同步配置已保存，已进入编辑模式');
+  manualSync();
+}
+
+function clearSyncConfig() {
+  if (!confirm('确认清除同步配置？')) return;
+  syncConfig = null;
+  localStorage.removeItem(SYNC_CONFIG_KEY);
+  fileSha = null;
+  document.getElementById('inputToken').value = '';
+  updateSyncBar();
+}
+const SYNC_BRANCH = 'main'; // Force sync to main branch regardless of remote default
+async function getDefaultBranch() {
+  // Always use main (the branch GitHub Pages serves from)
+  return SYNC_BRANCH;
+}
+async function manualSync() {
+  if (!syncConfig) { alert('请先配置同步'); return; }
+  setSyncStatus('syncing', '同步中...');
+  try {
+    await pullFromCloud();
+    await pushToCloud();
+    lastSyncHash = computeDataHash();
+    setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+  } catch (e) {
+    console.error('Sync error:', e);
+    setSyncStatus('error', '同步失败 · ' + e.message);
+  }
+}
+// Debounced auto sync: batch multiple quick saves into one push,
+// and skip push if content hash hasn't changed
+let autoSyncTimer = null;
+let lastSyncHash = null;
+
+function computeDataHash() {
+  const str = JSON.stringify({ a: analyses.map(x => [x.id, x.updatedAt]), e: events.map(x => [x.id, x.updatedAt, x.order]), t: timeline.map(x => [x.id, x.updatedAt, x.order]), d: Array.from(deletedIds).sort(), c: costPrice });
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
+  return hash.toString();
+}
+
+async function autoSync() {
+  if (!syncConfig) return;
+  // Debounce: wait 600ms for additional changes before pushing
+  if (autoSyncTimer) clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(async () => {
+    autoSyncTimer = null;
+    await doAutoSync();
+  }, 600);
+}
+
+async function doAutoSync() {
+  if (!syncConfig) return;
+  const hash = computeDataHash();
+  if (hash === lastSyncHash) return;
+  setSyncStatus('syncing', '同步中...');
+  try {
+    await pushToCloud();
+    lastSyncHash = hash;
+    setSyncStatus('connected', '已同步 · ' + syncConfig.repo);
+  } catch (e) {
+    console.error('Auto sync error:', e);
+    setSyncStatus('error', '同步失败');
+  }
+}
+
+// Flush pending sync immediately when page is hidden/closed
+async function flushAutoSync() {
+  if (autoSyncTimer) {
+    clearTimeout(autoSyncTimer);
+    autoSyncTimer = null;
+    await doAutoSync();
+  }
+}
+async function pullFromCloud() {
+  const branch = await getDefaultBranch();
+  // Cache-bust to avoid stale data on WeChat WebView and GitHub API edge cache
+  const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
+  if (!file) return;
+  fileSha = file.sha;
+  const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+  const parsed = JSON.parse(content);
+
+  // Merge tombstone list first, so deleted ids are filtered out below
+  if (parsed.deletedIds) {
+    try {
+      const cloudDeleted = await decryptData(parsed.deletedIds, syncConfig.password);
+      cloudDeleted.forEach(id => deletedIds.add(id));
+      saveDeletedIds();
+    } catch {}
+  }
+
+  // Decrypt and merge analyses (dedupe by date+body + remove tombstoned ids)
+  if (parsed.analyses) {
+    const cloudAnalyses = await decryptData(parsed.analyses, syncConfig.password);
+    analyses = dedupeAnalyses([...analyses, ...cloudAnalyses]).filter(a => !deletedIds.has(a.id));
+    saveAnalyses();
+  }
+  // Decrypt and merge events + remove tombstoned
+  if (parsed.events) {
+    const cloudEvents = await decryptData(parsed.events, syncConfig.password);
+    events = dedupeEvents([...events, ...cloudEvents]).filter(e => !deletedIds.has(e.id));
+    saveEvents();
+  }
+  // Decrypt and merge timeline + remove tombstoned
+  if (parsed.timeline) {
+    try {
+      const cloudTimeline = await decryptData(parsed.timeline, syncConfig.password);
+      timeline = dedupeTimeline([...timeline, ...cloudTimeline]).filter(t => !deletedIds.has(t.id));
+      saveTimelineStorage();
+    } catch {}
+  }
+  // Sync cost price (cloud wins if local is empty)
+  if (parsed.costPrice !== undefined) {
+    const cloudCost = parsed.costPrice;
+    if (cloudCost && !costPrice) {
+      costPrice = cloudCost;
+      localStorage.setItem(COST_KEY, costPrice.toString());
+      document.getElementById('statCost').textContent = costPrice.toFixed(3);
+    }
+  }
+}
+async function pushToCloud() {
+  const branch = await getDefaultBranch();
+  const encAnalyses = await encryptData(analyses, syncConfig.password);
+  const encEvents = await encryptData(events, syncConfig.password);
+  const encTimeline = await encryptData(timeline, syncConfig.password);
+  const encDeleted = await encryptData(Array.from(deletedIds), syncConfig.password);
+  const content = JSON.stringify({ analyses: encAnalyses, events: encEvents, timeline: encTimeline, deletedIds: encDeleted, costPrice: costPrice || null, updatedAt: new Date().toISOString() });
+
+  // Retry up to 3 times with fresh SHA on any conflict
+  const isConflict = (e) => {
+    const msg = (e && e.message) || '';
+    return msg.includes('does not match') || msg.includes('is at') || msg.includes('expected') || msg.includes('409') || msg.includes('422');
+  };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const file = await ghGet(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, branch + '&t=' + Date.now());
+      fileSha = file ? file.sha : null;
+      const result = await ghPut(syncConfig.token, syncConfig.repo, SYNC_DATA_PATH, content, fileSha, branch);
+      fileSha = result.content.sha;
+      return;
+    } catch (e) {
+      if (attempt === 2 || !isConflict(e)) throw e;
+      // Wait a bit before retry to let any concurrent write settle
+      await new Promise(r => setTimeout(r, 200 * (attempt + 1)));
+    }
+  }
+}
+
+// ==================== Cost Price ====================
+const COST_KEY = 'stock_02680_cost';
+let costPrice = null;
+
+function loadCostPrice() {
+  const v = localStorage.getItem(COST_KEY);
+  costPrice = v ? parseFloat(v) : null;
+  document.getElementById('statCost').textContent = costPrice ? costPrice.toFixed(3) : '--';
+}
+
+function editCostPrice() {
+  const input = prompt('输入你的持仓成本价（港元）', costPrice || '');
+  if (input === null) return;
+  const val = parseFloat(input);
+  if (!val || val <= 0) {
+    costPrice = null;
+    localStorage.removeItem(COST_KEY);
+  } else {
+    costPrice = val;
+    localStorage.setItem(COST_KEY, val.toString());
+  }
+  document.getElementById('statCost').textContent = costPrice ? costPrice.toFixed(3) : '--';
+  // Re-render chart with cost line
+  if (quoteCache[chartPeriod]) renderChart(quoteCache[chartPeriod]);
+  autoSync();
+}
+
+// ==================== Utils ====================
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function highlight(s) { return esc(s).replace(/2680/g, '<span style="color:var(--gold-light);font-weight:600">2680</span>'); }
+function toggleCardExpand(card) {
+  const preview = card.querySelector('.record-preview');
+  if (!preview) return;
+  const expanded = preview.classList.toggle('expanded');
+  const toggle = card.querySelector('.expand-toggle');
+  if (toggle) toggle.innerHTML = expanded ? '收起 ▲' : '展开全文 ▼';
+}
+function filterByTag(tag) {
+  // Toggle: click same tag = clear filter
+  if (activeTagFilter === tag || tag === '') {
+    activeTagFilter = '';
+  } else {
+    activeTagFilter = tag;
+  }
+  renderAnalyses();
+}
+// Auto-extract tags from analysis body
+const TAG_KEYWORDS = {
+  '邀约': ['邀约', '收购邀约', '要约'],
+  '洗盘': ['洗盘', '洗了', '洗盘', '最后一洗', '震仓'],
+  '护盘': ['护盘', '守护', '托底'],
+  '牌照': ['牌照', '证监会', '批准', '审批'],
+  '王庭发': ['王庭发', '发哥', '王总', '主席'],
+  '派息': ['派息', '分红'],
+  '拆股': ['拆股', '拆细'],
+  '改名': ['改名', '更名', '金母鸡'],
+  '配股': ['配股', '定增'],
+  '注入业务': ['注入业务', '注入', '借壳'],
+  '目标价': ['目标价', '20', '25', '30'],
+  '支撑位': ['铁底', '支撑', '强支撑'],
+  '主力': ['主力', '机构', '庄家'],
+  '3928': ['3928'],
+  '耀才': ['耀才'],
+};
+function extractTags(body) {
+  if (!body) return [];
+  const tags = [];
+  for (const [tag, keywords] of Object.entries(TAG_KEYWORDS)) {
+    if (keywords.some(k => body.includes(k))) tags.push(tag);
+  }
+  return tags;
+}
+
+const WEEKDAYS = ['周日','周一','周二','周三','周四','周五','周六'];
+function getDayOfWeek(dateStr) {
+  if (!dateStr || dateStr.length < 10) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return isNaN(d) ? '' : WEEKDAYS[d.getDay()];
+}
+
+// ==================== Theme ====================
+function initTheme() {
+  const saved = localStorage.getItem('stock_02680_theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  updateThemeIcon();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('stock_02680_theme')) {
+      document.documentElement.setAttribute('data-theme', e.matches ? '' : 'light');
+      updateThemeIcon();
+    }
+  });
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? '' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('stock_02680_theme', next || 'dark');
+  updateThemeIcon();
+}
+function updateThemeIcon() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isLight
+      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+      : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
+  }
+}
+
+// ==================== Init ====================
+// ==================== Guest / Owner Mode ====================
+const OWNER_KEY = 'stock_02680_owner';
+const GUEST_PASS = 'zuge2680';
+let isOwner = false;
+
+const GUEST_UNLOCKED_KEY = 'stock_02680_guest_ok';
+
+function checkAccess() {
+  if (localStorage.getItem(OWNER_KEY) === '1' || localStorage.getItem(SYNC_CONFIG_KEY)) {
+    isOwner = true;
+    return;
+  }
+  if (localStorage.getItem(GUEST_UNLOCKED_KEY) === '1') {
+    document.body.classList.add('guest-mode');
+    return;
+  }
+  document.getElementById('lockOverlay').style.display = '';
+  document.querySelector('.page').style.display = 'none';
+}
+
+function unlockPage() {
+  const pw = document.getElementById('lockPassword').value.trim();
+  if (pw === GUEST_PASS) {
+    localStorage.setItem(GUEST_UNLOCKED_KEY, '1');
+    document.getElementById('lockOverlay').style.display = 'none';
+    document.querySelector('.page').style.display = '';
+    document.body.classList.add('guest-mode');
+  } else {
+    document.getElementById('lockError').style.display = 'block';
+    document.getElementById('lockPassword').value = '';
+  }
+}
+
+function markAsOwner() {
+  localStorage.setItem(OWNER_KEY, '1');
+  isOwner = true;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  // Unregister any existing Service Worker to avoid stale cache issues
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => reg.unregister());
+    }).catch(() => {});
+    // Also clear caches
+    if (window.caches) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
+    }
+  }
+  // Auto pull when page becomes visible (WeChat/Safari switching back)
+  // Flush pending push when hidden
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushAutoSync();
+    } else if (document.visibilityState === 'visible' && syncConfig) {
+      // Pull latest data from cloud silently
+      pullFromCloud().then(() => {
+        renderAnalyses();
+        renderEvents();
+        renderTimeline();
+      }).catch(() => {});
+    }
+  });
+  window.addEventListener('pagehide', flushAutoSync);
+  // Close marker popup when clicking outside
+  document.addEventListener('click', (e) => {
+    const popup = document.getElementById('markerPopup');
+    if (popup && popup.style.display === 'block' && !popup.contains(e.target) && !e.target.classList.contains('analysis-marker') && !e.target.classList.contains('analysis-marker-hit')) {
+      popup.style.display = 'none';
+    }
+  });
+  checkAccess();
+  seedIfNeeded();
+  loadAnalyses();
+  loadEvents();
+  loadTimeline();
+  loadDeletedIds();
+  // Filter out tombstoned items and dedupe
+  const beforeA = analyses.length, beforeE = events.length, beforeT = timeline.length;
+  analyses = dedupeAnalyses(analyses).filter(a => !deletedIds.has(a.id));
+  events = dedupeEvents(events).filter(e => !deletedIds.has(e.id));
+  timeline = dedupeTimeline(timeline).filter(t => !deletedIds.has(t.id));
+  if (timeline.length !== beforeT) saveTimelineStorage();
+  let tagged = 0;
+  analyses.forEach(a => {
+    if (!a.tags || a.tags.length === 0 || a.tags.every(t => t === '种子数据' || t === '历史内容')) {
+      const autoTags = extractTags(a.body);
+      if (autoTags.length > 0) { a.tags = autoTags; tagged++; }
+    }
+  });
+  if (analyses.length !== beforeA || tagged > 0) saveAnalyses();
+  if (events.length !== beforeE) saveEvents();
+  loadSyncConfig();
+  loadCostPrice();
+  resetAnalysisForm();
+  resetEventForm();
+  resetTimelineForm();
+  renderAnalyses();
+  fetchQuote();
+  if (syncConfig) manualSync().catch(() => {});
+});
+</script>
+</body>
+</html>

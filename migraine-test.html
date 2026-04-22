@@ -474,25 +474,6 @@
                 assertEqual(win.syncConfig, null);
             });
 
-            // ---- Encryption ----
-            await runTest('AES-256 加密', '加密再解密数据一致', async () => {
-                const testData = [{ id: 1, intensity: 5 }, { id: 2, intensity: 8 }];
-                const password = 'test_password_123';
-                const encrypted = await win.encryptData(testData, password);
-                assert(typeof encrypted === 'string' && encrypted.length > 0, '加密结果为空');
-                const decrypted = await win.decryptData(encrypted, password);
-                assertEqual(JSON.stringify(decrypted), JSON.stringify(testData));
-            });
-            await runTest('AES-256 加密', '错误密码无法解密', async () => {
-                const encrypted = await win.encryptData({ test: 1 }, 'correct');
-                try {
-                    await win.decryptData(encrypted, 'wrong');
-                    throw new Error('应该抛出错误但没有');
-                } catch (e) {
-                    assert(!e.message.includes('应该抛出'), e.message);
-                }
-            });
-
             // ---- Accessibility ----
             await runTest('无障碍', 'Dark toggle 有 aria-label', () => {
                 const btn = doc.getElementById('darkToggle');

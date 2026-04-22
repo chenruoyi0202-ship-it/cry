@@ -1,0 +1,25 @@
+<!--
+  Minimal sync settings UI template. Drop into your app's sync tab.
+
+  Required global functions (from sync.js):
+    saveSyncConfig(), manualSync(), forcePullFromCloud(), clearSyncConfig()
+
+  Required DOM elements elsewhere on the page (for status):
+    <div class="sync-bar"><div id="syncDot"></div><span id="syncLabel"></span></div>
+-->
+<div class="tab-content" id="tabSync" style="display:none">
+    <div class="section-title">云端同步设置</div>
+    <div class="info-box">
+        首次使用会自动在你的 GitHub 下创建私有仓库（如果已存在则复用）。<br>
+        Token 仅保存在当前浏览器中。
+    </div>
+    <div class="field">
+        <label>GitHub Personal Access Token</label>
+        <input type="password" id="inputToken" placeholder="ghp_xxxxxxxxxxxx">
+        <div class="hint">GitHub → Settings → Developer settings → Personal access tokens → 创建 Token，勾选 repo 权限</div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSyncConfig()">保存配置</button>
+    <button class="btn btn-secondary" onclick="manualSync()">立即同步</button>
+    <button class="btn btn-secondary" onclick="forcePullFromCloud()">用云端数据覆盖本地</button>
+    <button class="btn btn-danger" onclick="clearSyncConfig()">清除同步配置</button>
+</div>
