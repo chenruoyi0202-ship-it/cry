@@ -1229,10 +1229,11 @@
                 if (result && !done) { done = true; resolve(result); }
                 if (--pending <= 0 && !done) { done = true; resolve(null); }
             }
-            // 1. OSS
+            // 1. OSS (try simple fetch first, streaming may have CORS issues)
             showPhotoBar('从阿里云下载...', 10);
-            fetchWithProgress(ossUrl('data/love_photos.json') + '?v=' + Date.now(), '阿里云', 0)
-                .then(finish).catch(() => finish(null));
+            fetch(ossUrl('data/love_photos.json') + '?v=' + Date.now())
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(finish).catch(function() { finish(null); });
             // 2. Pages
             fetchWithProgress('data/love_photos.json?v=' + Date.now(), '服务器', 0)
                 .then(finish).catch(() => finish(null));
@@ -1528,6 +1529,8 @@
     function enterTabs() {
         document.getElementById('heroSection').classList.add('hidden');
         document.getElementById('tabArea').classList.add('show');
+        document.getElementById('editToggle').classList.add('show');
+        document.getElementById('syncToggle').classList.add('show');
         window.scrollTo(0, 0);
     }
 
@@ -3297,8 +3300,6 @@
         document.getElementById('lockScreen').classList.remove('show');
         document.getElementById('lockScreen').classList.add('hidden');
         document.getElementById('floatingHearts').style.display = 'none';
-        document.getElementById('editToggle').classList.add('show');
-        document.getElementById('syncToggle').classList.add('show');
         document.getElementById('app').classList.add('show');
         // Auto-setup OSS keys if not yet configured
         if (appData && !appData._ossAkId) {
