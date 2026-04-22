@@ -1221,28 +1221,35 @@
     // Load photos in background after UI is shown
     async function lazyLoadPhotos(pwd, photosSha, token, repo) {
         showPhotoBar('照片加载中...', 5);
+        var photosJson = null;
 
-        // Race all sources, first success wins (no timeout - files are large)
-        const photosJson = await new Promise(resolve => {
-            let done = false, pending = 3;
-            function finish(result) {
-                if (result && !done) { done = true; resolve(result); }
-                if (--pending <= 0 && !done) { done = true; resolve(null); }
+        // 1. Try OSS first (should be fastest)
+        try {
+            showPhotoBar('从阿里云加载...', 10);
+            var ossResp = await fetch(ossUrl('data/love_photos.json') + '?v=' + Date.now());
+            if (ossResp.ok) {
+                showPhotoBar('阿里云下载中...', 30);
+                photosJson = await ossResp.json();
+                showPhotoBar('阿里云加载成功', 80);
             }
-            // 1. OSS (try simple fetch first, streaming may have CORS issues)
-            showPhotoBar('从阿里云下载...', 10);
-            fetch(ossUrl('data/love_photos.json') + '?v=' + Date.now())
-                .then(function(r) { return r.ok ? r.json() : null; })
-                .then(finish).catch(function() { finish(null); });
-            // 2. Pages
-            fetchWithProgress('data/love_photos.json?v=' + Date.now(), '服务器', 0)
-                .then(finish).catch(() => finish(null));
-            // 3. CDN
-            if (GH_REPO) {
-                fetch('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json')
-                    .then(r => r.ok ? r.json() : null).then(finish).catch(() => finish(null));
-            } else { pending--; }
-        });
+        } catch(e) {}
+
+        // 2. Fallback to Pages with progress
+        if (!photosJson) {
+            try {
+                showPhotoBar('从服务器下载...', 10);
+                photosJson = await fetchWithProgress('data/love_photos.json?v=' + Date.now(), '服务器', 0);
+            } catch(e) {}
+        }
+
+        // 3. CDN as last resort
+        if (!photosJson && GH_REPO) {
+            try {
+                showPhotoBar('从 CDN 下载...', 10);
+                var cdnResp = await fetch('https://cdn.jsdelivr.net/gh/' + GH_REPO + '@main/data/love_photos.json');
+                if (cdnResp.ok) photosJson = await cdnResp.json();
+            } catch(e) {}
+        }
 
         if (photosJson) {
             showPhotoBar('解密照片中（可能需 10 秒）...', 98);
