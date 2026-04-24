@@ -1193,25 +1193,25 @@
 
             <!-- Add form -->
             <div class="add-form" id="addForm">
-                <div class="form-row three-col">
+                <div class="form-row">
                     <div class="field">
                         <label>卖出价格</label>
                         <input type="number" step="0.001" inputmode="decimal" id="addPrice" placeholder="价格" oninput="updateAddPreview()">
                     </div>
                     <div class="field">
-                        <label>卖出股数</label>
-                        <div style="display:flex;gap:4px;align-items:stretch;">
-                            <button type="button" class="lot-btn" onclick="changeLots(-1)" title="-1手">−</button>
-                            <input type="number" step="1" inputmode="numeric" id="addShares" placeholder="股数" oninput="updateAddPreview()" style="flex:1;min-width:0;">
-                            <button type="button" class="lot-btn" onclick="changeLots(1)" title="+1手">+</button>
-                        </div>
-                    </div>
-                    <div class="field">
                         <label>类型</label>
-                        <select id="addType" onchange="updateAddPreview()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
+                        <select id="addType" onchange="updateAddPreview()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;min-height:44px;">
                             <option value="done" style="background:#1E293B;">已卖出</option>
                             <option value="plan" style="background:#1E293B;">计划卖出</option>
                         </select>
+                    </div>
+                </div>
+                <div class="field" style="margin-top:10px">
+                    <label>卖出股数</label>
+                    <div style="display:flex;gap:6px;align-items:stretch;">
+                        <button type="button" class="lot-btn" onclick="changeLots(-1)" title="-1手">−</button>
+                        <input type="number" step="1" inputmode="numeric" id="addShares" placeholder="输入股数" oninput="updateAddPreview()" style="flex:1;min-width:0;">
+                        <button type="button" class="lot-btn" onclick="changeLots(1)" title="+1手">+</button>
                     </div>
                 </div>
                 <div id="addPreview" class="add-preview" style="display:none"></div>
@@ -1487,7 +1487,6 @@
                 const div = document.createElement('div');
                 div.className = 'record-item';
                 div.dataset.index = i;
-                div.draggable = true;
                 div.innerHTML = `
                     <div class="record-top">
                         <div class="record-top-left">
@@ -1964,6 +1963,8 @@
             const items = list.querySelectorAll('.record-item');
 
             items.forEach(item => {
+                item.draggable = reorderMode;
+
                 // Desktop drag events
                 item.addEventListener('dragstart', onDragStart);
                 item.addEventListener('dragend', onDragEnd);
@@ -2137,7 +2138,6 @@
                 const div = document.createElement('div');
                 div.className = 'record-item';
                 div.dataset.index = records.indexOf(rec);
-                div.draggable = true;
                 div.innerHTML = `
                     <div class="record-top">
                         <div class="record-top-left">
