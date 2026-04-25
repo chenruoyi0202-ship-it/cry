@@ -1,0 +1,46 @@
+{
+  "records": [
+    {
+      "id": 1775196732637,
+      "datetime": "2026-04-01T14:11",
+      "intensity": 3,
+      "duration": 24,
+      "location": [],
+      "symptoms": [],
+      "triggers": [
+        "睡眠不足"
+      ],
+      "medication": "瑞美吉泮",
+      "notes": ""
+    },
+    {
+      "id": 1775297526695,
+      "datetime": "2026-04-04T15:11",
+      "intensity": 2,
+      "duration": 0,
+      "location": [],
+      "symptoms": [],
+      "triggers": [
+        "清明扫墓，淋到大雨"
+      ],
+      "medication": "",
+      "notes": "",
+      "weather": "雷暴 24.2°C 湿度88%"
+    },
+    {
+      "id": 1776089671073,
+      "datetime": "2026-04-13T22:14",
+      "intensity": 1,
+      "duration": 0,
+      "location": [],
+      "symptoms": [],
+      "triggers": [
+        "周一总是会头疼，这次算轻的"
+      ],
+      "medication": "",
+      "notes": "",
+      "weather": "阴天 17°C 湿度94%"
+    }
+  ],
+  "updatedAt": "2026-04-13T16:45:22.680Z"
+}
