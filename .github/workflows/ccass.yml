@@ -1,0 +1,130 @@
+name: CCASS 02680 Daily
+
+on:
+  schedule:
+    # 每个工作日 HKT 17:30 (UTC 09:30) — CCASS 通常 17:00 后刷新
+    - cron: '30 9 * * 1-5'
+  push:
+    branches: [main]
+    paths:
+      - 'scraper/scrape_ccass.py'
+      - 'scraper/analyze_ccass.py'
+      - '.github/workflows/ccass.yml'
+  workflow_dispatch:
+    inputs:
+      shareholding_date:
+        description: '持股日期 (YYYY/MM/DD)，留空取最近交易日'
+        required: false
+        default: ''
+      stock_code:
+        description: '股票代码'
+        required: false
+        default: '02680'
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: Scrape CCASS
+        id: scrape
+        run: |
+          python scraper/scrape_ccass.py \
+            "${{ github.event.inputs.shareholding_date }}" \
+            "${{ github.event.inputs.stock_code || '02680' }}"
+
+      - name: Upload debug HTML on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccass-debug-${{ github.run_id }}
+          path: data/ccass_history/_debug_*.html
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Commit debug HTML on failure (for diagnostics)
+        if: always() && steps.scrape.outcome == 'failure'
+        run: |
+          mkdir -p data/_debug
+          mv data/ccass_history/_debug_*.html data/_debug/ 2>/dev/null || true
+          # 只保留最新一份，避免撑大仓库
+          ls -t data/_debug/*.html 2>/dev/null | tail -n +2 | xargs -r rm -f
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/_debug/
+          if git diff --cached --quiet; then
+            echo "No debug html to commit"
+          else
+            git commit -m "debug(ccass): capture HKEX response for diagnosis"
+            for i in 1 2 3 4; do
+              git push && break || sleep $((2 ** i))
+            done
+          fi
+
+      - name: Generate analysis report
+        if: steps.scrape.outcome == 'success'
+        env:
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+        run: |
+          python scraper/analyze_ccass.py "${{ github.event.inputs.stock_code || '02680' }}"
+
+      - name: Commit and push
+        if: steps.scrape.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # 不提交 debug HTML
+          rm -f data/ccass_history/_debug_*.html
+          git add data/stock_*_ccass*.json data/stock_*_ccass_report.md data/ccass_history/ 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No CCASS changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "chore(ccass): update 02680 CCASS data ($DATE)"
+            for i in 1 2 3 4; do
+              git push && break || sleep $((2 ** i))
+            done
+          fi
+
+      - name: Post daily report to GitHub Issue
+        if: steps.scrape.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          STOCK_CODE: '02680'
+          TITLE: '📊 02680 创陞控股 · CCASS 每日报告'
+        run: |
+          REPORT_PATH="data/stock_${STOCK_CODE}_ccass_report.md"
+          if [ ! -f "$REPORT_PATH" ]; then
+            echo "Report file missing, skip"
+            exit 0
+          fi
+          # 查找置顶的追踪 issue(按标题精确匹配,只看 open 状态)
+          ISSUE_NUMBER=$(gh issue list --repo "$REPO" --search "\"$TITLE\" in:title" --state open --json number,title --jq '.[] | select(.title == "'"$TITLE"'") | .number' | head -1)
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "Creating tracking issue..."
+            URL=$(gh issue create --repo "$REPO" --title "$TITLE" \
+              --body "这是 02680 创陞控股 CCASS 每日报告的追踪 issue。每个工作日 HKT 17:30 后会以评论形式追加当天的分析。订阅这个 issue 即可每天收到邮件通知。")
+            ISSUE_NUMBER=$(echo "$URL" | grep -oE '[0-9]+$')
+            echo "Created issue #$ISSUE_NUMBER"
+          fi
+          echo "Posting report to issue #$ISSUE_NUMBER"
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$REPORT_PATH"
