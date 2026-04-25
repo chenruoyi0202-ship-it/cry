@@ -12,9 +12,13 @@
 <link rel="apple-touch-icon" href="projects-icon.png">
 <script>
   (function(){
-    var s = localStorage.getItem('projects-theme');
-    var t = s || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-    if(t === 'light') document.documentElement.setAttribute('data-theme','light');
+    function apply(){
+      if(window.matchMedia('(prefers-color-scheme: light)').matches)
+        document.documentElement.setAttribute('data-theme','light');
+      else document.documentElement.removeAttribute('data-theme');
+    }
+    apply();
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',apply);
   })();
 </script>
 <style>
@@ -193,29 +197,6 @@
   .card:hover .card-arrow{background:var(--arrow-bg-hover);transform:translateX(2px)}
   .card:hover .card-arrow svg{stroke:var(--text)}
 
-  /* ── Theme Toggle ── */
-  .theme-toggle{
-    position:fixed;top:18px;right:18px;z-index:10;
-    width:40px;height:40px;border-radius:50%;
-    background:var(--card);
-    border:1px solid var(--border);
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-    transition:transform .3s ease,background .4s ease,border-color .4s ease;
-    color:var(--text);
-    -webkit-tap-highlight-color:transparent;
-  }
-  .theme-toggle:hover{transform:scale(1.08)}
-  .theme-toggle:active{transform:scale(0.95)}
-  .theme-toggle svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-  .theme-toggle .icon-sun{display:none}
-  .theme-toggle .icon-moon{display:block}
-  [data-theme="light"] .theme-toggle .icon-sun{display:block}
-  [data-theme="light"] .theme-toggle .icon-moon{display:none}
-  @media(min-width:768px){
-    .theme-toggle{top:24px;right:24px;width:44px;height:44px}
-    .theme-toggle svg{width:20px;height:20px}
-  }
 
   /* ── Animations ── */
   @keyframes fadeUp{
@@ -263,11 +244,6 @@
 </style>
 </head>
 <body>
-
-<button class="theme-toggle" id="themeToggle" aria-label="切换主题">
-  <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-  <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-</button>
 
 <div class="bg-layer">
   <div class="orb orb-1"></div>
@@ -378,13 +354,6 @@
 </div>
 
 <script>
-  document.getElementById('themeToggle').addEventListener('click', function(){
-    var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-    var next = cur === 'light' ? 'dark' : 'light';
-    if(next === 'light') document.documentElement.setAttribute('data-theme','light');
-    else document.documentElement.removeAttribute('data-theme');
-    localStorage.setItem('projects-theme', next);
-  });
   document.querySelectorAll('.card[target="_blank"]').forEach(function(a){
     a.addEventListener('click', function(e){
       e.preventDefault();
