@@ -174,6 +174,9 @@
   .card--tv:hover{box-shadow:0 8px 40px rgba(129,140,248,0.12),0 0 0 1px rgba(129,140,248,0.1)}
   .card--tv .card-accent{background:linear-gradient(135deg,#818cf8,#a78bfa)}
 
+  .card--currency::before{background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08),transparent 70%)}
+  .card--currency:hover{box-shadow:0 8px 40px rgba(124,58,237,0.12),0 0 0 1px rgba(124,58,237,0.1)}
+
   /* Card icon */
   .card-icon{
     width:38px;height:38px;border-radius:10px;
@@ -332,7 +335,7 @@
 
     <!-- 投资 -->
     <section class="section section--invest">
-      <div class="section-title">投资 <span class="count">2</span></div>
+      <div class="section-title">投资 <span class="count">3</span></div>
       <div class="cards">
 
         <!-- 止盈计算推演 -->
@@ -355,6 +358,18 @@
           <div class="card-body">
             <div class="card-title">02680 创陞跟踪</div>
             <div class="card-desc">港股02680创陞控股分析追踪，记录盘中分析、重要事件与实时行情。</div>
+          </div>
+          <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
+
+        <!-- 汇率计算 -->
+        <a class="card card--currency" href="currency.html" target="_blank">
+          <div class="card-icon">
+            <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1a1028"/><text x="24" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#c084fc">¥</text><text x="14" y="38" text-anchor="middle" font-size="9" font-weight="600" fill="#818cf8">$</text><text x="34" y="38" text-anchor="middle" font-size="9" font-weight="600" fill="#818cf8">HK$</text><path d="M18 24h12" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/><path d="M22 22l-3 2 3 2" stroke="#7c3aed" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M26 22l3 2-3 2" stroke="#7c3aed" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">汇率计算</div>
+            <div class="card-desc">人民币、港币、美元三向实时换算，支持自定义汇率。</div>
           </div>
           <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
         </a>
