@@ -385,6 +385,12 @@
     else document.documentElement.removeAttribute('data-theme');
     localStorage.setItem('projects-theme', next);
   });
+  document.querySelectorAll('.card[target="_blank"]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      window.open(this.href, '_blank');
+    });
+  });
 </script>
 
 </body>
