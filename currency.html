@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汇率计算 - 人民币 / 港币 / 美元</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #12131a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 460px;
+            background: linear-gradient(180deg, #1e2230 0%, #181c28 100%);
+            border-radius: 20px;
+            padding: 28px 22px 24px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            height: fit-content;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(123,97,255,0.15);
+            color: #b39bff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 5px 16px;
+            border-radius: 20px;
+            margin: 0 auto 14px;
+        }
+        .badge::before {
+            content: '';
+            width: 8px; height: 8px;
+            background: #b39bff;
+            border-radius: 50%;
+        }
+
+        .header { text-align: center; margin-bottom: 22px; }
+        .header h1 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: 2px; }
+        .header .sub { font-size: 12px; color: #6b7394; }
+
+        .currency-row {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .currency-row:focus-within {
+            border-color: #7b61ff;
+            background: rgba(123,97,255,0.06);
+        }
+        .currency-row.active {
+            border-color: #7b61ff;
+            background: rgba(123,97,255,0.08);
+        }
+
+        .flag {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 12px;
+            background: rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .info { flex: 1; min-width: 0; }
+        .info .code { font-size: 15px; font-weight: 700; color: #fff; }
+        .info .name { font-size: 11px; color: #6b7394; margin-top: 2px; }
+
+        .amount-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+        .amount-wrap .symbol {
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b7394;
+        }
+        .amount {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: right;
+            width: 140px;
+            font-family: inherit;
+        }
+        .amount::placeholder { color: #3a3f55; font-weight: 500; }
+        .amount::-webkit-outer-spin-button,
+        .amount::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .amount[type=number] { -moz-appearance: textfield; }
+
+        .swap-divider {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 4px 0;
+        }
+        .swap-divider .line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+        }
+        .swap-divider .arrow {
+            color: #4a5070;
+            font-size: 12px;
+            margin: 0 10px;
+        }
+
+        .rates-section {
+            margin-top: 22px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .rates-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #8892b0;
+            margin-bottom: 12px;
+            padding-left: 10px;
+            border-left: 3px solid #7b61ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .rates-title .reset-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #8892b0;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        .rates-title .reset-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .rate-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 4px;
+            font-size: 13px;
+        }
+        .rate-row .pair { color: #6b7394; }
+        .rate-row .pair strong { color: #b8c0d9; font-weight: 600; }
+        .rate-row .rate-input {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            width: 110px;
+            text-align: right;
+            outline: none;
+            font-family: inherit;
+        }
+        .rate-row .rate-input:focus { border-color: #7b61ff; }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: #4a5070;
+            margin-top: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div style="text-align:center;">
+            <div class="badge">实时换算</div>
+        </div>
+        <div class="header">
+            <h1>汇率计算</h1>
+            <div class="sub">人民币 / 港币 / 美元 三向互转</div>
+        </div>
+
+        <div class="currency-row" data-code="CNY">
+            <div class="flag">🇨🇳</div>
+            <div class="info">
+                <div class="code">CNY</div>
+                <div class="name">人民币</div>
+            </div>
+            <div class="amount-wrap">
+                <span class="symbol">¥</span>
+                <input type="number" class="amount" id="amount-CNY" placeholder="0.00" step="0.01" inputmode="decimal">
+            </div>
+        </div>
+
+        <div class="swap-divider"><div class="line"></div><div class="arrow">⇅</div><div class="line"></div></div>
+
+        <div class="currency-row" data-code="HKD">
+            <div class="flag">🇭🇰</div>
+            <div class="info">
+                <div class="code">HKD</div>
+                <div class="name">港币</div>
+            </div>
+            <div class="amount-wrap">
+                <span class="symbol">HK$</span>
+                <input type="number" class="amount" id="amount-HKD" placeholder="0.00" step="0.01" inputmode="decimal">
+            </div>
+        </div>
+
+        <div class="swap-divider"><div class="line"></div><div class="arrow">⇅</div><div class="line"></div></div>
+
+        <div class="currency-row" data-code="USD">
+            <div class="flag">🇺🇸</div>
+            <div class="info">
+                <div class="code">USD</div>
+                <div class="name">美元</div>
+            </div>
+            <div class="amount-wrap">
+                <span class="symbol">$</span>
+                <input type="number" class="amount" id="amount-USD" placeholder="0.00" step="0.01" inputmode="decimal">
+            </div>
+        </div>
+
+        <div class="rates-section">
+            <div class="rates-title">
+                <span>参考汇率（可编辑）</span>
+                <button class="reset-btn" id="resetBtn">重置默认</button>
+            </div>
+            <div class="rate-row">
+                <span class="pair">1 <strong>USD</strong> = ? <strong>CNY</strong></span>
+                <input type="number" class="rate-input" id="rate-USD-CNY" step="0.0001">
+            </div>
+            <div class="rate-row">
+                <span class="pair">1 <strong>USD</strong> = ? <strong>HKD</strong></span>
+                <input type="number" class="rate-input" id="rate-USD-HKD" step="0.0001">
+            </div>
+            <div class="rate-row">
+                <span class="pair">1 <strong>HKD</strong> = ? <strong>CNY</strong></span>
+                <input type="number" class="rate-input" id="rate-HKD-CNY" readonly style="opacity:0.7;">
+            </div>
+        </div>
+
+        <div class="footer-note">汇率仅供参考 · 数据保存在本地浏览器</div>
+    </div>
+
+    <script>
+        const DEFAULT_RATES = {
+            'USD-CNY': 7.20,
+            'USD-HKD': 7.80
+        };
+
+        const STORAGE_KEY = 'currency_rates_v1';
+
+        function loadRates() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                if (saved && typeof saved['USD-CNY'] === 'number' && typeof saved['USD-HKD'] === 'number') {
+                    return saved;
+                }
+            } catch (e) {}
+            return { ...DEFAULT_RATES };
+        }
+
+        function saveRates(rates) {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(rates)); } catch (e) {}
+        }
+
+        let rates = loadRates();
+
+        const inputs = {
+            CNY: document.getElementById('amount-CNY'),
+            HKD: document.getElementById('amount-HKD'),
+            USD: document.getElementById('amount-USD')
+        };
+        const rows = {
+            CNY: document.querySelector('.currency-row[data-code="CNY"]'),
+            HKD: document.querySelector('.currency-row[data-code="HKD"]'),
+            USD: document.querySelector('.currency-row[data-code="USD"]')
+        };
+        const rateUSDCNY = document.getElementById('rate-USD-CNY');
+        const rateUSDHKD = document.getElementById('rate-USD-HKD');
+        const rateHKDCNY = document.getElementById('rate-HKD-CNY');
+
+        function format(n) {
+            if (!isFinite(n)) return '';
+            return (Math.round(n * 100) / 100).toFixed(2);
+        }
+
+        function toUSD(amount, code) {
+            if (code === 'USD') return amount;
+            if (code === 'CNY') return amount / rates['USD-CNY'];
+            if (code === 'HKD') return amount / rates['USD-HKD'];
+        }
+
+        function fromUSD(usd, code) {
+            if (code === 'USD') return usd;
+            if (code === 'CNY') return usd * rates['USD-CNY'];
+            if (code === 'HKD') return usd * rates['USD-HKD'];
+        }
+
+        let activeCode = null;
+
+        function recalc(sourceCode) {
+            const raw = inputs[sourceCode].value;
+            if (raw === '' || isNaN(parseFloat(raw))) {
+                ['CNY', 'HKD', 'USD'].forEach(c => {
+                    if (c !== sourceCode) inputs[c].value = '';
+                });
+                return;
+            }
+            const amount = parseFloat(raw);
+            const usd = toUSD(amount, sourceCode);
+            ['CNY', 'HKD', 'USD'].forEach(c => {
+                if (c !== sourceCode) inputs[c].value = format(fromUSD(usd, c));
+            });
+        }
+
+        function setActive(code) {
+            activeCode = code;
+            Object.entries(rows).forEach(([c, el]) => {
+                el.classList.toggle('active', c === code);
+            });
+        }
+
+        function updateDerivedRateDisplay() {
+            const hkdToCny = rates['USD-CNY'] / rates['USD-HKD'];
+            rateHKDCNY.value = (Math.round(hkdToCny * 10000) / 10000).toFixed(4);
+        }
+
+        function syncRateInputs() {
+            rateUSDCNY.value = rates['USD-CNY'];
+            rateUSDHKD.value = rates['USD-HKD'];
+            updateDerivedRateDisplay();
+        }
+
+        ['CNY', 'HKD', 'USD'].forEach(code => {
+            inputs[code].addEventListener('input', () => {
+                setActive(code);
+                recalc(code);
+            });
+            inputs[code].addEventListener('focus', () => setActive(code));
+        });
+
+        function onRateChange() {
+            const c = parseFloat(rateUSDCNY.value);
+            const h = parseFloat(rateUSDHKD.value);
+            if (isFinite(c) && c > 0) rates['USD-CNY'] = c;
+            if (isFinite(h) && h > 0) rates['USD-HKD'] = h;
+            saveRates(rates);
+            updateDerivedRateDisplay();
+            if (activeCode && inputs[activeCode].value !== '') recalc(activeCode);
+        }
+        rateUSDCNY.addEventListener('input', onRateChange);
+        rateUSDHKD.addEventListener('input', onRateChange);
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            rates = { ...DEFAULT_RATES };
+            saveRates(rates);
+            syncRateInputs();
+            if (activeCode && inputs[activeCode].value !== '') recalc(activeCode);
+        });
+
+        syncRateInputs();
+        inputs.CNY.focus();
+        setActive('CNY');
+    </script>
+</body>
+</html>
