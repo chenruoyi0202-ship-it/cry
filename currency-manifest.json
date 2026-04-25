@@ -1,0 +1,26 @@
+{
+  "name": "汇率计算",
+  "short_name": "汇率计算",
+  "description": "人民币 / 港币 / 美元 三向实时汇率换算",
+  "start_url": "/cry/currency.html",
+  "scope": "/cry/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12131a",
+  "theme_color": "#181c28",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "currency-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "currency-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
