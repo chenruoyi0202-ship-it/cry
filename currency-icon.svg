@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#282648"/>
+      <stop offset="100%" stop-color="#181c30"/>
+    </linearGradient>
+    <filter id="ds" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="2" dy="3" stdDeviation="0" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <g filter="url(#ds)" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif" font-weight="700" text-anchor="middle">
+    <text x="256" y="380" font-size="360" fill="#ffd54f">¥</text>
+    <text x="410" y="160" font-size="110" fill="#81c784">$</text>
+    <text x="130" y="445" font-size="80" fill="#4fc3f7">HK$</text>
+  </g>
+</svg>
