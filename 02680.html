@@ -260,9 +260,6 @@ body{
 
 <!-- Stock Header (Futu style) -->
 <div class="stock-header">
-  <div class="settings-btn" onclick="toggleTheme()" title="切换主题" style="right:40px" id="themeBtn">
-    <svg viewBox="0 0 24 24" id="themeIcon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-  </div>
   <div class="settings-btn" onclick="toggleSyncModal()" title="同步设置">
     <svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
   </div>
@@ -2365,35 +2362,13 @@ function getDayOfWeek(dateStr) {
 
 // ==================== Theme ====================
 function initTheme() {
-  const saved = localStorage.getItem('stock_02680_theme');
-  if (saved) {
-    document.documentElement.setAttribute('data-theme', saved);
-  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-    document.documentElement.setAttribute('data-theme', 'light');
+  function apply() {
+    if (window.matchMedia('(prefers-color-scheme: light)').matches)
+      document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
   }
-  updateThemeIcon();
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (!localStorage.getItem('stock_02680_theme')) {
-      document.documentElement.setAttribute('data-theme', e.matches ? '' : 'light');
-      updateThemeIcon();
-    }
-  });
-}
-function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'light' ? '' : 'light';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('stock_02680_theme', next || 'dark');
-  updateThemeIcon();
-}
-function updateThemeIcon() {
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  const icon = document.getElementById('themeIcon');
-  if (icon) {
-    icon.innerHTML = isLight
-      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
-      : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
-  }
+  apply();
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', apply);
 }
 
 // ==================== Init ====================

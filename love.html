@@ -705,7 +705,6 @@
     <div id="app">
         <header class="app-header">
             <div class="couple-names" id="coupleNames"></div>
-            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
         </header>
 
         <div class="tab-bar">
@@ -3325,11 +3324,6 @@
     }
     function getSystemTheme() {
         return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    function toggleTheme() {
-        // Temporary override for current session only
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        applyTheme(isDark ? 'light' : 'dark');
     }
     (function initTheme() {
         // Always clear old manual override, follow system
