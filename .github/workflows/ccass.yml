@@ -2,6 +2,11 @@ name: CCASS 02680 Daily
 
 on:
   schedule:
+<<<<<<< HEAD
+=======
+    # 每个工作日 HKT 10:00 (UTC 02:00) — 晨间报告（前一交易日数据）
+    - cron: '0 2 * * 1-5'
+>>>>>>> claude/stock-analysis-tracker-AjMEG
     # 每个工作日 HKT 17:30 (UTC 09:30) — CCASS 通常 17:00 后刷新
     - cron: '30 9 * * 1-5'
   push:
@@ -9,6 +14,10 @@ on:
     paths:
       - 'scraper/scrape_ccass.py'
       - 'scraper/analyze_ccass.py'
+<<<<<<< HEAD
+=======
+      - 'scraper/generate_ccass_pdf.py'
+>>>>>>> claude/stock-analysis-tracker-AjMEG
       - '.github/workflows/ccass.yml'
   workflow_dispatch:
     inputs:
@@ -42,7 +51,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+<<<<<<< HEAD
           pip install requests beautifulsoup4
+=======
+          pip install requests beautifulsoup4 markdown weasyprint
+
+      - name: Install CJK fonts for PDF
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk-extra >/dev/null 2>&1
+>>>>>>> claude/stock-analysis-tracker-AjMEG
 
       - name: Scrape CCASS
         id: scrape
@@ -86,6 +104,14 @@ jobs:
         run: |
           python scraper/analyze_ccass.py "${{ github.event.inputs.stock_code || '02680' }}"
 
+<<<<<<< HEAD
+=======
+      - name: Generate PDF report
+        if: steps.scrape.outcome == 'success'
+        run: |
+          python scraper/generate_ccass_pdf.py "${{ github.event.inputs.stock_code || '02680' }}"
+
+>>>>>>> claude/stock-analysis-tracker-AjMEG
       - name: Commit and push
         if: steps.scrape.outcome == 'success'
         run: |
@@ -93,7 +119,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # 不提交 debug HTML
           rm -f data/ccass_history/_debug_*.html
+<<<<<<< HEAD
           git add data/stock_*_ccass*.json data/stock_*_ccass_report.md data/ccass_history/ 2>/dev/null || true
+=======
+          git add data/stock_*_ccass*.json data/stock_*_ccass_report.md data/stock_*_ccass_report.pdf data/ccass_history/ 2>/dev/null || true
+>>>>>>> claude/stock-analysis-tracker-AjMEG
           if git diff --cached --quiet; then
             echo "No CCASS changes to commit"
           else
