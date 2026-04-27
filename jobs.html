@@ -238,8 +238,17 @@ body{
 .job-detail-meta .meta-dept{color:var(--text)}
 .job-detail-section{font-size:13px;color:var(--text);line-height:1.65;white-space:pre-wrap;word-break:break-word}
 .job-detail-section + .job-detail-section{margin-top:14px}
-.job-detail-section h4{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.job-detail-section h4,.theme-row h4{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
 .job-detail-empty{color:var(--text-muted);font-size:13px;padding:8px 0}
+.theme-row{margin:6px 0 14px}
+.theme-tags{display:flex;flex-wrap:wrap;gap:6px}
+.theme-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;padding:3px 9px;border-radius:999px;
+  background:var(--pill-bg-active);color:var(--accent);
+  border:1px solid rgba(56,189,248,0.25);
+}
+.theme-tag em{font-style:normal;color:var(--accent2);font-size:10px;letter-spacing:.5px}
 
 .resume-input{
   width:100%;min-height:240px;
@@ -482,6 +491,62 @@ const state = {
 
 // Built-in resume keywords (no PII) so the page works out of the box.
 // User can override by typing in the modal; localStorage takes precedence.
+// Built-in resume profile. Rather than a flat keyword bag (where 后端 and
+// 运营 count equally), this is a set of weighted themes that capture what
+// the candidate actually does. Each job's match score is the weighted sum
+// of theme hits with diminishing returns past the threshold, minus a
+// penalty for jobs that strongly hit anti-themes (pure tech, art, sales,
+// hardware) which would be a bad fit for a content-ops profile.
+const RESUME_PROFILE = {
+  themes: [
+    { id: 'ops', name: '运营', weight: 1.00, threshold: 3,
+      keywords: ['运营', '内容运营', '用户运营', '活动运营', '社区运营',
+                 '创作者运营', '圈层运营', '增长运营', '运营经理', '运营专家',
+                 '内容生态运营', '社群运营'] },
+    { id: 'content', name: '内容/知识平台', weight: 0.95, threshold: 2,
+      keywords: ['内容', '知识', '知识平台', '知识库', '内容社区', '内容生态',
+                 'IP 打造', 'OGC', 'PGC', 'UGC', '内容生产', '内容分发',
+                 '内容策略', '专题', '编辑', '科普', '内容矩阵'] },
+    { id: 'community', name: '社区/创作者', weight: 0.85, threshold: 2,
+      keywords: ['社区', '创作者', '社群', 'KOL', '圈子', '互动', '论坛',
+                 '社交', '粉丝', '活跃度', '认知度', '社区氛围'] },
+    { id: 'pm', name: '产品 PM', weight: 0.70, threshold: 2,
+      keywords: ['产品经理', '产品运营', '产品策略', '产品规划', '产品框架',
+                 '功能规划', '需求', '迭代', 'PRD', '商业化产品'] },
+    { id: 'ai', name: 'AI / 大模型', weight: 0.75, threshold: 1,
+      keywords: ['AI', '大模型', 'LLM', 'Claude', 'AGI', 'GPT', 'AIGC',
+                 'AI Coding', '生成式', '智能化', 'AI 工具'] },
+    { id: 'data', name: '数据驱动 / 增长', weight: 0.60, threshold: 2,
+      keywords: ['数据分析', '数据驱动', '用户增长', '留存', 'KANO',
+                 '数据后台', '指标', 'A/B', '分层运营', '用户画像'] },
+    { id: 'game', name: '游戏行业', weight: 0.40, threshold: 1,
+      keywords: ['游戏', '游戏运营', '游戏开发', 'TGDC', '游戏社区', '玩家',
+                 '电竞'] },
+  ],
+  // Penalize jobs that are clearly engineering/art/hardware/sales — these
+  // match raw keywords ("数据" appears in everything) but are bad fits.
+  antiThemes: [
+    { id: 'engineering', name: '纯研发岗', weight: 0.60, threshold: 2,
+      keywords: ['后端工程师', '前端工程师', '算法工程师', '架构师',
+                 '高级研发', 'devops', 'sre', '测试工程师', 'qa',
+                 '安全工程师', 'c++', 'java', 'golang', 'rust', 'kafka',
+                 'kubernetes', '编译器', '操作系统', '驱动开发',
+                 'ios 开发', 'android 开发', '客户端开发', '服务端开发'] },
+    { id: 'art', name: '美术/设计岗', weight: 0.50, threshold: 1,
+      keywords: ['美术', '原画', '建模', '动画师', 'pipeline ta',
+                 'ui 设计师', 'ux 设计师', '视觉设计师', '平面设计',
+                 '游戏美术', '场景美术', '角色美术', '特效美术'] },
+    { id: 'hardware', name: '硬件岗', weight: 0.55, threshold: 1,
+      keywords: ['硬件', '嵌入式', 'fpga', '芯片', '射频', '机械工程',
+                 '结构工程师', '电源工程师', '射频工程师'] },
+    { id: 'sales', name: '销售/BD/客户', weight: 0.30, threshold: 1,
+      keywords: ['销售', '商务拓展', '渠道经理', '客户经理', '大客户',
+                 '销售总监', '商务经理'] },
+  ],
+};
+// Sum used to normalize a positive score to 0..1.
+const _PROFILE_MAX_POS = RESUME_PROFILE.themes.reduce((s, t) => s + t.weight, 0);
+
 const DEFAULT_RESUME = `
 产品运营 内容运营 用户运营 活动运营 社区运营 产品经理 运营经理 高级产品经理 内容生态
 知识平台 知识社区 内容社区 互动社区 创作者社区
@@ -569,27 +634,86 @@ function buildIdf(jobs) {
   return idf;
 }
 
+// ── Profile-based scoring (default) ──
+// Each theme has a list of keywords and a `threshold` — once a job text
+// hits `threshold` distinct keywords from a theme, that theme is fully
+// credited. Hits below the threshold prorate linearly. This rewards
+// breadth (a job that spans operations + community + AI) over a single
+// keyword landing many times.
+function _countDistinctHits(text, keywords) {
+  let hits = 0;
+  for (const k of keywords) {
+    const needle = k.toLowerCase();
+    if (text.indexOf(needle) !== -1) hits++;
+  }
+  return hits;
+}
+function scoreJobByProfile(haystackLower) {
+  const matchedThemes = [];
+  let pos = 0;
+  for (const theme of RESUME_PROFILE.themes) {
+    const hits = _countDistinctHits(haystackLower, theme.keywords);
+    if (hits === 0) continue;
+    const norm = Math.min(1, hits / theme.threshold);
+    const contrib = theme.weight * norm;
+    pos += contrib;
+    matchedThemes.push({ id: theme.id, name: theme.name, hits, contrib });
+  }
+  let neg = 0;
+  for (const anti of RESUME_PROFILE.antiThemes) {
+    const hits = _countDistinctHits(haystackLower, anti.keywords);
+    if (hits === 0) continue;
+    const norm = Math.min(1, hits / anti.threshold);
+    neg += anti.weight * norm;
+  }
+  const raw = (pos - 0.6 * neg) / _PROFILE_MAX_POS;
+  const score = Math.max(0, Math.min(1, raw));
+  matchedThemes.sort((a, b) => b.contrib - a.contrib);
+  return { score, matchedThemes };
+}
+
 function scoreAllJobs() {
-  if (!state.idf || !state.resumeTokens || !state.data) {
+  if (!state.data) {
     state.scores = null;
+    state.matchedThemes = null;
     return;
   }
-  const idf = state.idf;
-  const rt = state.resumeTokens;
-  let totalW = 0;
-  for (const t of rt) totalW += (idf.get(t) || 0.5);
-  state.totalResumeWeight = totalW || 1;
+  // Use the structured profile when the user is on the default; if they
+  // pasted a custom resume, fall back to the keyword/IDF approach so they
+  // still get scoring on whatever they typed.
+  const useProfile = state.isDefaultResume;
   const scores = new Map();
-  for (const j of state.data.jobs || []) {
-    let matched = 0;
-    for (const t of rt) {
-      if (j._haystack && j._haystack.indexOf(t) !== -1) {
-        matched += (idf.get(t) || 0.5);
-      }
+  const matchedThemes = useProfile ? new Map() : null;
+
+  if (useProfile) {
+    for (const j of state.data.jobs || []) {
+      const { score, matchedThemes: mt } = scoreJobByProfile(j._haystack || '');
+      scores.set(j.id, score);
+      matchedThemes.set(j.id, mt);
     }
-    scores.set(j.id, matched / state.totalResumeWeight);
+  } else {
+    if (!state.idf || !state.resumeTokens) {
+      state.scores = null;
+      state.matchedThemes = null;
+      return;
+    }
+    const idf = state.idf;
+    const rt = state.resumeTokens;
+    let totalW = 0;
+    for (const t of rt) totalW += (idf.get(t) || 0.5);
+    state.totalResumeWeight = totalW || 1;
+    for (const j of state.data.jobs || []) {
+      let matched = 0;
+      for (const t of rt) {
+        if (j._haystack && j._haystack.indexOf(t) !== -1) {
+          matched += (idf.get(t) || 0.5);
+        }
+      }
+      scores.set(j.id, matched / state.totalResumeWeight);
+    }
   }
   state.scores = scores;
+  state.matchedThemes = matchedThemes;
 }
 
 function applyResume(text, persist) {
@@ -615,10 +739,11 @@ function renderResumeRow() {
   const status = $('resumeStatus');
   const n = state.resumeTokens ? state.resumeTokens.size : 0;
   if (state.isDefaultResume) {
+    const themes = RESUME_PROFILE.themes.length;
     label.textContent = '📄 默认简历 · 编辑';
     btn.classList.add('active');
     status.style.display = '';
-    status.textContent = `内置 ${n} 关键词，点按钮可替换为你的`;
+    status.textContent = `按 ${themes} 个主题加权打分（运营/内容/AI/社区…），点编辑可改`;
   } else {
     label.textContent = '📄 我的简历 · 编辑';
     btn.classList.add('active');
@@ -666,6 +791,17 @@ $('sortSelect').addEventListener('change', (e) => {
 });
 
 // ── Job detail modal ──────────────────────────────────────────────────
+function _matchedThemesHtml(jobId) {
+  if (!state.matchedThemes) return '';
+  const arr = state.matchedThemes.get(jobId) || [];
+  if (!arr.length) return '';
+  const top = arr.slice(0, 5).map(m => {
+    const stars = '★'.repeat(Math.min(3, Math.max(1, Math.round(m.contrib * 3))));
+    return `<span class="theme-tag">${escapeHtml(m.name)} <em>${stars}</em></span>`;
+  }).join('');
+  return `<div class="theme-row"><h4>匹配主题</h4><div class="theme-tags">${top}</div></div>`;
+}
+
 function openJobModal(jobId) {
   const job = (state.data.jobs || []).find(j => j.id === jobId);
   if (!job) return;
@@ -674,7 +810,7 @@ function openJobModal(jobId) {
   const score = (state.scores && state.resumeTokens && state.resumeTokens.size)
     ? state.scores.get(job.id) : null;
   const scorePill = (score != null)
-    ? `<span class="score-pill ${score>=0.20?'s-high':score>=0.10?'s-mid':'s-low'}">${Math.round(score*100)}% 匹配</span>`
+    ? `<span class="score-pill ${score>=0.40?'s-high':score>=0.20?'s-mid':'s-low'}">${Math.round(score*100)}% 匹配</span>`
     : '';
   const desc = (job.description || '').trim();
   const body = `
@@ -689,6 +825,7 @@ function openJobModal(jobId) {
       ${job.location ? `<span>📍 ${escapeHtml(job.location)}</span>` : ''}
       ${job.posted_date ? `<span>🗓 ${escapeHtml(job.posted_date)}</span>` : ''}
     </div>
+    ${_matchedThemesHtml(job.id)}
     <div class="job-detail-section">
       <h4>职位描述</h4>
       ${desc ? escapeHtml(desc) : '<div class="job-detail-empty">暂无描述（点击右下角查看原网页）</div>'}
@@ -894,8 +1031,8 @@ function renderJobs() {
     if (scoring) {
       const s = state.scores.get(j.id) || 0;
       const pct = Math.round(s * 100);
-      const cls = pct >= 20 ? 's-high' : pct >= 10 ? 's-mid' : 's-low';
-      scoreHtml = `<span class="score-pill ${cls}" title="基于简历关键词命中">${pct}%</span>`;
+      const cls = pct >= 40 ? 's-high' : pct >= 20 ? 's-mid' : 's-low';
+      scoreHtml = `<span class="score-pill ${cls}" title="基于简历主题加权命中">${pct}%</span>`;
     }
     return `
     <div class="job" role="button" tabindex="0" data-id="${escapeHtml(j.id)}">
