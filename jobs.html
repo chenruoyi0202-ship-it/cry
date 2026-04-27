@@ -53,15 +53,19 @@ body{
 
 .page{max-width:920px;margin:0 auto;padding:18px 14px 80px;position:relative}
 
-/* Theme toggle */
-.theme-btn{
-  position:absolute;top:16px;right:14px;width:32px;height:32px;border-radius:8px;
+/* Header buttons */
+.header-actions{position:absolute;top:16px;right:14px;display:flex;gap:6px}
+.icon-btn{
+  width:32px;height:32px;border-radius:8px;
   background:var(--pill-bg);border:1px solid var(--border);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
-  transition:background .2s;color:var(--text-muted);
+  transition:background .2s,color .2s;color:var(--text-muted);
 }
-.theme-btn:hover{background:var(--card-hover);color:var(--text)}
-.theme-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.icon-btn:hover{background:var(--card-hover);color:var(--text)}
+.icon-btn:disabled{opacity:.55;cursor:not-allowed}
+.icon-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.icon-btn.spin svg{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* Header */
 .header{padding:8px 4px 14px}
@@ -212,9 +216,14 @@ body{
 <body>
 
 <div class="page">
-  <button class="theme-btn" id="themeBtn" title="切换主题" aria-label="切换主题">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-  </button>
+  <div class="header-actions">
+    <button class="icon-btn" id="refreshBtn" title="刷新数据" aria-label="刷新数据">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3.5-7.1M21 4v5h-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="icon-btn" id="themeBtn" title="切换主题" aria-label="切换主题">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
+  </div>
 
   <header class="header">
     <span class="header-icon">🏢</span>
@@ -464,30 +473,46 @@ $('clearBtn').addEventListener('click', () => {
   renderJobs();
 });
 
+// ── Data load ─────────────────────────────────────────────────────────
+function loadData() {
+  const btn = $('refreshBtn');
+  btn.classList.add('spin');
+  btn.disabled = true;
+  return fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      state.data = data || { jobs: [], companies: {}, categories: [] };
+      if (!Array.isArray(state.data.jobs)) state.data.jobs = [];
+      if (!state.data.companies) state.data.companies = {};
+      if (!Array.isArray(state.data.categories)) state.data.categories = [];
+      renderHeader();
+      renderStaleBanner();
+      renderCategoryOptions();
+      renderChips();
+      renderJobs();
+    })
+    .catch(err => {
+      console.error(err);
+      $('metaUpdated').textContent = '数据加载失败';
+      $('jobsList').innerHTML = '';
+      $('emptyState').style.display = '';
+      $('emptyState').innerHTML = '<span class="empty-emoji">⚠️</span><div>数据加载失败</div><div style="margin-top:6px;font-size:12px">' + escapeHtml(err.message) + '</div>';
+    })
+    .finally(() => {
+      // Keep the spin visible briefly so the user sees feedback even on a fast cache hit.
+      setTimeout(() => { btn.classList.remove('spin'); btn.disabled = false; }, 400);
+    });
+}
+
+$('refreshBtn').addEventListener('click', loadData);
+
 // ── Bootstrap ─────────────────────────────────────────────────────────
 loadFromUrl();
 $('searchInput').value = state.filters.q;
-
-fetch(DATA_URL + '?t=' + Date.now())
-  .then(r => r.json())
-  .then(data => {
-    state.data = data || { jobs: [], companies: {}, categories: [] };
-    if (!Array.isArray(state.data.jobs)) state.data.jobs = [];
-    if (!state.data.companies) state.data.companies = {};
-    if (!Array.isArray(state.data.categories)) state.data.categories = [];
-    renderHeader();
-    renderStaleBanner();
-    renderCategoryOptions();
-    renderChips();
-    renderJobs();
-  })
-  .catch(err => {
-    console.error(err);
-    $('metaUpdated').textContent = '数据加载失败';
-    $('jobsList').innerHTML = '';
-    $('emptyState').style.display = '';
-    $('emptyState').innerHTML = '<span class="empty-emoji">⚠️</span><div>数据加载失败</div><div style="margin-top:6px;font-size:12px">' + escapeHtml(err.message) + '</div>';
-  });
+loadData();
 </script>
 
 </body>
