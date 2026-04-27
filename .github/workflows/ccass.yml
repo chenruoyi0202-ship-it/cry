@@ -141,3 +141,27 @@ jobs:
           fi
           echo "Posting report to issue #$ISSUE_NUMBER"
           gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$REPORT_PATH"
+
+      - name: Push report to WeChat (pushplus)
+        if: steps.scrape.outcome == 'success'
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          if [ -z "$PUSHPLUS_TOKEN" ]; then
+            echo "PUSHPLUS_TOKEN not set, skip WeChat push"
+            exit 0
+          fi
+          STOCK_CODE="${{ github.event.inputs.stock_code || '02680' }}"
+          REPORT_PATH="data/stock_${STOCK_CODE}_ccass_report.md"
+          if [ ! -f "$REPORT_PATH" ]; then
+            echo "Report file missing, skip"
+            exit 0
+          fi
+          DATE=$(date -u +"%Y-%m-%d")
+          TITLE="📊 ${STOCK_CODE} CCASS 报告 ${DATE}"
+          CONTENT=$(cat "$REPORT_PATH")
+          # pushplus API: send markdown to WeChat
+          curl -s -X POST "http://www.pushplus.plus/send" \
+            -H "Content-Type: application/json" \
+            -d "{\"token\":\"${PUSHPLUS_TOKEN}\",\"title\":\"${TITLE}\",\"content\":$(echo "$CONTENT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'),\"template\":\"markdown\"}" \
+            | python3 -c "import sys,json; r=json.load(sys.stdin); print(f'pushplus: {r.get(\"msg\",\"unknown\")}')"
