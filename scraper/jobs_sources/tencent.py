@@ -79,7 +79,16 @@ def _to_job(raw: dict) -> Optional[Job]:
               or parse_date(safe_get(raw, 'PostUpdateTime'))
               or parse_date(safe_get(raw, 'PostDate'))
               or parse_date(safe_get(raw, 'CreateTime')))
-    description = (safe_get(raw, 'Responsibility', default='') or '').strip()
+    # Tencent's API returns Responsibility (岗位职责) and Requirement (任职要求)
+    # as two separate fields; capture both so the detail modal is complete.
+    parts: list[str] = []
+    resp = (safe_get(raw, 'Responsibility', default='') or '').strip()
+    req = (safe_get(raw, 'Requirement', default='') or '').strip()
+    if resp:
+        parts.append(f'岗位职责：\n{resp}')
+    if req:
+        parts.append(f'任职要求：\n{req}')
+    description = '\n\n'.join(parts)
     return Job(
         id=f'tencent_{post_id}',
         company='tencent',

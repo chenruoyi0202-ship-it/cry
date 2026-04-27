@@ -224,12 +224,6 @@ body{
   padding:14px 16px;overflow-y:auto;flex:1;
   display:flex;flex-direction:column;gap:10px;
 }
-.modal-body .privacy{
-  font-size:11px;color:var(--text-muted);
-  background:var(--pill-bg);border:1px solid var(--border);
-  padding:8px 10px;border-radius:8px;line-height:1.5;
-}
-.modal-body .privacy strong{color:var(--text)}
 /* Job detail modal */
 .job-detail-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:6px}
 .job-detail-title{font-size:17px;font-weight:700;color:var(--text);line-height:1.35;flex:1;min-width:0;word-break:break-word}
@@ -250,16 +244,6 @@ body{
 }
 .theme-tag em{font-style:normal;color:var(--accent2);font-size:10px;letter-spacing:.5px}
 
-.resume-input{
-  width:100%;min-height:240px;
-  padding:10px 12px;border-radius:10px;
-  background:var(--pill-bg);border:1px solid var(--border);
-  color:var(--text);font-size:14px;font-family:inherit;line-height:1.5;
-  resize:vertical;
-}
-.resume-input:focus{outline:none;border-color:var(--accent);background:var(--card-hover)}
-.resume-stats{font-size:11px;color:var(--text-muted)}
-.resume-stats strong{color:var(--accent);font-variant-numeric:tabular-nums}
 .modal-foot{
   display:flex;gap:8px;padding:12px 16px;
   border-top:1px solid var(--border);
@@ -280,14 +264,6 @@ body{
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   font-size:12px;color:var(--text-muted);
 }
-.resume-row .resume-cta{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:6px 11px;border-radius:8px;
-  background:var(--pill-bg);border:1px solid var(--border);
-  cursor:pointer;font-family:inherit;color:var(--text-muted);font-size:12px;
-}
-.resume-row .resume-cta:hover{color:var(--accent);border-color:var(--accent)}
-.resume-row .resume-cta.active{background:var(--pill-bg-active);border-color:var(--accent);color:var(--accent)}
 .resume-row .sort-toggle{
   margin-left:auto;display:inline-flex;align-items:center;gap:6px;
 }
@@ -372,12 +348,6 @@ body{
       <div class="chips" id="companyChips"></div>
     </div>
     <div class="resume-row">
-      <button class="resume-cta" id="resumeBtn" type="button">
-        <span id="resumeBtnLabel">📄 默认简历 · 编辑</span>
-      </button>
-      <span id="resumeStatus"></span>
-    </div>
-    <div class="resume-row">
       <span class="sort-toggle">
         时间
         <select id="dateFilter">
@@ -421,27 +391,6 @@ body{
     </div>
   </div>
 
-  <div class="modal-overlay" id="resumeModal" role="dialog" aria-modal="true" aria-labelledby="resumeModalTitle">
-    <div class="modal">
-      <div class="modal-head">
-        <span class="modal-title" id="resumeModalTitle">匹配我的简历</span>
-        <button class="modal-close" id="resumeModalClose" aria-label="关闭">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="privacy">
-          🔒 <strong>简历仅在你浏览器本地处理</strong>，存在 localStorage，
-          不会上传到 GitHub 或任何服务器。我只用关键词在职位标题、部门、职责描述里做计分。
-        </div>
-        <textarea class="resume-input" id="resumeInput" placeholder="把简历正文粘贴到这里 — 工作经历、项目、技能都可以。越详细，匹配越准。" autocomplete="off" spellcheck="false"></textarea>
-        <div class="resume-stats" id="resumeStats">输入简历后会显示识别到的关键词数量</div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" id="resumeClear" type="button">清除</button>
-        <button class="btn btn-primary" id="resumeSave" type="button">保存并匹配</button>
-      </div>
-    </div>
-  </div>
-
   <div class="result-bar">
     <span id="resultSummary">显示 0 / 0 个职位</span>
     <span id="lastSync"></span>
@@ -480,17 +429,11 @@ const state = {
     sinceDays: 0,          // 0 = all time; 7/30/90 = filter recent
     minScore: 0,           // 0..1, hide jobs below this match score
   },
-  resume: localStorage.getItem('jobs.resume') || '',
-  resumeTokens: null,   // Set<string>
-  idf: null,            // Map<token, weight>
   scores: null,         // Map<jobId, 0..1>
-  totalResumeWeight: 0,
+  matchedThemes: null,  // Map<jobId, [{id, name, hits, contrib}]>
   sortMode: localStorage.getItem('jobs.sortMode') || 'match', // 'match' | 'date'
-  isDefaultResume: false,
 };
 
-// Built-in resume keywords (no PII) so the page works out of the box.
-// User can override by typing in the modal; localStorage takes precedence.
 // Built-in resume profile. Rather than a flat keyword bag (where 后端 and
 // 运营 count equally), this is a set of weighted themes that capture what
 // the candidate actually does. Each job's match score is the weighted sum
@@ -503,10 +446,22 @@ const RESUME_PROFILE = {
     // 知识平台、开发者生态、社区运营. Weighted at 1.00 so any single one
     // dominates the score; threshold 2 means a theme that genuinely runs
     // through the JD (not a one-off keyword) gets full credit.
+    // Platform / knowledge ops: this IS the candidate's specialty (ran
+    // 阿里云知识平台 + 腾讯游戏知识平台). Highest weight, very low
+    // threshold so any clear platform/knowledge signal pays off.
+    { id: 'platform', name: '平台/知识运营', weight: 1.00, threshold: 1,
+      keywords: ['平台运营', '平台运营经理', '平台产品', '平台策略',
+                 '平台增长', '平台生态', '知识运营', '知识平台', '内容平台',
+                 '开发者平台', '社区平台', '创作者平台', '中台运营',
+                 '生态运营', '生态产品'] },
+    // Note: bare "运营" is intentionally excluded — it would otherwise
+    // double-credit specific-game-ops roles ("玩法运营", "赛事运营") that
+    // we explicitly demote via the gameops anti-theme below.
     { id: 'ops', name: '运营 (核心)', weight: 1.00, threshold: 3,
-      keywords: ['运营', '内容运营', '用户运营', '活动运营', '社区运营',
+      keywords: ['内容运营', '用户运营', '活动运营', '社区运营',
                  '创作者运营', '圈层运营', '增长运营', '运营经理', '运营专家',
-                 '内容生态运营', '社群运营', '社区运营经理'] },
+                 '内容生态运营', '社群运营', '社区运营经理', '产品运营',
+                 '运营策略', '运营负责人', '生态运营', '私域运营'] },
     { id: 'content', name: '内容/知识 (核心)', weight: 1.00, threshold: 2,
       keywords: ['内容', '知识', '知识平台', '知识库', '知识社区', '知识中台',
                  '知识管理', '知识产品', 'wiki', '文档', '文档运营', '专题',
@@ -533,12 +488,23 @@ const RESUME_PROFILE = {
     { id: 'data', name: '数据驱动 / 增长', weight: 0.55, threshold: 2,
       keywords: ['数据分析', '数据驱动', '用户增长', '留存', 'KANO',
                  '数据后台', '指标', 'A/B', '分层运营', '用户画像'] },
-    { id: 'game', name: '游戏行业', weight: 0.35, threshold: 1,
-      keywords: ['游戏', '游戏运营', '游戏开发', '游戏社区', '玩家', '电竞'] },
+    // Soft signal only — the candidate worked AT a game company on its
+    // knowledge platform, not on game ops itself. Specific-game-ops roles
+    // are pulled down via the 'gameops' anti-theme below.
+    { id: 'game', name: '游戏行业 (背景)', weight: 0.20, threshold: 1,
+      keywords: ['游戏开发', '游戏行业', '游戏知识', 'TGDC', '开发者大会'] },
   ],
-  // Penalize jobs that are clearly engineering/art/hardware/sales — these
-  // match raw keywords ("数据" appears in everything) but are bad fits.
+  // Penalize jobs that are clearly engineering/art/hardware/sales/
+  // specific-game-ops — these match raw keywords ("数据"/"运营" appear
+  // in everything) but are bad fits for a platform/knowledge ops profile.
   antiThemes: [
+    { id: 'gameops', name: '具体游戏运营', weight: 0.85, threshold: 1,
+      keywords: ['玩法运营', '关卡运营', '赛事运营', '公会运营',
+                 '电竞运营', '电竞赛事', '游戏发行', '游戏推广',
+                 '主播运营', '玩家运营', '内购运营', '付费运营',
+                 'mmo', 'moba', 'fps', '手游运营', '端游运营', '游戏运营',
+                 '英雄联盟', '王者荣耀', '和平精英', '金铲铲', '洛克王国',
+                 'nikke', '海岛奇兵', 'pubg', 'supercell'] },
     { id: 'engineering', name: '纯研发岗', weight: 0.60, threshold: 2,
       keywords: ['后端工程师', '前端工程师', '算法工程师', '架构师',
                  '高级研发', 'devops', 'sre', '测试工程师', 'qa',
@@ -560,91 +526,19 @@ const RESUME_PROFILE = {
 // Sum used to normalize a positive score to 0..1.
 const _PROFILE_MAX_POS = RESUME_PROFILE.themes.reduce((s, t) => s + t.weight, 0);
 
-const DEFAULT_RESUME = `
-产品运营 内容运营 用户运营 活动运营 社区运营 产品经理 运营经理 高级产品经理 内容生态
-知识平台 知识社区 内容社区 互动社区 创作者社区
-AI 社区 AI Coding Claude Code 大模型 LLM AGI 提效 工具
-IP 打造 矩阵化 OGC PGC UGC 内容生产 内容分发 精准推荐 个性化推荐
-创作者运营 KOL 圈子运营 圈层运营 用户分层
-活动策划 大事件 H5 年度运营日历 落地页
-KANO 模型 数据分析 数据后台 自动化工具 产品框架 功能规划 分类体系
-冷启动 流量增长 用户增长 留存 提效 数据驱动
-开发者大会 行业大会 TGDC Workshop 1V1 深度交流 圈层
-游戏运营 游戏社区 游戏开发 游戏 IP 游戏知识
-腾讯 阿里 阿里云 互联网 大厂 P7
-内容矩阵 内容策略 增长策略 用户洞察
-B 端 C 端 SaaS 平台运营
-`.trim();
-
 const $ = (id) => document.getElementById(id);
-
-// ── Resume match: tokenization + IDF + scoring ────────────────────────
-const STOPWORDS_EN = new Set(('the a an of to for and or in on at by with from is are was were be been being '
-  + 'this that these those i me my we us our you your he she it they them their as if than then so but '
-  + 'also have has had do does did can will would should could not no yes about into out up down off '
-  + 'over under more most less few some any all every each other one two').split(' ').filter(Boolean));
-const STOPWORDS_CN_BG = new Set([
-  '的的','了了','是是','和和','与与','或或','及及','在的','的在','了的','的了',
-  '我们','你们','他们','以及','以下','以上','其中','其他','此外','由于','因此',
-  '所以','但是','然而','不过','例如','比如','以及','可以','需要','要求','负责',
-  '工作','岗位','职位','职责','内容','相关','以及','并且','或者','一个','一种',
-  '一些','一般','一定','部分','全部','大部','部分','以及','并且','以下','为以',
-]);
-// Common Chinese fillers that pollute matches if treated as bigrams.
-const STOPWORD_CHARS = new Set('的了是我你他她它们和与或及在上下了过为而但呢吗啊吧的'.split(''));
-
-function _isCJK(ch) {
-  const c = ch.charCodeAt(0);
-  return (c >= 0x4e00 && c <= 0x9fff);
-}
-
-function tokenize(text) {
-  if (!text) return new Set();
-  const lowered = text.toLowerCase();
-  const tokens = new Set();
-  // English-ish words: 2+ chars, allow .+#-_
-  const enRegex = /[a-z][a-z0-9+#.\-_]{1,40}/g;
-  let m;
-  while ((m = enRegex.exec(lowered)) !== null) {
-    const t = m[0];
-    if (t.length >= 2 && !STOPWORDS_EN.has(t)) tokens.add(t);
-  }
-  // Chinese: take 2-char bigrams from each CJK run, skipping bigrams that are
-  // mostly filler characters.
-  const cjkRegex = /[一-鿿]+/g;
-  while ((m = cjkRegex.exec(text)) !== null) {
-    const seg = m[0];
-    for (let i = 0; i < seg.length - 1; i++) {
-      const bg = seg.substr(i, 2);
-      if (STOPWORDS_CN_BG.has(bg)) continue;
-      // Skip bigrams where both chars are filler.
-      if (STOPWORD_CHARS.has(bg[0]) && STOPWORD_CHARS.has(bg[1])) continue;
-      tokens.add(bg);
-    }
-  }
-  // Plain numbers (years etc.) we don't want in match.
-  for (const t of [...tokens]) {
-    if (/^\d+$/.test(t)) tokens.delete(t);
-  }
-  return tokens;
-}
 
 function buildJobHaystack(job) {
   return `${job.title || ''}\n${job.department || ''}\n${job.category_raw || ''}\n${job.description || ''}`;
 }
 
-function buildIdf(jobs) {
-  const N = jobs.length || 1;
-  const df = new Map();
+// Pre-compute a lowercased haystack on each job once per data load. The
+// profile scorer reads from `_haystack`, so any indexOf check is just a
+// substring match (fast for ~2000 jobs).
+function buildHaystacks(jobs) {
   for (const j of jobs) {
-    const tokens = tokenize(buildJobHaystack(j));
-    j._tokens = tokens;     // cache
     j._haystack = buildJobHaystack(j).toLowerCase();
-    for (const t of tokens) df.set(t, (df.get(t) || 0) + 1);
   }
-  const idf = new Map();
-  for (const [t, c] of df) idf.set(t, Math.log((N + 1) / (c + 1)) + 1);
-  return idf;
 }
 
 // ── Profile-based scoring (default) ──
@@ -679,7 +573,10 @@ function scoreJobByProfile(haystackLower) {
     const norm = Math.min(1, hits / anti.threshold);
     neg += anti.weight * norm;
   }
-  const raw = (pos - 0.6 * neg) / _PROFILE_MAX_POS;
+  // Penalty multiplier is intentionally above 1.0 so a clear anti-theme
+  // hit (e.g. "硬件" or "玩法运营") materially demotes the job even when
+  // it picks up some incidental positive theme hits.
+  const raw = (pos - 1.0 * neg) / _PROFILE_MAX_POS;
   const score = Math.max(0, Math.min(1, raw));
   matchedThemes.sort((a, b) => b.contrib - a.contrib);
   return { score, matchedThemes };
@@ -691,112 +588,16 @@ function scoreAllJobs() {
     state.matchedThemes = null;
     return;
   }
-  // Use the structured profile when the user is on the default; if they
-  // pasted a custom resume, fall back to the keyword/IDF approach so they
-  // still get scoring on whatever they typed.
-  const useProfile = state.isDefaultResume;
   const scores = new Map();
-  const matchedThemes = useProfile ? new Map() : null;
-
-  if (useProfile) {
-    for (const j of state.data.jobs || []) {
-      const { score, matchedThemes: mt } = scoreJobByProfile(j._haystack || '');
-      scores.set(j.id, score);
-      matchedThemes.set(j.id, mt);
-    }
-  } else {
-    if (!state.idf || !state.resumeTokens) {
-      state.scores = null;
-      state.matchedThemes = null;
-      return;
-    }
-    const idf = state.idf;
-    const rt = state.resumeTokens;
-    let totalW = 0;
-    for (const t of rt) totalW += (idf.get(t) || 0.5);
-    state.totalResumeWeight = totalW || 1;
-    for (const j of state.data.jobs || []) {
-      let matched = 0;
-      for (const t of rt) {
-        if (j._haystack && j._haystack.indexOf(t) !== -1) {
-          matched += (idf.get(t) || 0.5);
-        }
-      }
-      scores.set(j.id, matched / state.totalResumeWeight);
-    }
+  const matchedThemes = new Map();
+  for (const j of state.data.jobs || []) {
+    const { score, matchedThemes: mt } = scoreJobByProfile(j._haystack || '');
+    scores.set(j.id, score);
+    matchedThemes.set(j.id, mt);
   }
   state.scores = scores;
   state.matchedThemes = matchedThemes;
 }
-
-function applyResume(text, persist) {
-  const userText = (text || '').trim();
-  if (persist) {
-    if (userText) localStorage.setItem('jobs.resume', userText);
-    else localStorage.removeItem('jobs.resume');
-  }
-  // If user cleared, fall back to the built-in default keywords so the
-  // page is still useful without any input.
-  state.resume = userText || DEFAULT_RESUME;
-  state.isDefaultResume = !userText;
-  state.resumeTokens = tokenize(state.resume);
-  scoreAllJobs();
-  renderResumeRow();
-  renderFilterControls();
-  renderJobs();
-}
-
-function renderResumeRow() {
-  const label = $('resumeBtnLabel');
-  const btn = $('resumeBtn');
-  const status = $('resumeStatus');
-  const n = state.resumeTokens ? state.resumeTokens.size : 0;
-  if (state.isDefaultResume) {
-    const themes = RESUME_PROFILE.themes.length;
-    label.textContent = '📄 默认简历 · 编辑';
-    btn.classList.add('active');
-    status.style.display = '';
-    status.textContent = `按 ${themes} 个主题加权打分（运营/内容/AI/社区…），点编辑可改`;
-  } else {
-    label.textContent = '📄 我的简历 · 编辑';
-    btn.classList.add('active');
-    status.style.display = '';
-    status.textContent = `已识别 ${n} 个关键词`;
-  }
-  $('sortSelect') && ($('sortSelect').value = state.sortMode);
-}
-
-// ── Modal control ─────────────────────────────────────────────────────
-function openResumeModal() {
-  // Show whatever is currently active (user-provided or the built-in default)
-  // so editing always starts from a real baseline.
-  $('resumeInput').value = state.resume;
-  updateModalStats();
-  $('resumeModal').classList.add('show');
-  setTimeout(() => $('resumeInput').focus(), 50);
-}
-function closeResumeModal() { $('resumeModal').classList.remove('show'); }
-function updateModalStats() {
-  const text = $('resumeInput').value;
-  const tokens = tokenize(text);
-  $('resumeStats').textContent = text
-    ? `已识别 ${tokens.size} 个关键词`
-    : '输入简历后会显示识别到的关键词数量';
-}
-$('resumeBtn').addEventListener('click', openResumeModal);
-$('resumeModalClose').addEventListener('click', closeResumeModal);
-$('resumeModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeResumeModal(); });
-$('resumeInput').addEventListener('input', updateModalStats);
-$('resumeSave').addEventListener('click', () => {
-  applyResume($('resumeInput').value.trim(), true);
-  closeResumeModal();
-});
-$('resumeClear').addEventListener('click', () => {
-  $('resumeInput').value = '';
-  updateModalStats();
-  applyResume('', true);
-  closeResumeModal();
-});
 $('sortSelect').addEventListener('change', (e) => {
   state.sortMode = e.target.value;
   localStorage.setItem('jobs.sortMode', state.sortMode);
@@ -820,8 +621,7 @@ function openJobModal(jobId) {
   if (!job) return;
   $('jobModalTitle').textContent = job.company_name || job.company;
   $('jobModalGo').href = job.url;
-  const score = (state.scores && state.resumeTokens && state.resumeTokens.size)
-    ? state.scores.get(job.id) : null;
+  const score = state.scores ? state.scores.get(job.id) : null;
   const scorePill = (score != null)
     ? `<span class="score-pill ${score>=0.40?'s-high':score>=0.20?'s-mid':'s-low'}">${Math.round(score*100)}% 匹配</span>`
     : '';
@@ -853,9 +653,7 @@ $('jobModalClose').addEventListener('click', closeJobModal);
 $('jobModalCloseBtn').addEventListener('click', closeJobModal);
 $('jobModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeJobModal(); });
 document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  if ($('jobModal').classList.contains('show')) closeJobModal();
-  else if ($('resumeModal').classList.contains('show')) closeResumeModal();
+  if (e.key === 'Escape' && $('jobModal').classList.contains('show')) closeJobModal();
 });
 
 $('dateFilter').addEventListener('change', (e) => {
@@ -869,12 +667,6 @@ $('matchFilter').addEventListener('change', (e) => {
 
 // Hide the match-score filter + sort dropdown when no resume is active so
 // the controls don't lie about what they do.
-function renderFilterControls() {
-  const hasResume = !!(state.resumeTokens && state.resumeTokens.size);
-  $('matchFilter').parentElement.style.display = hasResume ? '' : 'none';
-  $('sortToggle').style.display = hasResume ? '' : 'none';
-}
-
 // ── Theme ─────────────────────────────────────────────────────────────
 $('themeBtn').addEventListener('click', () => {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
@@ -1026,7 +818,7 @@ function renderJobs() {
   const empty = $('emptyState');
   let jobs = filteredJobs();
 
-  const scoring = !!(state.resume && state.scores);
+  const scoring = !!state.scores;
   if (scoring && state.sortMode === 'match') {
     jobs = jobs.slice().sort((a, b) =>
       (state.scores.get(b.id) || 0) - (state.scores.get(a.id) || 0));
@@ -1110,13 +902,11 @@ function loadData() {
       if (!Array.isArray(state.data.jobs)) state.data.jobs = [];
       if (!state.data.companies) state.data.companies = {};
       if (!Array.isArray(state.data.categories)) state.data.categories = [];
-      // Build IDF + per-job haystack once per data load.
-      state.idf = buildIdf(state.data.jobs);
-      // Always have an active resume — either the user's saved one or the
-      // built-in default keywords. Pass null persist so we don't write the
-      // default into localStorage.
-      const userText = (localStorage.getItem('jobs.resume') || '').trim();
-      applyResume(userText, false);
+      // Pre-compute per-job lowercase haystacks, then score with the
+      // built-in profile.
+      buildHaystacks(state.data.jobs);
+      scoreAllJobs();
+      $('sortSelect').value = state.sortMode;
       renderHeader();
       renderStaleBanner();
       renderCategoryOptions();
