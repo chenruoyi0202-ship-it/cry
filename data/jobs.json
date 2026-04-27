@@ -1,18 +1,18 @@
 {
-  "last_updated": 1777311582229,
-  "last_updated_iso": "2026-04-28T01:39:42+08:00",
+  "last_updated": 1777313750108,
+  "last_updated_iso": "2026-04-28T02:15:50+08:00",
   "companies": {
     "tencent": {
       "count": 1473,
       "status": "ok",
-      "fetched_at": 1777311448151,
+      "fetched_at": 1777313540696,
       "error": null,
       "name": "腾讯"
     },
     "bytedance": {
       "count": 606,
       "status": "ok",
-      "fetched_at": 1777311475697,
+      "fetched_at": 1777313567187,
       "error": null,
       "name": "字节跳动"
     },
@@ -22,6 +22,55 @@
       "status": "error",
       "fetched_at": 0,
       "error": "all meituan endpoints rejected our payload: meituan probe https://careers.meituan.com/api/c/search/v3: all 2 attempts failed: unexpected payload from https://careers.meituan.com/api/c/search/v3: code=401 msg=未登陆"
+    },
+    "dji": {
+      "name": "大疆",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "all dji endpoints rejected our payload: dji probe https://we.dji.com/api/career/list/page: all 2 attempts failed: http 404 from https://we.dji.com/api/career/list/page"
+    },
+    "byd": {
+      "name": "比亚迪",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "all byd endpoints rejected our payload: byd probe https://byd.zhiye.com/portal/api/external/recruitment/jobs/list/V1: all 2 attempts failed: Expecting value: line 1 column 1 (char 0)"
+    },
+    "jd": {
+      "name": "京东",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "all jd endpoints rejected our payload: jd probe https://careers.jd.com/api/web/job/search/getJobList: all 2 attempts failed: Expecting value: line 2 column 1 (char 1)"
+    },
+    "netease": {
+      "name": "网易",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "all netease endpoints rejected our payload: netease probe https://hr.163.com/api/hr163/position/list: all 2 attempts failed: Expecting value: line 1 column 1 (char 0)"
+    },
+    "xiaomi": {
+      "name": "小米",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "all xiaomi endpoints rejected our payload: xiaomi probe https://hr.xiaomi.com/api/recruitment/job/list: all 2 attempts failed: http 404 from https://hr.xiaomi.com/api/recruitment/job/list"
+    },
+    "oppo": {
+      "name": "OPPO",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "all oppo endpoints rejected our payload: oppo probe https://careers.oppo.com/api/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/job/list"
+    },
+    "vivo": {
+      "name": "vivo",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "all vivo endpoints rejected our payload: vivo probe https://hr.vivo.com/portal/api/external/jobs/page: all 2 attempts failed: http 405 from https://hr.vivo.com/portal/api/external/jobs/page"
     }
   },
   "categories": [
@@ -5871,6 +5920,20 @@
       "url": "http://careers.tencent.com/jobdesc.html?postId=2028285230246428672",
       "source": "careers.tencent.com",
       "description": "岗位职责：\n1.负责小小英雄的原创主题概念设计、视觉呈现与细节刻画，从世界观出发塑造独特角色形象；\r\n2.协同产品与项目团队，参与制定并持续优化角色美术风格基调，输出可视化设计规范与标准，推动风格创新与品质提升；\r\n3.负责部分外部画师的协作沟通与质量跟进，确保角色设计在统一风格下高效落地，符合项目整体品质要求。"
+    },
+    {
+      "id": "tencent_2011617150837612544",
+      "company": "tencent",
+      "company_name": "腾讯",
+      "title": "芯片设计工程师",
+      "category": "技术",
+      "category_raw": "技术",
+      "location": "深圳",
+      "department": "TEG · 自研芯片-云架平",
+      "posted_date": "2026-04-17",
+      "url": "http://careers.tencent.com/jobdesc.html?postId=2011617150837612544",
+      "source": "careers.tencent.com",
+      "description": "岗位职责：\n1.参与SoC/IP 系统/子系统的设计和实现；\r\n2.负责模块架构设计、RTL实现、时序分析优化以及模块的PPA优化；\r\n3.支撑 SoC/IP 的系统集成，以及文档编写；\r\n4.与性能分析团队一起进行芯片性能改进；\r\n5.与设计验证团队一起制定验证测试计划，覆盖率分析，芯片仿真以及调试。"
     },
     {
       "id": "tencent_2011617158689349632",
