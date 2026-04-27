@@ -123,6 +123,12 @@
             font-weight: 600;
             color: #6b7394;
         }
+        .amount-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            min-width: 0;
+        }
         .amount {
             background: transparent;
             border: none;
@@ -141,6 +147,45 @@
             margin: 0;
         }
         .amount[type=number] { -moz-appearance: textfield; }
+
+        .eval-preview {
+            font-size: 11px;
+            font-weight: 500;
+            color: #6b7394;
+            min-height: 14px;
+            line-height: 14px;
+            margin-top: 2px;
+            text-align: right;
+            transition: color 0.2s;
+        }
+        .eval-preview.has { color: #b39bff; }
+        .eval-preview.error { color: #f44336; }
+
+        .op-bar {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+        .op-bar button {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #d8dcec;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, transform 0.05s;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .op-bar button:hover { background: rgba(255,255,255,0.1); }
+        .op-bar button:active { transform: scale(0.94); }
+        .op-bar button.op { color: #b39bff; }
+        .op-bar button.warn { color: #ff8a80; }
 
         .swap-divider {
             display: flex;
@@ -276,7 +321,10 @@
             </div>
             <div class="amount-wrap">
                 <span class="symbol">¥</span>
-                <input type="number" class="amount" id="amount-CNY" placeholder="0.00" step="0.01" inputmode="decimal">
+                <div class="amount-col">
+                    <input type="text" class="amount" id="amount-CNY" placeholder="0.00" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false">
+                    <div class="eval-preview" id="eval-CNY"></div>
+                </div>
             </div>
         </div>
 
@@ -290,7 +338,10 @@
             </div>
             <div class="amount-wrap">
                 <span class="symbol">HK$</span>
-                <input type="number" class="amount" id="amount-HKD" placeholder="0.00" step="0.01" inputmode="decimal">
+                <div class="amount-col">
+                    <input type="text" class="amount" id="amount-HKD" placeholder="0.00" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false">
+                    <div class="eval-preview" id="eval-HKD"></div>
+                </div>
             </div>
         </div>
 
@@ -304,8 +355,22 @@
             </div>
             <div class="amount-wrap">
                 <span class="symbol">$</span>
-                <input type="number" class="amount" id="amount-USD" placeholder="0.00" step="0.01" inputmode="decimal">
+                <div class="amount-col">
+                    <input type="text" class="amount" id="amount-USD" placeholder="0.00" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false">
+                    <div class="eval-preview" id="eval-USD"></div>
+                </div>
             </div>
+        </div>
+
+        <div class="op-bar" id="opBar">
+            <button type="button" class="op" data-op="(">(</button>
+            <button type="button" class="op" data-op=")">)</button>
+            <button type="button" class="op" data-op="+">+</button>
+            <button type="button" class="op" data-op="-">−</button>
+            <button type="button" class="op" data-op="*">×</button>
+            <button type="button" class="op" data-op="/">÷</button>
+            <button type="button" data-op="bksp" title="退格">⌫</button>
+            <button type="button" class="warn" data-op="clear" title="清空">AC</button>
         </div>
 
         <div class="rates-section">
@@ -364,6 +429,11 @@
             HKD: document.getElementById('amount-HKD'),
             USD: document.getElementById('amount-USD')
         };
+        const evalPreviews = {
+            CNY: document.getElementById('eval-CNY'),
+            HKD: document.getElementById('eval-HKD'),
+            USD: document.getElementById('eval-USD')
+        };
         const rows = {
             CNY: document.querySelector('.currency-row[data-code="CNY"]'),
             HKD: document.querySelector('.currency-row[data-code="HKD"]'),
@@ -374,10 +444,86 @@
         const rateHKDCNY = document.getElementById('rate-HKD-CNY');
         const refreshBtn = document.getElementById('refreshBtn');
         const ratesMeta = document.getElementById('ratesMeta');
+        const opBar = document.getElementById('opBar');
 
         function format(n) {
             if (!isFinite(n)) return '';
             return (Math.round(n * 100) / 100).toFixed(2);
+        }
+
+        // Safe expression evaluator: only +, -, *, /, parens, decimals.
+        // Recursive descent, no eval/Function.
+        function evalExpr(raw) {
+            if (typeof raw !== 'string') return { value: NaN, complete: false };
+            const expr = raw.replace(/[×]/g, '*').replace(/[÷]/g, '/').replace(/[−–—]/g, '-').replace(/\s+/g, '');
+            if (expr === '') return { value: NaN, complete: false };
+            if (!/^[\d+\-*/().]*$/.test(expr)) return { value: NaN, complete: false };
+
+            let pos = 0;
+            const peek = () => expr[pos];
+            const consume = () => expr[pos++];
+
+            function parseExpr() {
+                let left = parseTerm();
+                while (peek() === '+' || peek() === '-') {
+                    const op = consume();
+                    const right = parseTerm();
+                    if (!isFinite(right)) return NaN;
+                    left = op === '+' ? left + right : left - right;
+                }
+                return left;
+            }
+            function parseTerm() {
+                let left = parseFactor();
+                while (peek() === '*' || peek() === '/') {
+                    const op = consume();
+                    const right = parseFactor();
+                    if (!isFinite(right)) return NaN;
+                    left = op === '*' ? left * right : (right === 0 ? NaN : left / right);
+                }
+                return left;
+            }
+            function parseFactor() {
+                if (peek() === '(') {
+                    consume();
+                    const v = parseExpr();
+                    if (peek() === ')') { consume(); return v; }
+                    return NaN; // unmatched paren
+                }
+                if (peek() === '-') { consume(); return -parseFactor(); }
+                if (peek() === '+') { consume(); return parseFactor(); }
+                let num = '';
+                while (peek() && /[\d.]/.test(peek())) num += consume();
+                if (num === '' || num === '.') return NaN;
+                const n = parseFloat(num);
+                return isFinite(n) ? n : NaN;
+            }
+
+            try {
+                const v = parseExpr();
+                const complete = pos === expr.length && isFinite(v);
+                return { value: v, complete };
+            } catch (e) {
+                return { value: NaN, complete: false };
+            }
+        }
+
+        function isPlainNumber(s) {
+            return /^-?\d*(\.\d+)?$/.test((s || '').trim()) && (s || '').trim() !== '';
+        }
+
+        function setEvalPreview(code, text, state) {
+            const el = evalPreviews[code];
+            if (!el) return;
+            el.classList.remove('has', 'error');
+            el.textContent = text || '';
+            if (state === 'has') el.classList.add('has');
+            if (state === 'error') el.classList.add('error');
+        }
+
+        function sanitizeInput(raw) {
+            // Allow digits, operators, parens, decimals, ×, ÷, − (minus look-alike).
+            return (raw || '').replace(/[^0-9+\-*/().×÷−–—\s]/g, '');
         }
 
         function toUSD(amount, code) {
@@ -396,16 +542,44 @@
 
         function recalc(sourceCode) {
             const raw = inputs[sourceCode].value;
-            if (raw === '' || isNaN(parseFloat(raw))) {
+
+            // Empty: clear all secondary fields and previews
+            if (raw === '' || raw === undefined) {
                 ['CNY', 'HKD', 'USD'].forEach(c => {
-                    if (c !== sourceCode) inputs[c].value = '';
+                    if (c !== sourceCode) {
+                        inputs[c].value = '';
+                        setEvalPreview(c, '');
+                    }
                 });
+                setEvalPreview(sourceCode, '');
                 return;
             }
-            const amount = parseFloat(raw);
-            const usd = toUSD(amount, sourceCode);
+
+            const { value, complete } = evalExpr(raw);
+            const sourceIsExpr = !isPlainNumber(raw);
+
+            if (!isFinite(value)) {
+                if (sourceIsExpr && raw.trim() !== '') {
+                    setEvalPreview(sourceCode, '= …', 'has'); // incomplete expression
+                } else {
+                    setEvalPreview(sourceCode, '', 'error');
+                }
+                return; // keep previous secondary values
+            }
+
+            // Show "= 20.00" preview only for expressions, not bare numbers
+            if (sourceIsExpr) {
+                setEvalPreview(sourceCode, '= ' + format(value), complete ? 'has' : 'has');
+            } else {
+                setEvalPreview(sourceCode, '');
+            }
+
+            const usd = toUSD(value, sourceCode);
             ['CNY', 'HKD', 'USD'].forEach(c => {
-                if (c !== sourceCode) inputs[c].value = format(fromUSD(usd, c));
+                if (c !== sourceCode) {
+                    inputs[c].value = format(fromUSD(usd, c));
+                    setEvalPreview(c, '');
+                }
             });
         }
 
@@ -497,11 +671,57 @@
         });
 
         ['CNY', 'HKD', 'USD'].forEach(code => {
-            inputs[code].addEventListener('input', () => {
+            inputs[code].addEventListener('input', (e) => {
+                const cleaned = sanitizeInput(e.target.value);
+                if (cleaned !== e.target.value) {
+                    const start = e.target.selectionStart;
+                    e.target.value = cleaned;
+                    try { e.target.setSelectionRange(start, start); } catch (_) {}
+                }
                 setActive(code);
                 recalc(code);
             });
             inputs[code].addEventListener('focus', () => setActive(code));
+        });
+
+        // Operator bar: insert at cursor position of the active input.
+        // pointerdown + preventDefault so the input keeps focus and the
+        // mobile keyboard doesn't dismiss between taps.
+        opBar.addEventListener('pointerdown', (e) => {
+            const btn = e.target.closest('button[data-op]');
+            if (!btn) return;
+            e.preventDefault();
+            const op = btn.dataset.op;
+            const code = activeCode || 'CNY';
+            const inp = inputs[code];
+            inp.focus();
+
+            if (op === 'clear') {
+                inp.value = '';
+                recalc(code);
+                return;
+            }
+            if (op === 'bksp') {
+                const s = inp.selectionStart, eSel = inp.selectionEnd;
+                if (s === null || s === eSel) {
+                    if (s > 0) {
+                        inp.value = inp.value.slice(0, s - 1) + inp.value.slice(s);
+                        try { inp.setSelectionRange(s - 1, s - 1); } catch (_) {}
+                    }
+                } else {
+                    inp.value = inp.value.slice(0, s) + inp.value.slice(eSel);
+                    try { inp.setSelectionRange(s, s); } catch (_) {}
+                }
+                recalc(code);
+                return;
+            }
+
+            const ch = op;
+            const s = inp.selectionStart ?? inp.value.length;
+            const eSel = inp.selectionEnd ?? inp.value.length;
+            inp.value = inp.value.slice(0, s) + ch + inp.value.slice(eSel);
+            try { inp.setSelectionRange(s + ch.length, s + ch.length); } catch (_) {}
+            recalc(code);
         });
 
         function onRateChange() {
