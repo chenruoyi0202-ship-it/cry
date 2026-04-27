@@ -75,7 +75,11 @@ def _to_job(raw: dict) -> Optional[Job]:
     if product and product != department:
         department = f'{department} · {product}' if department else product
     url = safe_get(raw, 'PostURL') or JOB_PAGE_TEMPLATE.format(post_id=post_id)
-    posted = parse_date(safe_get(raw, 'LastUpdateTime'))
+    posted = (parse_date(safe_get(raw, 'LastUpdateTime'))
+              or parse_date(safe_get(raw, 'PostUpdateTime'))
+              or parse_date(safe_get(raw, 'PostDate'))
+              or parse_date(safe_get(raw, 'CreateTime')))
+    description = (safe_get(raw, 'Responsibility', default='') or '').strip()
     return Job(
         id=f'tencent_{post_id}',
         company='tencent',
@@ -88,6 +92,7 @@ def _to_job(raw: dict) -> Optional[Job]:
         posted_date=posted,
         url=url,
         source='careers.tencent.com',
+        description=description,
     )
 
 
