@@ -1,11 +1,37 @@
 {
-  "last_updated": 0,
-  "last_updated_iso": "尚未首次运行",
+  "last_updated": 1777306440169,
+  "last_updated_iso": "2026-04-28T00:14:00+08:00",
   "companies": {
-    "tencent":   {"name": "腾讯",     "count": 0, "status": "pending", "fetched_at": 0, "error": null},
-    "bytedance": {"name": "字节跳动", "count": 0, "status": "pending", "fetched_at": 0, "error": null},
-    "meituan":   {"name": "美团",     "count": 0, "status": "pending", "fetched_at": 0, "error": null}
+    "tencent": {
+      "name": "腾讯",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "source returned 0 jobs"
+    },
+    "bytedance": {
+      "name": "字节跳动",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "source returned 0 jobs"
+    },
+    "meituan": {
+      "name": "美团",
+      "count": 0,
+      "status": "error",
+      "fetched_at": 0,
+      "error": "meituan p1: all 3 attempts failed: meituan: all endpoints failed: unexpected payload from https://careers.meituan.com/api/job/list/search: code=1"
+    }
   },
-  "categories": ["技术", "产品", "设计", "运营", "市场", "职能", "其他"],
+  "categories": [
+    "技术",
+    "产品",
+    "设计",
+    "运营",
+    "市场",
+    "职能",
+    "其他"
+  ],
   "jobs": []
 }
