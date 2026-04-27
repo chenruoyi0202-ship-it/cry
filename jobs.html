@@ -180,6 +180,107 @@ body{
 .job-meta span{display:inline-flex;align-items:center;gap:3px}
 .job-meta .meta-dept{color:var(--text)}
 
+/* Match score pill on each job */
+.score-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;
+  flex-shrink:0;font-variant-numeric:tabular-nums;
+  background:rgba(56,189,248,0.10);color:var(--accent);
+  border:1px solid rgba(56,189,248,0.18);
+}
+.score-pill.s-high{background:rgba(34,197,94,0.14);color:#22c55e;border-color:rgba(34,197,94,0.22)}
+.score-pill.s-mid{background:rgba(56,189,248,0.12);color:var(--accent);border-color:rgba(56,189,248,0.20)}
+.score-pill.s-low{background:rgba(148,163,184,0.10);color:var(--text-muted);border-color:rgba(148,163,184,0.18)}
+
+/* Resume modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:200;display:none;align-items:flex-end;justify-content:center;
+  padding:0;
+}
+[data-theme="light"] .modal-overlay{background:rgba(15,23,42,0.45)}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px 16px 0 0;
+  width:100%;max-width:540px;max-height:88dvh;
+  display:flex;flex-direction:column;
+  animation:slideUp .25s cubic-bezier(.22,1,.36,1);
+}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--border);
+}
+.modal-title{font-size:15px;font-weight:600;color:var(--text)}
+.modal-close{
+  width:30px;height:30px;border-radius:8px;
+  background:var(--pill-bg);border:1px solid var(--border);color:var(--text-muted);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:18px;line-height:1;
+}
+.modal-close:hover{color:var(--text)}
+.modal-body{
+  padding:14px 16px;overflow-y:auto;flex:1;
+  display:flex;flex-direction:column;gap:10px;
+}
+.modal-body .privacy{
+  font-size:11px;color:var(--text-muted);
+  background:var(--pill-bg);border:1px solid var(--border);
+  padding:8px 10px;border-radius:8px;line-height:1.5;
+}
+.modal-body .privacy strong{color:var(--text)}
+.resume-input{
+  width:100%;min-height:240px;
+  padding:10px 12px;border-radius:10px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  color:var(--text);font-size:14px;font-family:inherit;line-height:1.5;
+  resize:vertical;
+}
+.resume-input:focus{outline:none;border-color:var(--accent);background:var(--card-hover)}
+.resume-stats{font-size:11px;color:var(--text-muted)}
+.resume-stats strong{color:var(--accent);font-variant-numeric:tabular-nums}
+.modal-foot{
+  display:flex;gap:8px;padding:12px 16px;
+  border-top:1px solid var(--border);
+}
+.btn{
+  flex:1;padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;
+  font-family:inherit;cursor:pointer;border:1px solid var(--border);
+  background:var(--pill-bg);color:var(--text);
+  transition:background .2s,border-color .2s;
+}
+.btn:hover{background:var(--card-hover)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text-muted)}
+
+/* Resume status row in filter bar */
+.resume-row{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:12px;color:var(--text-muted);
+}
+.resume-row .resume-cta{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 11px;border-radius:8px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  cursor:pointer;font-family:inherit;color:var(--text-muted);font-size:12px;
+}
+.resume-row .resume-cta:hover{color:var(--accent);border-color:var(--accent)}
+.resume-row .resume-cta.active{background:var(--pill-bg-active);border-color:var(--accent);color:var(--accent)}
+.resume-row .sort-toggle{
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+}
+.resume-row .sort-toggle select{
+  padding:5px 24px 5px 8px;border-radius:8px;
+  background:var(--pill-bg);border:1px solid var(--border);color:var(--text);
+  font-size:12px;font-family:inherit;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);
+  background-position:calc(100% - 12px) 50%,calc(100% - 8px) 50%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+}
+
 .empty{
   text-align:center;padding:40px 20px;color:var(--text-muted);
   background:var(--card);border:1px solid var(--border);border-radius:12px;
@@ -250,6 +351,40 @@ body{
     <div class="filter-row">
       <div class="chips" id="companyChips"></div>
     </div>
+    <div class="resume-row">
+      <button class="resume-cta" id="resumeBtn" type="button">
+        <span id="resumeBtnLabel">📄 匹配我的简历</span>
+      </button>
+      <span id="resumeStatus" style="display:none"></span>
+      <span class="sort-toggle" id="sortToggle" style="display:none">
+        排序
+        <select id="sortSelect">
+          <option value="match">按匹配度</option>
+          <option value="date">按发布日期</option>
+        </select>
+      </span>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="resumeModal" role="dialog" aria-modal="true" aria-labelledby="resumeModalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title" id="resumeModalTitle">匹配我的简历</span>
+        <button class="modal-close" id="resumeModalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="privacy">
+          🔒 <strong>简历仅在你浏览器本地处理</strong>，存在 localStorage，
+          不会上传到 GitHub 或任何服务器。我只用关键词在职位标题、部门、职责描述里做计分。
+        </div>
+        <textarea class="resume-input" id="resumeInput" placeholder="把简历正文粘贴到这里 — 工作经历、项目、技能都可以。越详细，匹配越准。" autocomplete="off" spellcheck="false"></textarea>
+        <div class="resume-stats" id="resumeStats">输入简历后会显示识别到的关键词数量</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="resumeClear" type="button">清除</button>
+        <button class="btn btn-primary" id="resumeSave" type="button">保存并匹配</button>
+      </div>
+    </div>
   </div>
 
   <div class="result-bar">
@@ -288,9 +423,176 @@ const state = {
     companies: new Set(),  // empty = all
     category: '',
   },
+  resume: localStorage.getItem('jobs.resume') || '',
+  resumeTokens: null,   // Set<string>
+  idf: null,            // Map<token, weight>
+  scores: null,         // Map<jobId, 0..1>
+  totalResumeWeight: 0,
+  sortMode: localStorage.getItem('jobs.sortMode') || 'match', // 'match' | 'date'
 };
 
 const $ = (id) => document.getElementById(id);
+
+// ── Resume match: tokenization + IDF + scoring ────────────────────────
+const STOPWORDS_EN = new Set(('the a an of to for and or in on at by with from is are was were be been being '
+  + 'this that these those i me my we us our you your he she it they them their as if than then so but '
+  + 'also have has had do does did can will would should could not no yes about into out up down off '
+  + 'over under more most less few some any all every each other one two').split(' ').filter(Boolean));
+const STOPWORDS_CN_BG = new Set([
+  '的的','了了','是是','和和','与与','或或','及及','在的','的在','了的','的了',
+  '我们','你们','他们','以及','以下','以上','其中','其他','此外','由于','因此',
+  '所以','但是','然而','不过','例如','比如','以及','可以','需要','要求','负责',
+  '工作','岗位','职位','职责','内容','相关','以及','并且','或者','一个','一种',
+  '一些','一般','一定','部分','全部','大部','部分','以及','并且','以下','为以',
+]);
+// Common Chinese fillers that pollute matches if treated as bigrams.
+const STOPWORD_CHARS = new Set('的了是我你他她它们和与或及在上下了过为而但呢吗啊吧的'.split(''));
+
+function _isCJK(ch) {
+  const c = ch.charCodeAt(0);
+  return (c >= 0x4e00 && c <= 0x9fff);
+}
+
+function tokenize(text) {
+  if (!text) return new Set();
+  const lowered = text.toLowerCase();
+  const tokens = new Set();
+  // English-ish words: 2+ chars, allow .+#-_
+  const enRegex = /[a-z][a-z0-9+#.\-_]{1,40}/g;
+  let m;
+  while ((m = enRegex.exec(lowered)) !== null) {
+    const t = m[0];
+    if (t.length >= 2 && !STOPWORDS_EN.has(t)) tokens.add(t);
+  }
+  // Chinese: take 2-char bigrams from each CJK run, skipping bigrams that are
+  // mostly filler characters.
+  const cjkRegex = /[一-鿿]+/g;
+  while ((m = cjkRegex.exec(text)) !== null) {
+    const seg = m[0];
+    for (let i = 0; i < seg.length - 1; i++) {
+      const bg = seg.substr(i, 2);
+      if (STOPWORDS_CN_BG.has(bg)) continue;
+      // Skip bigrams where both chars are filler.
+      if (STOPWORD_CHARS.has(bg[0]) && STOPWORD_CHARS.has(bg[1])) continue;
+      tokens.add(bg);
+    }
+  }
+  // Plain numbers (years etc.) we don't want in match.
+  for (const t of [...tokens]) {
+    if (/^\d+$/.test(t)) tokens.delete(t);
+  }
+  return tokens;
+}
+
+function buildJobHaystack(job) {
+  return `${job.title || ''}\n${job.department || ''}\n${job.category_raw || ''}\n${job.description || ''}`;
+}
+
+function buildIdf(jobs) {
+  const N = jobs.length || 1;
+  const df = new Map();
+  for (const j of jobs) {
+    const tokens = tokenize(buildJobHaystack(j));
+    j._tokens = tokens;     // cache
+    j._haystack = buildJobHaystack(j).toLowerCase();
+    for (const t of tokens) df.set(t, (df.get(t) || 0) + 1);
+  }
+  const idf = new Map();
+  for (const [t, c] of df) idf.set(t, Math.log((N + 1) / (c + 1)) + 1);
+  return idf;
+}
+
+function scoreAllJobs() {
+  if (!state.idf || !state.resumeTokens || !state.data) {
+    state.scores = null;
+    return;
+  }
+  const idf = state.idf;
+  const rt = state.resumeTokens;
+  let totalW = 0;
+  for (const t of rt) totalW += (idf.get(t) || 0.5);
+  state.totalResumeWeight = totalW || 1;
+  const scores = new Map();
+  for (const j of state.data.jobs || []) {
+    let matched = 0;
+    for (const t of rt) {
+      if (j._haystack && j._haystack.indexOf(t) !== -1) {
+        matched += (idf.get(t) || 0.5);
+      }
+    }
+    scores.set(j.id, matched / state.totalResumeWeight);
+  }
+  state.scores = scores;
+}
+
+function applyResume(text, persist) {
+  state.resume = text || '';
+  state.resumeTokens = state.resume ? tokenize(state.resume) : null;
+  if (persist) {
+    if (state.resume) localStorage.setItem('jobs.resume', state.resume);
+    else localStorage.removeItem('jobs.resume');
+  }
+  scoreAllJobs();
+  renderResumeRow();
+  renderJobs();
+}
+
+function renderResumeRow() {
+  const has = !!state.resume;
+  const label = $('resumeBtnLabel');
+  const btn = $('resumeBtn');
+  const status = $('resumeStatus');
+  const sortToggle = $('sortToggle');
+  if (has) {
+    const n = state.resumeTokens ? state.resumeTokens.size : 0;
+    label.textContent = '📄 编辑简历';
+    btn.classList.add('active');
+    status.style.display = '';
+    status.textContent = `已识别 ${n} 个关键词`;
+    sortToggle.style.display = '';
+    $('sortSelect').value = state.sortMode;
+  } else {
+    label.textContent = '📄 匹配我的简历';
+    btn.classList.remove('active');
+    status.style.display = 'none';
+    sortToggle.style.display = 'none';
+  }
+}
+
+// ── Modal control ─────────────────────────────────────────────────────
+function openResumeModal() {
+  $('resumeInput').value = state.resume;
+  updateModalStats();
+  $('resumeModal').classList.add('show');
+  setTimeout(() => $('resumeInput').focus(), 50);
+}
+function closeResumeModal() { $('resumeModal').classList.remove('show'); }
+function updateModalStats() {
+  const text = $('resumeInput').value;
+  const tokens = tokenize(text);
+  $('resumeStats').textContent = text
+    ? `已识别 ${tokens.size} 个关键词`
+    : '输入简历后会显示识别到的关键词数量';
+}
+$('resumeBtn').addEventListener('click', openResumeModal);
+$('resumeModalClose').addEventListener('click', closeResumeModal);
+$('resumeModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeResumeModal(); });
+$('resumeInput').addEventListener('input', updateModalStats);
+$('resumeSave').addEventListener('click', () => {
+  applyResume($('resumeInput').value.trim(), true);
+  closeResumeModal();
+});
+$('resumeClear').addEventListener('click', () => {
+  $('resumeInput').value = '';
+  updateModalStats();
+  applyResume('', true);
+  closeResumeModal();
+});
+$('sortSelect').addEventListener('change', (e) => {
+  state.sortMode = e.target.value;
+  localStorage.setItem('jobs.sortMode', state.sortMode);
+  renderJobs();
+});
 
 // ── Theme ─────────────────────────────────────────────────────────────
 $('themeBtn').addEventListener('click', () => {
@@ -429,7 +731,14 @@ function filteredJobs() {
 function renderJobs() {
   const list = $('jobsList');
   const empty = $('emptyState');
-  const jobs = filteredJobs();
+  let jobs = filteredJobs();
+
+  const scoring = !!(state.resume && state.scores);
+  if (scoring && state.sortMode === 'match') {
+    jobs = jobs.slice().sort((a, b) =>
+      (state.scores.get(b.id) || 0) - (state.scores.get(a.id) || 0));
+  }
+
   $('resultSummary').textContent = `显示 ${jobs.length} / ${(state.data.jobs || []).length} 个职位`;
   if (!jobs.length) {
     list.innerHTML = '';
@@ -437,9 +746,18 @@ function renderJobs() {
     return;
   }
   empty.style.display = 'none';
-  list.innerHTML = jobs.map(j => `
+  list.innerHTML = jobs.map(j => {
+    let scoreHtml = '';
+    if (scoring) {
+      const s = state.scores.get(j.id) || 0;
+      const pct = Math.round(s * 100);
+      const cls = pct >= 60 ? 's-high' : pct >= 30 ? 's-mid' : 's-low';
+      scoreHtml = `<span class="score-pill ${cls}" title="基于简历关键词命中">${pct}%</span>`;
+    }
+    return `
     <a class="job" href="${escapeHtml(j.url)}" target="_blank" rel="noopener">
       <div class="job-top">
+        ${scoreHtml}
         <span class="job-pill ${j.company}">${escapeHtml(j.company_name || j.company)}</span>
         <span class="job-title">${escapeHtml(j.title)}</span>
         <span class="job-arrow">→</span>
@@ -450,8 +768,8 @@ function renderJobs() {
         ${j.location ? `<span>📍 ${escapeHtml(j.location)}</span>` : ''}
         ${j.posted_date ? `<span>${escapeHtml(j.posted_date)}</span>` : ''}
       </div>
-    </a>
-  `).join('');
+    </a>`;
+  }).join('');
 }
 
 // ── Wire up filter inputs ─────────────────────────────────────────────
@@ -492,10 +810,17 @@ function loadData() {
       if (!Array.isArray(state.data.jobs)) state.data.jobs = [];
       if (!state.data.companies) state.data.companies = {};
       if (!Array.isArray(state.data.categories)) state.data.categories = [];
+      // Build IDF + per-job haystack once per data load.
+      state.idf = buildIdf(state.data.jobs);
+      if (state.resume) {
+        state.resumeTokens = tokenize(state.resume);
+        scoreAllJobs();
+      }
       renderHeader();
       renderStaleBanner();
       renderCategoryOptions();
       renderChips();
+      renderResumeRow();
       renderJobs();
     })
     .catch(err => {
