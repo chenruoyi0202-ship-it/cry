@@ -9,10 +9,16 @@ Tencent's city map (observed on careers.tencent.com): 1=北京, 2=上海, 3=深�
 4=广州, 5=成都. If cityId=3 returns 0 posts (e.g. their dictionary changed),
 we transparently retry once with no city filter and rely entirely on the
 client-side `is_shenzhen()` check.
+
+The list endpoint returns Responsibility (岗位职责) but ships an empty
+Requirement (任职要求) field — to get it we have to hit each job's
+ByPostId detail endpoint. We do that in a small thread pool after the
+list pagination completes.
 """
 from __future__ import annotations
 
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Iterable, Optional
 
 import requests
@@ -28,10 +34,13 @@ from .common import (
 )
 
 API_URL = 'https://careers.tencent.com/tencentcareer/api/post/Query'
+DETAIL_URL = 'https://careers.tencent.com/tencentcareer/api/post/ByPostId'
 JOB_PAGE_TEMPLATE = 'https://careers.tencent.com/jobdesc.html?postId={post_id}'
 
 PAGE_SIZE = 100
 MAX_PAGES = 50  # safety cap; Tencent SZ social currently ~10-20 pages
+DETAIL_WORKERS = 8       # concurrent detail-page fetches
+DETAIL_TIMEOUT = 15
 
 
 def _fetch_page(session: requests.Session, page_index: int,
@@ -129,6 +138,71 @@ def _crawl(session: requests.Session, city_id: str) -> list[Job]:
     return jobs
 
 
+def _fetch_detail(session: requests.Session, post_id: str) -> Optional[dict]:
+    """Fetch a single job's detail page — returns the Data object or None on failure."""
+    params = {'postId': post_id, 'language': 'zh-cn',
+              'timestamp': int(time.time() * 1000)}
+    try:
+        resp = session.get(DETAIL_URL, params=params, timeout=DETAIL_TIMEOUT)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        if data.get('Code') != 200:
+            return None
+        return data.get('Data') or None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _enrich_with_details(session: requests.Session, jobs: list[Job]) -> None:
+    """Fill in 任职要求 by hitting each job's detail endpoint in parallel.
+
+    The list endpoint omits Requirement, so without this the detail modal
+    only ever shows 岗位职责. We swallow individual detail failures rather
+    than aborting — the job still has its list-derived 岗位职责.
+    """
+    if not jobs:
+        return
+    print(f'  [tencent] enriching {len(jobs)} jobs with detail pages '
+          f'({DETAIL_WORKERS} workers)…', flush=True)
+    started = time.time()
+    fail = 0
+    with ThreadPoolExecutor(max_workers=DETAIL_WORKERS) as ex:
+        future_to_job = {}
+        for job in jobs:
+            post_id = job.id.split('_', 1)[-1]
+            future_to_job[ex.submit(_fetch_detail, session, post_id)] = job
+        for done, fut in enumerate(as_completed(future_to_job), 1):
+            job = future_to_job[fut]
+            try:
+                detail = fut.result()
+            except Exception:
+                detail = None
+            if not detail:
+                fail += 1
+                continue
+            req = (detail.get('Requirement') or '').strip()
+            resp = (detail.get('Responsibility') or '').strip()
+            # Rebuild description from the richer detail-page fields. Falls
+            # back to the existing list-derived description if detail is empty.
+            parts: list[str] = []
+            if resp:
+                parts.append(f'岗位职责：\n{resp}')
+            if req:
+                parts.append(f'任职要求：\n{req}')
+            if parts:
+                job.description = '\n\n'.join(parts)
+            if done % 200 == 0:
+                print(f'  [tencent detail] {done}/{len(jobs)} '
+                      f'({fail} failed)', flush=True)
+    elapsed = time.time() - started
+    print(f'  [tencent] detail enrichment done in {elapsed:.1f}s '
+          f'({fail}/{len(jobs)} failed)', flush=True)
+
+
+
+
+
 def fetch() -> list[Job]:
     """Fetch all current Shenzhen social-recruit postings from Tencent.
 
@@ -141,11 +215,12 @@ def fetch() -> list[Job]:
     session.headers['Accept'] = 'application/json,text/plain,*/*'
 
     jobs = _crawl(session, city_id='3')
-    if jobs:
-        return jobs
-    print('  [tencent] cityId=3 returned 0 jobs; retrying without city filter',
-          flush=True)
-    return _crawl(session, city_id='')
+    if not jobs:
+        print('  [tencent] cityId=3 returned 0 jobs; retrying without city filter',
+              flush=True)
+        jobs = _crawl(session, city_id='')
+    _enrich_with_details(session, jobs)
+    return jobs
 
 
 if __name__ == '__main__':
