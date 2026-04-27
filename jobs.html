@@ -230,6 +230,17 @@ body{
   padding:8px 10px;border-radius:8px;line-height:1.5;
 }
 .modal-body .privacy strong{color:var(--text)}
+/* Job detail modal */
+.job-detail-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:6px}
+.job-detail-title{font-size:17px;font-weight:700;color:var(--text);line-height:1.35;flex:1;min-width:0;word-break:break-word}
+.job-detail-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text-muted);margin:4px 0 12px}
+.job-detail-meta span{display:inline-flex;align-items:center;gap:3px}
+.job-detail-meta .meta-dept{color:var(--text)}
+.job-detail-section{font-size:13px;color:var(--text);line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.job-detail-section + .job-detail-section{margin-top:14px}
+.job-detail-section h4{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.job-detail-empty{color:var(--text-muted);font-size:13px;padding:8px 0}
+
 .resume-input{
   width:100%;min-height:240px;
   padding:10px 12px;border-radius:10px;
@@ -353,16 +364,51 @@ body{
     </div>
     <div class="resume-row">
       <button class="resume-cta" id="resumeBtn" type="button">
-        <span id="resumeBtnLabel">📄 匹配我的简历</span>
+        <span id="resumeBtnLabel">📄 默认简历 · 编辑</span>
       </button>
-      <span id="resumeStatus" style="display:none"></span>
-      <span class="sort-toggle" id="sortToggle" style="display:none">
+      <span id="resumeStatus"></span>
+    </div>
+    <div class="resume-row">
+      <span class="sort-toggle">
+        时间
+        <select id="dateFilter">
+          <option value="0">全部</option>
+          <option value="7">近 7 天</option>
+          <option value="30">近 30 天</option>
+          <option value="90">近 90 天</option>
+        </select>
+      </span>
+      <span class="sort-toggle">
+        匹配度
+        <select id="matchFilter">
+          <option value="0">全部</option>
+          <option value="0.05">≥ 5%</option>
+          <option value="0.10">≥ 10%</option>
+          <option value="0.20">≥ 20%</option>
+          <option value="0.30">≥ 30%</option>
+        </select>
+      </span>
+      <span class="sort-toggle" id="sortToggle">
         排序
         <select id="sortSelect">
           <option value="match">按匹配度</option>
           <option value="date">按发布日期</option>
         </select>
       </span>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="jobModal" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title" id="jobModalTitle">职位详情</span>
+        <button class="modal-close" id="jobModalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body" id="jobModalBody"></div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="jobModalCloseBtn" type="button">关闭</button>
+        <a class="btn btn-primary" id="jobModalGo" target="_blank" rel="noopener">查看原网页 →</a>
+      </div>
     </div>
   </div>
 
@@ -422,6 +468,8 @@ const state = {
     q: '',
     companies: new Set(),  // empty = all
     category: '',
+    sinceDays: 0,          // 0 = all time; 7/30/90 = filter recent
+    minScore: 0,           // 0..1, hide jobs below this match score
   },
   resume: localStorage.getItem('jobs.resume') || '',
   resumeTokens: null,   // Set<string>
@@ -429,7 +477,26 @@ const state = {
   scores: null,         // Map<jobId, 0..1>
   totalResumeWeight: 0,
   sortMode: localStorage.getItem('jobs.sortMode') || 'match', // 'match' | 'date'
+  isDefaultResume: false,
 };
+
+// Built-in resume keywords (no PII) so the page works out of the box.
+// User can override by typing in the modal; localStorage takes precedence.
+const DEFAULT_RESUME = `
+产品运营 内容运营 用户运营 活动运营 社区运营 产品经理 运营经理 高级产品经理 内容生态
+知识平台 知识社区 内容社区 互动社区 创作者社区
+AI 社区 AI Coding Claude Code 大模型 LLM AGI 提效 工具
+IP 打造 矩阵化 OGC PGC UGC 内容生产 内容分发 精准推荐 个性化推荐
+创作者运营 KOL 圈子运营 圈层运营 用户分层
+活动策划 大事件 H5 年度运营日历 落地页
+KANO 模型 数据分析 数据后台 自动化工具 产品框架 功能规划 分类体系
+冷启动 流量增长 用户增长 留存 提效 数据驱动
+开发者大会 行业大会 TGDC Workshop 1V1 深度交流 圈层
+游戏运营 游戏社区 游戏开发 游戏 IP 游戏知识
+腾讯 阿里 阿里云 互联网 大厂 P7
+内容矩阵 内容策略 增长策略 用户洞察
+B 端 C 端 SaaS 平台运营
+`.trim();
 
 const $ = (id) => document.getElementById(id);
 
@@ -526,41 +593,45 @@ function scoreAllJobs() {
 }
 
 function applyResume(text, persist) {
-  state.resume = text || '';
-  state.resumeTokens = state.resume ? tokenize(state.resume) : null;
+  const userText = (text || '').trim();
   if (persist) {
-    if (state.resume) localStorage.setItem('jobs.resume', state.resume);
+    if (userText) localStorage.setItem('jobs.resume', userText);
     else localStorage.removeItem('jobs.resume');
   }
+  // If user cleared, fall back to the built-in default keywords so the
+  // page is still useful without any input.
+  state.resume = userText || DEFAULT_RESUME;
+  state.isDefaultResume = !userText;
+  state.resumeTokens = tokenize(state.resume);
   scoreAllJobs();
   renderResumeRow();
+  renderFilterControls();
   renderJobs();
 }
 
 function renderResumeRow() {
-  const has = !!state.resume;
   const label = $('resumeBtnLabel');
   const btn = $('resumeBtn');
   const status = $('resumeStatus');
-  const sortToggle = $('sortToggle');
-  if (has) {
-    const n = state.resumeTokens ? state.resumeTokens.size : 0;
-    label.textContent = '📄 编辑简历';
+  const n = state.resumeTokens ? state.resumeTokens.size : 0;
+  if (state.isDefaultResume) {
+    label.textContent = '📄 默认简历 · 编辑';
+    btn.classList.add('active');
+    status.style.display = '';
+    status.textContent = `内置 ${n} 关键词，点按钮可替换为你的`;
+  } else {
+    label.textContent = '📄 我的简历 · 编辑';
     btn.classList.add('active');
     status.style.display = '';
     status.textContent = `已识别 ${n} 个关键词`;
-    sortToggle.style.display = '';
-    $('sortSelect').value = state.sortMode;
-  } else {
-    label.textContent = '📄 匹配我的简历';
-    btn.classList.remove('active');
-    status.style.display = 'none';
-    sortToggle.style.display = 'none';
   }
+  $('sortSelect') && ($('sortSelect').value = state.sortMode);
 }
 
 // ── Modal control ─────────────────────────────────────────────────────
 function openResumeModal() {
+  // Show whatever is currently active (user-provided or the built-in default)
+  // so editing always starts from a real baseline.
   $('resumeInput').value = state.resume;
   updateModalStats();
   $('resumeModal').classList.add('show');
@@ -593,6 +664,66 @@ $('sortSelect').addEventListener('change', (e) => {
   localStorage.setItem('jobs.sortMode', state.sortMode);
   renderJobs();
 });
+
+// ── Job detail modal ──────────────────────────────────────────────────
+function openJobModal(jobId) {
+  const job = (state.data.jobs || []).find(j => j.id === jobId);
+  if (!job) return;
+  $('jobModalTitle').textContent = job.company_name || job.company;
+  $('jobModalGo').href = job.url;
+  const score = (state.scores && state.resumeTokens && state.resumeTokens.size)
+    ? state.scores.get(job.id) : null;
+  const scorePill = (score != null)
+    ? `<span class="score-pill ${score>=0.20?'s-high':score>=0.10?'s-mid':'s-low'}">${Math.round(score*100)}% 匹配</span>`
+    : '';
+  const desc = (job.description || '').trim();
+  const body = `
+    <div class="job-detail-head">
+      ${scorePill}
+      <span class="job-pill ${escapeHtml(job.company)}">${escapeHtml(job.company_name || job.company)}</span>
+      <span class="job-detail-title">${escapeHtml(job.title)}</span>
+    </div>
+    <div class="job-detail-meta">
+      ${job.department ? `<span class="meta-dept">${escapeHtml(job.department)}</span>` : ''}
+      ${job.category && job.category !== '其他' ? `<span>${escapeHtml(job.category)}</span>` : ''}
+      ${job.location ? `<span>📍 ${escapeHtml(job.location)}</span>` : ''}
+      ${job.posted_date ? `<span>🗓 ${escapeHtml(job.posted_date)}</span>` : ''}
+    </div>
+    <div class="job-detail-section">
+      <h4>职位描述</h4>
+      ${desc ? escapeHtml(desc) : '<div class="job-detail-empty">暂无描述（点击右下角查看原网页）</div>'}
+    </div>
+  `;
+  $('jobModalBody').innerHTML = body;
+  $('jobModalBody').scrollTop = 0;
+  $('jobModal').classList.add('show');
+}
+function closeJobModal() { $('jobModal').classList.remove('show'); }
+$('jobModalClose').addEventListener('click', closeJobModal);
+$('jobModalCloseBtn').addEventListener('click', closeJobModal);
+$('jobModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeJobModal(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if ($('jobModal').classList.contains('show')) closeJobModal();
+  else if ($('resumeModal').classList.contains('show')) closeResumeModal();
+});
+
+$('dateFilter').addEventListener('change', (e) => {
+  state.filters.sinceDays = parseInt(e.target.value, 10) || 0;
+  renderJobs();
+});
+$('matchFilter').addEventListener('change', (e) => {
+  state.filters.minScore = parseFloat(e.target.value) || 0;
+  renderJobs();
+});
+
+// Hide the match-score filter + sort dropdown when no resume is active so
+// the controls don't lie about what they do.
+function renderFilterControls() {
+  const hasResume = !!(state.resumeTokens && state.resumeTokens.size);
+  $('matchFilter').parentElement.style.display = hasResume ? '' : 'none';
+  $('sortToggle').style.display = hasResume ? '' : 'none';
+}
 
 // ── Theme ─────────────────────────────────────────────────────────────
 $('themeBtn').addEventListener('click', () => {
@@ -715,14 +846,26 @@ function renderCategoryOptions() {
 }
 
 function filteredJobs() {
-  const { q, companies, category } = state.filters;
+  const { q, companies, category, sinceDays, minScore } = state.filters;
   const qLower = q.trim().toLowerCase();
+  const cutoff = sinceDays > 0
+    ? new Date(Date.now() - sinceDays * 86400_000)
+    : null;
   return (state.data.jobs || []).filter(j => {
     if (companies.size && !companies.has(j.company)) return false;
     if (category && j.category !== category) return false;
     if (qLower) {
       const hay = `${j.title} ${j.department} ${j.category_raw} ${j.location}`.toLowerCase();
       if (!hay.includes(qLower)) return false;
+    }
+    if (cutoff) {
+      if (!j.posted_date) return false;
+      const d = new Date(j.posted_date);
+      if (isNaN(d.getTime()) || d < cutoff) return false;
+    }
+    if (minScore > 0) {
+      const s = state.scores ? (state.scores.get(j.id) || 0) : 0;
+      if (s < minScore) return false;
     }
     return true;
   });
@@ -751,11 +894,11 @@ function renderJobs() {
     if (scoring) {
       const s = state.scores.get(j.id) || 0;
       const pct = Math.round(s * 100);
-      const cls = pct >= 60 ? 's-high' : pct >= 30 ? 's-mid' : 's-low';
+      const cls = pct >= 20 ? 's-high' : pct >= 10 ? 's-mid' : 's-low';
       scoreHtml = `<span class="score-pill ${cls}" title="基于简历关键词命中">${pct}%</span>`;
     }
     return `
-    <a class="job" href="${escapeHtml(j.url)}" target="_blank" rel="noopener">
+    <div class="job" role="button" tabindex="0" data-id="${escapeHtml(j.id)}">
       <div class="job-top">
         ${scoreHtml}
         <span class="job-pill ${j.company}">${escapeHtml(j.company_name || j.company)}</span>
@@ -768,8 +911,15 @@ function renderJobs() {
         ${j.location ? `<span>📍 ${escapeHtml(j.location)}</span>` : ''}
         ${j.posted_date ? `<span>${escapeHtml(j.posted_date)}</span>` : ''}
       </div>
-    </a>`;
+    </div>`;
   }).join('');
+  list.querySelectorAll('.job').forEach(el => {
+    const id = el.dataset.id;
+    el.addEventListener('click', () => openJobModal(id));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openJobModal(id); }
+    });
+  });
 }
 
 // ── Wire up filter inputs ─────────────────────────────────────────────
@@ -812,15 +962,15 @@ function loadData() {
       if (!Array.isArray(state.data.categories)) state.data.categories = [];
       // Build IDF + per-job haystack once per data load.
       state.idf = buildIdf(state.data.jobs);
-      if (state.resume) {
-        state.resumeTokens = tokenize(state.resume);
-        scoreAllJobs();
-      }
+      // Always have an active resume — either the user's saved one or the
+      // built-in default keywords. Pass null persist so we don't write the
+      // default into localStorage.
+      const userText = (localStorage.getItem('jobs.resume') || '').trim();
+      applyResume(userText, false);
       renderHeader();
       renderStaleBanner();
       renderCategoryOptions();
       renderChips();
-      renderResumeRow();
       renderJobs();
     })
     .catch(err => {
