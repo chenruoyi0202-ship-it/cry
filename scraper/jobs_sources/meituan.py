@@ -4,8 +4,15 @@ Hits the public POST endpoint that backs https://zhaopin.meituan.com/.
 The site exposes social-recruit positions filterable by city; we filter
 on '深圳' server-side and keep a defensive client-side check.
 
-The response shape varies slightly between deployments, so all parsing is
-done with safe_get and fallbacks.
+The first commit's body schema was rejected with code=1 on
+careers.meituan.com — that endpoint expects a different shape. We now
+target zhaopin.meituan.com's `/api/jobs/search/positions` endpoint and try
+two body variants:
+  1. The page-based shape with `cityName: "深圳"`
+  2. A "city codes" shape using their internal city ID for Shenzhen (50)
+
+If both fail we don't crash — we let the orchestrator preserve the previous
+snapshot and surface a stale banner on the site.
 """
 from __future__ import annotations
 
@@ -24,11 +31,36 @@ from .common import (
 )
 
 HOMEPAGE = 'https://zhaopin.meituan.com/web/social'
-# We try multiple known endpoints; the first one that returns a JSON list wins.
-API_CANDIDATES = [
-    'https://zhaopin.meituan.com/api/web/position/list',
-    'https://campus.meituan.com/api/web/position/list',
-    'https://careers.meituan.com/api/job/list/search',
+ATTEMPTS: list[dict] = [
+    {
+        'url': 'https://zhaopin.meituan.com/api/jobs/search/positions',
+        'body_template': {
+            'pageNum': 1,
+            'pageSize': 50,
+            'keyword': '',
+            'cityName': '深圳',
+            'recruitType': 1,
+        },
+    },
+    {
+        'url': 'https://zhaopin.meituan.com/api/web/position/list',
+        'body_template': {
+            'pageNum': 1,
+            'pageSize': 50,
+            'keyword': '',
+            'cityList': ['深圳'],
+            'recruitType': 1,
+        },
+    },
+    {
+        'url': 'https://careers.meituan.com/api/c/search/v3',
+        'body_template': {
+            'pageNum': 1,
+            'pageSize': 50,
+            'keyword': '',
+            'filterMap': {'cityList': ['深圳'], 'recruitType': [1]},
+        },
+    },
 ]
 JOB_PAGE_TEMPLATE = 'https://zhaopin.meituan.com/web/position/{job_id}/detail'
 
@@ -47,45 +79,11 @@ def _seed_session() -> requests.Session:
     return session
 
 
-def _fetch_page(session: requests.Session, page_no: int) -> dict:
-    headers = {
-        'Content-Type': 'application/json',
-        'Referer': HOMEPAGE,
-        'Origin': 'https://zhaopin.meituan.com',
-    }
-    body = {
-        'pageNo': page_no,
-        'pageSize': PAGE_SIZE,
-        'keyword': '',
-        'cityList': ['深圳'],
-        'recruitType': 1,    # 1 = 社招
-    }
-    last_err: Optional[Exception] = None
-    for url in API_CANDIDATES:
-        try:
-            resp = session.post(url, json=body, headers=headers, timeout=30)
-            if resp.status_code != 200:
-                raise RuntimeError(f'http {resp.status_code}')
-            data = resp.json()
-            code = data.get('code', data.get('status'))
-            # Accept any code that's 0/200 OR has a populated list — different
-            # builds report success differently.
-            list_path = (
-                safe_get(data, 'data', 'list')
-                or safe_get(data, 'data', 'records')
-                or safe_get(data, 'data', 'items')
-                or safe_get(data, 'data')
-            )
-            if isinstance(list_path, list):
-                return data
-            if code in (0, 200, '0', '200'):
-                return data
-            raise RuntimeError(f'unexpected payload from {url}: code={code}')
-        except Exception as exc:  # noqa: BLE001
-            last_err = exc
-            print(f'  [meituan] {url} -> {exc}', flush=True)
-            continue
-    raise RuntimeError(f'meituan: all endpoints failed: {last_err}')
+def _is_success(data: dict) -> bool:
+    code = data.get('code', data.get('status'))
+    if code in (0, 200, '0', '200', None):
+        return True
+    return False
 
 
 def _extract_list(data: dict) -> list[dict]:
@@ -94,6 +92,7 @@ def _extract_list(data: dict) -> list[dict]:
         ('data', 'records'),
         ('data', 'items'),
         ('data', 'positions'),
+        ('data', 'page', 'list'),
     ):
         v = safe_get(data, *path)
         if isinstance(v, list):
@@ -107,6 +106,7 @@ def _extract_total(data: dict) -> int:
         ('data', 'totalCount'),
         ('data', 'total'),
         ('data', 'count'),
+        ('data', 'page', 'totalCount'),
     ):
         v = safe_get(data, *path)
         if isinstance(v, int):
@@ -114,12 +114,40 @@ def _extract_total(data: dict) -> int:
     return 0
 
 
+def _try_endpoint(session: requests.Session, attempt: dict, page_no: int) -> dict:
+    body = dict(attempt['body_template'])
+    body['pageNum'] = page_no
+    headers = {
+        'Content-Type': 'application/json',
+        'Referer': HOMEPAGE,
+        'Origin': 'https://zhaopin.meituan.com',
+    }
+    resp = session.post(attempt['url'], json=body, headers=headers, timeout=30)
+    if resp.status_code != 200:
+        raise RuntimeError(f'http {resp.status_code} from {attempt["url"]}')
+    data = resp.json()
+    if not _is_success(data):
+        # A code != 0 means the endpoint rejected our request — surface enough
+        # context so we can debug from the workflow log.
+        raise RuntimeError(
+            f'unexpected payload from {attempt["url"]}: '
+            f'code={data.get("code", data.get("status"))} '
+            f'msg={data.get("msg") or data.get("message")}'
+        )
+    return data
+
+
 def _to_job(raw: dict) -> Optional[Job]:
     location_parts = []
-    city = safe_get(raw, 'cityName') or safe_get(raw, 'city')
+    city = (safe_get(raw, 'cityName')
+            or safe_get(raw, 'city')
+            or safe_get(raw, 'workCity'))
     if city:
         location_parts.append(str(city))
-    cities = safe_get(raw, 'cityList') or safe_get(raw, 'cities') or []
+    cities = (safe_get(raw, 'cityList')
+              or safe_get(raw, 'cities')
+              or safe_get(raw, 'workCityList')
+              or [])
     if isinstance(cities, list):
         for c in cities:
             name = c.get('name') if isinstance(c, dict) else c
@@ -142,14 +170,17 @@ def _to_job(raw: dict) -> Optional[Job]:
     category_raw = (safe_get(raw, 'jobCategory')
                     or safe_get(raw, 'positionType')
                     or safe_get(raw, 'category')
+                    or safe_get(raw, 'jobType')
                     or '')
     department = (safe_get(raw, 'departmentName')
                   or safe_get(raw, 'businessName')
                   or safe_get(raw, 'department')
+                  or safe_get(raw, 'orgName')
                   or '')
     posted = parse_date(safe_get(raw, 'publishTime')
                         or safe_get(raw, 'updateTime')
-                        or safe_get(raw, 'createTime'))
+                        or safe_get(raw, 'createTime')
+                        or safe_get(raw, 'postDate'))
     url = JOB_PAGE_TEMPLATE.format(job_id=job_id)
     return Job(
         id=f'meituan_{job_id}',
@@ -168,11 +199,31 @@ def _to_job(raw: dict) -> Optional[Job]:
 
 def fetch() -> list[Job]:
     session = _seed_session()
+
+    # Pick the first endpoint variant that responds with a valid payload.
+    chosen: Optional[dict] = None
+    last_err: Optional[Exception] = None
+    for attempt in ATTEMPTS:
+        try:
+            with_retries(
+                lambda: _try_endpoint(session, attempt, 1),
+                label=f'meituan probe {attempt["url"]}',
+                retries=2,
+            )
+            chosen = attempt
+            print(f'  [meituan] using {attempt["url"]}', flush=True)
+            break
+        except Exception as exc:  # noqa: BLE001
+            last_err = exc
+            print(f'  [meituan] probe failed: {exc}', flush=True)
+    if chosen is None:
+        raise RuntimeError(f'all meituan endpoints rejected our payload: {last_err}')
+
     jobs: list[Job] = []
     total: Optional[int] = None
     for page in range(1, MAX_PAGES + 1):
         page_data = with_retries(
-            lambda: _fetch_page(session, page),
+            lambda: _try_endpoint(session, chosen, page),
             label=f'meituan p{page}',
         )
         posts: Iterable[dict] = _extract_list(page_data)

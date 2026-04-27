@@ -5,8 +5,9 @@ the cookie by GETting the listing page, then echo the token back in both
 the `x-csrf-token` header and (automatically via the Session) the cookie
 jar. Falls back gracefully if the token isn't present.
 
-Shenzhen location code on jobs.bytedance.com is `CT_6` (verified by also
-matching city_info.name client-side as a defensive check).
+ByteDance location codes (observed): CT_6 = 上海, CT_138 = 深圳, CT_109 =
+北京. We use `CT_138` and fall back to no location filter (relying on
+client-side `is_shenzhen()`) if the primary call returns zero posts.
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ from .common import (
     with_retries,
 )
 
-HOMEPAGE = 'https://jobs.bytedance.com/experienced/position?location=CT_6'
+HOMEPAGE = 'https://jobs.bytedance.com/experienced/position?location=CT_138'
 API_URL = 'https://jobs.bytedance.com/api/v1/search/job/posts'
 JOB_PAGE_TEMPLATE = 'https://jobs.bytedance.com/experienced/position/{job_id}/detail'
 
@@ -44,7 +45,8 @@ def _seed_session() -> tuple[requests.Session, Optional[str]]:
     return session, csrf
 
 
-def _fetch_page(session: requests.Session, csrf: Optional[str], offset: int) -> dict:
+def _fetch_page(session: requests.Session, csrf: Optional[str], offset: int,
+                location_codes: list[str]) -> dict:
     headers = {
         'Content-Type': 'application/json',
         'Referer': HOMEPAGE,
@@ -60,7 +62,7 @@ def _fetch_page(session: requests.Session, csrf: Optional[str], offset: int) -> 
         'offset': offset,
         'job_category_id_list': [],
         'tag_id_list': [],
-        'location_code_list': ['CT_6'],
+        'location_code_list': location_codes,
         'subject_id_list': [],
         'head_id_list': [],
         'sequence_id_list': [],
@@ -132,34 +134,45 @@ def _to_job(raw: dict) -> Optional[Job]:
     )
 
 
+def _crawl(session: requests.Session, csrf: Optional[str],
+           location_codes: list[str]) -> list[Job]:
+    jobs: list[Job] = []
+    total: Optional[int] = None
+    label = ','.join(location_codes) if location_codes else 'no-loc'
+    for page in range(MAX_PAGES):
+        offset = page * PAGE_SIZE
+        page_data = with_retries(
+            lambda: _fetch_page(session, csrf, offset, location_codes),
+            label=f'bytedance[{label}] off{offset}',
+        )
+        posts: Iterable[dict] = safe_get(page_data, 'data', 'job_post_list', default=[]) or []
+        posts = list(posts)
+        if total is None:
+            total = safe_get(page_data, 'data', 'count', default=0) or 0
+            print(f'  [bytedance {label}] reported total: {total}', flush=True)
+        page_jobs = [j for j in (_to_job(p) for p in posts) if j is not None]
+        jobs.extend(page_jobs)
+        print(f'  [bytedance {label}] page {page + 1}: raw={len(posts)} '
+              f'kept={len(page_jobs)} cumulative={len(jobs)}', flush=True)
+        if not posts or len(posts) < PAGE_SIZE:
+            break
+        if total and offset + len(posts) >= total:
+            break
+    return jobs
+
+
 def fetch() -> list[Job]:
     session, csrf = _seed_session()
     if not csrf:
         print('  [bytedance] no csrf cookie present; will try without — '
               'expect failure if upstream changed', flush=True)
 
-    jobs: list[Job] = []
-    total: Optional[int] = None
-    for page in range(MAX_PAGES):
-        offset = page * PAGE_SIZE
-        page_data = with_retries(
-            lambda: _fetch_page(session, csrf, offset),
-            label=f'bytedance off{offset}',
-        )
-        posts: Iterable[dict] = safe_get(page_data, 'data', 'job_post_list', default=[]) or []
-        posts = list(posts)
-        if total is None:
-            total = safe_get(page_data, 'data', 'count', default=0) or 0
-            print(f'  [bytedance] reported total: {total}', flush=True)
-        page_jobs = [j for j in (_to_job(p) for p in posts) if j is not None]
-        jobs.extend(page_jobs)
-        print(f'  [bytedance] page {page + 1}: raw={len(posts)} kept={len(page_jobs)} '
-              f'cumulative={len(jobs)}', flush=True)
-        if not posts or len(posts) < PAGE_SIZE:
-            break
-        if total and offset + len(posts) >= total:
-            break
-    return jobs
+    jobs = _crawl(session, csrf, ['CT_138'])
+    if jobs:
+        return jobs
+    print('  [bytedance] CT_138 returned 0 jobs; retrying without location filter',
+          flush=True)
+    return _crawl(session, csrf, [])
 
 
 if __name__ == '__main__':
