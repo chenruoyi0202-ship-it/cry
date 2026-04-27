@@ -176,6 +176,25 @@ body{
 .job-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.35;flex:1;min-width:0;word-break:break-word}
 .job-arrow{color:var(--text-dim);font-size:13px;line-height:1;align-self:center}
 .job:hover .job-arrow{color:var(--accent)}
+
+/* Favorite star (per-card and per-modal) */
+.fav-btn{
+  width:28px;height:28px;border-radius:8px;
+  border:1px solid var(--border);background:var(--pill-bg);
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;color:var(--text-muted);
+  font-size:14px;line-height:1;font-family:inherit;
+  transition:color .2s,background .2s,border-color .2s,transform .2s;
+  align-self:center;
+}
+.fav-btn:hover{color:#fbbf24;border-color:rgba(251,191,36,0.3)}
+.fav-btn.is-fav{color:#f59e0b;border-color:rgba(251,191,36,0.45);background:rgba(251,191,36,0.10)}
+.fav-btn.is-fav:hover{transform:scale(1.05)}
+.fav-btn .fav-icon{display:block}
+
+.chip.chip-fav{border-color:var(--border)}
+.chip.chip-fav[data-active="true"]{background:rgba(251,191,36,0.15);color:#f59e0b;border-color:rgba(251,191,36,0.4)}
+.chip.chip-fav[data-active="true"] .chip-count{background:rgba(251,191,36,0.22);color:#f59e0b}
 .job-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text-muted)}
 .job-meta span{display:inline-flex;align-items:center;gap:3px}
 .job-meta .meta-dept{color:var(--text)}
@@ -346,6 +365,11 @@ body{
     </div>
     <div class="filter-row">
       <div class="chips" id="companyChips"></div>
+      <button class="chip chip-fav" id="favFilterBtn" type="button" data-active="false" aria-pressed="false">
+        <span aria-hidden="true">☆</span>
+        <span>仅看收藏</span>
+        <span class="chip-count" id="favCount">0</span>
+      </button>
     </div>
     <div class="resume-row">
       <span class="sort-toggle">
@@ -420,6 +444,15 @@ const COMPANY_DEFAULTS = {
   meituan:   { name: '美团' },
 };
 
+function _loadFavorites() {
+  try {
+    const raw = localStorage.getItem('jobs.favorites');
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch (e) { return new Set(); }
+}
+
 const state = {
   data: null,
   filters: {
@@ -428,11 +461,24 @@ const state = {
     category: '',
     sinceDays: 0,          // 0 = all time; 7/30/90 = filter recent
     minScore: 0,           // 0..1, hide jobs below this match score
+    favoritesOnly: false,  // toggled via the chip-fav button
   },
   scores: null,         // Map<jobId, 0..1>
   matchedThemes: null,  // Map<jobId, [{id, name, hits, contrib}]>
   sortMode: localStorage.getItem('jobs.sortMode') || 'match', // 'match' | 'date'
+  favorites: _loadFavorites(),  // Set<jobId>
 };
+
+function _saveFavorites() {
+  localStorage.setItem('jobs.favorites', JSON.stringify([...state.favorites]));
+}
+function isFavorite(id) { return state.favorites.has(id); }
+function toggleFavorite(id) {
+  if (state.favorites.has(id)) state.favorites.delete(id);
+  else state.favorites.add(id);
+  _saveFavorites();
+  renderFavCount();
+}
 
 // Built-in resume profile. Rather than a flat keyword bag (where 后端 and
 // 运营 count equally), this is a set of weighted themes that capture what
@@ -625,12 +671,14 @@ function openJobModal(jobId) {
   const scorePill = (score != null)
     ? `<span class="score-pill ${score>=0.40?'s-high':score>=0.20?'s-mid':'s-low'}">${Math.round(score*100)}% 匹配</span>`
     : '';
+  const fav = isFavorite(job.id);
   const desc = (job.description || '').trim();
   const body = `
     <div class="job-detail-head">
       ${scorePill}
       <span class="job-pill ${escapeHtml(job.company)}">${escapeHtml(job.company_name || job.company)}</span>
       <span class="job-detail-title">${escapeHtml(job.title)}</span>
+      <button class="fav-btn ${fav ? 'is-fav' : ''}" id="jobModalFav" data-fav="${escapeHtml(job.id)}" type="button" aria-label="收藏"><span class="fav-icon">${fav ? '★' : '☆'}</span></button>
     </div>
     <div class="job-detail-meta">
       ${job.department ? `<span class="meta-dept">${escapeHtml(job.department)}</span>` : ''}
@@ -647,6 +695,24 @@ function openJobModal(jobId) {
   $('jobModalBody').innerHTML = body;
   $('jobModalBody').scrollTop = 0;
   $('jobModal').classList.add('show');
+  // The fav button is recreated each open — wire it up here.
+  const favBtn = $('jobModalFav');
+  if (favBtn) {
+    favBtn.addEventListener('click', () => {
+      const id = favBtn.dataset.fav;
+      toggleFavorite(id);
+      const nowFav = isFavorite(id);
+      favBtn.classList.toggle('is-fav', nowFav);
+      favBtn.querySelector('.fav-icon').textContent = nowFav ? '★' : '☆';
+      // Sync the matching card star without re-rendering everything.
+      const cardBtn = document.querySelector(`.fav-btn[data-fav="${CSS.escape(id)}"]:not(#jobModalFav)`);
+      if (cardBtn) {
+        cardBtn.classList.toggle('is-fav', nowFav);
+        cardBtn.querySelector('.fav-icon').textContent = nowFav ? '★' : '☆';
+        cardBtn.setAttribute('aria-pressed', String(nowFav));
+      }
+    });
+  }
 }
 function closeJobModal() { $('jobModal').classList.remove('show'); }
 $('jobModalClose').addEventListener('click', closeJobModal);
@@ -662,6 +728,19 @@ $('dateFilter').addEventListener('change', (e) => {
 });
 $('matchFilter').addEventListener('change', (e) => {
   state.filters.minScore = parseFloat(e.target.value) || 0;
+  renderJobs();
+});
+
+// ── Favorites filter ──────────────────────────────────────────────────
+function renderFavCount() {
+  $('favCount').textContent = state.favorites.size;
+}
+$('favFilterBtn').addEventListener('click', () => {
+  const next = !state.filters.favoritesOnly;
+  state.filters.favoritesOnly = next;
+  $('favFilterBtn').dataset.active = String(next);
+  $('favFilterBtn').setAttribute('aria-pressed', String(next));
+  $('favFilterBtn').querySelector('span[aria-hidden]').textContent = next ? '★' : '☆';
   renderJobs();
 });
 
@@ -788,12 +867,13 @@ function renderCategoryOptions() {
 }
 
 function filteredJobs() {
-  const { q, companies, category, sinceDays, minScore } = state.filters;
+  const { q, companies, category, sinceDays, minScore, favoritesOnly } = state.filters;
   const qLower = q.trim().toLowerCase();
   const cutoff = sinceDays > 0
     ? new Date(Date.now() - sinceDays * 86400_000)
     : null;
   return (state.data.jobs || []).filter(j => {
+    if (favoritesOnly && !state.favorites.has(j.id)) return false;
     if (companies.size && !companies.has(j.company)) return false;
     if (category && j.category !== category) return false;
     if (qLower) {
@@ -839,12 +919,14 @@ function renderJobs() {
       const cls = pct >= 40 ? 's-high' : pct >= 20 ? 's-mid' : 's-low';
       scoreHtml = `<span class="score-pill ${cls}" title="基于简历主题加权命中">${pct}%</span>`;
     }
+    const fav = isFavorite(j.id);
     return `
     <div class="job" role="button" tabindex="0" data-id="${escapeHtml(j.id)}">
       <div class="job-top">
         ${scoreHtml}
         <span class="job-pill ${j.company}">${escapeHtml(j.company_name || j.company)}</span>
         <span class="job-title">${escapeHtml(j.title)}</span>
+        <button class="fav-btn ${fav ? 'is-fav' : ''}" data-fav="${escapeHtml(j.id)}" type="button" aria-label="收藏" aria-pressed="${fav}"><span class="fav-icon">${fav ? '★' : '☆'}</span></button>
         <span class="job-arrow">→</span>
       </div>
       <div class="job-meta">
@@ -855,6 +937,20 @@ function renderJobs() {
       </div>
     </div>`;
   }).join('');
+  list.querySelectorAll('.fav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.fav;
+      toggleFavorite(id);
+      const nowFav = isFavorite(id);
+      btn.classList.toggle('is-fav', nowFav);
+      btn.querySelector('.fav-icon').textContent = nowFav ? '★' : '☆';
+      btn.setAttribute('aria-pressed', String(nowFav));
+      // If we're currently filtering to favorites only, drop the unfavorited
+      // card from view immediately.
+      if (state.filters.favoritesOnly && !nowFav) renderJobs();
+    });
+  });
   list.querySelectorAll('.job').forEach(el => {
     const id = el.dataset.id;
     el.addEventListener('click', () => openJobModal(id));
@@ -911,6 +1007,7 @@ function loadData() {
       renderStaleBanner();
       renderCategoryOptions();
       renderChips();
+      renderFavCount();
       renderJobs();
     })
     .catch(err => {
