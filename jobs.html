@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>深圳大厂招聘 · 腾讯 · 字节 · 美团</title>
+<meta name="description" content="深圳大厂在招职位聚合 — 腾讯、字节跳动、美团，每日自动更新。">
+<meta property="og:title" content="深圳大厂招聘">
+<meta property="og:description" content="深圳腾讯、字节跳动、美团社招职位聚合，每日刷新">
+<meta property="og:url" content="https://chenruoyi0202-ship-it.github.io/cry/jobs.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🏢</text></svg>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="深圳招聘">
+<script>
+  (function(){
+    var saved = localStorage.getItem('jobs.theme');
+    if (saved === 'light') document.documentElement.setAttribute('data-theme','light');
+    else if (saved === 'dark') document.documentElement.removeAttribute('data-theme');
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches)
+      document.documentElement.setAttribute('data-theme','light');
+  })();
+</script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#070710;--card:#0e0e16;--card-hover:#13131e;
+  --border:rgba(255,255,255,0.07);--border-strong:rgba(255,255,255,0.14);
+  --text:#e8eaf0;--text-muted:#8892b0;--text-dim:#5a6280;
+  --accent:#38bdf8;--accent2:#0ea5e9;--accent-glow:rgba(56,189,248,0.18);
+  --tencent:#1ec0e5;--bytedance:#a78bfa;--meituan:#facc15;
+  --pill-bg:rgba(255,255,255,0.04);--pill-bg-active:rgba(56,189,248,0.18);
+  --warn:#f59e0b;--warn-bg:rgba(245,158,11,0.10);
+  --error:#ef4444;
+  --radius:14px;
+}
+[data-theme="light"]{
+  --bg:#f5f7fb;--card:#ffffff;--card-hover:#f0f4f9;
+  --border:rgba(15,23,42,0.08);--border-strong:rgba(15,23,42,0.16);
+  --text:#0f172a;--text-muted:#64748b;--text-dim:#94a3b8;
+  --accent:#0284c7;--accent2:#0369a1;--accent-glow:rgba(2,132,199,0.14);
+  --pill-bg:rgba(15,23,42,0.04);--pill-bg-active:rgba(2,132,199,0.14);
+  --warn:#b45309;--warn-bg:rgba(245,158,11,0.14);
+}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Figtree','Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+  transition:background .3s ease,color .3s ease;
+}
+
+.page{max-width:920px;margin:0 auto;padding:18px 14px 80px;position:relative}
+
+/* Theme toggle */
+.theme-btn{
+  position:absolute;top:16px;right:14px;width:32px;height:32px;border-radius:8px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .2s;color:var(--text-muted);
+}
+.theme-btn:hover{background:var(--card-hover);color:var(--text)}
+.theme-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+
+/* Header */
+.header{padding:8px 4px 14px}
+.header-icon{font-size:30px;display:block;margin-bottom:4px}
+.header h1{
+  font-size:24px;font-weight:700;letter-spacing:-.4px;
+  background:linear-gradient(135deg,var(--text) 0%,var(--accent) 120%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.header .subtitle{margin-top:4px;font-size:13px;color:var(--text-muted);line-height:1.5}
+.header .meta{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--text-muted)}
+.header .meta .dot{color:var(--text-dim)}
+.header .meta strong{color:var(--text);font-weight:600}
+
+/* Stale banner */
+.banner{
+  margin:12px 0;padding:10px 12px;border-radius:10px;
+  background:var(--warn-bg);color:var(--warn);
+  font-size:12px;line-height:1.5;
+  border:1px solid rgba(245,158,11,0.25);
+  display:none;
+}
+.banner.show{display:block}
+
+/* Filters */
+.filters{
+  margin:14px 0 10px;padding:10px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  display:flex;flex-direction:column;gap:10px;
+}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.search-wrap{flex:1;min-width:200px;position:relative}
+.search-input{
+  width:100%;padding:9px 12px 9px 32px;border-radius:10px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  color:var(--text);font-size:14px;font-family:inherit;
+  transition:border-color .2s,background .2s;
+}
+.search-input:focus{outline:none;border-color:var(--accent);background:var(--card-hover)}
+.search-input::placeholder{color:var(--text-dim)}
+.search-icon{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;color:var(--text-dim);stroke:currentColor;fill:none;stroke-width:2;
+}
+.cat-select{
+  padding:9px 30px 9px 12px;border-radius:10px;
+  background:var(--pill-bg);border:1px solid var(--border);color:var(--text);
+  font-size:13px;font-family:inherit;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);
+  background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+}
+.clear-btn{
+  padding:7px 12px;border-radius:10px;
+  background:transparent;border:1px solid var(--border);color:var(--text-muted);
+  font-size:12px;cursor:pointer;font-family:inherit;
+  transition:border-color .2s,color .2s;
+}
+.clear-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:999px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  font-size:12px;color:var(--text-muted);
+  cursor:pointer;user-select:none;
+  transition:all .2s;
+  font-family:inherit;
+}
+.chip:hover{border-color:var(--border-strong);color:var(--text)}
+.chip.active{background:var(--pill-bg-active);border-color:var(--accent);color:var(--accent)}
+.chip .chip-count{
+  font-size:10px;padding:1px 5px;border-radius:8px;
+  background:rgba(255,255,255,0.06);color:var(--text-dim);
+  font-variant-numeric:tabular-nums;
+}
+[data-theme="light"] .chip .chip-count{background:rgba(15,23,42,0.05)}
+.chip.active .chip-count{background:rgba(56,189,248,0.22);color:var(--accent)}
+.chip.stale::after{content:'·陈旧';margin-left:2px;color:var(--warn);font-size:10px}
+
+/* Result summary */
+.result-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 4px;font-size:12px;color:var(--text-muted);
+  margin:6px 0 10px;
+}
+
+/* Job list */
+.jobs{display:flex;flex-direction:column;gap:8px}
+.job{
+  display:flex;flex-direction:column;gap:6px;
+  padding:12px 14px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  text-decoration:none;color:inherit;
+  transition:transform .15s ease,border-color .15s ease,background .15s ease;
+}
+.job:hover{transform:translateY(-1px);border-color:var(--accent);background:var(--card-hover)}
+.job-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.job-pill{
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;
+  flex-shrink:0;font-variant-numeric:tabular-nums;
+}
+.job-pill.tencent{background:rgba(30,192,229,0.15);color:var(--tencent)}
+.job-pill.bytedance{background:rgba(167,139,250,0.18);color:var(--bytedance)}
+.job-pill.meituan{background:rgba(250,204,21,0.18);color:var(--meituan)}
+.job-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.35;flex:1;min-width:0;word-break:break-word}
+.job-arrow{color:var(--text-dim);font-size:13px;line-height:1;align-self:center}
+.job:hover .job-arrow{color:var(--accent)}
+.job-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text-muted)}
+.job-meta span{display:inline-flex;align-items:center;gap:3px}
+.job-meta .meta-dept{color:var(--text)}
+
+.empty{
+  text-align:center;padding:40px 20px;color:var(--text-muted);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+}
+.empty-emoji{font-size:32px;display:block;margin-bottom:8px;opacity:.6}
+
+.footer{
+  margin-top:32px;padding:0 4px;font-size:11px;color:var(--text-dim);
+  text-align:center;line-height:1.6;
+}
+.footer a{color:var(--text-muted);text-decoration:none}
+.footer a:hover{color:var(--accent)}
+
+@media(min-width:640px){
+  .page{padding:24px 18px 80px}
+  .header h1{font-size:30px}
+  .header .subtitle{font-size:14px}
+  .filters{padding:14px;gap:12px}
+}
+@media(min-width:900px){
+  .page{padding:32px 24px 80px}
+  .header-icon{font-size:36px}
+  .header h1{font-size:34px}
+  .jobs{gap:10px}
+  .job{padding:14px 16px}
+  .job-title{font-size:16px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <button class="theme-btn" id="themeBtn" title="切换主题" aria-label="切换主题">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+
+  <header class="header">
+    <span class="header-icon">🏢</span>
+    <h1>深圳大厂招聘</h1>
+    <p class="subtitle">腾讯 · 字节跳动 · 美团 — 公开 API 聚合，每日自动刷新</p>
+    <div class="meta" id="meta">
+      <span id="metaUpdated">加载中…</span>
+      <span class="dot">·</span>
+      <span>共 <strong id="metaCount">0</strong> 个职位</span>
+    </div>
+  </header>
+
+  <div class="banner" id="staleBanner"></div>
+
+  <div class="filters">
+    <div class="filter-row">
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input class="search-input" id="searchInput" type="search" placeholder="搜索职位 / 部门，例如 后端 / 微信" autocomplete="off">
+      </div>
+      <select class="cat-select" id="catSelect"><option value="">全部类别</option></select>
+      <button class="clear-btn" id="clearBtn">清除</button>
+    </div>
+    <div class="filter-row">
+      <div class="chips" id="companyChips"></div>
+    </div>
+  </div>
+
+  <div class="result-bar">
+    <span id="resultSummary">显示 0 / 0 个职位</span>
+    <span id="lastSync"></span>
+  </div>
+
+  <div class="jobs" id="jobsList"></div>
+  <div class="empty" id="emptyState" style="display:none">
+    <span class="empty-emoji">🔍</span>
+    <div>没有匹配的职位</div>
+    <div style="margin-top:6px;font-size:12px">尝试调整搜索词或筛选条件</div>
+  </div>
+
+  <div class="footer">
+    数据来源 ·
+    <a href="https://careers.tencent.com" target="_blank" rel="noopener">careers.tencent.com</a> ·
+    <a href="https://jobs.bytedance.com" target="_blank" rel="noopener">jobs.bytedance.com</a> ·
+    <a href="https://zhaopin.meituan.com" target="_blank" rel="noopener">zhaopin.meituan.com</a><br>
+    <span style="opacity:.7">每日 09:00 北京时间自动同步 · 仅供个人参考</span>
+  </div>
+</div>
+
+<script>
+const DATA_URL = 'data/jobs.json';
+const COMPANY_ORDER = ['tencent', 'bytedance', 'meituan'];
+const COMPANY_DEFAULTS = {
+  tencent:   { name: '腾讯' },
+  bytedance: { name: '字节跳动' },
+  meituan:   { name: '美团' },
+};
+
+const state = {
+  data: null,
+  filters: {
+    q: '',
+    companies: new Set(),  // empty = all
+    category: '',
+  },
+};
+
+const $ = (id) => document.getElementById(id);
+
+// ── Theme ─────────────────────────────────────────────────────────────
+$('themeBtn').addEventListener('click', () => {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('jobs.theme', 'dark');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    localStorage.setItem('jobs.theme', 'light');
+  }
+});
+
+// ── URL state ─────────────────────────────────────────────────────────
+function loadFromUrl() {
+  const params = new URLSearchParams(location.search);
+  state.filters.q = params.get('q') || '';
+  state.filters.category = params.get('category') || '';
+  const cs = (params.get('company') || '').split(',').filter(Boolean);
+  state.filters.companies = new Set(cs);
+}
+function saveToUrl() {
+  const params = new URLSearchParams();
+  if (state.filters.q) params.set('q', state.filters.q);
+  if (state.filters.category) params.set('category', state.filters.category);
+  if (state.filters.companies.size) params.set('company', [...state.filters.companies].join(','));
+  const qs = params.toString();
+  history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+}
+
+// ── Format helpers ────────────────────────────────────────────────────
+function fmtRelative(ts) {
+  if (!ts) return '尚未同步';
+  const diff = Date.now() - ts;
+  if (diff < 60_000) return '刚刚';
+  if (diff < 3600_000) return Math.floor(diff / 60_000) + ' 分钟前';
+  if (diff < 86400_000) return Math.floor(diff / 3600_000) + ' 小时前';
+  const days = Math.floor(diff / 86400_000);
+  return days + ' 天前';
+}
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+function renderHeader() {
+  const data = state.data;
+  const total = (data.jobs || []).length;
+  $('metaCount').textContent = total;
+  if (data.last_updated) {
+    $('metaUpdated').textContent = '更新于 ' + fmtRelative(data.last_updated);
+  } else {
+    $('metaUpdated').textContent = data.last_updated_iso || '尚未首次同步';
+  }
+  $('lastSync').textContent = data.last_updated_iso && data.last_updated
+    ? data.last_updated_iso.replace('T', ' ').slice(0, 16) : '';
+}
+
+function renderStaleBanner() {
+  const cs = state.data.companies || {};
+  const issues = [];
+  for (const slug of COMPANY_ORDER) {
+    const c = cs[slug];
+    if (!c) continue;
+    if (c.status === 'stale' || c.status === 'error') {
+      const name = c.name || COMPANY_DEFAULTS[slug].name;
+      const when = c.fetched_at ? '上次成功 ' + fmtRelative(c.fetched_at) : '尚未成功同步过';
+      issues.push(`${name} 数据陈旧（${when}）`);
+    }
+  }
+  const banner = $('staleBanner');
+  if (issues.length) {
+    banner.textContent = '⚠ ' + issues.join(' · ');
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+function renderChips() {
+  const wrap = $('companyChips');
+  const counts = {};
+  for (const job of (state.data.jobs || [])) counts[job.company] = (counts[job.company] || 0) + 1;
+  const cs = state.data.companies || {};
+  wrap.innerHTML = COMPANY_ORDER.map(slug => {
+    const c = cs[slug] || {};
+    const n = counts[slug] || 0;
+    const name = c.name || COMPANY_DEFAULTS[slug].name;
+    const active = state.filters.companies.has(slug);
+    const stale = c.status === 'stale' || c.status === 'error';
+    return `<button class="chip ${active ? 'active' : ''} ${stale ? 'stale' : ''}" data-slug="${slug}">
+      ${escapeHtml(name)}<span class="chip-count">${n}</span>
+    </button>`;
+  }).join('');
+  wrap.querySelectorAll('.chip').forEach(el => {
+    el.addEventListener('click', () => {
+      const slug = el.dataset.slug;
+      if (state.filters.companies.has(slug)) state.filters.companies.delete(slug);
+      else state.filters.companies.add(slug);
+      saveToUrl();
+      renderChips();
+      renderJobs();
+    });
+  });
+}
+
+function renderCategoryOptions() {
+  const select = $('catSelect');
+  const cats = state.data.categories || [];
+  select.innerHTML = '<option value="">全部类别</option>' +
+    cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  select.value = state.filters.category;
+}
+
+function filteredJobs() {
+  const { q, companies, category } = state.filters;
+  const qLower = q.trim().toLowerCase();
+  return (state.data.jobs || []).filter(j => {
+    if (companies.size && !companies.has(j.company)) return false;
+    if (category && j.category !== category) return false;
+    if (qLower) {
+      const hay = `${j.title} ${j.department} ${j.category_raw} ${j.location}`.toLowerCase();
+      if (!hay.includes(qLower)) return false;
+    }
+    return true;
+  });
+}
+
+function renderJobs() {
+  const list = $('jobsList');
+  const empty = $('emptyState');
+  const jobs = filteredJobs();
+  $('resultSummary').textContent = `显示 ${jobs.length} / ${(state.data.jobs || []).length} 个职位`;
+  if (!jobs.length) {
+    list.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = jobs.map(j => `
+    <a class="job" href="${escapeHtml(j.url)}" target="_blank" rel="noopener">
+      <div class="job-top">
+        <span class="job-pill ${j.company}">${escapeHtml(j.company_name || j.company)}</span>
+        <span class="job-title">${escapeHtml(j.title)}</span>
+        <span class="job-arrow">→</span>
+      </div>
+      <div class="job-meta">
+        ${j.department ? `<span class="meta-dept">${escapeHtml(j.department)}</span>` : ''}
+        ${j.category && j.category !== '其他' ? `<span>${escapeHtml(j.category)}</span>` : ''}
+        ${j.location ? `<span>📍 ${escapeHtml(j.location)}</span>` : ''}
+        ${j.posted_date ? `<span>${escapeHtml(j.posted_date)}</span>` : ''}
+      </div>
+    </a>
+  `).join('');
+}
+
+// ── Wire up filter inputs ─────────────────────────────────────────────
+let searchTimer;
+$('searchInput').addEventListener('input', (e) => {
+  state.filters.q = e.target.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { saveToUrl(); renderJobs(); }, 150);
+});
+$('catSelect').addEventListener('change', (e) => {
+  state.filters.category = e.target.value;
+  saveToUrl();
+  renderJobs();
+});
+$('clearBtn').addEventListener('click', () => {
+  state.filters.q = '';
+  state.filters.companies.clear();
+  state.filters.category = '';
+  $('searchInput').value = '';
+  $('catSelect').value = '';
+  saveToUrl();
+  renderChips();
+  renderJobs();
+});
+
+// ── Bootstrap ─────────────────────────────────────────────────────────
+loadFromUrl();
+$('searchInput').value = state.filters.q;
+
+fetch(DATA_URL + '?t=' + Date.now())
+  .then(r => r.json())
+  .then(data => {
+    state.data = data || { jobs: [], companies: {}, categories: [] };
+    if (!Array.isArray(state.data.jobs)) state.data.jobs = [];
+    if (!state.data.companies) state.data.companies = {};
+    if (!Array.isArray(state.data.categories)) state.data.categories = [];
+    renderHeader();
+    renderStaleBanner();
+    renderCategoryOptions();
+    renderChips();
+    renderJobs();
+  })
+  .catch(err => {
+    console.error(err);
+    $('metaUpdated').textContent = '数据加载失败';
+    $('jobsList').innerHTML = '';
+    $('emptyState').style.display = '';
+    $('emptyState').innerHTML = '<span class="empty-emoji">⚠️</span><div>数据加载失败</div><div style="margin-top:6px;font-size:12px">' + escapeHtml(err.message) + '</div>';
+  });
+</script>
+
+</body>
+</html>
