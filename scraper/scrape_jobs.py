@@ -30,25 +30,25 @@ OUTPUT_PATH = os.path.join(DATA_DIR, 'jobs.json')
 # Allow running from the repo root (`python scraper/scrape_jobs.py`).
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from jobs_sources import bytedance, meituan, tencent  # noqa: E402
+from jobs_sources import (
+    bytedance, byd, dji, jd, meituan, netease, oppo, tencent, vivo, xiaomi,
+)  # noqa: E402
 from jobs_sources.common import CATEGORIES, Job, dedupe_jobs  # noqa: E402
 
 CST = timezone(timedelta(hours=8))
 
 
 SOURCES: dict[str, dict] = {
-    'tencent': {
-        'name': '腾讯',
-        'fetch': tencent.fetch,
-    },
-    'bytedance': {
-        'name': '字节跳动',
-        'fetch': bytedance.fetch,
-    },
-    'meituan': {
-        'name': '美团',
-        'fetch': meituan.fetch,
-    },
+    'tencent':   {'name': '腾讯',     'fetch': tencent.fetch},
+    'bytedance': {'name': '字节跳动', 'fetch': bytedance.fetch},
+    'meituan':   {'name': '美团',     'fetch': meituan.fetch},
+    'dji':       {'name': '大疆',     'fetch': dji.fetch},
+    'byd':       {'name': '比亚迪',   'fetch': byd.fetch},
+    'jd':        {'name': '京东',     'fetch': jd.fetch},
+    'netease':   {'name': '网易',     'fetch': netease.fetch},
+    'xiaomi':    {'name': '小米',     'fetch': xiaomi.fetch},
+    'oppo':      {'name': 'OPPO',     'fetch': oppo.fetch},
+    'vivo':      {'name': 'vivo',     'fetch': vivo.fetch},
 }
 
 
