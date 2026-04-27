@@ -30,6 +30,8 @@
   --text:#e8eaf0;--text-muted:#8892b0;--text-dim:#5a6280;
   --accent:#38bdf8;--accent2:#0ea5e9;--accent-glow:rgba(56,189,248,0.18);
   --tencent:#1ec0e5;--bytedance:#a78bfa;--meituan:#facc15;
+  --dji:#f97316;--byd:#3b82f6;--jd:#dc2626;--netease:#10b981;
+  --xiaomi:#fb923c;--oppo:#22c55e;--vivo:#14b8a6;
   --pill-bg:rgba(255,255,255,0.04);--pill-bg-active:rgba(56,189,248,0.18);
   --warn:#f59e0b;--warn-bg:rgba(245,158,11,0.10);
   --error:#ef4444;
@@ -173,6 +175,13 @@ body{
 .job-pill.tencent{background:rgba(30,192,229,0.15);color:var(--tencent)}
 .job-pill.bytedance{background:rgba(167,139,250,0.18);color:var(--bytedance)}
 .job-pill.meituan{background:rgba(250,204,21,0.18);color:var(--meituan)}
+.job-pill.dji{background:rgba(249,115,22,0.15);color:var(--dji)}
+.job-pill.byd{background:rgba(59,130,246,0.15);color:var(--byd)}
+.job-pill.jd{background:rgba(220,38,38,0.15);color:var(--jd)}
+.job-pill.netease{background:rgba(16,185,129,0.15);color:var(--netease)}
+.job-pill.xiaomi{background:rgba(251,146,60,0.15);color:var(--xiaomi)}
+.job-pill.oppo{background:rgba(34,197,94,0.15);color:var(--oppo)}
+.job-pill.vivo{background:rgba(20,184,166,0.15);color:var(--vivo)}
 .job-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.35;flex:1;min-width:0;word-break:break-word}
 .job-arrow{color:var(--text-dim);font-size:13px;line-height:1;align-self:center}
 .job:hover .job-arrow{color:var(--accent)}
@@ -344,7 +353,7 @@ body{
   <header class="header">
     <span class="header-icon">🏢</span>
     <h1>深圳大厂招聘</h1>
-    <p class="subtitle">腾讯 · 字节跳动 — 公开 API 聚合，每日自动刷新</p>
+    <p class="subtitle">腾讯·字节·大疆·比亚迪·京东·网易·小米·OPPO·vivo — 公开 API 聚合，每日自动刷新</p>
     <div class="meta" id="meta">
       <span id="metaUpdated">加载中…</span>
       <span class="dot">·</span>
@@ -437,11 +446,19 @@ body{
 
 <script>
 const DATA_URL = 'data/jobs.json';
-const COMPANY_ORDER = ['tencent', 'bytedance', 'meituan'];
+const COMPANY_ORDER = ['tencent', 'bytedance', 'meituan', 'dji', 'byd',
+                       'jd', 'netease', 'xiaomi', 'oppo', 'vivo'];
 const COMPANY_DEFAULTS = {
   tencent:   { name: '腾讯' },
   bytedance: { name: '字节跳动' },
   meituan:   { name: '美团' },
+  dji:       { name: '大疆' },
+  byd:       { name: '比亚迪' },
+  jd:        { name: '京东' },
+  netease:   { name: '网易' },
+  xiaomi:    { name: '小米' },
+  oppo:      { name: 'OPPO' },
+  vivo:      { name: 'vivo' },
 };
 
 function _loadFavorites() {
