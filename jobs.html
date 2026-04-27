@@ -101,7 +101,7 @@ body{
 .search-input{
   width:100%;padding:9px 12px 9px 32px;border-radius:10px;
   background:var(--pill-bg);border:1px solid var(--border);
-  color:var(--text);font-size:14px;font-family:inherit;
+  color:var(--text);font-size:16px;font-family:inherit;
   transition:border-color .2s,background .2s;
 }
 .search-input:focus{outline:none;border-color:var(--accent);background:var(--card-hover)}
@@ -113,7 +113,7 @@ body{
 .cat-select{
   padding:9px 30px 9px 12px;border-radius:10px;
   background:var(--pill-bg);border:1px solid var(--border);color:var(--text);
-  font-size:13px;font-family:inherit;cursor:pointer;
+  font-size:16px;font-family:inherit;cursor:pointer;
   appearance:none;-webkit-appearance:none;
   background-image:linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);
   background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;
@@ -228,7 +228,7 @@ body{
   <header class="header">
     <span class="header-icon">🏢</span>
     <h1>深圳大厂招聘</h1>
-    <p class="subtitle">腾讯 · 字节跳动 · 美团 — 公开 API 聚合，每日自动刷新</p>
+    <p class="subtitle">腾讯 · 字节跳动 — 公开 API 聚合，每日自动刷新</p>
     <div class="meta" id="meta">
       <span id="metaUpdated">加载中…</span>
       <span class="dot">·</span>
@@ -267,8 +267,7 @@ body{
   <div class="footer">
     数据来源 ·
     <a href="https://careers.tencent.com" target="_blank" rel="noopener">careers.tencent.com</a> ·
-    <a href="https://jobs.bytedance.com" target="_blank" rel="noopener">jobs.bytedance.com</a> ·
-    <a href="https://zhaopin.meituan.com" target="_blank" rel="noopener">zhaopin.meituan.com</a><br>
+    <a href="https://jobs.bytedance.com" target="_blank" rel="noopener">jobs.bytedance.com</a><br>
     <span style="opacity:.7">每日 09:00 北京时间自动同步 · 仅供个人参考</span>
   </div>
 </div>
@@ -358,11 +357,12 @@ function renderStaleBanner() {
   for (const slug of COMPANY_ORDER) {
     const c = cs[slug];
     if (!c) continue;
-    if (c.status === 'stale' || c.status === 'error') {
-      const name = c.name || COMPANY_DEFAULTS[slug].name;
-      const when = c.fetched_at ? '上次成功 ' + fmtRelative(c.fetched_at) : '尚未成功同步过';
-      issues.push(`${name} 数据陈旧（${when}）`);
-    }
+    if (c.status !== 'stale' && c.status !== 'error') continue;
+    // Only flag sources that were once working but are now stale — never
+    // surface a banner for sources that have never delivered data.
+    if (!c.fetched_at) continue;
+    const name = c.name || COMPANY_DEFAULTS[slug].name;
+    issues.push(`${name} 数据陈旧（上次成功 ${fmtRelative(c.fetched_at)}）`);
   }
   const banner = $('staleBanner');
   if (issues.length) {
@@ -378,16 +378,20 @@ function renderChips() {
   const counts = {};
   for (const job of (state.data.jobs || [])) counts[job.company] = (counts[job.company] || 0) + 1;
   const cs = state.data.companies || {};
-  wrap.innerHTML = COMPANY_ORDER.map(slug => {
+  const html = COMPANY_ORDER.map(slug => {
     const c = cs[slug] || {};
     const n = counts[slug] || 0;
+    // Skip the chip entirely when a source has no jobs and has never been
+    // successful — this hides Meituan while its endpoint remains broken.
+    if (n === 0 && !c.fetched_at) return '';
     const name = c.name || COMPANY_DEFAULTS[slug].name;
     const active = state.filters.companies.has(slug);
-    const stale = c.status === 'stale' || c.status === 'error';
+    const stale = (c.status === 'stale' || c.status === 'error') && c.fetched_at;
     return `<button class="chip ${active ? 'active' : ''} ${stale ? 'stale' : ''}" data-slug="${slug}">
       ${escapeHtml(name)}<span class="chip-count">${n}</span>
     </button>`;
-  }).join('');
+  }).filter(Boolean).join('');
+  wrap.innerHTML = html;
   wrap.querySelectorAll('.chip').forEach(el => {
     el.addEventListener('click', () => {
       const slug = el.dataset.slug;

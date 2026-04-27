@@ -119,6 +119,14 @@ def _to_job(raw: dict) -> Optional[Job]:
                   or safe_get(raw, 'publish_date')
                   or safe_get(raw, 'modify_time'))
     posted = parse_date(posted_raw) if posted_raw is not None else None
+    description_parts = []
+    desc = safe_get(raw, 'description')
+    req = safe_get(raw, 'requirement')
+    if desc:
+        description_parts.append(str(desc).strip())
+    if req:
+        description_parts.append(str(req).strip())
+    description = '\n'.join(p for p in description_parts if p)
     return Job(
         id=f'bytedance_{job_id}',
         company='bytedance',
@@ -131,6 +139,7 @@ def _to_job(raw: dict) -> Optional[Job]:
         posted_date=posted,
         url=url,
         source='jobs.bytedance.com',
+        description=description,
     )
 
 

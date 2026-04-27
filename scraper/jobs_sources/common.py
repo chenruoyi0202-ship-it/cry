@@ -72,11 +72,21 @@ def safe_get(d: Any, *path: Any, default: Any = None) -> Any:
 
 
 def parse_date(text: Optional[str]) -> Optional[str]:
-    """Extract a YYYY-MM-DD date from various source formats."""
+    """Extract a YYYY-MM-DD date from various source formats.
+
+    Handles ISO-ish (2026-04-25, 2026/4/25, 2026.4.25), Chinese (2026年4月25日),
+    and epoch (10- or 13-digit) inputs.
+    """
     if not text:
         return None
     text = str(text)
+    # ISO-ish separators
     m = re.search(r'(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})', text)
+    if m:
+        y, mo, d = m.groups()
+        return f'{y}-{int(mo):02d}-{int(d):02d}'
+    # Chinese format: 2026年4月25日 / 2026年04月25日
+    m = re.search(r'(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日?', text)
     if m:
         y, mo, d = m.groups()
         return f'{y}-{int(mo):02d}-{int(d):02d}'
@@ -103,6 +113,7 @@ class Job:
     posted_date: Optional[str]
     url: str
     source: str           # host of the original posting
+    description: str = '' # job responsibilities + requirements; used by resume match
 
     def to_dict(self) -> dict:
         return asdict(self)

@@ -200,6 +200,7 @@ def _dict_to_job(d: dict) -> Job:
         posted_date=d.get('posted_date'),
         url=d.get('url', ''),
         source=d.get('source', ''),
+        description=d.get('description', ''),
     )
 
 
