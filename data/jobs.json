@@ -1,0 +1,11 @@
+{
+  "last_updated": 0,
+  "last_updated_iso": "尚未首次运行",
+  "companies": {
+    "tencent":   {"name": "腾讯",     "count": 0, "status": "pending", "fetched_at": 0, "error": null},
+    "bytedance": {"name": "字节跳动", "count": 0, "status": "pending", "fetched_at": 0, "error": null},
+    "meituan":   {"name": "美团",     "count": 0, "status": "pending", "fetched_at": 0, "error": null}
+  },
+  "categories": ["技术", "产品", "设计", "运营", "市场", "职能", "其他"],
+  "jobs": []
+}
