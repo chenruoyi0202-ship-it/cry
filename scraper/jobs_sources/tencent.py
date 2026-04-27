@@ -1,9 +1,14 @@
 """Tencent careers scraper.
 
 Hits the public JSON endpoint used by https://careers.tencent.com/ — no auth,
-no CSRF. Filters server-side by cityId=2 (深圳) and attrId=1 (社会招聘),
+no CSRF. Filters server-side by cityId=3 (深圳) and attrId=1 (社会招聘),
 plus a defensive client-side check on LocationName so we still work if the
 city dictionary changes.
+
+Tencent's city map (observed on careers.tencent.com): 1=北京, 2=上海, 3=深圳,
+4=广州, 5=成都. If cityId=3 returns 0 posts (e.g. their dictionary changed),
+we transparently retry once with no city filter and rely entirely on the
+client-side `is_shenzhen()` check.
 """
 from __future__ import annotations
 
@@ -29,11 +34,12 @@ PAGE_SIZE = 100
 MAX_PAGES = 50  # safety cap; Tencent SZ social currently ~10-20 pages
 
 
-def _fetch_page(session: requests.Session, page_index: int) -> dict:
+def _fetch_page(session: requests.Session, page_index: int,
+                city_id: str = '3') -> dict:
     params = {
         'timestamp': int(time.time() * 1000),
         'countryId': '',
-        'cityId': '2',                  # Shenzhen
+        'cityId': city_id,              # 3 = 深圳
         'bgIds': '',
         'productId': '',
         'categoryId': '',
@@ -85,32 +91,47 @@ def _to_job(raw: dict) -> Optional[Job]:
     )
 
 
-def fetch() -> list[Job]:
-    """Fetch all current Shenzhen social-recruit postings from Tencent."""
-    session = requests.Session()
-    session.headers.update(DEFAULT_HEADERS)
-    session.headers['Accept'] = 'application/json,text/plain,*/*'
-
+def _crawl(session: requests.Session, city_id: str) -> list[Job]:
     jobs: list[Job] = []
     total: Optional[int] = None
     for page in range(1, MAX_PAGES + 1):
         page_data = with_retries(
-            lambda: _fetch_page(session, page),
-            label=f'tencent p{page}',
+            lambda: _fetch_page(session, page, city_id=city_id),
+            label=f'tencent[city={city_id}] p{page}',
         )
-        posts: Iterable[dict] = safe_get(page_data, 'Data', 'Posts', default=[]) or []
+        posts = safe_get(page_data, 'Data', 'Posts', default=[]) or []
+        posts_list = list(posts)
         if total is None:
             total = safe_get(page_data, 'Data', 'Count', default=0) or 0
-            print(f'  [tencent] reported total: {total}', flush=True)
-        page_jobs = [j for j in (_to_job(p) for p in posts) if j is not None]
+            print(f'  [tencent city={city_id}] reported total: {total}', flush=True)
+        page_jobs = [j for j in (_to_job(p) for p in posts_list) if j is not None]
         jobs.extend(page_jobs)
-        print(f'  [tencent] page {page}: raw={len(list(posts))} kept={len(page_jobs)} '
-              f'cumulative={len(jobs)}', flush=True)
-        if not posts or len(posts) < PAGE_SIZE:
+        print(f'  [tencent city={city_id}] page {page}: raw={len(posts_list)} '
+              f'kept={len(page_jobs)} cumulative={len(jobs)}', flush=True)
+        if not posts_list or len(posts_list) < PAGE_SIZE:
             break
         if total and len(jobs) >= total:
             break
     return jobs
+
+
+def fetch() -> list[Job]:
+    """Fetch all current Shenzhen social-recruit postings from Tencent.
+
+    Primary path uses cityId=3 (Shenzhen). If that yields zero, fall back to
+    no city filter and rely on the client-side `is_shenzhen()` check — that
+    handles the case where Tencent renumbers their city dictionary.
+    """
+    session = requests.Session()
+    session.headers.update(DEFAULT_HEADERS)
+    session.headers['Accept'] = 'application/json,text/plain,*/*'
+
+    jobs = _crawl(session, city_id='3')
+    if jobs:
+        return jobs
+    print('  [tencent] cityId=3 returned 0 jobs; retrying without city filter',
+          flush=True)
+    return _crawl(session, city_id='')
 
 
 if __name__ == '__main__':
