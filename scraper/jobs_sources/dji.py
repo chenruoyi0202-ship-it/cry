@@ -13,6 +13,7 @@ import requests
 from .common import (
     DEFAULT_HEADERS,
     Job,
+    http_error_snippet,
     is_shenzhen,
     normalize_category,
     parse_date,
