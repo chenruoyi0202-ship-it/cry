@@ -1,18 +1,18 @@
 {
-  "last_updated": 1777336026010,
-  "last_updated_iso": "2026-04-28T08:27:06+08:00",
+  "last_updated": 1777336923306,
+  "last_updated_iso": "2026-04-28T08:42:03+08:00",
   "companies": {
     "tencent": {
       "count": 1472,
       "status": "ok",
-      "fetched_at": 1777335769703,
+      "fetched_at": 1777336656444,
       "error": null,
       "name": "腾讯"
     },
     "bytedance": {
       "count": 621,
       "status": "ok",
-      "fetched_at": 1777335840495,
+      "fetched_at": 1777336719500,
       "error": null,
       "name": "字节跳动"
     },
@@ -28,7 +28,7 @@
       "count": 0,
       "status": "error",
       "fetched_at": 0,
-      "error": "all dji endpoints rejected our payload :: https://we.dji.com/zh-CN/api/career/list/page: dji probe https://we.dji.com/zh-CN/api/career/list/page: all 2 attempts failed: name 'http_error_snippet' is not defined | https://we.dji.com/api/career/list/page: dji probe https://we.dji.com/api/career/list/pa"
+      "error": "all dji endpoints rejected our payload :: https://we.dji.com/zh-CN/api/career/list/page: dji probe https://we.dji.com/zh-CN/api/career/list/page: all 2 attempts failed: http 404 from https://we.dji.com/zh-CN/api/career/list/page :: <!DOCTYPE html> <!--[if lte IE 9]>   <html lang=\"zh-CN\" class=\"lt-ie"
     },
     "byd": {
       "name": "比亚迪",
@@ -63,7 +63,7 @@
       "count": 0,
       "status": "error",
       "fetched_at": 0,
-      "error": "all oppo endpoints rejected our payload :: https://careers.oppo.com/api/web/job/list: oppo probe https://careers.oppo.com/api/web/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/web/job/list :: {\"timestamp\":\"2026-04-28T00:26:45.025+00:00\",\"status\":500,\"error\":\"Internal Se"
+      "error": "all oppo endpoints rejected our payload :: https://careers.oppo.com/api/web/job/list: oppo probe https://careers.oppo.com/api/web/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/web/job/list :: {\"timestamp\":\"2026-04-28T00:41:42.226+00:00\",\"status\":500,\"error\":\"Internal Se"
     },
     "vivo": {
       "name": "vivo",
