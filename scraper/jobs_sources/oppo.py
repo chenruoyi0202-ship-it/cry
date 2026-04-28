@@ -10,7 +10,7 @@ import requests
 
 from .common import (
     DEFAULT_HEADERS, Job, is_shenzhen, normalize_category, parse_date,
-    http_error_snippet, http_error_snippet, safe_get, with_retries,
+    http_error_snippet, safe_get, with_retries,
 )
 
 HOMEPAGE = 'https://careers.oppo.com/'
