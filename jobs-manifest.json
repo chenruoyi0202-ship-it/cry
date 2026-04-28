@@ -1,0 +1,14 @@
+{
+  "name": "深圳大厂招聘",
+  "short_name": "深圳招聘",
+  "description": "腾讯·字节·美团·大疆·比亚迪·京东·网易·小米·OPPO·vivo 深圳社招聚合，每日刷新。",
+  "start_url": "/cry/jobs.html",
+  "scope": "/cry/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {"src": "jobs-icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any"},
+    {"src": "jobs-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
