@@ -143,15 +143,6 @@ body{
   position:absolute;left:10px;top:50%;transform:translateY(-50%);
   width:14px;height:14px;color:var(--text-dim);stroke:currentColor;fill:none;stroke-width:2;
 }
-.cat-select{
-  padding:9px 30px 9px 12px;border-radius:10px;
-  background:var(--pill-bg);border:1px solid var(--border);color:var(--text);
-  font-size:16px;font-family:inherit;cursor:pointer;
-  appearance:none;-webkit-appearance:none;
-  background-image:linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);
-  background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;
-  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
-}
 .clear-btn{
   padding:7px 12px;border-radius:10px;
   background:transparent;border:1px solid var(--border);color:var(--text-muted);
@@ -198,7 +189,13 @@ body{
   transition:transform .15s ease,border-color .15s ease,background .15s ease;
 }
 .job:hover{transform:translateY(-1px);border-color:var(--accent);background:var(--card-hover)}
-.job-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.job-top{display:flex;align-items:flex-start;gap:8px}
+.job-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.job-tag{
+  font-size:11px;font-weight:500;padding:2px 8px;border-radius:6px;
+  flex-shrink:0;background:var(--pill-bg);color:var(--text-muted);
+  border:1px solid var(--border);
+}
 .job-pill{
   font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;
   flex-shrink:0;font-variant-numeric:tabular-nums;
@@ -434,7 +431,6 @@ body{
         <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <input class="search-input" id="searchInput" type="search" placeholder="搜索职位 / 部门，例如 后端 / 微信" autocomplete="off">
       </div>
-      <select class="cat-select" id="catSelect"><option value="">全部类别</option></select>
       <button class="clear-btn" id="clearBtn">清除</button>
     </div>
     <div class="filter-row">
@@ -444,6 +440,9 @@ body{
         <span>仅看收藏</span>
         <span class="chip-count" id="favCount">0</span>
       </button>
+    </div>
+    <div class="filter-row">
+      <div class="chips" id="categoryChips"></div>
     </div>
     <div class="resume-row">
       <span class="sort-toggle">
@@ -540,7 +539,7 @@ const state = {
   filters: {
     q: '',
     companies: new Set(),  // empty = all
-    category: '',
+    categories: new Set(), // empty = all
     sinceDays: 0,          // 0 = all time; 7/30/90 = filter recent
     minScore: 0,           // 0..1, hide jobs below this match score
     favoritesOnly: false,  // toggled via the chip-fav button
@@ -929,14 +928,15 @@ $('themeBtn').addEventListener('click', () => {
 function loadFromUrl() {
   const params = new URLSearchParams(location.search);
   state.filters.q = params.get('q') || '';
-  state.filters.category = params.get('category') || '';
+  const cats = (params.get('category') || '').split(',').filter(Boolean);
+  state.filters.categories = new Set(cats);
   const cs = (params.get('company') || '').split(',').filter(Boolean);
   state.filters.companies = new Set(cs);
 }
 function saveToUrl() {
   const params = new URLSearchParams();
   if (state.filters.q) params.set('q', state.filters.q);
-  if (state.filters.category) params.set('category', state.filters.category);
+  if (state.filters.categories.size) params.set('category', [...state.filters.categories].join(','));
   if (state.filters.companies.size) params.set('company', [...state.filters.companies].join(','));
   const qs = params.toString();
   history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
@@ -1025,16 +1025,37 @@ function renderChips() {
   });
 }
 
-function renderCategoryOptions() {
-  const select = $('catSelect');
+function renderCategoryChips() {
+  const wrap = $('categoryChips');
+  // Count jobs per category so each chip shows a count, like company chips.
+  const counts = {};
+  for (const job of (state.data.jobs || [])) {
+    const c = job.category || '其他';
+    counts[c] = (counts[c] || 0) + 1;
+  }
   const cats = state.data.categories || [];
-  select.innerHTML = '<option value="">全部类别</option>' +
-    cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-  select.value = state.filters.category;
+  wrap.innerHTML = cats.map(c => {
+    const n = counts[c] || 0;
+    if (n === 0) return '';   // hide empty categories
+    const active = state.filters.categories.has(c);
+    return `<button class="chip ${active ? 'active' : ''}" data-cat="${escapeHtml(c)}" type="button">
+      ${escapeHtml(c)}<span class="chip-count">${n}</span>
+    </button>`;
+  }).filter(Boolean).join('');
+  wrap.querySelectorAll('.chip').forEach(el => {
+    el.addEventListener('click', () => {
+      const cat = el.dataset.cat;
+      if (state.filters.categories.has(cat)) state.filters.categories.delete(cat);
+      else state.filters.categories.add(cat);
+      saveToUrl();
+      renderCategoryChips();
+      renderJobs();
+    });
+  });
 }
 
 function filteredJobs() {
-  const { q, companies, category, sinceDays, minScore, favoritesOnly } = state.filters;
+  const { q, companies, categories, sinceDays, minScore, favoritesOnly } = state.filters;
   const qLower = q.trim().toLowerCase();
   const cutoff = sinceDays > 0
     ? new Date(Date.now() - sinceDays * 86400_000)
@@ -1042,7 +1063,7 @@ function filteredJobs() {
   return (state.data.jobs || []).filter(j => {
     if (favoritesOnly && !state.favorites.has(j.id)) return false;
     if (companies.size && !companies.has(j.company)) return false;
-    if (category && j.category !== category) return false;
+    if (categories.size && !categories.has(j.category)) return false;
     if (qLower) {
       const hay = `${j.title} ${j.department} ${j.category_raw} ${j.location}`.toLowerCase();
       if (!hay.includes(qLower)) return false;
@@ -1090,15 +1111,17 @@ function renderJobs() {
     return `
     <div class="job" role="button" tabindex="0" data-id="${escapeHtml(j.id)}">
       <div class="job-top">
-        ${scoreHtml}
-        <span class="job-pill ${j.company}">${escapeHtml(j.company_name || j.company)}</span>
         <span class="job-title">${escapeHtml(j.title)}</span>
         <button class="fav-btn ${fav ? 'is-fav' : ''}" data-fav="${escapeHtml(j.id)}" type="button" aria-label="收藏" aria-pressed="${fav}"><span class="fav-icon">${fav ? '★' : '☆'}</span></button>
         <span class="job-arrow">→</span>
       </div>
+      <div class="job-tags">
+        ${scoreHtml}
+        <span class="job-pill ${j.company}">${escapeHtml(j.company_name || j.company)}</span>
+        ${j.category && j.category !== '其他' ? `<span class="job-tag">${escapeHtml(j.category)}</span>` : ''}
+      </div>
       <div class="job-meta">
         ${j.department ? `<span class="meta-dept">${escapeHtml(j.department)}</span>` : ''}
-        ${j.category && j.category !== '其他' ? `<span>${escapeHtml(j.category)}</span>` : ''}
         ${j.location ? `<span>📍 ${escapeHtml(j.location)}</span>` : ''}
         ${j.posted_date ? `<span>${escapeHtml(j.posted_date)}</span>` : ''}
       </div>
@@ -1134,19 +1157,14 @@ $('searchInput').addEventListener('input', (e) => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => { saveToUrl(); renderJobs(); }, 150);
 });
-$('catSelect').addEventListener('change', (e) => {
-  state.filters.category = e.target.value;
-  saveToUrl();
-  renderJobs();
-});
 $('clearBtn').addEventListener('click', () => {
   state.filters.q = '';
   state.filters.companies.clear();
-  state.filters.category = '';
+  state.filters.categories.clear();
   $('searchInput').value = '';
-  $('catSelect').value = '';
   saveToUrl();
   renderChips();
+  renderCategoryChips();
   renderJobs();
 });
 
@@ -1172,7 +1190,7 @@ function loadData() {
       $('sortSelect').value = state.sortMode;
       renderHeader();
       renderStaleBanner();
-      renderCategoryOptions();
+      renderCategoryChips();
       renderChips();
       renderFavCount();
       renderJobs();
