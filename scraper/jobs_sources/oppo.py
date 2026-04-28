@@ -10,7 +10,7 @@ import requests
 
 from .common import (
     DEFAULT_HEADERS, Job, is_shenzhen, normalize_category, parse_date,
-    safe_get, with_retries,
+    http_error_snippet, http_error_snippet, safe_get, with_retries,
 )
 
 HOMEPAGE = 'https://careers.oppo.com/'
@@ -56,8 +56,11 @@ def _try_endpoint(session: requests.Session, attempt: dict, page_no: int) -> dic
                'Origin': 'https://careers.oppo.com'}
     resp = session.post(attempt['url'], json=body, headers=headers, timeout=30)
     if resp.status_code != 200:
-        raise RuntimeError(f'http {resp.status_code} from {attempt["url"]}')
-    data = resp.json()
+        raise RuntimeError(f'http {resp.status_code} from {attempt["url"]} :: {http_error_snippet(resp)}')
+    try:
+        data = resp.json()
+    except ValueError:
+        raise RuntimeError(f'non-json from {attempt["url"]} (status {resp.status_code}) :: {http_error_snippet(resp)}')
     code = data.get('code', data.get('status'))
     if code not in (0, 200, '0', '200', None):
         raise RuntimeError(f'oppo {attempt["url"]} code={code} '
@@ -125,7 +128,7 @@ def _to_job(raw: dict) -> Optional[Job]:
 def fetch() -> list[Job]:
     session = _seed_session()
     chosen: Optional[dict] = None
-    last_err: Optional[Exception] = None
+    errors: list[str] = []
     for attempt in ATTEMPTS:
         try:
             with_retries(lambda: _try_endpoint(session, attempt, 1),
@@ -134,10 +137,11 @@ def fetch() -> list[Job]:
             print(f'  [oppo] using {attempt["url"]}', flush=True)
             break
         except Exception as exc:  # noqa: BLE001
-            last_err = exc
+            errors.append(f'{attempt["url"]}: {exc}')
             print(f'  [oppo] probe failed: {exc}', flush=True)
     if chosen is None:
-        raise RuntimeError(f'all oppo endpoints rejected our payload: {last_err}')
+        raise RuntimeError('all oppo endpoints rejected our payload :: '
+                           + ' | '.join(errors))
 
     jobs: list[Job] = []
     for page in range(1, MAX_PAGES + 1):

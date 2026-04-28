@@ -124,8 +124,11 @@ def _try_endpoint(session: requests.Session, attempt: dict, page_no: int) -> dic
     }
     resp = session.post(attempt['url'], json=body, headers=headers, timeout=30)
     if resp.status_code != 200:
-        raise RuntimeError(f'http {resp.status_code} from {attempt["url"]}')
-    data = resp.json()
+        raise RuntimeError(f'http {resp.status_code} from {attempt["url"]} :: {http_error_snippet(resp)}')
+    try:
+        data = resp.json()
+    except ValueError:
+        raise RuntimeError(f'non-json from {attempt["url"]} (status {resp.status_code}) :: {http_error_snippet(resp)}')
     if not _is_success(data):
         # A code != 0 means the endpoint rejected our request — surface enough
         # context so we can debug from the workflow log.
@@ -202,7 +205,7 @@ def fetch() -> list[Job]:
 
     # Pick the first endpoint variant that responds with a valid payload.
     chosen: Optional[dict] = None
-    last_err: Optional[Exception] = None
+    errors: list[str] = []
     for attempt in ATTEMPTS:
         try:
             with_retries(
@@ -214,10 +217,11 @@ def fetch() -> list[Job]:
             print(f'  [meituan] using {attempt["url"]}', flush=True)
             break
         except Exception as exc:  # noqa: BLE001
-            last_err = exc
+            errors.append(f'{attempt["url"]}: {exc}')
             print(f'  [meituan] probe failed: {exc}', flush=True)
     if chosen is None:
-        raise RuntimeError(f'all meituan endpoints rejected our payload: {last_err}')
+        raise RuntimeError('all meituan endpoints rejected our payload :: '
+                           + ' | '.join(errors))
 
     jobs: list[Job] = []
     total: Optional[int] = None

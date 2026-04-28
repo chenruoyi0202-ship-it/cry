@@ -119,6 +119,21 @@ class Job:
         return asdict(self)
 
 
+def http_error_snippet(resp) -> str:
+    """Return a short, log-friendly excerpt of an HTTP response body.
+
+    Used when an endpoint returns non-200 or non-JSON so we can tell at a
+    glance whether the server gave us an HTML 404, a redirect, a 'service
+    error' JSON, or an empty body. Trims whitespace and limits length so
+    workflow logs and saved error fields stay readable.
+    """
+    text = (resp.text or '').strip()
+    if not text:
+        return '(empty body)'
+    snippet = text[:160].replace('\n', ' ').replace('\r', ' ')
+    return snippet
+
+
 def with_retries(
     fn: Callable[[], Any],
     *,
