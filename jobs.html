@@ -100,6 +100,48 @@ body{
 .icon-btn.spin svg{animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* Sync status dot on the cloud-sync icon */
+.icon-btn{position:relative}
+.sync-dot{
+  position:absolute;top:5px;right:5px;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--text-dim);
+  border:1.5px solid var(--card);
+}
+.sync-dot.ok{background:#22c55e}
+.sync-dot.syncing{background:#fbbf24;animation:pulse 1.2s ease-in-out infinite}
+.sync-dot.err{background:var(--error)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* Sync settings modal */
+.sync-help{
+  font-size:12px;color:var(--text-muted);line-height:1.6;
+  background:var(--pill-bg);border:1px solid var(--border);
+  padding:10px 12px;border-radius:8px;
+}
+.sync-help a{color:var(--accent);text-decoration:none}
+.sync-help a:hover{text-decoration:underline}
+.sync-help code{
+  font-size:11px;padding:1px 5px;border-radius:4px;
+  background:var(--pill-bg-active);color:var(--accent);
+  font-family:ui-monospace,monospace;
+}
+.sync-token-input{
+  width:100%;padding:10px 12px;border-radius:10px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  color:var(--text);font-size:14px;font-family:ui-monospace,monospace;
+  letter-spacing:.5px;
+}
+.sync-token-input:focus{outline:none;border-color:var(--accent);background:var(--card-hover)}
+.sync-status{font-size:12px;color:var(--text-muted);min-height:18px;line-height:1.5;
+  padding:6px 0;
+}
+.sync-status.ok{color:#22c55e}
+.sync-status.err{color:var(--error)}
+.sync-status.syncing{color:var(--accent)}
+.sync-foot{display:flex;flex-wrap:wrap;gap:8px}
+.sync-foot .btn{flex:1 1 auto;min-width:90px}
+
 /* Header */
 .header{padding:8px 4px 14px}
 .header-icon{font-size:30px;display:block;margin-bottom:4px}
@@ -404,6 +446,10 @@ body{
 
 <div class="page">
   <div class="header-actions">
+    <button class="icon-btn" id="syncBtn" title="云同步收藏" aria-label="云同步收藏">
+      <svg viewBox="0 0 24 24"><path d="M16 17v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h2M8 7v-3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="sync-dot" id="syncDot" aria-hidden="true"></span>
+    </button>
     <button class="icon-btn" id="refreshBtn" title="刷新数据" aria-label="刷新数据">
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3.5-7.1M21 4v5h-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
@@ -471,6 +517,33 @@ body{
           <option value="date">按发布日期</option>
         </select>
       </span>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="syncModal" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title" id="syncModalTitle">☁️ 云同步收藏</span>
+        <button class="modal-close" id="syncModalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="sync-help">
+          多设备同步收藏 —— 用 <strong>GitHub Personal Access Token</strong> 把收藏存进你自己的私有仓库。
+          Token 只存在浏览器 localStorage，不上传到任何服务器；私有仓库自动创建，只有你能看。
+          <br><br>
+          <a href="https://github.com/settings/tokens/new?description=cry-jobs-sync&amp;scopes=repo" target="_blank" rel="noopener">
+            点这里去 GitHub 生成 token →
+          </a>
+          （勾选 <code>repo</code> scope 即可）
+        </div>
+        <input class="sync-token-input" id="syncTokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+        <div class="sync-status" id="syncStatus">未配置同步</div>
+      </div>
+      <div class="modal-foot sync-foot">
+        <button class="btn btn-ghost" id="syncClearBtn" type="button">清除配置</button>
+        <button class="btn btn-ghost" id="syncPullBtn" type="button">用云端覆盖本地</button>
+        <button class="btn btn-primary" id="syncSaveBtn" type="button">保存并同步</button>
+      </div>
     </div>
   </div>
 
@@ -548,17 +621,223 @@ const state = {
   matchedThemes: null,  // Map<jobId, [{id, name, hits, contrib}]>
   sortMode: localStorage.getItem('jobs.sortMode') || 'match', // 'match' | 'date'
   favorites: _loadFavorites(),  // Set<jobId>
+  favLastUpdated: parseInt(localStorage.getItem('jobs.favorites.lastUpdated') || '0', 10),
+  syncConfig: null,  // {token, owner}; populated from localStorage on init
 };
 
-function _saveFavorites() {
+function _saveFavorites(touchTimestamp = true) {
   localStorage.setItem('jobs.favorites', JSON.stringify([...state.favorites]));
+  if (touchTimestamp) {
+    const now = Date.now();
+    state.favLastUpdated = now;
+    localStorage.setItem('jobs.favorites.lastUpdated', String(now));
+  }
 }
 function isFavorite(id) { return state.favorites.has(id); }
 function toggleFavorite(id) {
   if (state.favorites.has(id)) state.favorites.delete(id);
   else state.favorites.add(id);
-  _saveFavorites();
+  _saveFavorites(true);
   renderFavCount();
+  // Debounced background push to cloud, if configured.
+  if (state.syncConfig) schedulePush();
+}
+
+// ── Cloud sync (GitHub-token-based) ──────────────────────────────────
+// Stores favorites as a single JSON blob in a private repo automatically
+// created on first save. Token only lives in localStorage on this device.
+// Conflict model: last-write-wins by lastUpdated timestamp; simple but
+// safe for a single user across a few devices. Concurrent edits without
+// syncing in between can lose changes — the user can always manually
+// pull or push to resolve.
+const SYNC_REPO_NAME = 'cry-data';
+const SYNC_DATA_PATH = 'data/jobs-favorites.json';
+const SYNC_PUSH_DEBOUNCE_MS = 1500;
+let _pushTimer = null;
+let _fileSha = null;
+
+function _loadSyncConfig() {
+  try {
+    const raw = localStorage.getItem('jobs.sync.config');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function _saveSyncConfig(cfg) {
+  if (cfg) localStorage.setItem('jobs.sync.config', JSON.stringify(cfg));
+  else localStorage.removeItem('jobs.sync.config');
+  state.syncConfig = cfg;
+}
+
+function _setSyncStatus(text, kind) {
+  const status = $('syncStatus');
+  if (status) {
+    status.textContent = text;
+    status.className = 'sync-status' + (kind ? ' ' + kind : '');
+  }
+  const dot = $('syncDot');
+  if (dot) dot.className = 'sync-dot' + (kind ? ' ' + kind : '');
+}
+
+async function _ghFetch(path, opts = {}) {
+  const cfg = state.syncConfig;
+  if (!cfg) throw new Error('未配置同步');
+  const headers = Object.assign({
+    'Authorization': `token ${cfg.token}`,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }, opts.headers || {});
+  const url = path.startsWith('http') ? path : `https://api.github.com${path}`;
+  const resp = await fetch(url, { ...opts, headers });
+  if (resp.status === 401 || resp.status === 403) {
+    throw new Error(`token 鉴权失败 (${resp.status})`);
+  }
+  return resp;
+}
+
+async function _ensureSyncRepo() {
+  // Get owner login + check repo. Auto-create if missing.
+  const cfg = state.syncConfig;
+  if (cfg && cfg.owner) return cfg;
+  const me = await (await _ghFetch('/user')).json();
+  const owner = me.login;
+  if (!owner) throw new Error('无法读取 GitHub 用户信息');
+  const repoCheck = await _ghFetch(`/repos/${owner}/${SYNC_REPO_NAME}`);
+  if (repoCheck.status === 404) {
+    const create = await _ghFetch('/user/repos', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: SYNC_REPO_NAME, private: true, auto_init: true,
+        description: '深圳大厂招聘 - 收藏数据私有同步仓库（自动创建）',
+      }),
+    });
+    if (!create.ok) {
+      throw new Error('创建私有仓库失败 ' + create.status);
+    }
+  } else if (!repoCheck.ok) {
+    throw new Error(`仓库检查失败 ${repoCheck.status}`);
+  }
+  const newCfg = { ...cfg, owner };
+  _saveSyncConfig(newCfg);
+  return newCfg;
+}
+
+async function _pullFromCloud() {
+  await _ensureSyncRepo();
+  const cfg = state.syncConfig;
+  const url = `/repos/${cfg.owner}/${SYNC_REPO_NAME}/contents/${SYNC_DATA_PATH}?t=${Date.now()}`;
+  const resp = await _ghFetch(url);
+  if (resp.status === 404) {
+    _fileSha = null;
+    return null;          // first-ever sync; nothing in cloud yet
+  }
+  if (!resp.ok) throw new Error(`pull failed ${resp.status}`);
+  const meta = await resp.json();
+  _fileSha = meta.sha;
+  // Decode base64 content
+  const decoded = decodeURIComponent(escape(atob(meta.content.replace(/\n/g, ''))));
+  return JSON.parse(decoded);
+}
+
+async function _pushToCloud(payload) {
+  await _ensureSyncRepo();
+  const cfg = state.syncConfig;
+  // Encode JSON as base64
+  const json = JSON.stringify(payload, null, 2);
+  const content = btoa(unescape(encodeURIComponent(json)));
+  const body = {
+    message: `chore(jobs-favorites): sync ${payload.favorites.length} items`,
+    content,
+  };
+  if (_fileSha) body.sha = _fileSha;
+  let resp = await _ghFetch(
+    `/repos/${cfg.owner}/${SYNC_REPO_NAME}/contents/${SYNC_DATA_PATH}`,
+    { method: 'PUT', body: JSON.stringify(body) },
+  );
+  if (resp.status === 409 || (resp.status === 422 && _fileSha)) {
+    // SHA mismatch — re-pull to grab the latest sha and retry once.
+    _fileSha = null;
+    await _pullFromCloud();
+    if (_fileSha) body.sha = _fileSha;
+    resp = await _ghFetch(
+      `/repos/${cfg.owner}/${SYNC_REPO_NAME}/contents/${SYNC_DATA_PATH}`,
+      { method: 'PUT', body: JSON.stringify(body) },
+    );
+  }
+  if (!resp.ok) {
+    const errBody = await resp.text();
+    throw new Error(`push failed ${resp.status}: ${errBody.slice(0, 120)}`);
+  }
+  const meta = await resp.json();
+  _fileSha = meta.content.sha;
+}
+
+async function manualSync({ forcePull = false } = {}) {
+  if (!state.syncConfig) {
+    _setSyncStatus('未配置同步', '');
+    return;
+  }
+  _setSyncStatus('正在同步…', 'syncing');
+  try {
+    const cloud = await _pullFromCloud();
+    const localTs = state.favLastUpdated || 0;
+    const cloudTs = cloud && cloud.lastUpdated ? cloud.lastUpdated : 0;
+    if (forcePull) {
+      if (cloud) _applyCloudFavorites(cloud);
+      else _setSyncStatus('云端尚无数据', 'ok');
+    } else if (!cloud) {
+      // Cloud empty: push local (skip if local is also empty — protects
+      // a fresh device from wiping the cloud).
+      if (state.favorites.size > 0) {
+        await _pushToCloud(_buildPayload());
+      }
+    } else if (cloudTs > localTs) {
+      _applyCloudFavorites(cloud);
+    } else if (localTs > cloudTs) {
+      await _pushToCloud(_buildPayload());
+    }
+    _setSyncStatus(
+      `已同步 · ${state.favorites.size} 个收藏 · ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}`,
+      'ok',
+    );
+  } catch (e) {
+    console.error(e);
+    _setSyncStatus('同步失败：' + e.message, 'err');
+  }
+}
+
+function _buildPayload() {
+  return {
+    favorites: [...state.favorites],
+    lastUpdated: state.favLastUpdated || Date.now(),
+    schemaVersion: 1,
+  };
+}
+
+function _applyCloudFavorites(cloud) {
+  const ids = Array.isArray(cloud.favorites) ? cloud.favorites : [];
+  state.favorites = new Set(ids);
+  state.favLastUpdated = cloud.lastUpdated || Date.now();
+  localStorage.setItem('jobs.favorites', JSON.stringify(ids));
+  localStorage.setItem('jobs.favorites.lastUpdated', String(state.favLastUpdated));
+  renderFavCount();
+  // Re-render the job list so card stars reflect the new state.
+  if (state.data) renderJobs();
+}
+
+function schedulePush() {
+  if (_pushTimer) clearTimeout(_pushTimer);
+  _setSyncStatus('待同步…', 'syncing');
+  _pushTimer = setTimeout(async () => {
+    _pushTimer = null;
+    try {
+      _setSyncStatus('正在推送…', 'syncing');
+      await _pushToCloud(_buildPayload());
+      _setSyncStatus(`已同步 · ${state.favorites.size} 个收藏`, 'ok');
+    } catch (e) {
+      console.error(e);
+      _setSyncStatus('推送失败：' + e.message, 'err');
+    }
+  }, SYNC_PUSH_DEBOUNCE_MS);
 }
 
 // Built-in resume profile. Rather than a flat keyword bag (where 后端 and
@@ -890,6 +1169,41 @@ $('matchFilter').addEventListener('change', (e) => {
 function renderFavCount() {
   $('favCount').textContent = state.favorites.size;
 }
+// ── Sync modal control ────────────────────────────────────────────────
+function openSyncModal() {
+  const cfg = state.syncConfig;
+  $('syncTokenInput').value = cfg ? cfg.token : '';
+  if (cfg) {
+    _setSyncStatus(`已配置 · 仓库 ${cfg.owner || '?'}/${SYNC_REPO_NAME}`, 'ok');
+  } else {
+    _setSyncStatus('未配置同步', '');
+  }
+  $('syncModal').classList.add('show');
+  setTimeout(() => $('syncTokenInput').focus(), 50);
+}
+function closeSyncModal() { $('syncModal').classList.remove('show'); }
+$('syncBtn').addEventListener('click', openSyncModal);
+$('syncModalClose').addEventListener('click', closeSyncModal);
+$('syncModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSyncModal(); });
+$('syncSaveBtn').addEventListener('click', async () => {
+  const token = $('syncTokenInput').value.trim();
+  if (!token) { _setSyncStatus('请粘贴 token', 'err'); return; }
+  _saveSyncConfig({ token });
+  await manualSync();
+});
+$('syncPullBtn').addEventListener('click', async () => {
+  const token = $('syncTokenInput').value.trim();
+  if (token && (!state.syncConfig || state.syncConfig.token !== token)) {
+    _saveSyncConfig({ token });
+  }
+  await manualSync({ forcePull: true });
+});
+$('syncClearBtn').addEventListener('click', () => {
+  _saveSyncConfig(null);
+  $('syncTokenInput').value = '';
+  _setSyncStatus('已清除同步配置（本地收藏保留）', '');
+});
+
 $('favFilterBtn').addEventListener('click', () => {
   const next = !state.filters.favoritesOnly;
   state.filters.favoritesOnly = next;
@@ -1214,6 +1528,15 @@ $('refreshBtn').addEventListener('click', loadData);
 loadFromUrl();
 $('searchInput').value = state.filters.q;
 loadData();
+
+// Restore sync config; if present, trigger one background sync after the
+// main data load. Don't block first paint on the network round-trip.
+state.syncConfig = _loadSyncConfig();
+if (state.syncConfig) {
+  _setSyncStatus('已配置（启动同步中…）', 'syncing');
+  // Defer to next tick so the rest of the page renders first.
+  setTimeout(() => manualSync(), 200);
+}
 </script>
 
 </body>
