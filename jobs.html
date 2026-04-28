@@ -258,9 +258,43 @@ body{
 .job-detail-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text-muted);margin:4px 0 12px}
 .job-detail-meta span{display:inline-flex;align-items:center;gap:3px}
 .job-detail-meta .meta-dept{color:var(--text)}
-.job-detail-section{font-size:13px;color:var(--text);line-height:1.65;white-space:pre-wrap;word-break:break-word}
-.job-detail-section + .job-detail-section{margin-top:14px}
-.job-detail-section h4,.theme-row h4{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+/* New structured description: sections + numbered list */
+.jd-section{margin-top:18px}
+.jd-section:first-of-type{margin-top:8px}
+.jd-section-label{
+  font-size:13px;font-weight:700;color:var(--accent);
+  letter-spacing:.4px;margin-bottom:10px;
+  padding:4px 0 4px 10px;
+  border-left:3px solid var(--accent);
+  background:linear-gradient(90deg,var(--pill-bg-active),transparent 80%);
+  border-radius:2px;
+}
+.jd-list{
+  margin:0;padding:0 0 0 4px;list-style:none;
+  display:flex;flex-direction:column;gap:10px;
+  counter-reset:jd-counter;
+}
+.jd-list li{
+  font-size:14px;color:var(--text);line-height:1.7;
+  padding-left:26px;position:relative;
+  word-break:break-word;
+}
+.jd-list li::before{
+  counter-increment:jd-counter;
+  content:counter(jd-counter);
+  position:absolute;left:0;top:1px;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--pill-bg-active);color:var(--accent);
+  font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  font-variant-numeric:tabular-nums;
+}
+.jd-text{
+  font-size:14px;color:var(--text);line-height:1.7;
+  white-space:pre-wrap;word-break:break-word;
+}
+.theme-row + .jd-section{margin-top:8px}
+.theme-row h4{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
 .job-detail-empty{color:var(--text-muted);font-size:13px;padding:8px 0}
 .theme-row{margin:6px 0 14px}
 .theme-tags{display:flex;flex-wrap:wrap;gap:6px}
@@ -679,6 +713,83 @@ function _matchedThemesHtml(jobId) {
   return `<div class="theme-row"><h4>匹配主题</h4><div class="theme-tags">${top}</div></div>`;
 }
 
+// Parse the job description text into sections (岗位职责 / 任职要求 / etc.)
+// and within each section, peel off a numbered list ("1. … 2. …") so the
+// modal can render them with proper visual hierarchy instead of a wall of
+// pre-wrapped text.
+function _parseDescription(text) {
+  if (!text) return [];
+  // Section labels we recognize. Order doesn't matter — the regex finds
+  // them anywhere they appear.
+  const SECTION_LABELS = ['岗位职责', '任职要求', '职位描述', '工作职责',
+                          '工作要求', '任职资格', '加分项', '其他要求'];
+  const labelGroup = SECTION_LABELS.join('|');
+  const re = new RegExp(`(?:^|\\n)\\s*(${labelGroup})\\s*[:：]\\s*\\n?`, 'g');
+  const sections = [];
+  let lastIdx = 0;
+  let lastLabel = null;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (lastLabel != null || m.index > 0) {
+      const body = text.slice(lastIdx, m.index).trim();
+      if (lastLabel != null || body) {
+        sections.push({ label: lastLabel, body });
+      }
+    }
+    lastLabel = m[1];
+    lastIdx = m.index + m[0].length;
+  }
+  const trailingBody = text.slice(lastIdx).trim();
+  if (lastLabel != null || trailingBody) {
+    sections.push({ label: lastLabel, body: trailingBody });
+  }
+  return sections;
+}
+
+function _splitNumberedItems(text) {
+  // Split a body into numbered items if it looks like "1. … 2. …" (or
+  // "1、 …", "(1) …"). Otherwise return [text] as a single chunk.
+  const items = [];
+  const itemRe = /(?:^|\n)\s*(?:\(?\d{1,2}[.\)、]\s*)/;
+  if (!itemRe.test('\n' + text)) return [text];
+  let cur = '';
+  for (const line of text.split('\n')) {
+    if (/^\s*\(?\d{1,2}[.\)、]\s*/.test(line)) {
+      if (cur.trim()) items.push(cur.trim());
+      cur = line.replace(/^\s*\(?\d{1,2}[.\)、]\s*/, '');
+    } else {
+      cur += (cur ? '\n' : '') + line;
+    }
+  }
+  if (cur.trim()) items.push(cur.trim());
+  return items.length ? items : [text];
+}
+
+function _renderJobDescription(text) {
+  if (!text || !text.trim()) {
+    return '<div class="job-detail-empty">暂无描述 · 点击右下角查看原网页</div>';
+  }
+  const sections = _parseDescription(text);
+  if (!sections.length) {
+    return `<div class="jd-section"><div class="jd-text">${escapeHtml(text)}</div></div>`;
+  }
+  return sections.map(s => {
+    const items = _splitNumberedItems(s.body);
+    let inner = '';
+    if (items.length > 1) {
+      inner = `<ol class="jd-list">${
+        items.map(i => `<li>${escapeHtml(i)}</li>`).join('')
+      }</ol>`;
+    } else {
+      inner = `<div class="jd-text">${escapeHtml(s.body)}</div>`;
+    }
+    const heading = s.label
+      ? `<div class="jd-section-label">${escapeHtml(s.label)}</div>`
+      : '';
+    return `<div class="jd-section">${heading}${inner}</div>`;
+  }).join('');
+}
+
 function openJobModal(jobId) {
   const job = (state.data.jobs || []).find(j => j.id === jobId);
   if (!job) return;
@@ -704,10 +815,7 @@ function openJobModal(jobId) {
       ${job.posted_date ? `<span>🗓 ${escapeHtml(job.posted_date)}</span>` : ''}
     </div>
     ${_matchedThemesHtml(job.id)}
-    <div class="job-detail-section">
-      <h4>职位描述</h4>
-      ${desc ? escapeHtml(desc) : '<div class="job-detail-empty">暂无描述（点击右下角查看原网页）</div>'}
-    </div>
+    ${_renderJobDescription(desc)}
   `;
   $('jobModalBody').innerHTML = body;
   $('jobModalBody').scrollTop = 0;
