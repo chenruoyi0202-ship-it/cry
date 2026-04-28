@@ -4,12 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>深圳大厂招聘 · 腾讯 · 字节 · 美团</title>
-<meta name="description" content="深圳大厂在招职位聚合 — 腾讯、字节跳动、美团，每日自动更新。">
-<meta property="og:title" content="深圳大厂招聘">
-<meta property="og:description" content="深圳腾讯、字节跳动、美团社招职位聚合，每日刷新">
+<title>深圳大厂招聘 · 腾讯·字节·美团·大疆·京东·网易·小米·OPPO·vivo</title>
+<meta name="description" content="深圳大厂在招职位聚合 — 腾讯、字节跳动、美团、大疆、比亚迪、京东、网易、小米、OPPO、vivo，每日自动刷新，简历主题匹配，一键收藏。">
+<meta name="keywords" content="深圳招聘,腾讯招聘,字节跳动招聘,美团招聘,大疆招聘,比亚迪招聘,京东招聘,网易招聘,小米招聘,OPPO招聘,vivo招聘,深圳大厂,社招">
+
+<!-- Open Graph (微信 / Facebook / LinkedIn) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="深圳大厂招聘 · 每日自动更新">
+<meta property="og:description" content="腾讯·字节·美团·大疆·比亚迪·京东·网易·小米·OPPO·vivo 深圳社招职位聚合，每日刷新，按简历主题匹配，一键收藏。">
 <meta property="og:url" content="https://chenruoyi0202-ship-it.github.io/cry/jobs.html">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🏢</text></svg>">
+<meta property="og:image" content="https://chenruoyi0202-ship-it.github.io/cry/jobs-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="深圳大厂招聘">
+<meta property="og:locale" content="zh_CN">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="深圳大厂招聘 · 每日自动更新">
+<meta name="twitter:description" content="腾讯·字节·美团·大疆·比亚迪·京东·网易·小米·OPPO·vivo 深圳社招聚合，简历主题匹配，一键收藏。">
+<meta name="twitter:image" content="https://chenruoyi0202-ship-it.github.io/cry/jobs-cover.png">
+
+<!-- Favicons + PWA -->
+<link rel="icon" type="image/svg+xml" href="jobs-icon.svg">
+<link rel="icon" type="image/png" sizes="512x512" href="jobs-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="jobs-icon-180.png">
+<link rel="manifest" href="jobs-manifest.json">
+<meta name="theme-color" content="#0f172a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="深圳招聘">
@@ -46,6 +67,16 @@
   --warn:#b45309;--warn-bg:rgba(245,158,11,0.14);
 }
 html{-webkit-text-size-adjust:100%}
+/* During a theme swap, suppress every element's transition so the
+   thousands of rendered cards repaint instantly instead of each
+   animating its color/background change. */
+html.switching-theme,
+html.switching-theme *,
+html.switching-theme *::before,
+html.switching-theme *::after{
+  transition:none !important;
+  animation:none !important;
+}
 body{
   font-family:'Figtree','Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
   background:var(--bg);color:var(--text);min-height:100dvh;
@@ -873,14 +904,25 @@ $('favFilterBtn').addEventListener('click', () => {
 // the controls don't lie about what they do.
 // ── Theme ─────────────────────────────────────────────────────────────
 $('themeBtn').addEventListener('click', () => {
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  // Disable all transitions during the swap. Without this every one of
+  // the 2000+ rendered card elements animates its background/border
+  // change, which on phones takes several seconds to repaint.
+  const root = document.documentElement;
+  root.classList.add('switching-theme');
+  const isLight = root.getAttribute('data-theme') === 'light';
   if (isLight) {
-    document.documentElement.removeAttribute('data-theme');
+    root.removeAttribute('data-theme');
     localStorage.setItem('jobs.theme', 'dark');
   } else {
-    document.documentElement.setAttribute('data-theme', 'light');
+    root.setAttribute('data-theme', 'light');
     localStorage.setItem('jobs.theme', 'light');
   }
+  // Re-enable transitions on the next paint, after the new colors have
+  // committed. Two requestAnimationFrames so the class lands in the
+  // following tick reliably across browsers.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    root.classList.remove('switching-theme');
+  }));
 });
 
 // ── URL state ─────────────────────────────────────────────────────────
