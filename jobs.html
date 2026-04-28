@@ -523,26 +523,22 @@ body{
   <div class="modal-overlay" id="syncModal" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
     <div class="modal">
       <div class="modal-head">
-        <span class="modal-title" id="syncModalTitle">☁️ 云同步收藏</span>
+        <span class="modal-title" id="syncModalTitle">☁️ 解锁云同步</span>
         <button class="modal-close" id="syncModalClose" aria-label="关闭">×</button>
       </div>
       <div class="modal-body">
         <div class="sync-help">
-          多设备同步收藏 —— 用 <strong>GitHub Personal Access Token</strong> 把收藏存进你自己的私有仓库。
-          Token 只存在浏览器 localStorage，不上传到任何服务器；私有仓库自动创建，只有你能看。
-          <br><br>
-          <a href="https://github.com/settings/tokens/new?description=cry-jobs-sync&amp;scopes=repo" target="_blank" rel="noopener">
-            点这里去 GitHub 生成 token →
-          </a>
-          （勾选 <code>repo</code> scope 即可）
+          输入访问密码即可解锁多设备收藏同步。Token 用 AES 加密内嵌在页面，
+          只有输入正确密码才能解出。本地缓存后无需重复输入。
         </div>
-        <input class="sync-token-input" id="syncTokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
-        <div class="sync-status" id="syncStatus">未配置同步</div>
+        <input class="sync-token-input" id="syncPasswordInput" type="password"
+          inputmode="numeric" placeholder="访问密码" autocomplete="off"
+          spellcheck="false" maxlength="32">
+        <div class="sync-status" id="syncStatus">输入密码以解锁</div>
       </div>
       <div class="modal-foot sync-foot">
-        <button class="btn btn-ghost" id="syncClearBtn" type="button">清除配置</button>
-        <button class="btn btn-ghost" id="syncPullBtn" type="button">用云端覆盖本地</button>
-        <button class="btn btn-primary" id="syncSaveBtn" type="button">保存并同步</button>
+        <button class="btn btn-ghost" id="syncClearBtn" type="button">清除本机缓存</button>
+        <button class="btn btn-primary" id="syncUnlockBtn" type="button">解锁</button>
       </div>
     </div>
   </div>
@@ -643,18 +639,37 @@ function toggleFavorite(id) {
   if (state.syncConfig) schedulePush();
 }
 
-// ── Cloud sync (GitHub-token-based) ──────────────────────────────────
-// Stores favorites as a single JSON blob in a private repo automatically
-// created on first save. Token only lives in localStorage on this device.
-// Conflict model: last-write-wins by lastUpdated timestamp; simple but
-// safe for a single user across a few devices. Concurrent edits without
-// syncing in between can lose changes — the user can always manually
-// pull or push to resolve.
+// ── Cloud sync (password-gated, embedded-token) ──────────────────────
+// The owner's GitHub PAT is AES-GCM encrypted with a 6-digit page
+// password and embedded in the page source. Visitors enter the password
+// once per device → token decrypts → caches in localStorage → sync runs.
+// Cross-device "near real-time": fast 5s polling using the file blob's
+// sha as an ETag-equivalent (only re-fetch+apply if sha changes) plus
+// immediate push (500ms debounce) on every favorite toggle.
+//
+// Threat model: a 6-digit numeric password + public ciphertext can be
+// brute-forced in minutes on a GPU. The owner accepts this risk for
+// convenience; the embedded token has only `repo` scope and lives in a
+// site that's effectively private-by-obscurity. Rotate the token if
+// the page is shared with anyone untrusted.
+
 const SYNC_REPO_NAME = 'cry-data';
 const SYNC_DATA_PATH = 'data/jobs-favorites.json';
-const SYNC_PUSH_DEBOUNCE_MS = 1500;
+const SYNC_PUSH_DEBOUNCE_MS = 500;
+const SYNC_POLL_INTERVAL_MS = 5000;
+// PBKDF2 params + ciphertext baked at build-time. To re-encrypt with a
+// new token, regenerate via the same scheme: AES-256-GCM, key from
+// PBKDF2-SHA256(password, salt, 100000, 32). Output is base64(iv ||
+// ciphertext || gcmtag). Salt is plain ASCII for ease of inspection.
+const SYNC_TOKEN_CIPHERTEXT = '/jE5cyRAaDowXEwz8AJcyBeVb2m8f9VhBQGNGGifPwiY1k9PiHk8m87CwCfSPeiZeZp9lTBuVF1VZftvut7V8xVOQnw=';
+const SYNC_PBKDF2_SALT = 'cry-jobs-sync-v1';
+const SYNC_PBKDF2_ITERATIONS = 100000;
+
 let _pushTimer = null;
+let _pollTimer = null;
 let _fileSha = null;
+let _lastSeenCloudSha = null;
+let _suppressPushUntil = 0;
 
 function _loadSyncConfig() {
   try {
@@ -678,9 +693,27 @@ function _setSyncStatus(text, kind) {
   if (dot) dot.className = 'sync-dot' + (kind ? ' ' + kind : '');
 }
 
+// AES-GCM(PBKDF2(password)) decrypt of the embedded token.
+async function _decryptToken(password) {
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const aesKey = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: enc.encode(SYNC_PBKDF2_SALT),
+      iterations: SYNC_PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false, ['decrypt']);
+  const blob = Uint8Array.from(atob(SYNC_TOKEN_CIPHERTEXT), c => c.charCodeAt(0));
+  const iv = blob.slice(0, 12);
+  const body = blob.slice(12);
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, body);
+  return new TextDecoder().decode(plain);
+}
+
 async function _ghFetch(path, opts = {}) {
   const cfg = state.syncConfig;
-  if (!cfg) throw new Error('未配置同步');
+  if (!cfg) throw new Error('未解锁同步');
   const headers = Object.assign({
     'Authorization': `token ${cfg.token}`,
     'Accept': 'application/vnd.github+json',
@@ -695,7 +728,6 @@ async function _ghFetch(path, opts = {}) {
 }
 
 async function _ensureSyncRepo() {
-  // Get owner login + check repo. Auto-create if missing.
   const cfg = state.syncConfig;
   if (cfg && cfg.owner) return cfg;
   const me = await (await _ghFetch('/user')).json();
@@ -710,9 +742,7 @@ async function _ensureSyncRepo() {
         description: '深圳大厂招聘 - 收藏数据私有同步仓库（自动创建）',
       }),
     });
-    if (!create.ok) {
-      throw new Error('创建私有仓库失败 ' + create.status);
-    }
+    if (!create.ok) throw new Error('创建私有仓库失败 ' + create.status);
   } else if (!repoCheck.ok) {
     throw new Error(`仓库检查失败 ${repoCheck.status}`);
   }
@@ -726,22 +756,17 @@ async function _pullFromCloud() {
   const cfg = state.syncConfig;
   const url = `/repos/${cfg.owner}/${SYNC_REPO_NAME}/contents/${SYNC_DATA_PATH}?t=${Date.now()}`;
   const resp = await _ghFetch(url);
-  if (resp.status === 404) {
-    _fileSha = null;
-    return null;          // first-ever sync; nothing in cloud yet
-  }
+  if (resp.status === 404) { _fileSha = null; return null; }
   if (!resp.ok) throw new Error(`pull failed ${resp.status}`);
   const meta = await resp.json();
   _fileSha = meta.sha;
-  // Decode base64 content
   const decoded = decodeURIComponent(escape(atob(meta.content.replace(/\n/g, ''))));
-  return JSON.parse(decoded);
+  return { sha: meta.sha, payload: JSON.parse(decoded) };
 }
 
 async function _pushToCloud(payload) {
   await _ensureSyncRepo();
   const cfg = state.syncConfig;
-  // Encode JSON as base64
   const json = JSON.stringify(payload, null, 2);
   const content = btoa(unescape(encodeURIComponent(json)));
   const body = {
@@ -754,7 +779,6 @@ async function _pushToCloud(payload) {
     { method: 'PUT', body: JSON.stringify(body) },
   );
   if (resp.status === 409 || (resp.status === 422 && _fileSha)) {
-    // SHA mismatch — re-pull to grab the latest sha and retry once.
     _fileSha = null;
     await _pullFromCloud();
     if (_fileSha) body.sha = _fileSha;
@@ -769,40 +793,7 @@ async function _pushToCloud(payload) {
   }
   const meta = await resp.json();
   _fileSha = meta.content.sha;
-}
-
-async function manualSync({ forcePull = false } = {}) {
-  if (!state.syncConfig) {
-    _setSyncStatus('未配置同步', '');
-    return;
-  }
-  _setSyncStatus('正在同步…', 'syncing');
-  try {
-    const cloud = await _pullFromCloud();
-    const localTs = state.favLastUpdated || 0;
-    const cloudTs = cloud && cloud.lastUpdated ? cloud.lastUpdated : 0;
-    if (forcePull) {
-      if (cloud) _applyCloudFavorites(cloud);
-      else _setSyncStatus('云端尚无数据', 'ok');
-    } else if (!cloud) {
-      // Cloud empty: push local (skip if local is also empty — protects
-      // a fresh device from wiping the cloud).
-      if (state.favorites.size > 0) {
-        await _pushToCloud(_buildPayload());
-      }
-    } else if (cloudTs > localTs) {
-      _applyCloudFavorites(cloud);
-    } else if (localTs > cloudTs) {
-      await _pushToCloud(_buildPayload());
-    }
-    _setSyncStatus(
-      `已同步 · ${state.favorites.size} 个收藏 · ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}`,
-      'ok',
-    );
-  } catch (e) {
-    console.error(e);
-    _setSyncStatus('同步失败：' + e.message, 'err');
-  }
+  _lastSeenCloudSha = _fileSha;  // we just wrote, so next poll skips
 }
 
 function _buildPayload() {
@@ -819,18 +810,81 @@ function _applyCloudFavorites(cloud) {
   state.favLastUpdated = cloud.lastUpdated || Date.now();
   localStorage.setItem('jobs.favorites', JSON.stringify(ids));
   localStorage.setItem('jobs.favorites.lastUpdated', String(state.favLastUpdated));
+  // Suppress auto-push briefly so we don't immediately re-push what we just pulled.
+  _suppressPushUntil = Date.now() + 1500;
   renderFavCount();
-  // Re-render the job list so card stars reflect the new state.
   if (state.data) renderJobs();
 }
 
+async function manualSync({ forcePull = false } = {}) {
+  if (!state.syncConfig) { _setSyncStatus('未解锁同步', ''); return; }
+  _setSyncStatus('同步中…', 'syncing');
+  try {
+    const cloud = await _pullFromCloud();
+    const localTs = state.favLastUpdated || 0;
+    const cloudPayload = cloud ? cloud.payload : null;
+    const cloudTs = cloudPayload && cloudPayload.lastUpdated ? cloudPayload.lastUpdated : 0;
+    if (forcePull) {
+      if (cloudPayload) _applyCloudFavorites(cloudPayload);
+    } else if (!cloudPayload) {
+      if (state.favorites.size > 0) await _pushToCloud(_buildPayload());
+    } else if (cloudTs > localTs) {
+      _applyCloudFavorites(cloudPayload);
+    } else if (localTs > cloudTs) {
+      await _pushToCloud(_buildPayload());
+    }
+    if (cloud) _lastSeenCloudSha = cloud.sha;
+    _setSyncStatus(
+      `已同步 · ${state.favorites.size} 个收藏 · ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}`,
+      'ok',
+    );
+    _ensurePolling();
+  } catch (e) {
+    console.error(e);
+    _setSyncStatus('同步失败：' + e.message, 'err');
+  }
+}
+
+// Fast polling. Pull cloud sha every SYNC_POLL_INTERVAL_MS, only apply
+// the body if the sha changed since we last saw it. Pause when the tab
+// is hidden so background tabs don't burn rate limit.
+async function _pollOnce() {
+  if (!state.syncConfig) return;
+  if (document.hidden) return;
+  try {
+    const cloud = await _pullFromCloud();
+    if (!cloud) return;
+    if (_lastSeenCloudSha === cloud.sha) return;
+    _lastSeenCloudSha = cloud.sha;
+    const cloudTs = cloud.payload.lastUpdated || 0;
+    const localTs = state.favLastUpdated || 0;
+    if (cloudTs > localTs) {
+      _applyCloudFavorites(cloud.payload);
+      _setSyncStatus(
+        `从云端更新 · ${state.favorites.size} 个收藏`,
+        'ok',
+      );
+    }
+  } catch (e) {
+    // Silent on background poll failures — surfaced in dot only.
+    console.warn('poll error:', e.message);
+  }
+}
+function _ensurePolling() {
+  if (_pollTimer) return;
+  _pollTimer = setInterval(_pollOnce, SYNC_POLL_INTERVAL_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.syncConfig) _pollOnce();
+  });
+}
+
 function schedulePush() {
+  if (Date.now() < _suppressPushUntil) return;
   if (_pushTimer) clearTimeout(_pushTimer);
   _setSyncStatus('待同步…', 'syncing');
   _pushTimer = setTimeout(async () => {
     _pushTimer = null;
     try {
-      _setSyncStatus('正在推送…', 'syncing');
       await _pushToCloud(_buildPayload());
       _setSyncStatus(`已同步 · ${state.favorites.size} 个收藏`, 'ok');
     } catch (e) {
@@ -838,6 +892,19 @@ function schedulePush() {
       _setSyncStatus('推送失败：' + e.message, 'err');
     }
   }, SYNC_PUSH_DEBOUNCE_MS);
+}
+
+async function unlockSyncWithPassword(password) {
+  if (!password) throw new Error('请输入密码');
+  let token;
+  try {
+    token = await _decryptToken(password);
+  } catch (e) {
+    throw new Error('密码错误');
+  }
+  if (!token || !token.startsWith('ghp_')) throw new Error('解密失败');
+  _saveSyncConfig({ token });
+  await manualSync();
 }
 
 // Built-in resume profile. Rather than a flat keyword bag (where 后端 and
@@ -1171,37 +1238,39 @@ function renderFavCount() {
 }
 // ── Sync modal control ────────────────────────────────────────────────
 function openSyncModal() {
-  const cfg = state.syncConfig;
-  $('syncTokenInput').value = cfg ? cfg.token : '';
-  if (cfg) {
-    _setSyncStatus(`已配置 · 仓库 ${cfg.owner || '?'}/${SYNC_REPO_NAME}`, 'ok');
+  $('syncPasswordInput').value = '';
+  if (state.syncConfig) {
+    _setSyncStatus(
+      `已解锁 · 仓库 ${state.syncConfig.owner || '?'}/${SYNC_REPO_NAME} · ${state.favorites.size} 个收藏`,
+      'ok',
+    );
   } else {
-    _setSyncStatus('未配置同步', '');
+    _setSyncStatus('输入密码以解锁', '');
   }
   $('syncModal').classList.add('show');
-  setTimeout(() => $('syncTokenInput').focus(), 50);
+  setTimeout(() => $('syncPasswordInput').focus(), 50);
 }
 function closeSyncModal() { $('syncModal').classList.remove('show'); }
 $('syncBtn').addEventListener('click', openSyncModal);
 $('syncModalClose').addEventListener('click', closeSyncModal);
 $('syncModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSyncModal(); });
-$('syncSaveBtn').addEventListener('click', async () => {
-  const token = $('syncTokenInput').value.trim();
-  if (!token) { _setSyncStatus('请粘贴 token', 'err'); return; }
-  _saveSyncConfig({ token });
-  await manualSync();
-});
-$('syncPullBtn').addEventListener('click', async () => {
-  const token = $('syncTokenInput').value.trim();
-  if (token && (!state.syncConfig || state.syncConfig.token !== token)) {
-    _saveSyncConfig({ token });
+$('syncUnlockBtn').addEventListener('click', async () => {
+  const pwd = $('syncPasswordInput').value.trim();
+  _setSyncStatus('解锁中…', 'syncing');
+  try {
+    await unlockSyncWithPassword(pwd);
+    setTimeout(closeSyncModal, 500);
+  } catch (e) {
+    _setSyncStatus(e.message, 'err');
   }
-  await manualSync({ forcePull: true });
+});
+$('syncPasswordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') $('syncUnlockBtn').click();
 });
 $('syncClearBtn').addEventListener('click', () => {
   _saveSyncConfig(null);
-  $('syncTokenInput').value = '';
-  _setSyncStatus('已清除同步配置（本地收藏保留）', '');
+  if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  _setSyncStatus('已清除本机缓存（本地收藏保留，云端不变）', '');
 });
 
 $('favFilterBtn').addEventListener('click', () => {
@@ -1529,13 +1598,23 @@ loadFromUrl();
 $('searchInput').value = state.filters.q;
 loadData();
 
-// Restore sync config; if present, trigger one background sync after the
-// main data load. Don't block first paint on the network round-trip.
+// Restore sync config. If present, run sync + start polling immediately.
+// If absent, prompt for the password the first time the user opens the
+// page (only once — closing the prompt without unlocking just leaves
+// favorites in local-only mode).
 state.syncConfig = _loadSyncConfig();
 if (state.syncConfig) {
-  _setSyncStatus('已配置（启动同步中…）', 'syncing');
-  // Defer to next tick so the rest of the page renders first.
+  _setSyncStatus('启动同步中…', 'syncing');
   setTimeout(() => manualSync(), 200);
+} else if (!localStorage.getItem('jobs.sync.declined')) {
+  // Show the unlock prompt once.
+  setTimeout(() => {
+    if (!state.syncConfig) openSyncModal();
+  }, 600);
+  // Treat any close-without-unlock as "decline" until next refresh.
+  $('syncModalClose').addEventListener('click', () => {
+    if (!state.syncConfig) localStorage.setItem('jobs.sync.declined', '1');
+  });
 }
 </script>
 
