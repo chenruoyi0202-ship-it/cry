@@ -1,18 +1,18 @@
 {
-  "last_updated": 1777472176221,
-  "last_updated_iso": "2026-04-29T22:16:16+08:00",
+  "last_updated": 1777473259531,
+  "last_updated_iso": "2026-04-29T22:34:19+08:00",
   "companies": {
     "tencent": {
       "count": 1488,
       "status": "ok",
-      "fetched_at": 1777471924981,
+      "fetched_at": 1777473000137,
       "error": null,
       "name": "腾讯"
     },
     "bytedance": {
       "count": 621,
       "status": "ok",
-      "fetched_at": 1777471992843,
+      "fetched_at": 1777473072925,
       "error": null,
       "name": "字节跳动"
     },
@@ -63,7 +63,7 @@
       "count": 0,
       "status": "error",
       "fetched_at": 0,
-      "error": "all oppo endpoints rejected our payload :: https://careers.oppo.com/api/web/job/list: oppo probe https://careers.oppo.com/api/web/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/web/job/list :: {\"timestamp\":\"2026-04-29T14:15:54.350+00:00\",\"status\":500,\"error\":\"Internal Se"
+      "error": "all oppo endpoints rejected our payload :: https://careers.oppo.com/api/web/job/list: oppo probe https://careers.oppo.com/api/web/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/web/job/list :: {\"timestamp\":\"2026-04-29T14:33:57.932+00:00\",\"status\":500,\"error\":\"Internal Se"
     },
     "vivo": {
       "name": "vivo",
@@ -2952,6 +2952,20 @@
       "url": "http://careers.tencent.com/jobdesc.html?postId=2015970222820970496",
       "source": "careers.tencent.com",
       "description": "岗位职责：\n1.对腾讯会议客户服务满意度、工单闭环率核心指标负责，建立服务质量监控机制，持续优化服务流程，提升整体服务体验与口碑；\r\n2.快速响应客户及合作伙伴在腾讯会议使用过程中遇到的各类技术难题，提供专业、高效的技术指导与定制化解决方案，确保问题闭环时效与解决质量，最大化客户满意度；\r\n3.编写并更新并维护技术文档（含操作手册、常见问题库、故障排查指南等），为客户及合作伙伴提供清晰的自助指导，助力其高效理解与使用产品；\r\n4.与渠道合作伙伴保持紧密联动，制定针对性技术培训计划并落地实施，定期开展技术交流与答疑，提升渠道伙伴的独立技术支持能力与服务水平；\r\n5.参与项目交付全流程，牵头制定详细的交付计划与风险预案，协调内外部资源，推动项目按时间节点、质量标准顺利落地，确保客户交付体验；\r\n6.基于客户反馈、项目交付经验及业务发展需求，持续迭代完善交付流程、技术支持规范，提升项目交付效率与服务标准化水平。\n\n任职要求：\n1.计算机科学与技术、通信工程等相关专业本科及以上学历；\r\n2.2年以上云会议、音视频通信或相关领域技术支持/客户服务工作经验，熟悉行业技术架构与业务场景；\r\n3.熟悉云会议 / 传统音视频产品，具备扎实的计算机网络（TCP/IP、音视频传输协议等）及网络安全基础知识；\r\n4.具备较强的技术问题定位、分析与解决能力，能独立处理复杂场景下的技术故障；\r\n5.执行力强、自我驱动，具备良好的跨部门沟通协调能力与团队协作意识；\r\n6.表达清晰、逻辑严谨，能高效输出技术文档与培训内容，服务意识突出。"
+    },
+    {
+      "id": "tencent_2016029430715142144",
+      "company": "tencent",
+      "company_name": "腾讯",
+      "title": "腾讯会议-iOS客户端开发工程师",
+      "category": "技术",
+      "category_raw": "技术",
+      "location": "深圳",
+      "department": "CSIG · 腾讯会议",
+      "posted_date": "2026-04-27",
+      "url": "http://careers.tencent.com/jobdesc.html?postId=2016029430715142144",
+      "source": "careers.tencent.com",
+      "description": "岗位职责：\n1.负责跨平台C++逻辑层与iOS原生上层（Swift/Objective-C）的框架开发，参与开发与维护MVVM应用框架、容器框架、路由框架等核心基础设施；\r\n2.负责移动端及跨平台层的整体架构设计，参与大型复杂业务需求的技术方案评审与架构设计，并承担核心模块的开发与落地；\r\n3.参与研发和维护自研跨平台UI框架与组件库（理念类似Flutter/Compose），持续修复缺陷，优化开发体验与渲染性能，支撑业务快速迭代。\n\n任职要求：\n1.本科及以上学历，计算机、软件工程或相关专业；\r\n2.3年及以上iOS平台开发经验，精通Swift/Objective-C，深入理解iOS运行时机制、内部原理、内存管理及多线程编程；\r\n3.了解客户端架构设计，有复杂应用框架（如MVVM、模块化、路由）的设计和落地经验，对代码结构、可维护性有极高要求；\r\n4.具备优秀的分析解决问题能力、沟通协作能力和技术文档撰写能力，能主导技术方案并推动团队落地。"
     },
     {
       "id": "tencent_1946501112794292224",
@@ -12766,20 +12780,6 @@
       "url": "http://careers.tencent.com/jobdesc.html?postId=2042255086771666944",
       "source": "careers.tencent.com",
       "description": "岗位职责：\n1.设计并制作主角 / 怪物 / NPC 的高品质关键帧与动捕动画；\n2.负责引擎内实现：状态机、混合树、Motion Matching、Root Motion、IK 适配不平坦地形与攀爬等场景；\n3.主导或参与动捕拍摄与数据清理，确保动捕数据符合玩法与视觉要求；\n4.与设计、程序、技术动画协作，解决动画与玩法冲突、性能瓶颈，制定动画资产规范与验收标准；\n5.实现次级运动：布料、头发、裙摆、武器摆动等物理驱动效果，提升动画真实感；\n6.开发与维护动画蓝图、状态机、蒙太奇，解决动画与玩法交互的技术问题。\n\n任职要求：\n1.作品集突出玩法动画与动捕 / 关键帧能力，有已发行 3A 项目上线经验；\r\n2.精通 Maya、MotionBuilder，熟练掌握 UE5 动画系统与动画蓝图；\r\n3.深刻理解人体 / 生物运动规律、节奏与重量感，能适配写实 / 风格化等多种风格；\r\n4.有 3A 项目技术动画经验，能独立解决绑定、IK、物理模拟等复杂问题；\r\n5.具备良好的沟通与项目管理能力，能在迭代中快速响应反馈。"
-    },
-    {
-      "id": "tencent_1995437047728459776",
-      "company": "tencent",
-      "company_name": "腾讯",
-      "title": "在研剑来IP单机游戏-战斗策划-新星引力计划",
-      "category": "产品",
-      "category_raw": "产品",
-      "location": "深圳",
-      "department": "IEG · JGame-端游",
-      "posted_date": "2026-04-09",
-      "url": "http://careers.tencent.com/jobdesc.html?postId=1995437047728459776",
-      "source": "careers.tencent.com",
-      "description": "岗位职责：\n1.负责在研剑来IP单机游戏的战斗系统设计，包括但不限于战斗机制、技能系统、敌人AI等；\r\n2.根据游戏世界观和剧情需求，设计具有创新性和可玩性的战斗体验；\r\n3.与项目团队紧密合作，确保战斗设计与其他游戏系统的无缝衔接；\r\n4.对现有战斗系统进行持续优化，提升游戏平衡性和玩家体验。\n\n任职要求：\n1.具备2年以上游戏战斗策划经验，有成功上线项目者优先；\n2.熟悉游戏设计原理，对战斗系统有深入理解；\n3.具备良好的逻辑思维能力和创新意识，能够独立完成战斗设计工作；\n4.良好的沟通能力和团队协作精神，能够承受项目压力。"
     },
     {
       "id": "tencent_2008430629229842432",
