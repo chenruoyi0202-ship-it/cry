@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install requests markdown
 
       - name: Scrape jobs
         id: scrape
@@ -90,6 +90,15 @@ jobs:
             echo "Created tracking issue #$ISSUE_NUMBER"
           fi
           gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$DIGEST"
+
+      - name: Send digest by email (QQ SMTP)
+        if: steps.scrape.outcome == 'success'
+        env:
+          EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
+          EMAIL_FROM: 512773445@qq.com
+          EMAIL_TO: 512773445@qq.com
+        run: |
+          python scraper/send_digest_email.py
 
       - name: Push digest to WeChat (pushplus)
         if: steps.scrape.outcome == 'success'
