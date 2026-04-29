@@ -1591,7 +1591,97 @@ function loadData() {
     });
 }
 
-$('refreshBtn').addEventListener('click', loadData);
+// ── Refresh button (smart) ────────────────────────────────────────────
+// Without sync unlocked: just re-fetch data/jobs.json (same as before).
+// With sync unlocked: trigger the GitHub Actions workflow to re-scrape,
+// then poll for the bot's refresh commit, then re-fetch the JSON. So the
+// user actually sees fresh data instead of the same cached file.
+const REFRESH_WORKFLOW_FILE = 'jobs.yml';
+const REFRESH_REPO = 'chenruoyi0202-ship-it/cry';
+const REFRESH_POLL_MS = 5000;
+const REFRESH_TIMEOUT_MS = 180000;  // 3 min — workflow takes ~60-120s
+
+async function _refreshTriggerScrape() {
+  const cfg = state.syncConfig;
+  if (!cfg) return false;
+  // Note baseline last_updated so we can detect when the bot has pushed.
+  const baselineUpdated = (state.data && state.data.last_updated) || 0;
+  // Dispatch the workflow.
+  const dispatchResp = await fetch(
+    `https://api.github.com/repos/${REFRESH_REPO}/actions/workflows/${REFRESH_WORKFLOW_FILE}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${cfg.token}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ref: 'main', inputs: { company: 'all' } }),
+    },
+  );
+  if (!dispatchResp.ok && dispatchResp.status !== 204) {
+    throw new Error(`dispatch failed ${dispatchResp.status}`);
+  }
+  // Poll the data file until last_updated > baseline OR we time out.
+  const deadline = Date.now() + REFRESH_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, REFRESH_POLL_MS));
+    try {
+      const r = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+      if (r.ok) {
+        const data = await r.json();
+        const ts = data.last_updated || 0;
+        if (ts > baselineUpdated) {
+          // Found fresh data — apply it.
+          state.data = data;
+          if (!Array.isArray(state.data.jobs)) state.data.jobs = [];
+          if (!state.data.companies) state.data.companies = {};
+          if (!Array.isArray(state.data.categories)) state.data.categories = [];
+          buildHaystacks(state.data.jobs);
+          scoreAllJobs();
+          renderHeader();
+          renderStaleBanner();
+          renderCategoryChips();
+          renderChips();
+          renderFavCount();
+          renderJobs();
+          return true;
+        }
+      }
+    } catch (e) { /* keep polling */ }
+  }
+  return false;
+}
+
+$('refreshBtn').addEventListener('click', async () => {
+  const btn = $('refreshBtn');
+  btn.classList.add('spin');
+  btn.disabled = true;
+  if (state.syncConfig) {
+    // Unlocked: trigger a fresh scrape and wait for the bot to commit.
+    try {
+      const got = await _refreshTriggerScrape();
+      if (!got) {
+        // Workflow didn't produce a new commit in time — fall back to
+        // showing whatever the static file currently has.
+        await loadData();
+        console.warn('refresh: workflow timeout, showing cached data');
+      }
+    } catch (e) {
+      console.error('refresh: dispatch failed', e);
+      await loadData();   // fall back to plain reload
+    } finally {
+      btn.classList.remove('spin');
+      btn.disabled = false;
+    }
+  } else {
+    // Not unlocked: just re-fetch the static file (no extra power).
+    await loadData();
+    btn.classList.remove('spin');
+    btn.disabled = false;
+  }
+});
 
 // ── Bootstrap ─────────────────────────────────────────────────────────
 loadFromUrl();
