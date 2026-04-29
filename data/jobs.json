@@ -1,18 +1,18 @@
 {
-  "last_updated": 1777471131684,
-  "last_updated_iso": "2026-04-29T21:58:51+08:00",
+  "last_updated": 1777471893327,
+  "last_updated_iso": "2026-04-29T22:11:33+08:00",
   "companies": {
     "tencent": {
       "count": 1489,
       "status": "ok",
-      "fetched_at": 1777470862526,
+      "fetched_at": 1777471626469,
       "error": null,
       "name": "腾讯"
     },
     "bytedance": {
       "count": 621,
       "status": "ok",
-      "fetched_at": 1777470935090,
+      "fetched_at": 1777471691788,
       "error": null,
       "name": "字节跳动"
     },
@@ -63,7 +63,7 @@
       "count": 0,
       "status": "error",
       "fetched_at": 0,
-      "error": "all oppo endpoints rejected our payload :: https://careers.oppo.com/api/web/job/list: oppo probe https://careers.oppo.com/api/web/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/web/job/list :: {\"timestamp\":\"2026-04-29T13:58:29.551+00:00\",\"status\":500,\"error\":\"Internal Se"
+      "error": "all oppo endpoints rejected our payload :: https://careers.oppo.com/api/web/job/list: oppo probe https://careers.oppo.com/api/web/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/web/job/list :: {\"timestamp\":\"2026-04-29T14:11:12.328+00:00\",\"status\":500,\"error\":\"Internal Se"
     },
     "vivo": {
       "name": "vivo",
