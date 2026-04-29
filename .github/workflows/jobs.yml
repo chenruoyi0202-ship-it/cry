@@ -91,11 +91,10 @@ jobs:
           fi
           gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$DIGEST"
 
-      - name: Send digest by email (QQ SMTP)
+      - name: Send digest by email (Resend)
         if: steps.scrape.outcome == 'success'
         env:
-          EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
-          EMAIL_FROM: 512773445@qq.com
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_TO: 512773445@qq.com
         run: |
           python scraper/send_digest_email.py
