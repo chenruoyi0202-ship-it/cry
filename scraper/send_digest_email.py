@@ -2,14 +2,19 @@
 
 The user wanted email delivery without owning a sending mailbox. Resend
 exposes a shared "onboarding@resend.dev" from-address that works
-without domain verification — sign up at resend.com, grab an API key,
-and you can send to any inbox immediately.
+without domain verification.
 
-Skips silently when RESEND_API_KEY is not set so the rest of the
-workflow keeps working.
+Auth: prefer the RESEND_API_KEY env var (set as a GitHub secret) when
+present; otherwise fall back to a copy of the key encrypted in source
+under the same 020608 password used for the page sync token. Same
+security posture as the embedded PAT — anyone reading the public repo
+can decrypt, but Resend free tier is rate-limited and trivial to
+rotate if abused.
 """
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
 import sys
@@ -23,12 +28,38 @@ DEFAULT_FROM = 'Jobs Digest <onboarding@resend.dev>'
 DEFAULT_TO = '512773445@qq.com'
 DEFAULT_DIGEST = 'data/jobs_digest_latest.md'
 
+# AES-256-GCM(PBKDF2-SHA256(password='020608', salt='cry-jobs-resend-v1', iter=100000))
+# encryption of the Resend API key. Output is base64(iv||ciphertext||tag).
+EMBEDDED_KEY_CIPHERTEXT_B64 = (
+    'zoH6+4IP1VnmpoJAn6+PNX5wLpndw69r6eXSaFNBONqpMpM8bdVeUlq6o7TQ8ZzMQemzdstQRxIcH3qDPI91Hw=='
+)
+EMBEDDED_KEY_PASSWORD = b'020608'
+EMBEDDED_KEY_SALT = b'cry-jobs-resend-v1'
+EMBEDDED_KEY_ITERATIONS = 100000
+
+
+def _decrypt_embedded_key() -> str:
+    """Decrypt the in-source Resend key (pycryptodome AES-GCM)."""
+    from Crypto.Cipher import AES
+    derived = hashlib.pbkdf2_hmac(
+        'sha256', EMBEDDED_KEY_PASSWORD, EMBEDDED_KEY_SALT,
+        EMBEDDED_KEY_ITERATIONS, dklen=32,
+    )
+    blob = base64.b64decode(EMBEDDED_KEY_CIPHERTEXT_B64)
+    iv, ciphertext, tag = blob[:12], blob[12:-16], blob[-16:]
+    cipher = AES.new(derived, AES.MODE_GCM, nonce=iv)
+    return cipher.decrypt_and_verify(ciphertext, tag).decode('ascii')
+
 
 def main() -> int:
     api_key = os.environ.get('RESEND_API_KEY', '').strip()
     if not api_key:
-        print('RESEND_API_KEY not set, skip email')
-        return 0
+        try:
+            api_key = _decrypt_embedded_key()
+            print('using embedded resend key')
+        except Exception as e:
+            print(f'no resend key (env empty, embed decrypt failed: {e}), skip email')
+            return 0
 
     email_to = os.environ.get('EMAIL_TO', DEFAULT_TO)
     email_from = os.environ.get('EMAIL_FROM', DEFAULT_FROM)

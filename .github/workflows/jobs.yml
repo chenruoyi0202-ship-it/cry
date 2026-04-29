@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests markdown
+          pip install requests markdown pycryptodome
 
       - name: Scrape jobs
         id: scrape
