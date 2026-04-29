@@ -146,20 +146,26 @@ def update_seen(seen: dict, current_jobs: list[dict], today: str) -> set[str]:
     return new_today
 
 
+FALLBACK_WINDOW_DAYS = 7
+FALLBACK_MAX_ITEMS = 15
+
+
+def _job_age_days(job: dict, today: datetime) -> int:
+    """How many days ago was this job posted? Returns 9999 on bad/missing date."""
+    raw = job.get('posted_date') or ''
+    try:
+        d = datetime.strptime(raw, '%Y-%m-%d').replace(tzinfo=CST)
+        return (today - d).days
+    except Exception:
+        return 9999
+
+
 def build_digest_md(today: str, scored_new: list[tuple[dict, float, list]],
-                    total_jobs: int) -> str:
+                    total_jobs: int,
+                    scored_fallback: list[tuple[dict, float, list]] | None = None
+                    ) -> str:
     lines = []
     lines.append(f'# 深圳大厂招聘 · 今日新增 ({today})')
-    lines.append('')
-    if not scored_new:
-        lines.append('今日没有新增职位。')
-        return '\n'.join(lines)
-    high = [t for t in scored_new if t[1] >= 0.40]
-    mid = [t for t in scored_new if 0.20 <= t[1] < 0.40]
-    low = [t for t in scored_new if t[1] < 0.20]
-    lines.append(f'📊 共 **{len(scored_new)}** 个新增 · '
-                 f'高匹配 **{len(high)}** · 中匹配 **{len(mid)}** · 低匹配 **{len(low)}**')
-    lines.append(f'· 当前在招总数 {total_jobs}')
     lines.append('')
 
     def render_section(title, group, max_items):
@@ -180,11 +186,30 @@ def build_digest_md(today: str, scored_new: list[tuple[dict, float, list]],
                 lines.append(f'  🎯 {theme_str}')
             lines.append('')
 
-    render_section('🔥 高匹配 (≥40%)', high, 30)
-    render_section('✨ 中匹配 (20-40%)', mid, 20)
-    if low and len(high) + len(mid) < 5:
-        # Only show low-match section when there's very little high/mid signal
-        render_section('一般匹配 (<20%)', low, 10)
+    if scored_new:
+        high = [t for t in scored_new if t[1] >= 0.40]
+        mid = [t for t in scored_new if 0.20 <= t[1] < 0.40]
+        low = [t for t in scored_new if t[1] < 0.20]
+        lines.append(f'📊 共 **{len(scored_new)}** 个新增 · '
+                     f'高匹配 **{len(high)}** · 中匹配 **{len(mid)}** · 低匹配 **{len(low)}**')
+        lines.append(f'· 当前在招总数 {total_jobs}')
+        lines.append('')
+        render_section('🔥 高匹配 (≥40%)', high, 30)
+        render_section('✨ 中匹配 (20-40%)', mid, 20)
+        if low and len(high) + len(mid) < 5:
+            render_section('一般匹配 (<20%)', low, 10)
+    elif scored_fallback:
+        # Today had no genuinely new postings — show the highest-matching
+        # postings from the recent window so the digest still has signal.
+        lines.append(
+            f'📭 今日没有新增职位。下面是最近 {FALLBACK_WINDOW_DAYS} 天内 '
+            f'按匹配度排序的 Top {FALLBACK_MAX_ITEMS}（当前在招总数 {total_jobs}）。'
+        )
+        lines.append('')
+        render_section(f'⭐ 最近 {FALLBACK_WINDOW_DAYS} 天高匹配',
+                       scored_fallback, FALLBACK_MAX_ITEMS)
+    else:
+        lines.append('今日没有新增职位，最近 7 天也暂无可推荐内容。')
 
     lines.append('---')
     lines.append('')
@@ -197,13 +222,13 @@ def main() -> int:
     if not os.path.exists(JOBS_PATH):
         print(f'no jobs.json at {JOBS_PATH}', file=sys.stderr)
         return 1
-    today = datetime.now(CST).strftime('%Y-%m-%d')
+    now = datetime.now(CST)
+    today = now.strftime('%Y-%m-%d')
     data = json.load(open(JOBS_PATH, encoding='utf-8'))
     jobs = data.get('jobs') or []
 
     seen = load_seen()
     new_ids = update_seen(seen, jobs, today)
-    # Always rewrite the seen catalog so newly-added entries persist.
     with open(SEEN_PATH, 'w', encoding='utf-8') as f:
         json.dump(seen, f, ensure_ascii=False, indent=2)
     print(f'seen catalog: {len(seen)} jobs ({len(new_ids)} new today)')
@@ -212,13 +237,23 @@ def main() -> int:
     scored = [(j, *score(j)) for j in new_jobs]
     scored.sort(key=lambda t: t[1], reverse=True)
 
-    md = build_digest_md(today, scored, len(jobs))
+    fallback = None
+    if not scored:
+        # Fallback: highest-scoring jobs from the last 7 days, excluding any
+        # so-low-they're-noise. Keeps the daily email useful even on a quiet day.
+        candidates = [j for j in jobs
+                      if _job_age_days(j, now) <= FALLBACK_WINDOW_DAYS]
+        scored_recent = [(j, *score(j)) for j in candidates]
+        scored_recent = [t for t in scored_recent if t[1] >= 0.10]
+        scored_recent.sort(key=lambda t: t[1], reverse=True)
+        fallback = scored_recent[:FALLBACK_MAX_ITEMS]
+        print(f'fallback: {len(fallback)} recent (≤{FALLBACK_WINDOW_DAYS}d) jobs')
+
+    md = build_digest_md(today, scored, len(jobs), scored_fallback=fallback)
     out_path = os.path.join(DATA_DIR, f'jobs_digest_{today}.md')
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write(md)
     print(f'wrote {out_path} ({len(md)} chars)')
-    # Also write a fixed-name "latest" so the workflow can grab it without
-    # parameterizing on date.
     with open(os.path.join(DATA_DIR, 'jobs_digest_latest.md'), 'w', encoding='utf-8') as f:
         f.write(md)
     return 0
