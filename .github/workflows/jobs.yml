@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths:
       - 'scraper/scrape_jobs.py'
+      - 'scraper/generate_jobs_digest.py'
+      - 'scraper/send_digest_email.py'
       - 'scraper/jobs_sources/**'
       - '.github/workflows/jobs.yml'
   workflow_dispatch:
