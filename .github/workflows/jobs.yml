@@ -119,3 +119,4 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"token\":\"${PUSHPLUS_TOKEN}\",\"title\":\"${TITLE}\",\"content\":$(echo "$CONTENT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'),\"template\":\"markdown\"}" \
             | python3 -c "import sys,json; r=json.load(sys.stdin); print(f'pushplus: {r.get(\"msg\",\"unknown\")}')"
+# manual trigger: 2026-04-30 morning catch-up
