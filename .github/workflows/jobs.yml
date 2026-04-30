@@ -4,6 +4,8 @@ on:
   schedule:
     # 每日 09:00 北京时间 (UTC 01:00)
     - cron: '0 1 * * *'
+    # 备份：09:30 北京时间 (UTC 01:30)。若 09:00 已通知则跳过发送步骤。
+    - cron: '30 1 * * *'
   push:
     branches: [main]
     paths:
@@ -58,24 +60,23 @@ jobs:
         run: |
           python scraper/generate_jobs_digest.py
 
-      - name: Commit and push
+      - name: Compute notification dedup state
         if: steps.scrape.outcome == 'success'
+        id: notify_state
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/jobs.json data/jobs_seen.json data/jobs_digest_*.md 2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "No jobs.json changes to commit"
+          TODAY_BJT=$(TZ=Asia/Shanghai date +"%Y-%m-%d")
+          MARKER="data/jobs_notified_date.txt"
+          if [ -f "$MARKER" ] && [ "$(cat $MARKER | tr -d '[:space:]')" = "$TODAY_BJT" ]; then
+            echo "already notified today ($TODAY_BJT BJT), notification steps will skip"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
           else
-            DATE=$(date -u +"%Y-%m-%d")
-            git commit -m "chore(jobs): refresh 深圳大厂招聘 ($DATE)"
-            for i in 1 2 3 4; do
-              git push && break || sleep $((2 ** i))
-            done
+            echo "not notified yet today ($TODAY_BJT BJT), will run notification steps"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
+          echo "today_bjt=$TODAY_BJT" >> "$GITHUB_OUTPUT"
 
       - name: Post digest to tracking issue
-        if: steps.scrape.outcome == 'success'
+        if: steps.scrape.outcome == 'success' && steps.notify_state.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -94,7 +95,7 @@ jobs:
           gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$DIGEST"
 
       - name: Send digest by email (Resend)
-        if: steps.scrape.outcome == 'success'
+        if: steps.scrape.outcome == 'success' && steps.notify_state.outputs.skip != 'true'
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_TO: 512773445@qq.com
@@ -102,7 +103,7 @@ jobs:
           python scraper/send_digest_email.py
 
       - name: Push digest to WeChat (pushplus)
-        if: steps.scrape.outcome == 'success'
+        if: steps.scrape.outcome == 'success' && steps.notify_state.outputs.skip != 'true'
         env:
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: |
@@ -119,4 +120,30 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"token\":\"${PUSHPLUS_TOKEN}\",\"title\":\"${TITLE}\",\"content\":$(echo "$CONTENT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'),\"template\":\"markdown\"}" \
             | python3 -c "import sys,json; r=json.load(sys.stdin); print(f'pushplus: {r.get(\"msg\",\"unknown\")}')"
+
+      - name: Stamp notified marker
+        # The Python email script writes the marker on success, but we also
+        # stamp it here so dedup holds even if email is skipped (no key) yet
+        # the issue/WeChat steps did fire. Belt + suspenders.
+        if: steps.scrape.outcome == 'success' && steps.notify_state.outputs.skip != 'true'
+        run: |
+          mkdir -p data
+          echo "${{ steps.notify_state.outputs.today_bjt }}" > data/jobs_notified_date.txt
+          echo "stamped data/jobs_notified_date.txt = ${{ steps.notify_state.outputs.today_bjt }}"
+
+      - name: Commit and push
+        if: steps.scrape.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/jobs.json data/jobs_seen.json data/jobs_digest_*.md data/jobs_notified_date.txt 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No jobs.json changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "chore(jobs): refresh 深圳大厂招聘 ($DATE)"
+            for i in 1 2 3 4; do
+              git push && break || sleep $((2 ** i))
+            done
+          fi
 # manual trigger: 2026-04-30 morning catch-up

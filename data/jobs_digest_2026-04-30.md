@@ -1,55 +1,68 @@
 # 深圳大厂招聘 · 今日新增 (2026-04-30)
 
-📊 共 **11** 个新增 · 高匹配 **0** · 中匹配 **2** · 低匹配 **9**
-· 当前在招总数 2095
+📭 今日没有新增职位。下面是最近 7 天内 按匹配度排序的 Top 15（当前在招总数 2095）。
 
-## ✨ 中匹配 (20-40%)
+## ⭐ 最近 7 天高匹配
 
-**1. [多模态大模型算法专家-AI应用与创新](https://jobs.bytedance.com/experienced/position/7341332351337629990/detail)** · `36%`
-  字节跳动 · 🗓 2024-03-01
-  🎯 AI / 大模型 · 产品 PM · 内容/知识 (核心)
+**1. [智能体-用户增长运营经理-CodeBuddy/WorkBuddy](http://careers.tencent.com/jobdesc.html?postId=1981555753542111232)** · `76%`
+  腾讯 · CSIG · 腾讯云 · 🗓 2026-04-30
+  🎯 运营 (核心) · 社区/创作者 (核心) · 开发者生态
 
-**2. [Agent技术专家-剪映CapCut（深圳/广州）](https://jobs.bytedance.com/experienced/position/7601085104937011461/detail)** · `29%`
-  字节跳动 · 🗓 2026-01-30
-  🎯 内容/知识 (核心) · AI / 大模型 · 产品 PM
+**2. [腾讯云数据智能平台-资深产品经理-出海方向](http://careers.tencent.com/jobdesc.html?postId=2047219127009050624)** · `71%`
+  腾讯 · CSIG · 腾讯云-大数据 · 🗓 2026-04-24
+  🎯 内容/知识 (核心) · 社区/创作者 (核心) · 开发者生态
 
-## 一般匹配 (<20%)
+**3. [《火影忍者》手游-内容生态运营](http://careers.tencent.com/jobdesc.html?postId=1980835562680111104)** · `65%`
+  腾讯 · IEG · 火影忍者-手游 · 🗓 2026-04-29
+  🎯 平台/知识运营 · 运营 (核心) · 内容/知识 (核心)
 
-**1. [渠道业务-行业研究与分析](http://careers.tencent.com/jobdesc.html?postId=2049085813249179648)** · `17%`
-  腾讯 · IEG · 渠道业务合作 · 🗓 2026-04-29
-  🎯 AI / 大模型 · 内容/知识 (核心)
+**4. [ima产品-知识号负责人(北京/深圳)](http://careers.tencent.com/jobdesc.html?postId=2030974661344526336)** · `61%`
+  腾讯 · CSIG · IMA · 🗓 2026-04-30
+  🎯 平台/知识运营 · 内容/知识 (核心) · 社区/创作者 (核心)
 
-**2. [招聘运营专家-Data（深圳/上海/北京）](https://jobs.bytedance.com/experienced/position/7589478582620604725/detail)** · `17%`
-  字节跳动 · 🗓 2025-12-30
-  🎯 数据驱动 / 增长 · 产品 PM · 运营 (核心)
+**5. [天美游戏社区产品策划-AI创新方向](http://careers.tencent.com/jobdesc.html?postId=2037421573023100928)** · `58%`
+  腾讯 · IEG · 公共 · 🗓 2026-04-28
+  🎯 平台/知识运营 · 内容/知识 (核心) · AI / 大模型
 
-**3. [服务端研发工程师-抖音](https://jobs.bytedance.com/experienced/position/7290442583548709176/detail)** · `17%`
-  字节跳动 · 🗓 2023-10-16
-  🎯 开发者生态 · 内容/知识 (核心) · 产品 PM
+**6. [证券-高级产品经理-用户产品策划/运营方向](http://careers.tencent.com/jobdesc.html?postId=1990311305084559360)** · `55%`
+  腾讯 · CDG · 自选股 · 🗓 2026-04-29
+  🎯 内容/知识 (核心) · 社区/创作者 (核心) · 产品 PM
 
-**4. [渠道业务-项目管理(技术向)](http://careers.tencent.com/jobdesc.html?postId=2049085808673189888)** · `15%`
-  腾讯 · IEG · 渠道业务合作 · 🗓 2026-04-29
-  🎯 AI / 大模型 · 产品 PM
+**7. [《三角洲行动》-UGC 策划-产品方向](http://careers.tencent.com/jobdesc.html?postId=2048957608915795968)** · `54%`
+  腾讯 · IEG · ProjectD-手游APP · 🗓 2026-04-28
+  🎯 平台/知识运营 · 运营 (核心) · 内容/知识 (核心)
 
-**5. [招聘专家（AI方向）-剪映CapCut（北京/深圳）](https://jobs.bytedance.com/experienced/position/7563945159752091957/detail)** · `14%`
-  字节跳动 · 🗓 2025-10-22
-  🎯 AI / 大模型 · 数据驱动 / 增长
+**8. [轻游梦工坊-高级玩法策划（AI游戏生成）](http://careers.tencent.com/jobdesc.html?postId=2016352990373498880)** · `52%`
+  腾讯 · IEG · IEG微信游戏合作中心-小游戏合集 · 🗓 2026-04-28
+  🎯 内容/知识 (核心) · 开发者生态 · AI / 大模型
 
-**6. [渠道业务-综合项目管理](http://careers.tencent.com/jobdesc.html?postId=2049085811282051072)** · `10%`
-  腾讯 · IEG · 渠道业务合作 · 🗓 2026-04-29
-  🎯 AI / 大模型
+**9. [腾讯游戏生态管理合作平台-生态合作运营](http://careers.tencent.com/jobdesc.html?postId=1983095058873864192)** · `52%`
+  腾讯 · IEG · 游可爱平台运营 · 🗓 2026-04-29
+  🎯 平台/知识运营 · 运营 (核心) · 内容/知识 (核心)
 
-**7. [ASIC设计工程师（RDMA方向）-Data](https://jobs.bytedance.com/experienced/position/7472816929540245778/detail)** · `8%`
-  字节跳动 · 🗓 2025-02-18
-  🎯 AI / 大模型 · 产品 PM
+**10. [微信支付-商户管理运营经理](http://careers.tencent.com/jobdesc.html?postId=2034818977519267840)** · `51%`
+  腾讯 · WXG · 微信支付 · 🗓 2026-04-28
+  🎯 平台/知识运营 · AI / 大模型 · 产品 PM
 
-**8. [测试开发工程师-安全专项](https://jobs.bytedance.com/experienced/position/6893474189782075656/detail)** · `7%`
-  字节跳动 · 🗓 2020-11-10
-  🎯 内容/知识 (核心)
+**11. [QQ-#创作者运营#](http://careers.tencent.com/jobdesc.html?postId=2028745250746560512)** · `51%`
+  腾讯 · PCG · QQ · 🗓 2026-04-28
+  🎯 内容/知识 (核心) · 社区/创作者 (核心) · 产品 PM
 
-**9. [IoT结构件资源开发经理-Data](https://jobs.bytedance.com/experienced/position/7362102336691194139/detail)** · `1%`
-  字节跳动 · 🗓 2024-04-26
-  🎯 产品 PM · 数据驱动 / 增长
+**12. [AI 原生产品经理-游戏方向](http://careers.tencent.com/jobdesc.html?postId=2049014853242355712)** · `50%`
+  腾讯 · IEG · ProjectD-手游APP · 🗓 2026-04-28
+  🎯 开发者生态 · AI / 大模型 · 产品 PM
+
+**13. [天美游戏社区产品策划-FPS品类](http://careers.tencent.com/jobdesc.html?postId=2037421575640346624)** · `49%`
+  腾讯 · IEG · 公共 · 🗓 2026-04-28
+  🎯 平台/知识运营 · 社区/创作者 (核心) · AI / 大模型
+
+**14. [在研UE5射击游戏-游戏内容生态经理](http://careers.tencent.com/jobdesc.html?postId=1991800952625192960)** · `48%`
+  腾讯 · IEG · NBN-手游APP · 🗓 2026-04-29
+  🎯 平台/知识运营 · 运营 (核心) · 内容/知识 (核心)
+
+**15. [智能体-内容创作运营经理-WorkBuddy](http://careers.tencent.com/jobdesc.html?postId=2033172783344812032)** · `47%`
+  腾讯 · CSIG · 腾讯云-Codebuddy · 🗓 2026-04-30
+  🎯 内容/知识 (核心) · 开发者生态 · AI / 大模型
 
 ---
 

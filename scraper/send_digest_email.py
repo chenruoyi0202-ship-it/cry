@@ -14,6 +14,7 @@ rotate if abused.
 from __future__ import annotations
 
 import base64
+import datetime
 import hashlib
 import json
 import os
@@ -27,6 +28,25 @@ RESEND_URL = 'https://api.resend.com/emails'
 DEFAULT_FROM = 'Jobs Digest <onboarding@resend.dev>'
 DEFAULT_TO = '512773445@qq.com'
 DEFAULT_DIGEST = 'data/jobs_digest_latest.md'
+NOTIFIED_MARKER = 'data/jobs_notified_date.txt'
+
+
+def _today_bjt() -> str:
+    return (datetime.datetime.utcnow() + datetime.timedelta(hours=8)).strftime('%Y-%m-%d')
+
+
+def _already_notified_today() -> bool:
+    try:
+        with open(NOTIFIED_MARKER, encoding='utf-8') as f:
+            return f.read().strip() == _today_bjt()
+    except FileNotFoundError:
+        return False
+
+
+def _mark_notified_today() -> None:
+    os.makedirs(os.path.dirname(NOTIFIED_MARKER), exist_ok=True)
+    with open(NOTIFIED_MARKER, 'w', encoding='utf-8') as f:
+        f.write(_today_bjt())
 
 # AES-256-GCM(PBKDF2-SHA256(password='020608', salt='cry-jobs-resend-v1', iter=100000))
 # encryption of the Resend API key. Output is base64(iv||ciphertext||tag).
@@ -52,6 +72,10 @@ def _decrypt_embedded_key() -> str:
 
 
 def main() -> int:
+    if _already_notified_today():
+        print(f'already sent today ({_today_bjt()} BJT), skip email')
+        return 0
+
     api_key = os.environ.get('RESEND_API_KEY', '').strip()
     if not api_key:
         try:
@@ -110,6 +134,7 @@ def main() -> int:
         return 2
     body = resp.json()
     print(f'email sent to {email_to} (id={body.get("id")})')
+    _mark_notified_today()
     return 0
 
 

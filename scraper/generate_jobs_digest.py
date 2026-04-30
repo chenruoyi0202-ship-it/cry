@@ -149,6 +149,14 @@ def update_seen(seen: dict, current_jobs: list[dict], today: str) -> set[str]:
 FALLBACK_WINDOW_DAYS = 7
 FALLBACK_MAX_ITEMS = 15
 
+# Categories the user is not in — drop from the digest entirely. The user
+# wants 平台/运营/内容/社区 roles, not engineering or design positions.
+EXCLUDED_CATEGORIES = {'技术', '设计'}
+
+
+def _is_excluded(job: dict) -> bool:
+    return (job.get('category') or '').strip() in EXCLUDED_CATEGORIES
+
 
 def _job_age_days(job: dict, today: datetime) -> int:
     """How many days ago was this job posted? Returns 9999 on bad/missing date."""
@@ -233,7 +241,11 @@ def main() -> int:
         json.dump(seen, f, ensure_ascii=False, indent=2)
     print(f'seen catalog: {len(seen)} jobs ({len(new_ids)} new today)')
 
-    new_jobs = [j for j in jobs if j.get('id') in new_ids]
+    new_jobs = [j for j in jobs if j.get('id') in new_ids and not _is_excluded(j)]
+    excluded_new = sum(1 for j in jobs
+                       if j.get('id') in new_ids and _is_excluded(j))
+    if excluded_new:
+        print(f'filtered out {excluded_new} new {EXCLUDED_CATEGORIES} jobs')
     scored = [(j, *score(j)) for j in new_jobs]
     scored.sort(key=lambda t: t[1], reverse=True)
 
@@ -242,7 +254,8 @@ def main() -> int:
         # Fallback: highest-scoring jobs from the last 7 days, excluding any
         # so-low-they're-noise. Keeps the daily email useful even on a quiet day.
         candidates = [j for j in jobs
-                      if _job_age_days(j, now) <= FALLBACK_WINDOW_DAYS]
+                      if _job_age_days(j, now) <= FALLBACK_WINDOW_DAYS
+                      and not _is_excluded(j)]
         scored_recent = [(j, *score(j)) for j in candidates]
         scored_recent = [t for t in scored_recent if t[1] >= 0.10]
         scored_recent.sort(key=lambda t: t[1], reverse=True)
