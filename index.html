@@ -2560,7 +2560,7 @@
         async function syncPlans(forceUpload) {
             if (!isLoggedIn()) return;
             const token = getGHToken();
-            const password = token; // use token as encryption key
+            const password = token;
 
             setSyncStatus('syncing');
 
@@ -2568,32 +2568,42 @@
                 let gistId = getGistId();
                 let finalPlans;
                 const deletedNames = getDeletedNames();
+                const lastSync = localStorage.getItem('cry_last_sync') || '';
 
                 if (forceUpload) {
-                    // After delete/save: local is the source of truth, push directly
                     finalPlans = getPlans();
                 } else {
-                    // Normal sync: merge local + cloud
+                    // Normal sync: cloud is source of truth
                     let cloudPlans = {};
                     if (gistId) {
                         const content = await gistGet(token, gistId);
                         if (content) {
                             try { cloudPlans = await decryptData(content, password); }
-                            catch (e) { console.warn('Decrypt failed, password may differ:', e); }
+                            catch (e) { console.warn('Decrypt failed:', e); }
                         }
                     }
                     const localPlans = getPlans();
+                    // Start with cloud as base
                     finalPlans = { ...cloudPlans };
+                    // Only add local plans that are NEW (created after last sync)
                     for (const name in localPlans) {
                         const local = localPlans[name];
                         const cloud = finalPlans[name];
-                        if (!cloud || (local.savedAt && (!cloud.savedAt || local.savedAt > cloud.savedAt))) {
-                            finalPlans[name] = local;
+                        if (cloud) {
+                            // Both exist: keep newer
+                            if (local.savedAt && (!cloud.savedAt || local.savedAt > cloud.savedAt)) {
+                                finalPlans[name] = local;
+                            }
+                        } else {
+                            // Only in local: keep ONLY if created after last sync (genuinely new)
+                            if (local.savedAt && local.savedAt > lastSync) {
+                                finalPlans[name] = local;
+                            }
+                            // Otherwise: was deleted from cloud, don't re-add
                         }
                     }
-                    // Remove plans that were deleted locally (tombstones)
+                    // Also remove tombstoned plans
                     deletedNames.forEach(name => { delete finalPlans[name]; });
-                    // Save merged locally
                     localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(finalPlans));
                     refreshPlanSelect();
                 }
@@ -2607,7 +2617,8 @@
                     localStorage.setItem('cry_gist_id', gistId);
                 }
 
-                // Sync succeeded, clear tombstones
+                // Record sync time and clear tombstones
+                localStorage.setItem('cry_last_sync', new Date().toISOString());
                 clearDeletedNames();
                 setSyncStatus('synced');
             } catch (e) {
