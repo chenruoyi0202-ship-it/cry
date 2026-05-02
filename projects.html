@@ -171,6 +171,9 @@
   .card--currency::before{background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08),transparent 70%)}
   .card--currency:hover{box-shadow:0 8px 40px rgba(124,58,237,0.12),0 0 0 1px rgba(124,58,237,0.1)}
 
+  .card--review::before{background:radial-gradient(ellipse at 30% 20%,rgba(244,114,182,0.08),transparent 70%)}
+  .card--review:hover{box-shadow:0 8px 40px rgba(244,114,182,0.12),0 0 0 1px rgba(244,114,182,0.1)}
+
   /* Card icon */
   .card-icon{
     width:42px;height:42px;border-radius:11px;
@@ -307,7 +310,7 @@
 
     <!-- 投资 -->
     <section class="section section--invest">
-      <div class="section-title">投资 <span class="count">3</span></div>
+      <div class="section-title">投资 <span class="count">4</span></div>
       <div class="cards">
 
         <!-- 止盈计算推演 -->
@@ -330,6 +333,18 @@
           <div class="card-body">
             <div class="card-title">02680 创陞跟踪</div>
             <div class="card-desc">港股02680创陞控股分析追踪，记录盘中分析、重要事件与实时行情。</div>
+          </div>
+          <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
+
+        <!-- 02680 每日复盘 -->
+        <a class="card card--review" href="http://47.103.108.226:8888/02680/" target="_blank">
+          <div class="card-icon">
+            <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1f1424"/><rect x="11" y="9" width="26" height="30" rx="3" fill="none" stroke="#f472b6" stroke-width="2"/><path d="M16 18h16M16 24h16M16 30h10" stroke="#f9a8d4" stroke-width="1.6" stroke-linecap="round"/><circle cx="36" cy="14" r="4" fill="#ec4899"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-title">02680 每日复盘</div>
+            <div class="card-desc">港股 02680 创陞控股每日盘后复盘，记录走势、成交、关键事件与策略思考。</div>
           </div>
           <span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
         </a>
