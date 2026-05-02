@@ -2465,9 +2465,13 @@
 
         // --- Auth UI ---
         function showAuth() {
-            document.getElementById('authError').textContent = '';
-            document.getElementById('authToken').value = getGHToken() || '';
-            document.getElementById('authOverlay').classList.add('visible');
+            const overlay = document.getElementById('authOverlay');
+            if (!overlay) return;
+            overlay.classList.add('visible');
+            const errEl = document.getElementById('authError');
+            if (errEl) errEl.textContent = '';
+            const tokenEl = document.getElementById('authToken');
+            if (tokenEl) tokenEl.value = getGHToken() || '';
         }
         function hideAuth() {
             document.getElementById('authOverlay').classList.remove('visible');
