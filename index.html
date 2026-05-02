@@ -1087,6 +1087,76 @@
         }
         .toast button:hover { background: rgba(202,138,4,0.25); }
 
+        /* PIN Lock Screen */
+        .pin-lock {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: #050505;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
+        .pin-lock.unlocked { display: none; }
+        .pin-lock h2 {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 20px;
+            color: #F8FAFC;
+            letter-spacing: 6px;
+        }
+        .pin-dots {
+            display: flex;
+            gap: 14px;
+        }
+        .pin-dot {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            border: 2px solid rgba(202,138,4,0.4);
+            background: transparent;
+            transition: all 0.2s;
+        }
+        .pin-dot.filled {
+            background: #FBBF24;
+            border-color: #FBBF24;
+            box-shadow: 0 0 8px rgba(251,191,36,0.4);
+        }
+        .pin-dot.error {
+            border-color: #f44336;
+            animation: pinShake 0.4s;
+        }
+        .pin-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 72px);
+            gap: 12px;
+        }
+        .pin-key {
+            width: 72px; height: 56px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: #F8FAFC;
+            font-size: 22px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pin-key:hover { background: rgba(255,255,255,0.08); }
+        .pin-key:active { transform: scale(0.93); background: rgba(202,138,4,0.15); }
+        .pin-key-del { font-size: 16px; color: #94A3B8; }
+        .pin-key-empty { border: none; background: none; cursor: default; }
+        .pin-key-empty:hover { background: none; }
+        .pin-key-empty:active { transform: none; }
+        @keyframes pinShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
     </style>
 </head>
 <body>
@@ -1248,9 +1318,24 @@
         let records = [];
         let currentRtPrice = null;
 
-        // --- Currency (real-time via Yahoo Finance) ---
-        let FX_RATES = { HK: 0.89, US: 6.90 }; // fallback defaults
+        // --- Currency (real-time via Yahoo Finance, cached in localStorage) ---
+        const FX_CACHE_KEY = 'cry_fx_cache';
+        let FX_RATES = { HK: 0.89, US: 6.90 }; // hardcoded fallback if no cache
         let fxLoaded = false;
+        let fxCachedAt = null; // ISO timestamp of cached rates
+
+        // Load cached rates immediately on script parse
+        (function loadCachedFx() {
+            try {
+                const cache = JSON.parse(localStorage.getItem(FX_CACHE_KEY) || 'null');
+                if (cache && cache.HK && cache.US && cache.savedAt) {
+                    FX_RATES.HK = cache.HK;
+                    FX_RATES.US = cache.US;
+                    fxCachedAt = cache.savedAt;
+                    fxLoaded = true; // mark as loaded since we have real data
+                }
+            } catch {}
+        })();
 
         async function fetchFxRates() {
             const pairs = [
@@ -1262,6 +1347,7 @@
                 url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                 url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
             ];
+            const newRates = {};
             for (const pair of pairs) {
                 const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${pair.symbol}?interval=1d&range=1d`;
                 for (const proxy of proxies) {
@@ -1270,20 +1356,44 @@
                         if (!resp.ok) continue;
                         const data = await resp.json();
                         const price = data.chart.result[0].meta.regularMarketPrice;
-                        if (price) { FX_RATES[pair.key] = price; fxLoaded = true; break; }
+                        if (price) { newRates[pair.key] = price; break; }
                     } catch { continue; }
                 }
+            }
+            // Only update + cache if we got both rates fresh
+            if (newRates.HK && newRates.US) {
+                FX_RATES.HK = newRates.HK;
+                FX_RATES.US = newRates.US;
+                fxLoaded = true;
+                fxCachedAt = new Date().toISOString();
+                try {
+                    localStorage.setItem(FX_CACHE_KEY, JSON.stringify({
+                        HK: newRates.HK, US: newRates.US, savedAt: fxCachedAt
+                    }));
+                } catch {}
             }
             updateFxDisplay();
             calculate();
         }
 
+        function fmtCachedAge(iso) {
+            const ms = Date.now() - new Date(iso).getTime();
+            const min = Math.floor(ms / 60000);
+            if (min < 1) return '刚刚';
+            if (min < 60) return `${min}分钟前`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr}小时前`;
+            return `${Math.floor(hr / 24)}天前`;
+        }
+
         function updateFxDisplay() {
             const el = document.getElementById('fxStatus');
             if (!el) return;
-            if (fxLoaded) {
-                el.textContent = `汇率: 1 HKD = ${FX_RATES.HK.toFixed(4)} CNY | 1 USD = ${FX_RATES.US.toFixed(4)} CNY · ${new Date().toLocaleTimeString('zh-CN')}`;
-                el.style.color = '#4caf50';
+            const isFresh = fxCachedAt && (Date.now() - new Date(fxCachedAt).getTime() < 60000);
+            if (fxLoaded && fxCachedAt) {
+                const age = fmtCachedAge(fxCachedAt);
+                el.textContent = `汇率: 1 HKD = ${FX_RATES.HK.toFixed(4)} CNY · 1 USD = ${FX_RATES.US.toFixed(4)} CNY · ${age}`;
+                el.style.color = isFresh ? '#4caf50' : '#94A3B8';
             } else {
                 el.textContent = `汇率获取失败，使用默认值 (HKD ${FX_RATES.HK} / USD ${FX_RATES.US})`;
                 el.style.color = '#ffb74d';
@@ -3176,7 +3286,8 @@
             loadPresetPlans();
             refreshPlanSelect();
             refreshTagBar();
-            fetchFxRates();
+            updateFxDisplay(); // show cached rates immediately
+            fetchFxRates();    // then refresh in background
             updateUserBar();
             if (isLoggedIn()) {
                 syncPlans();
@@ -3188,31 +3299,30 @@
 <!-- Auth Modal (outside .card to avoid backdrop-filter breaking fixed positioning) -->
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-box">
-        <h2>云端同步设置</h2>
+        <h2>云端同步</h2>
         <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
-            使用 GitHub Gist 加密存储方案数据。<br>
-            需要一个 GitHub 个人令牌（PAT）和加密密码。
+            输入 PIN 码开启云端同步，方案数据加密存储。
         </p>
         <div class="field">
-            <label>GitHub Token</label>
-            <input type="password" id="authToken" placeholder="ghp_xxxx（需 gist 权限）">
-        </div>
-        <div class="field">
-            <label>加密密码</label>
-            <input type="password" id="authPassword" placeholder="用于加密数据（牢记，无法找回）">
+            <label>PIN 码</label>
+            <input type="password" inputmode="numeric" maxlength="6" id="authPin" placeholder="输入6位PIN码" style="text-align:center;font-size:24px;letter-spacing:12px;">
         </div>
         <div class="auth-error" id="authError"></div>
         <div class="auth-actions">
-            <button class="auth-btn-primary" id="authSubmitBtn" onclick="doAuth()">保存并同步</button>
+            <button class="auth-btn-primary" id="authSubmitBtn" onclick="doAuth()">同步</button>
         </div>
-        <details style="margin-top:14px;font-size:11px;color:#475569">
-            <summary style="cursor:pointer">如何获取 GitHub Token？</summary>
-            <ol style="padding-left:18px;line-height:1.8;margin-top:8px">
-                <li>打开 github.com → Settings → Developer settings</li>
-                <li>Personal access tokens → Tokens (classic)</li>
-                <li>Generate new token → 勾选 <b>gist</b> 权限</li>
-                <li>复制生成的 token 粘贴到上方</li>
-            </ol>
+        <details style="margin-top:14px;font-size:11px;color:#475569" id="tokenSection">
+            <summary style="cursor:pointer">GitHub Token（首次需要设置）</summary>
+            <div class="field" style="margin-top:8px">
+                <label>GitHub Token</label>
+                <input type="password" id="authToken" placeholder="ghp_xxxx（需 gist 权限）">
+            </div>
+            <p style="margin-top:6px;line-height:1.8">
+                1. github.com → Settings → Developer settings<br>
+                2. Personal access tokens → Tokens (classic)<br>
+                3. Generate new token → 勾选 <b>gist</b><br>
+                4. 粘贴到上方，只需设置一次
+            </p>
         </details>
         <div class="auth-close" onclick="hideAuth()">取消</div>
     </div>
