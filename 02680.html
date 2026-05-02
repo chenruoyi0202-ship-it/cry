@@ -417,14 +417,6 @@ body{
 </div>
 
 <!-- Tab 4: CCASS -->
-<<<<<<< HEAD
-<div class="tab-content" id="tabCCASS">
-  <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;opacity:.6">
-    港交所 CCASS 中央结算系统持股分布 · 每交易日 17:30 自动更新
-  </div>
-  <div id="ccassContent">
-    <div class="list-empty">加载中...</div>
-=======
 <div class="tab-content" id="tabCcass">
   <div style="display:flex;justify-content:flex-end;margin-bottom:8px;gap:8px">
     <a href="data/stock_02680_ccass_report.pdf" target="_blank" class="btn btn-secondary" style="font-size:11px;padding:4px 12px;text-decoration:none">下载 PDF</a>
@@ -432,7 +424,6 @@ body{
   </div>
   <div class="ccass-report" id="ccassReport">
     <div class="list-empty">加载 CCASS 报告中...</div>
->>>>>>> claude/stock-analysis-tracker-AjMEG
   </div>
 </div>
 
@@ -920,15 +911,9 @@ function switchTab(name) {
     document.querySelectorAll('.tab')[2].classList.add('active');
     renderTimeline();
   } else if (name === 'ccass') {
-<<<<<<< HEAD
-    document.getElementById('tabCCASS').classList.add('active');
-    document.querySelectorAll('.tab')[3].classList.add('active');
-    renderCCASS();
-=======
     document.getElementById('tabCcass').classList.add('active');
     document.querySelectorAll('.tab')[3].classList.add('active');
     loadCcassReport();
->>>>>>> claude/stock-analysis-tracker-AjMEG
   }
 }
 
