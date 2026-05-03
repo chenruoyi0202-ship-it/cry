@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>深圳大厂招聘 · 腾讯 · 字节跳动</title>
+<meta name="description" content="腾讯、字节跳动 深圳社招职位聚合，每日自动刷新。">
+<meta name="keywords" content="深圳招聘,腾讯招聘,字节跳动招聘,深圳大厂,社招">
+
+<!-- Open Graph (微信 / Facebook / LinkedIn) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="深圳大厂招聘">
+<meta property="og:description" content="腾讯 · 字节跳动 — 每日刷新">
+<meta property="og:url" content="https://chenruoyi0202-ship-it.github.io/cry/jobs.html">
+<meta property="og:image" content="https://chenruoyi0202-ship-it.github.io/cry/jobs-cover.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="深圳大厂招聘">
+<meta property="og:locale" content="zh_CN">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="深圳大厂招聘">
+<meta name="twitter:description" content="腾讯 · 字节跳动 — 每日刷新">
+<meta name="twitter:image" content="https://chenruoyi0202-ship-it.github.io/cry/jobs-cover.png?v=2">
+
+<!-- Favicons + PWA -->
+<link rel="icon" type="image/svg+xml" href="jobs-icon.svg">
+<link rel="icon" type="image/png" sizes="512x512" href="jobs-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="jobs-icon-180.png">
+<link rel="manifest" href="jobs-manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="深圳招聘">
+<script>
+  (function(){
+    var saved = localStorage.getItem('jobs.theme');
+    if (saved === 'light') document.documentElement.setAttribute('data-theme','light');
+    else if (saved === 'dark') document.documentElement.removeAttribute('data-theme');
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches)
+      document.documentElement.setAttribute('data-theme','light');
+  })();
+</script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#070710;--card:#0e0e16;--card-hover:#13131e;
+  --border:rgba(255,255,255,0.07);--border-strong:rgba(255,255,255,0.14);
+  --text:#e8eaf0;--text-muted:#8892b0;--text-dim:#5a6280;
+  --accent:#38bdf8;--accent2:#0ea5e9;--accent-glow:rgba(56,189,248,0.18);
+  --tencent:#1ec0e5;--bytedance:#a78bfa;--meituan:#facc15;
+  --dji:#f97316;--byd:#3b82f6;--jd:#dc2626;--netease:#10b981;
+  --xiaomi:#fb923c;--oppo:#22c55e;--vivo:#14b8a6;
+  --pill-bg:rgba(255,255,255,0.04);--pill-bg-active:rgba(56,189,248,0.18);
+  --warn:#f59e0b;--warn-bg:rgba(245,158,11,0.10);
+  --error:#ef4444;
+  --radius:14px;
+}
+[data-theme="light"]{
+  --bg:#f5f7fb;--card:#ffffff;--card-hover:#f0f4f9;
+  --border:rgba(15,23,42,0.08);--border-strong:rgba(15,23,42,0.16);
+  --text:#0f172a;--text-muted:#64748b;--text-dim:#94a3b8;
+  --accent:#0284c7;--accent2:#0369a1;--accent-glow:rgba(2,132,199,0.14);
+  --pill-bg:rgba(15,23,42,0.04);--pill-bg-active:rgba(2,132,199,0.14);
+  --warn:#b45309;--warn-bg:rgba(245,158,11,0.14);
+}
+html{-webkit-text-size-adjust:100%}
+/* During a theme swap, suppress every element's transition so the
+   thousands of rendered cards repaint instantly instead of each
+   animating its color/background change. */
+html.switching-theme,
+html.switching-theme *,
+html.switching-theme *::before,
+html.switching-theme *::after{
+  transition:none !important;
+  animation:none !important;
+}
+body{
+  font-family:'Figtree','Noto Sans SC',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+  transition:background .3s ease,color .3s ease;
+}
+
+.page{max-width:920px;margin:0 auto;padding:18px 14px 80px;position:relative}
+
+/* Header buttons */
+.header-actions{position:absolute;top:16px;right:14px;display:flex;gap:6px}
+.icon-btn{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .2s,color .2s;color:var(--text-muted);
+}
+.icon-btn:hover{background:var(--card-hover);color:var(--text)}
+.icon-btn:disabled{opacity:.55;cursor:not-allowed}
+.icon-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.icon-btn.spin svg{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Sync status dot on the cloud-sync icon */
+.icon-btn{position:relative}
+.sync-dot{
+  position:absolute;top:5px;right:5px;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--text-dim);
+  border:1.5px solid var(--card);
+}
+.sync-dot.ok{background:#22c55e}
+.sync-dot.syncing{background:#fbbf24;animation:pulse 1.2s ease-in-out infinite}
+.sync-dot.err{background:var(--error)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* Sync settings modal */
+.sync-help{
+  font-size:12px;color:var(--text-muted);line-height:1.6;
+  background:var(--pill-bg);border:1px solid var(--border);
+  padding:10px 12px;border-radius:8px;
+}
+.sync-help a{color:var(--accent);text-decoration:none}
+.sync-help a:hover{text-decoration:underline}
+.sync-help code{
+  font-size:11px;padding:1px 5px;border-radius:4px;
+  background:var(--pill-bg-active);color:var(--accent);
+  font-family:ui-monospace,monospace;
+}
+.sync-token-input{
+  width:100%;padding:10px 12px;border-radius:10px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  color:var(--text);font-size:16px;font-family:ui-monospace,monospace;
+  letter-spacing:.5px;
+}
+.sync-token-input:focus{outline:none;border-color:var(--accent);background:var(--card-hover)}
+.sync-status{font-size:12px;color:var(--text-muted);min-height:18px;line-height:1.5;
+  padding:6px 0;
+}
+.sync-status.ok{color:#22c55e}
+.sync-status.err{color:var(--error)}
+.sync-status.syncing{color:var(--accent)}
+.sync-foot{display:flex;flex-wrap:wrap;gap:8px}
+.sync-foot .btn{flex:1 1 auto;min-width:90px}
+
+/* Header */
+.header{padding:8px 4px 14px}
+.header-icon{font-size:30px;display:block;margin-bottom:4px}
+.header h1{
+  font-size:24px;font-weight:700;letter-spacing:-.4px;
+  background:linear-gradient(135deg,var(--text) 0%,var(--accent) 120%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.header .subtitle{margin-top:4px;font-size:13px;color:var(--text-muted);line-height:1.5}
+.header .meta{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--text-muted)}
+.header .meta .dot{color:var(--text-dim)}
+.header .meta strong{color:var(--text);font-weight:600}
+
+/* Stale banner */
+.banner{
+  margin:12px 0;padding:10px 12px;border-radius:10px;
+  background:var(--warn-bg);color:var(--warn);
+  font-size:12px;line-height:1.5;
+  border:1px solid rgba(245,158,11,0.25);
+  display:none;
+}
+.banner.show{display:block}
+
+/* Filters */
+.filters{
+  margin:14px 0 10px;padding:10px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  display:flex;flex-direction:column;gap:10px;
+}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.search-wrap{flex:1;min-width:200px;position:relative}
+.search-input{
+  width:100%;padding:9px 12px 9px 32px;border-radius:10px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  color:var(--text);font-size:16px;font-family:inherit;
+  transition:border-color .2s,background .2s;
+}
+.search-input:focus{outline:none;border-color:var(--accent);background:var(--card-hover)}
+.search-input::placeholder{color:var(--text-dim)}
+.search-icon{
+  position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;color:var(--text-dim);stroke:currentColor;fill:none;stroke-width:2;
+}
+.clear-btn{
+  padding:7px 12px;border-radius:10px;
+  background:transparent;border:1px solid var(--border);color:var(--text-muted);
+  font-size:12px;cursor:pointer;font-family:inherit;
+  transition:border-color .2s,color .2s;
+}
+.clear-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:999px;
+  background:var(--pill-bg);border:1px solid var(--border);
+  font-size:12px;color:var(--text-muted);
+  cursor:pointer;user-select:none;
+  transition:all .2s;
+  font-family:inherit;
+}
+.chip:hover{border-color:var(--border-strong);color:var(--text)}
+.chip.active{background:var(--pill-bg-active);border-color:var(--accent);color:var(--accent)}
+.chip .chip-count{
+  font-size:10px;padding:1px 5px;border-radius:8px;
+  background:rgba(255,255,255,0.06);color:var(--text-dim);
+  font-variant-numeric:tabular-nums;
+}
+[data-theme="light"] .chip .chip-count{background:rgba(15,23,42,0.05)}
+.chip.active .chip-count{background:rgba(56,189,248,0.22);color:var(--accent)}
+.chip.stale::after{content:'·陈旧';margin-left:2px;color:var(--warn);font-size:10px}
+
+/* Result summary */
+.result-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 4px;font-size:12px;color:var(--text-muted);
+  margin:6px 0 10px;
+}
+
+/* Job list */
+.jobs{display:flex;flex-direction:column;gap:8px}
+.job{
+  display:flex;flex-direction:column;gap:6px;
+  padding:12px 14px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  text-decoration:none;color:inherit;
+  transition:transform .15s ease,border-color .15s ease,background .15s ease;
+}
+.job:hover{transform:translateY(-1px);border-color:var(--accent);background:var(--card-hover)}
+.job-top{display:flex;align-items:flex-start;gap:8px}
+.job-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.job-tag{
+  font-size:11px;font-weight:500;padding:2px 8px;border-radius:6px;
+  flex-shrink:0;background:var(--pill-bg);color:var(--text-muted);
+  border:1px solid var(--border);
+}
+.job-pill{
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;
+  flex-shrink:0;font-variant-numeric:tabular-nums;
+}
+.job-pill.tencent{background:rgba(30,192,229,0.15);color:var(--tencent)}
+.job-pill.bytedance{background:rgba(167,139,250,0.18);color:var(--bytedance)}
+.job-pill.meituan{background:rgba(250,204,21,0.18);color:var(--meituan)}
+.job-pill.dji{background:rgba(249,115,22,0.15);color:var(--dji)}
+.job-pill.byd{background:rgba(59,130,246,0.15);color:var(--byd)}
+.job-pill.jd{background:rgba(220,38,38,0.15);color:var(--jd)}
+.job-pill.netease{background:rgba(16,185,129,0.15);color:var(--netease)}
+.job-pill.xiaomi{background:rgba(251,146,60,0.15);color:var(--xiaomi)}
+.job-pill.oppo{background:rgba(34,197,94,0.15);color:var(--oppo)}
+.job-pill.vivo{background:rgba(20,184,166,0.15);color:var(--vivo)}
+.job-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.35;flex:1;min-width:0;word-break:break-word}
+.job-arrow{color:var(--text-dim);font-size:13px;line-height:1;align-self:center}
+.job:hover .job-arrow{color:var(--accent)}
+
+/* Favorite star (per-card and per-modal) */
+.fav-btn{
+  width:28px;height:28px;border-radius:8px;
+  border:1px solid var(--border);background:var(--pill-bg);
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;color:var(--text-muted);
+  font-size:14px;line-height:1;font-family:inherit;
+  transition:color .2s,background .2s,border-color .2s,transform .2s;
+  align-self:center;
+}
+.fav-btn:hover{color:#fbbf24;border-color:rgba(251,191,36,0.3)}
+.fav-btn.is-fav{color:#f59e0b;border-color:rgba(251,191,36,0.45);background:rgba(251,191,36,0.10)}
+.fav-btn.is-fav:hover{transform:scale(1.05)}
+.fav-btn .fav-icon{display:block}
+
+.chip.chip-fav{border-color:var(--border)}
+.chip.chip-fav[data-active="true"]{background:rgba(251,191,36,0.15);color:#f59e0b;border-color:rgba(251,191,36,0.4)}
+.chip.chip-fav[data-active="true"] .chip-count{background:rgba(251,191,36,0.22);color:#f59e0b}
+.job-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text-muted)}
+.job-meta span{display:inline-flex;align-items:center;gap:3px}
+.job-meta .meta-dept{color:var(--text)}
+
+/* Match score pill on each job */
+.score-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;
+  flex-shrink:0;font-variant-numeric:tabular-nums;
+  background:rgba(56,189,248,0.10);color:var(--accent);
+  border:1px solid rgba(56,189,248,0.18);
+}
+.score-pill.s-high{background:rgba(34,197,94,0.14);color:#22c55e;border-color:rgba(34,197,94,0.22)}
+.score-pill.s-mid{background:rgba(56,189,248,0.12);color:var(--accent);border-color:rgba(56,189,248,0.20)}
+.score-pill.s-low{background:rgba(148,163,184,0.10);color:var(--text-muted);border-color:rgba(148,163,184,0.18)}
+
+/* Resume modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:200;display:none;align-items:flex-end;justify-content:center;
+  padding:0;
+}
+[data-theme="light"] .modal-overlay{background:rgba(15,23,42,0.45)}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px 16px 0 0;
+  width:100%;max-width:540px;max-height:88dvh;
+  display:flex;flex-direction:column;
+  animation:slideUp .25s cubic-bezier(.22,1,.36,1);
+}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--border);
+}
+.modal-title{font-size:15px;font-weight:600;color:var(--text)}
+.modal-close{
+  width:30px;height:30px;border-radius:8px;
+  background:var(--pill-bg);border:1px solid var(--border);color:var(--text-muted);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:18px;line-height:1;
+}
+.modal-close:hover{color:var(--text)}
+.modal-body{
+  padding:14px 16px;overflow-y:auto;flex:1;
+  display:flex;flex-direction:column;gap:10px;
+}
+/* Job detail modal */
+.job-detail-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:6px}
+.job-detail-title{font-size:17px;font-weight:700;color:var(--text);line-height:1.35;flex:1;min-width:0;word-break:break-word}
+.job-detail-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text-muted);margin:4px 0 12px}
+.job-detail-meta span{display:inline-flex;align-items:center;gap:3px}
+.job-detail-meta .meta-dept{color:var(--text)}
+/* New structured description: sections + numbered list */
+.jd-section{margin-top:18px}
+.jd-section:first-of-type{margin-top:8px}
+.jd-section-label{
+  font-size:13px;font-weight:700;color:var(--accent);
+  letter-spacing:.4px;margin-bottom:10px;
+  padding:4px 0 4px 10px;
+  border-left:3px solid var(--accent);
+  background:linear-gradient(90deg,var(--pill-bg-active),transparent 80%);
+  border-radius:2px;
+}
+.jd-list{
+  margin:0;padding:0 0 0 4px;list-style:none;
+  display:flex;flex-direction:column;gap:10px;
+  counter-reset:jd-counter;
+}
+.jd-list li{
+  font-size:14px;color:var(--text);line-height:1.7;
+  padding-left:26px;position:relative;
+  word-break:break-word;
+}
+.jd-list li::before{
+  counter-increment:jd-counter;
+  content:counter(jd-counter);
+  position:absolute;left:0;top:1px;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--pill-bg-active);color:var(--accent);
+  font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  font-variant-numeric:tabular-nums;
+}
+.jd-text{
+  font-size:14px;color:var(--text);line-height:1.7;
+  white-space:pre-wrap;word-break:break-word;
+}
+.theme-row + .jd-section{margin-top:8px}
+.theme-row h4{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.job-detail-empty{color:var(--text-muted);font-size:13px;padding:8px 0}
+.theme-row{margin:6px 0 14px}
+.theme-tags{display:flex;flex-wrap:wrap;gap:6px}
+.theme-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;padding:3px 9px;border-radius:999px;
+  background:var(--pill-bg-active);color:var(--accent);
+  border:1px solid rgba(56,189,248,0.25);
+}
+.theme-tag em{font-style:normal;color:var(--accent2);font-size:10px;letter-spacing:.5px}
+
+.modal-foot{
+  display:flex;gap:8px;padding:12px 16px;
+  border-top:1px solid var(--border);
+}
+.btn{
+  flex:1;padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;
+  font-family:inherit;cursor:pointer;border:1px solid var(--border);
+  background:var(--pill-bg);color:var(--text);
+  transition:background .2s,border-color .2s;
+}
+.btn:hover{background:var(--card-hover)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--text-muted)}
+
+/* Resume status row in filter bar */
+.resume-row{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:12px;color:var(--text-muted);
+}
+.resume-row .sort-toggle{
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+}
+.resume-row .sort-toggle select{
+  padding:5px 24px 5px 8px;border-radius:8px;
+  background:var(--pill-bg);border:1px solid var(--border);color:var(--text);
+  font-size:12px;font-family:inherit;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-muted) 50%),linear-gradient(135deg,var(--text-muted) 50%,transparent 50%);
+  background-position:calc(100% - 12px) 50%,calc(100% - 8px) 50%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+}
+
+.empty{
+  text-align:center;padding:40px 20px;color:var(--text-muted);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+}
+.empty-emoji{font-size:32px;display:block;margin-bottom:8px;opacity:.6}
+
+.footer{
+  margin-top:32px;padding:0 4px;font-size:11px;color:var(--text-dim);
+  text-align:center;line-height:1.6;
+}
+.footer a{color:var(--text-muted);text-decoration:none}
+.footer a:hover{color:var(--accent)}
+
+@media(min-width:640px){
+  .page{padding:24px 18px 80px}
+  .header h1{font-size:30px}
+  .header .subtitle{font-size:14px}
+  .filters{padding:14px;gap:12px}
+}
+@media(min-width:900px){
+  .page{padding:32px 24px 80px}
+  .header-icon{font-size:36px}
+  .header h1{font-size:34px}
+  .jobs{gap:10px}
+  .job{padding:14px 16px}
+  .job-title{font-size:16px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="header-actions">
+    <button class="icon-btn" id="syncBtn" title="云同步收藏" aria-label="云同步收藏">
+      <svg viewBox="0 0 24 24"><path d="M16 17v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h2M8 7v-3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="sync-dot" id="syncDot" aria-hidden="true"></span>
+    </button>
+    <button class="icon-btn" id="refreshBtn" title="刷新数据" aria-label="刷新数据">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3.5-7.1M21 4v5h-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="icon-btn" id="themeBtn" title="切换主题" aria-label="切换主题">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
+  </div>
+
+  <header class="header">
+    <span class="header-icon">🏢</span>
+    <h1>深圳大厂招聘</h1>
+    <p class="subtitle">腾讯 · 字节跳动 — 每日自动刷新</p>
+    <div class="meta" id="meta">
+      <span id="metaUpdated">加载中…</span>
+      <span class="dot">·</span>
+      <span>共 <strong id="metaCount">0</strong> 个职位</span>
+    </div>
+  </header>
+
+  <div class="banner" id="staleBanner"></div>
+
+  <div class="filters">
+    <div class="filter-row">
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input class="search-input" id="searchInput" type="search" placeholder="搜索职位 / 部门，例如 后端 / 微信" autocomplete="off">
+      </div>
+      <button class="clear-btn" id="clearBtn">清除</button>
+    </div>
+    <div class="filter-row">
+      <div class="chips" id="companyChips"></div>
+      <button class="chip chip-fav" id="favFilterBtn" type="button" data-active="false" aria-pressed="false">
+        <span aria-hidden="true">☆</span>
+        <span>仅看收藏</span>
+        <span class="chip-count" id="favCount">0</span>
+      </button>
+    </div>
+    <div class="filter-row">
+      <div class="chips" id="categoryChips"></div>
+    </div>
+    <div class="resume-row">
+      <span class="sort-toggle">
+        时间
+        <select id="dateFilter">
+          <option value="0">全部</option>
+          <option value="7">近 7 天</option>
+          <option value="30">近 30 天</option>
+          <option value="90">近 90 天</option>
+        </select>
+      </span>
+      <span class="sort-toggle">
+        匹配度
+        <select id="matchFilter">
+          <option value="0">全部</option>
+          <option value="0.05">≥ 5%</option>
+          <option value="0.10">≥ 10%</option>
+          <option value="0.20">≥ 20%</option>
+          <option value="0.30">≥ 30%</option>
+        </select>
+      </span>
+      <span class="sort-toggle" id="sortToggle">
+        排序
+        <select id="sortSelect">
+          <option value="match">按匹配度</option>
+          <option value="date">按发布日期</option>
+        </select>
+      </span>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="syncModal" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title" id="syncModalTitle">☁️ 解锁云同步</span>
+        <button class="modal-close" id="syncModalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="sync-help">
+          输入访问密码即可解锁多设备收藏同步。Token 用 AES 加密内嵌在页面，
+          只有输入正确密码才能解出。本地缓存后无需重复输入。
+        </div>
+        <input class="sync-token-input" id="syncPasswordInput" type="password"
+          inputmode="numeric" placeholder="访问密码" autocomplete="off"
+          spellcheck="false" maxlength="32">
+        <div class="sync-status" id="syncStatus">输入密码以解锁</div>
+      </div>
+      <div class="modal-foot sync-foot">
+        <button class="btn btn-ghost" id="syncClearBtn" type="button">清除本机缓存</button>
+        <button class="btn btn-primary" id="syncUnlockBtn" type="button">解锁</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="jobModal" role="dialog" aria-modal="true" aria-labelledby="jobModalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title" id="jobModalTitle">职位详情</span>
+        <button class="modal-close" id="jobModalClose" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body" id="jobModalBody"></div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="jobModalCloseBtn" type="button">关闭</button>
+        <a class="btn btn-primary" id="jobModalGo" target="_blank" rel="noopener">查看原网页 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-bar">
+    <span id="resultSummary">显示 0 / 0 个职位</span>
+    <span id="lastSync"></span>
+  </div>
+
+  <div class="jobs" id="jobsList"></div>
+  <div class="empty" id="emptyState" style="display:none">
+    <span class="empty-emoji">🔍</span>
+    <div>没有匹配的职位</div>
+    <div style="margin-top:6px;font-size:12px">尝试调整搜索词或筛选条件</div>
+  </div>
+
+  <div class="footer">
+    数据来源 ·
+    <a href="https://careers.tencent.com" target="_blank" rel="noopener">careers.tencent.com</a> ·
+    <a href="https://jobs.bytedance.com" target="_blank" rel="noopener">jobs.bytedance.com</a><br>
+    <span style="opacity:.7">每日 09:00 北京时间自动同步 · 仅供个人参考</span>
+  </div>
+</div>
+
+<script>
+const DATA_URL = 'data/jobs.json';
+const COMPANY_ORDER = ['tencent', 'bytedance', 'meituan', 'dji', 'byd',
+                       'jd', 'netease', 'xiaomi', 'oppo', 'vivo'];
+const COMPANY_DEFAULTS = {
+  tencent:   { name: '腾讯' },
+  bytedance: { name: '字节跳动' },
+  meituan:   { name: '美团' },
+  dji:       { name: '大疆' },
+  byd:       { name: '比亚迪' },
+  jd:        { name: '京东' },
+  netease:   { name: '网易' },
+  xiaomi:    { name: '小米' },
+  oppo:      { name: 'OPPO' },
+  vivo:      { name: 'vivo' },
+};
+
+function _loadFavorites() {
+  try {
+    const raw = localStorage.getItem('jobs.favorites');
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch (e) { return new Set(); }
+}
+
+const state = {
+  data: null,
+  filters: {
+    q: '',
+    companies: new Set(),  // empty = all
+    categories: new Set(), // empty = all
+    sinceDays: 0,          // 0 = all time; 7/30/90 = filter recent
+    minScore: 0,           // 0..1, hide jobs below this match score
+    favoritesOnly: false,  // toggled via the chip-fav button
+  },
+  scores: null,         // Map<jobId, 0..1>
+  matchedThemes: null,  // Map<jobId, [{id, name, hits, contrib}]>
+  sortMode: localStorage.getItem('jobs.sortMode') || 'match', // 'match' | 'date'
+  favorites: _loadFavorites(),  // Set<jobId>
+  favLastUpdated: parseInt(localStorage.getItem('jobs.favorites.lastUpdated') || '0', 10),
+  syncConfig: null,  // {token, owner}; populated from localStorage on init
+};
+
+function _saveFavorites(touchTimestamp = true) {
+  localStorage.setItem('jobs.favorites', JSON.stringify([...state.favorites]));
+  if (touchTimestamp) {
+    const now = Date.now();
+    state.favLastUpdated = now;
+    localStorage.setItem('jobs.favorites.lastUpdated', String(now));
+  }
+}
+function isFavorite(id) { return state.favorites.has(id); }
+function toggleFavorite(id) {
+  if (state.favorites.has(id)) state.favorites.delete(id);
+  else state.favorites.add(id);
+  _saveFavorites(true);
+  renderFavCount();
+  // Debounced background push to cloud, if configured.
+  if (state.syncConfig) schedulePush();
+}
+
+// ── Cloud sync (password-gated, embedded-token) ──────────────────────
+// The owner's GitHub PAT is AES-GCM encrypted with a 6-digit page
+// password and embedded in the page source. Visitors enter the password
+// once per device → token decrypts → caches in localStorage → sync runs.
+// Cross-device "near real-time": fast 5s polling using the file blob's
+// sha as an ETag-equivalent (only re-fetch+apply if sha changes) plus
+// immediate push (500ms debounce) on every favorite toggle.
+//
+// Threat model: a 6-digit numeric password + public ciphertext can be
+// brute-forced in minutes on a GPU. The owner accepts this risk for
+// convenience; the embedded token has only `repo` scope and lives in a
+// site that's effectively private-by-obscurity. Rotate the token if
+// the page is shared with anyone untrusted.
+
+const SYNC_REPO_NAME = 'cry-data';
+const SYNC_DATA_PATH = 'data/jobs-favorites.json';
+const SYNC_PUSH_DEBOUNCE_MS = 500;
+const SYNC_POLL_INTERVAL_MS = 5000;
+// PBKDF2 params + ciphertext baked at build-time. To re-encrypt with a
+// new token, regenerate via the same scheme: AES-256-GCM, key from
+// PBKDF2-SHA256(password, salt, 100000, 32). Output is base64(iv ||
+// ciphertext || gcmtag). Salt is plain ASCII for ease of inspection.
+const SYNC_TOKEN_CIPHERTEXT = '/jE5cyRAaDowXEwz8AJcyBeVb2m8f9VhBQGNGGifPwiY1k9PiHk8m87CwCfSPeiZeZp9lTBuVF1VZftvut7V8xVOQnw=';
+const SYNC_PBKDF2_SALT = 'cry-jobs-sync-v1';
+const SYNC_PBKDF2_ITERATIONS = 100000;
+
+let _pushTimer = null;
+let _pollTimer = null;
+let _fileSha = null;
+let _lastSeenCloudSha = null;
+let _suppressPushUntil = 0;
+
+function _loadSyncConfig() {
+  try {
+    const raw = localStorage.getItem('jobs.sync.config');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function _saveSyncConfig(cfg) {
+  if (cfg) localStorage.setItem('jobs.sync.config', JSON.stringify(cfg));
+  else localStorage.removeItem('jobs.sync.config');
+  state.syncConfig = cfg;
+}
+
+function _setSyncStatus(text, kind) {
+  const status = $('syncStatus');
+  if (status) {
+    status.textContent = text;
+    status.className = 'sync-status' + (kind ? ' ' + kind : '');
+  }
+  const dot = $('syncDot');
+  if (dot) dot.className = 'sync-dot' + (kind ? ' ' + kind : '');
+}
+
+// AES-GCM(PBKDF2(password)) decrypt of the embedded token.
+async function _decryptToken(password) {
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const aesKey = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: enc.encode(SYNC_PBKDF2_SALT),
+      iterations: SYNC_PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false, ['decrypt']);
+  const blob = Uint8Array.from(atob(SYNC_TOKEN_CIPHERTEXT), c => c.charCodeAt(0));
+  const iv = blob.slice(0, 12);
+  const body = blob.slice(12);
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, body);
+  return new TextDecoder().decode(plain);
+}
+
+async function _ghFetch(path, opts = {}) {
+  const cfg = state.syncConfig;
+  if (!cfg) throw new Error('未解锁同步');
+  const headers = Object.assign({
+    'Authorization': `token ${cfg.token}`,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }, opts.headers || {});
+  const url = path.startsWith('http') ? path : `https://api.github.com${path}`;
+  const resp = await fetch(url, { ...opts, headers });
+  if (resp.status === 401 || resp.status === 403) {
+    throw new Error(`token 鉴权失败 (${resp.status})`);
+  }
+  return resp;
+}
+
+async function _ensureSyncRepo() {
+  const cfg = state.syncConfig;
+  if (cfg && cfg.owner) return cfg;
+  const me = await (await _ghFetch('/user')).json();
+  const owner = me.login;
+  if (!owner) throw new Error('无法读取 GitHub 用户信息');
+  const repoCheck = await _ghFetch(`/repos/${owner}/${SYNC_REPO_NAME}`);
+  if (repoCheck.status === 404) {
+    const create = await _ghFetch('/user/repos', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: SYNC_REPO_NAME, private: true, auto_init: true,
+        description: '深圳大厂招聘 - 收藏数据私有同步仓库（自动创建）',
+      }),
+    });
+    if (!create.ok) throw new Error('创建私有仓库失败 ' + create.status);
+  } else if (!repoCheck.ok) {
+    throw new Error(`仓库检查失败 ${repoCheck.status}`);
+  }
+  const newCfg = { ...cfg, owner };
+  _saveSyncConfig(newCfg);
+  return newCfg;
+}
+
+async function _pullFromCloud() {
+  await _ensureSyncRepo();
+  const cfg = state.syncConfig;
+  const url = `/repos/${cfg.owner}/${SYNC_REPO_NAME}/contents/${SYNC_DATA_PATH}?t=${Date.now()}`;
+  const resp = await _ghFetch(url);
+  if (resp.status === 404) { _fileSha = null; return null; }
+  if (!resp.ok) throw new Error(`pull failed ${resp.status}`);
+  const meta = await resp.json();
+  _fileSha = meta.sha;
+  const decoded = decodeURIComponent(escape(atob(meta.content.replace(/\n/g, ''))));
+  return { sha: meta.sha, payload: JSON.parse(decoded) };
+}
+
+async function _pushToCloud(payload) {
+  await _ensureSyncRepo();
+  const cfg = state.syncConfig;
+  const json = JSON.stringify(payload, null, 2);
+  const content = btoa(unescape(encodeURIComponent(json)));
+  const body = {
+    message: `chore(jobs-favorites): sync ${payload.favorites.length} items`,
+    content,
+  };
+  if (_fileSha) body.sha = _fileSha;
+  let resp = await _ghFetch(
+    `/repos/${cfg.owner}/${SYNC_REPO_NAME}/contents/${SYNC_DATA_PATH}`,
+    { method: 'PUT', body: JSON.stringify(body) },
+  );
+  if (resp.status === 409 || (resp.status === 422 && _fileSha)) {
+    _fileSha = null;
+    await _pullFromCloud();
+    if (_fileSha) body.sha = _fileSha;
+    resp = await _ghFetch(
+      `/repos/${cfg.owner}/${SYNC_REPO_NAME}/contents/${SYNC_DATA_PATH}`,
+      { method: 'PUT', body: JSON.stringify(body) },
+    );
+  }
+  if (!resp.ok) {
+    const errBody = await resp.text();
+    throw new Error(`push failed ${resp.status}: ${errBody.slice(0, 120)}`);
+  }
+  const meta = await resp.json();
+  _fileSha = meta.content.sha;
+  _lastSeenCloudSha = _fileSha;  // we just wrote, so next poll skips
+}
+
+function _buildPayload() {
+  return {
+    favorites: [...state.favorites],
+    lastUpdated: state.favLastUpdated || Date.now(),
+    schemaVersion: 1,
+  };
+}
+
+function _applyCloudFavorites(cloud) {
+  const ids = Array.isArray(cloud.favorites) ? cloud.favorites : [];
+  state.favorites = new Set(ids);
+  state.favLastUpdated = cloud.lastUpdated || Date.now();
+  localStorage.setItem('jobs.favorites', JSON.stringify(ids));
+  localStorage.setItem('jobs.favorites.lastUpdated', String(state.favLastUpdated));
+  // Suppress auto-push briefly so we don't immediately re-push what we just pulled.
+  _suppressPushUntil = Date.now() + 1500;
+  renderFavCount();
+  if (state.data) renderJobs();
+}
+
+async function manualSync({ forcePull = false } = {}) {
+  if (!state.syncConfig) { _setSyncStatus('未解锁同步', ''); return; }
+  _setSyncStatus('同步中…', 'syncing');
+  try {
+    const cloud = await _pullFromCloud();
+    const localTs = state.favLastUpdated || 0;
+    const cloudPayload = cloud ? cloud.payload : null;
+    const cloudTs = cloudPayload && cloudPayload.lastUpdated ? cloudPayload.lastUpdated : 0;
+    if (forcePull) {
+      if (cloudPayload) _applyCloudFavorites(cloudPayload);
+    } else if (!cloudPayload) {
+      if (state.favorites.size > 0) await _pushToCloud(_buildPayload());
+    } else if (cloudTs > localTs) {
+      _applyCloudFavorites(cloudPayload);
+    } else if (localTs > cloudTs) {
+      await _pushToCloud(_buildPayload());
+    }
+    if (cloud) _lastSeenCloudSha = cloud.sha;
+    _setSyncStatus(
+      `已同步 · ${state.favorites.size} 个收藏 · ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}`,
+      'ok',
+    );
+    _ensurePolling();
+  } catch (e) {
+    console.error(e);
+    _setSyncStatus('同步失败：' + e.message, 'err');
+  }
+}
+
+// Fast polling. Pull cloud sha every SYNC_POLL_INTERVAL_MS, only apply
+// the body if the sha changed since we last saw it. Pause when the tab
+// is hidden so background tabs don't burn rate limit.
+async function _pollOnce() {
+  if (!state.syncConfig) return;
+  if (document.hidden) return;
+  try {
+    const cloud = await _pullFromCloud();
+    if (!cloud) return;
+    if (_lastSeenCloudSha === cloud.sha) return;
+    _lastSeenCloudSha = cloud.sha;
+    const cloudTs = cloud.payload.lastUpdated || 0;
+    const localTs = state.favLastUpdated || 0;
+    if (cloudTs > localTs) {
+      _applyCloudFavorites(cloud.payload);
+      _setSyncStatus(
+        `从云端更新 · ${state.favorites.size} 个收藏`,
+        'ok',
+      );
+    }
+  } catch (e) {
+    // Silent on background poll failures — surfaced in dot only.
+    console.warn('poll error:', e.message);
+  }
+}
+function _ensurePolling() {
+  if (_pollTimer) return;
+  _pollTimer = setInterval(_pollOnce, SYNC_POLL_INTERVAL_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.syncConfig) _pollOnce();
+  });
+}
+
+function schedulePush() {
+  if (Date.now() < _suppressPushUntil) return;
+  if (_pushTimer) clearTimeout(_pushTimer);
+  _setSyncStatus('待同步…', 'syncing');
+  _pushTimer = setTimeout(async () => {
+    _pushTimer = null;
+    try {
+      await _pushToCloud(_buildPayload());
+      _setSyncStatus(`已同步 · ${state.favorites.size} 个收藏`, 'ok');
+    } catch (e) {
+      console.error(e);
+      _setSyncStatus('推送失败：' + e.message, 'err');
+    }
+  }, SYNC_PUSH_DEBOUNCE_MS);
+}
+
+async function unlockSyncWithPassword(password) {
+  if (!password) throw new Error('请输入密码');
+  let token;
+  try {
+    token = await _decryptToken(password);
+  } catch (e) {
+    throw new Error('密码错误');
+  }
+  if (!token || !token.startsWith('ghp_')) throw new Error('解密失败');
+  _saveSyncConfig({ token });
+  await manualSync();
+}
+
+// Built-in resume profile. Rather than a flat keyword bag (where 后端 and
+// 运营 count equally), this is a set of weighted themes that capture what
+// the candidate actually does. Each job's match score is the weighted sum
+// of theme hits with diminishing returns past the threshold, minus a
+// penalty for jobs that strongly hit anti-themes (pure tech, art, sales,
+// hardware) which would be a bad fit for a content-ops profile.
+const RESUME_PROFILE = {
+  themes: [
+    // Three "core" themes the candidate explicitly wants prioritized:
+    // 知识平台、开发者生态、社区运营. Weighted at 1.00 so any single one
+    // dominates the score; threshold 2 means a theme that genuinely runs
+    // through the JD (not a one-off keyword) gets full credit.
+    // Platform / knowledge ops: this IS the candidate's specialty (ran
+    // 阿里云知识平台 + 腾讯游戏知识平台). Highest weight, very low
+    // threshold so any clear platform/knowledge signal pays off.
+    { id: 'platform', name: '平台/知识运营', weight: 1.00, threshold: 1,
+      keywords: ['平台运营', '平台运营经理', '平台产品', '平台策略',
+                 '平台增长', '平台生态', '知识运营', '知识平台', '内容平台',
+                 '开发者平台', '社区平台', '创作者平台', '中台运营',
+                 '生态运营', '生态产品'] },
+    // Note: bare "运营" is intentionally excluded — it would otherwise
+    // double-credit specific-game-ops roles ("玩法运营", "赛事运营") that
+    // we explicitly demote via the gameops anti-theme below.
+    { id: 'ops', name: '运营 (核心)', weight: 1.00, threshold: 3,
+      keywords: ['内容运营', '用户运营', '活动运营', '社区运营',
+                 '创作者运营', '圈层运营', '增长运营', '运营经理', '运营专家',
+                 '内容生态运营', '社群运营', '社区运营经理', '产品运营',
+                 '运营策略', '运营负责人', '生态运营', '私域运营'] },
+    { id: 'content', name: '内容/知识 (核心)', weight: 1.00, threshold: 2,
+      keywords: ['内容', '知识', '知识平台', '知识库', '知识社区', '知识中台',
+                 '知识管理', '知识产品', 'wiki', '文档', '文档运营', '专题',
+                 '内容社区', '内容生态', '内容生产', '内容分发', '内容策略',
+                 '内容矩阵', 'IP 打造', 'OGC', 'PGC', 'UGC', '编辑', '科普',
+                 '资料库'] },
+    { id: 'community', name: '社区/创作者 (核心)', weight: 1.00, threshold: 2,
+      keywords: ['社区', '社区运营', '社群', '社群运营', '创作者', '创作者运营',
+                 'KOL', '圈子', '圈层', '互动', '论坛', '社交', '粉丝',
+                 '活跃度', '认知度', '社区氛围', '社区营销', '社群活跃',
+                 '社区生态'] },
+    { id: 'devrel', name: '开发者生态', weight: 0.95, threshold: 1,
+      keywords: ['开发者', '开发者大会', '开发者生态', '开发者关系', '开发者社区',
+                 '开发者运营', 'devrel', 'developer relations', '开源',
+                 '技术布道', '技术社区', '技术内容', '技术运营', '技术传播',
+                 'tgdc', 'workshop', 'hackathon', '黑客松', '程序员',
+                 '技术大会', 'meetup'] },
+    { id: 'ai', name: 'AI / 大模型', weight: 0.75, threshold: 1,
+      keywords: ['AI', '大模型', 'LLM', 'Claude', 'AGI', 'GPT', 'AIGC',
+                 'AI Coding', '生成式', '智能化', 'AI 工具', '元宝'] },
+    { id: 'pm', name: '产品 PM', weight: 0.70, threshold: 2,
+      keywords: ['产品经理', '产品运营', '产品策略', '产品规划', '产品框架',
+                 '功能规划', '需求', '迭代', 'PRD', '商业化产品'] },
+    { id: 'data', name: '数据驱动 / 增长', weight: 0.55, threshold: 2,
+      keywords: ['数据分析', '数据驱动', '用户增长', '留存', 'KANO',
+                 '数据后台', '指标', 'A/B', '分层运营', '用户画像'] },
+    // Soft signal only — the candidate worked AT a game company on its
+    // knowledge platform, not on game ops itself. Specific-game-ops roles
+    // are pulled down via the 'gameops' anti-theme below.
+    { id: 'game', name: '游戏行业 (背景)', weight: 0.20, threshold: 1,
+      keywords: ['游戏开发', '游戏行业', '游戏知识', 'TGDC', '开发者大会'] },
+  ],
+  // Penalize jobs that are clearly engineering/art/hardware/sales/
+  // specific-game-ops — these match raw keywords ("数据"/"运营" appear
+  // in everything) but are bad fits for a platform/knowledge ops profile.
+  antiThemes: [
+    { id: 'gameops', name: '具体游戏运营', weight: 0.85, threshold: 1,
+      keywords: ['玩法运营', '关卡运营', '赛事运营', '公会运营',
+                 '电竞运营', '电竞赛事', '游戏发行', '游戏推广',
+                 '主播运营', '玩家运营', '内购运营', '付费运营',
+                 'mmo', 'moba', 'fps', '手游运营', '端游运营', '游戏运营',
+                 '英雄联盟', '王者荣耀', '和平精英', '金铲铲', '洛克王国',
+                 'nikke', '海岛奇兵', 'pubg', 'supercell'] },
+    { id: 'engineering', name: '纯研发岗', weight: 0.60, threshold: 2,
+      keywords: ['后端工程师', '前端工程师', '算法工程师', '架构师',
+                 '高级研发', 'devops', 'sre', '测试工程师', 'qa',
+                 '安全工程师', 'c++', 'java', 'golang', 'rust', 'kafka',
+                 'kubernetes', '编译器', '操作系统', '驱动开发',
+                 'ios 开发', 'android 开发', '客户端开发', '服务端开发'] },
+    { id: 'art', name: '美术/设计岗', weight: 0.50, threshold: 1,
+      keywords: ['美术', '原画', '建模', '动画师', 'pipeline ta',
+                 'ui 设计师', 'ux 设计师', '视觉设计师', '平面设计',
+                 '游戏美术', '场景美术', '角色美术', '特效美术'] },
+    { id: 'hardware', name: '硬件岗', weight: 0.55, threshold: 1,
+      keywords: ['硬件', '嵌入式', 'fpga', '芯片', '射频', '机械工程',
+                 '结构工程师', '电源工程师', '射频工程师'] },
+    { id: 'sales', name: '销售/BD/客户', weight: 0.30, threshold: 1,
+      keywords: ['销售', '商务拓展', '渠道经理', '客户经理', '大客户',
+                 '销售总监', '商务经理'] },
+  ],
+};
+// Sum used to normalize a positive score to 0..1.
+const _PROFILE_MAX_POS = RESUME_PROFILE.themes.reduce((s, t) => s + t.weight, 0);
+
+const $ = (id) => document.getElementById(id);
+
+function buildJobHaystack(job) {
+  return `${job.title || ''}\n${job.department || ''}\n${job.category_raw || ''}\n${job.description || ''}`;
+}
+
+// Pre-compute a lowercased haystack on each job once per data load. The
+// profile scorer reads from `_haystack`, so any indexOf check is just a
+// substring match (fast for ~2000 jobs).
+function buildHaystacks(jobs) {
+  for (const j of jobs) {
+    j._haystack = buildJobHaystack(j).toLowerCase();
+  }
+}
+
+// ── Profile-based scoring (default) ──
+// Each theme has a list of keywords and a `threshold` — once a job text
+// hits `threshold` distinct keywords from a theme, that theme is fully
+// credited. Hits below the threshold prorate linearly. This rewards
+// breadth (a job that spans operations + community + AI) over a single
+// keyword landing many times.
+function _countDistinctHits(text, keywords) {
+  let hits = 0;
+  for (const k of keywords) {
+    const needle = k.toLowerCase();
+    if (text.indexOf(needle) !== -1) hits++;
+  }
+  return hits;
+}
+function scoreJobByProfile(haystackLower) {
+  const matchedThemes = [];
+  let pos = 0;
+  for (const theme of RESUME_PROFILE.themes) {
+    const hits = _countDistinctHits(haystackLower, theme.keywords);
+    if (hits === 0) continue;
+    const norm = Math.min(1, hits / theme.threshold);
+    const contrib = theme.weight * norm;
+    pos += contrib;
+    matchedThemes.push({ id: theme.id, name: theme.name, hits, contrib });
+  }
+  let neg = 0;
+  for (const anti of RESUME_PROFILE.antiThemes) {
+    const hits = _countDistinctHits(haystackLower, anti.keywords);
+    if (hits === 0) continue;
+    const norm = Math.min(1, hits / anti.threshold);
+    neg += anti.weight * norm;
+  }
+  // Penalty multiplier is intentionally above 1.0 so a clear anti-theme
+  // hit (e.g. "硬件" or "玩法运营") materially demotes the job even when
+  // it picks up some incidental positive theme hits.
+  const raw = (pos - 1.0 * neg) / _PROFILE_MAX_POS;
+  const score = Math.max(0, Math.min(1, raw));
+  matchedThemes.sort((a, b) => b.contrib - a.contrib);
+  return { score, matchedThemes };
+}
+
+function scoreAllJobs() {
+  if (!state.data) {
+    state.scores = null;
+    state.matchedThemes = null;
+    return;
+  }
+  const scores = new Map();
+  const matchedThemes = new Map();
+  for (const j of state.data.jobs || []) {
+    const { score, matchedThemes: mt } = scoreJobByProfile(j._haystack || '');
+    scores.set(j.id, score);
+    matchedThemes.set(j.id, mt);
+  }
+  state.scores = scores;
+  state.matchedThemes = matchedThemes;
+}
+$('sortSelect').addEventListener('change', (e) => {
+  state.sortMode = e.target.value;
+  localStorage.setItem('jobs.sortMode', state.sortMode);
+  renderJobs();
+});
+
+// ── Job detail modal ──────────────────────────────────────────────────
+function _matchedThemesHtml(jobId) {
+  if (!state.matchedThemes) return '';
+  const arr = state.matchedThemes.get(jobId) || [];
+  if (!arr.length) return '';
+  const top = arr.slice(0, 5).map(m => {
+    const stars = '★'.repeat(Math.min(3, Math.max(1, Math.round(m.contrib * 3))));
+    return `<span class="theme-tag">${escapeHtml(m.name)} <em>${stars}</em></span>`;
+  }).join('');
+  return `<div class="theme-row"><h4>匹配主题</h4><div class="theme-tags">${top}</div></div>`;
+}
+
+// Parse the job description text into sections (岗位职责 / 任职要求 / etc.)
+// and within each section, peel off a numbered list ("1. … 2. …") so the
+// modal can render them with proper visual hierarchy instead of a wall of
+// pre-wrapped text.
+function _parseDescription(text) {
+  if (!text) return [];
+  // Section labels we recognize. Order doesn't matter — the regex finds
+  // them anywhere they appear.
+  const SECTION_LABELS = ['岗位职责', '任职要求', '职位描述', '工作职责',
+                          '工作要求', '任职资格', '加分项', '其他要求'];
+  const labelGroup = SECTION_LABELS.join('|');
+  const re = new RegExp(`(?:^|\\n)\\s*(${labelGroup})\\s*[:：]\\s*\\n?`, 'g');
+  const sections = [];
+  let lastIdx = 0;
+  let lastLabel = null;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (lastLabel != null || m.index > 0) {
+      const body = text.slice(lastIdx, m.index).trim();
+      if (lastLabel != null || body) {
+        sections.push({ label: lastLabel, body });
+      }
+    }
+    lastLabel = m[1];
+    lastIdx = m.index + m[0].length;
+  }
+  const trailingBody = text.slice(lastIdx).trim();
+  if (lastLabel != null || trailingBody) {
+    sections.push({ label: lastLabel, body: trailingBody });
+  }
+  return sections;
+}
+
+function _splitNumberedItems(text) {
+  // Split a body into numbered items if it looks like "1. … 2. …" (or
+  // "1、 …", "(1) …"). Otherwise return [text] as a single chunk.
+  const items = [];
+  const itemRe = /(?:^|\n)\s*(?:\(?\d{1,2}[.\)、]\s*)/;
+  if (!itemRe.test('\n' + text)) return [text];
+  let cur = '';
+  for (const line of text.split('\n')) {
+    if (/^\s*\(?\d{1,2}[.\)、]\s*/.test(line)) {
+      if (cur.trim()) items.push(cur.trim());
+      cur = line.replace(/^\s*\(?\d{1,2}[.\)、]\s*/, '');
+    } else {
+      cur += (cur ? '\n' : '') + line;
+    }
+  }
+  if (cur.trim()) items.push(cur.trim());
+  return items.length ? items : [text];
+}
+
+function _renderJobDescription(text) {
+  if (!text || !text.trim()) {
+    return '<div class="job-detail-empty">暂无描述 · 点击右下角查看原网页</div>';
+  }
+  const sections = _parseDescription(text);
+  if (!sections.length) {
+    return `<div class="jd-section"><div class="jd-text">${escapeHtml(text)}</div></div>`;
+  }
+  return sections.map(s => {
+    const items = _splitNumberedItems(s.body);
+    let inner = '';
+    if (items.length > 1) {
+      inner = `<ol class="jd-list">${
+        items.map(i => `<li>${escapeHtml(i)}</li>`).join('')
+      }</ol>`;
+    } else {
+      inner = `<div class="jd-text">${escapeHtml(s.body)}</div>`;
+    }
+    const heading = s.label
+      ? `<div class="jd-section-label">${escapeHtml(s.label)}</div>`
+      : '';
+    return `<div class="jd-section">${heading}${inner}</div>`;
+  }).join('');
+}
+
+function openJobModal(jobId) {
+  const job = (state.data.jobs || []).find(j => j.id === jobId);
+  if (!job) return;
+  $('jobModalTitle').textContent = job.company_name || job.company;
+  $('jobModalGo').href = job.url;
+  const score = state.scores ? state.scores.get(job.id) : null;
+  const scorePill = (score != null)
+    ? `<span class="score-pill ${score>=0.40?'s-high':score>=0.20?'s-mid':'s-low'}">${Math.round(score*100)}% 匹配</span>`
+    : '';
+  const fav = isFavorite(job.id);
+  const desc = (job.description || '').trim();
+  const body = `
+    <div class="job-detail-head">
+      ${scorePill}
+      <span class="job-pill ${escapeHtml(job.company)}">${escapeHtml(job.company_name || job.company)}</span>
+      <span class="job-detail-title">${escapeHtml(job.title)}</span>
+      <button class="fav-btn ${fav ? 'is-fav' : ''}" id="jobModalFav" data-fav="${escapeHtml(job.id)}" type="button" aria-label="收藏"><span class="fav-icon">${fav ? '★' : '☆'}</span></button>
+    </div>
+    <div class="job-detail-meta">
+      ${job.department ? `<span class="meta-dept">${escapeHtml(job.department)}</span>` : ''}
+      ${job.category && job.category !== '其他' ? `<span>${escapeHtml(job.category)}</span>` : ''}
+      ${job.location ? `<span>📍 ${escapeHtml(job.location)}</span>` : ''}
+      ${job.posted_date ? `<span>🗓 ${escapeHtml(job.posted_date)}</span>` : ''}
+    </div>
+    ${_matchedThemesHtml(job.id)}
+    ${_renderJobDescription(desc)}
+  `;
+  $('jobModalBody').innerHTML = body;
+  $('jobModalBody').scrollTop = 0;
+  $('jobModal').classList.add('show');
+  // The fav button is recreated each open — wire it up here.
+  const favBtn = $('jobModalFav');
+  if (favBtn) {
+    favBtn.addEventListener('click', () => {
+      const id = favBtn.dataset.fav;
+      toggleFavorite(id);
+      const nowFav = isFavorite(id);
+      favBtn.classList.toggle('is-fav', nowFav);
+      favBtn.querySelector('.fav-icon').textContent = nowFav ? '★' : '☆';
+      // Sync the matching card star without re-rendering everything.
+      const cardBtn = document.querySelector(`.fav-btn[data-fav="${CSS.escape(id)}"]:not(#jobModalFav)`);
+      if (cardBtn) {
+        cardBtn.classList.toggle('is-fav', nowFav);
+        cardBtn.querySelector('.fav-icon').textContent = nowFav ? '★' : '☆';
+        cardBtn.setAttribute('aria-pressed', String(nowFav));
+      }
+    });
+  }
+}
+function closeJobModal() { $('jobModal').classList.remove('show'); }
+$('jobModalClose').addEventListener('click', closeJobModal);
+$('jobModalCloseBtn').addEventListener('click', closeJobModal);
+$('jobModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeJobModal(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && $('jobModal').classList.contains('show')) closeJobModal();
+});
+
+$('dateFilter').addEventListener('change', (e) => {
+  state.filters.sinceDays = parseInt(e.target.value, 10) || 0;
+  renderJobs();
+});
+$('matchFilter').addEventListener('change', (e) => {
+  state.filters.minScore = parseFloat(e.target.value) || 0;
+  renderJobs();
+});
+
+// ── Favorites filter ──────────────────────────────────────────────────
+function renderFavCount() {
+  $('favCount').textContent = state.favorites.size;
+}
+// ── Sync modal control ────────────────────────────────────────────────
+function openSyncModal() {
+  $('syncPasswordInput').value = '';
+  if (state.syncConfig) {
+    _setSyncStatus(
+      `已解锁 · 仓库 ${state.syncConfig.owner || '?'}/${SYNC_REPO_NAME} · ${state.favorites.size} 个收藏`,
+      'ok',
+    );
+  } else {
+    _setSyncStatus('输入密码以解锁', '');
+  }
+  $('syncModal').classList.add('show');
+  setTimeout(() => $('syncPasswordInput').focus(), 50);
+}
+function closeSyncModal() { $('syncModal').classList.remove('show'); }
+$('syncBtn').addEventListener('click', openSyncModal);
+$('syncModalClose').addEventListener('click', closeSyncModal);
+$('syncModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSyncModal(); });
+$('syncUnlockBtn').addEventListener('click', async () => {
+  const pwd = $('syncPasswordInput').value.trim();
+  _setSyncStatus('解锁中…', 'syncing');
+  try {
+    await unlockSyncWithPassword(pwd);
+    setTimeout(closeSyncModal, 500);
+  } catch (e) {
+    _setSyncStatus(e.message, 'err');
+  }
+});
+$('syncPasswordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') $('syncUnlockBtn').click();
+});
+$('syncClearBtn').addEventListener('click', () => {
+  _saveSyncConfig(null);
+  if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  _setSyncStatus('已清除本机缓存（本地收藏保留，云端不变）', '');
+});
+
+$('favFilterBtn').addEventListener('click', () => {
+  const next = !state.filters.favoritesOnly;
+  state.filters.favoritesOnly = next;
+  $('favFilterBtn').dataset.active = String(next);
+  $('favFilterBtn').setAttribute('aria-pressed', String(next));
+  $('favFilterBtn').querySelector('span[aria-hidden]').textContent = next ? '★' : '☆';
+  renderJobs();
+});
+
+// Hide the match-score filter + sort dropdown when no resume is active so
+// the controls don't lie about what they do.
+// ── Theme ─────────────────────────────────────────────────────────────
+$('themeBtn').addEventListener('click', () => {
+  // Disable all transitions during the swap. Without this every one of
+  // the 2000+ rendered card elements animates its background/border
+  // change, which on phones takes several seconds to repaint.
+  const root = document.documentElement;
+  root.classList.add('switching-theme');
+  const isLight = root.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    root.removeAttribute('data-theme');
+    localStorage.setItem('jobs.theme', 'dark');
+  } else {
+    root.setAttribute('data-theme', 'light');
+    localStorage.setItem('jobs.theme', 'light');
+  }
+  // Re-enable transitions on the next paint, after the new colors have
+  // committed. Two requestAnimationFrames so the class lands in the
+  // following tick reliably across browsers.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    root.classList.remove('switching-theme');
+  }));
+});
+
+// ── URL state ─────────────────────────────────────────────────────────
+function loadFromUrl() {
+  const params = new URLSearchParams(location.search);
+  state.filters.q = params.get('q') || '';
+  const cats = (params.get('category') || '').split(',').filter(Boolean);
+  state.filters.categories = new Set(cats);
+  const cs = (params.get('company') || '').split(',').filter(Boolean);
+  state.filters.companies = new Set(cs);
+}
+function saveToUrl() {
+  const params = new URLSearchParams();
+  if (state.filters.q) params.set('q', state.filters.q);
+  if (state.filters.categories.size) params.set('category', [...state.filters.categories].join(','));
+  if (state.filters.companies.size) params.set('company', [...state.filters.companies].join(','));
+  const qs = params.toString();
+  history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+}
+
+// ── Format helpers ────────────────────────────────────────────────────
+function fmtRelative(ts) {
+  if (!ts) return '尚未同步';
+  const diff = Date.now() - ts;
+  if (diff < 60_000) return '刚刚';
+  if (diff < 3600_000) return Math.floor(diff / 60_000) + ' 分钟前';
+  if (diff < 86400_000) return Math.floor(diff / 3600_000) + ' 小时前';
+  const days = Math.floor(diff / 86400_000);
+  return days + ' 天前';
+}
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+function renderHeader() {
+  const data = state.data;
+  const total = (data.jobs || []).length;
+  $('metaCount').textContent = total;
+  if (data.last_updated) {
+    $('metaUpdated').textContent = '更新于 ' + fmtRelative(data.last_updated);
+  } else {
+    $('metaUpdated').textContent = data.last_updated_iso || '尚未首次同步';
+  }
+  $('lastSync').textContent = data.last_updated_iso && data.last_updated
+    ? data.last_updated_iso.replace('T', ' ').slice(0, 16) : '';
+}
+
+function renderStaleBanner() {
+  const cs = state.data.companies || {};
+  const issues = [];
+  for (const slug of COMPANY_ORDER) {
+    const c = cs[slug];
+    if (!c) continue;
+    if (c.status !== 'stale' && c.status !== 'error') continue;
+    // Only flag sources that were once working but are now stale — never
+    // surface a banner for sources that have never delivered data.
+    if (!c.fetched_at) continue;
+    const name = c.name || COMPANY_DEFAULTS[slug].name;
+    issues.push(`${name} 数据陈旧（上次成功 ${fmtRelative(c.fetched_at)}）`);
+  }
+  const banner = $('staleBanner');
+  if (issues.length) {
+    banner.textContent = '⚠ ' + issues.join(' · ');
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+function renderChips() {
+  const wrap = $('companyChips');
+  const counts = {};
+  for (const job of (state.data.jobs || [])) counts[job.company] = (counts[job.company] || 0) + 1;
+  const cs = state.data.companies || {};
+  const html = COMPANY_ORDER.map(slug => {
+    const c = cs[slug] || {};
+    const n = counts[slug] || 0;
+    // Skip the chip entirely when a source has no jobs and has never been
+    // successful — this hides Meituan while its endpoint remains broken.
+    if (n === 0 && !c.fetched_at) return '';
+    const name = c.name || COMPANY_DEFAULTS[slug].name;
+    const active = state.filters.companies.has(slug);
+    const stale = (c.status === 'stale' || c.status === 'error') && c.fetched_at;
+    return `<button class="chip ${active ? 'active' : ''} ${stale ? 'stale' : ''}" data-slug="${slug}">
+      ${escapeHtml(name)}<span class="chip-count">${n}</span>
+    </button>`;
+  }).filter(Boolean).join('');
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.chip').forEach(el => {
+    el.addEventListener('click', () => {
+      const slug = el.dataset.slug;
+      if (state.filters.companies.has(slug)) state.filters.companies.delete(slug);
+      else state.filters.companies.add(slug);
+      saveToUrl();
+      renderChips();
+      renderJobs();
+    });
+  });
+}
+
+function renderCategoryChips() {
+  const wrap = $('categoryChips');
+  // Count jobs per category so each chip shows a count, like company chips.
+  const counts = {};
+  for (const job of (state.data.jobs || [])) {
+    const c = job.category || '其他';
+    counts[c] = (counts[c] || 0) + 1;
+  }
+  const cats = state.data.categories || [];
+  wrap.innerHTML = cats.map(c => {
+    const n = counts[c] || 0;
+    if (n === 0) return '';   // hide empty categories
+    const active = state.filters.categories.has(c);
+    return `<button class="chip ${active ? 'active' : ''}" data-cat="${escapeHtml(c)}" type="button">
+      ${escapeHtml(c)}<span class="chip-count">${n}</span>
+    </button>`;
+  }).filter(Boolean).join('');
+  wrap.querySelectorAll('.chip').forEach(el => {
+    el.addEventListener('click', () => {
+      const cat = el.dataset.cat;
+      if (state.filters.categories.has(cat)) state.filters.categories.delete(cat);
+      else state.filters.categories.add(cat);
+      saveToUrl();
+      renderCategoryChips();
+      renderJobs();
+    });
+  });
+}
+
+function filteredJobs() {
+  const { q, companies, categories, sinceDays, minScore, favoritesOnly } = state.filters;
+  const qLower = q.trim().toLowerCase();
+  const cutoff = sinceDays > 0
+    ? new Date(Date.now() - sinceDays * 86400_000)
+    : null;
+  return (state.data.jobs || []).filter(j => {
+    if (favoritesOnly && !state.favorites.has(j.id)) return false;
+    if (companies.size && !companies.has(j.company)) return false;
+    if (categories.size && !categories.has(j.category)) return false;
+    if (qLower) {
+      const hay = `${j.title} ${j.department} ${j.category_raw} ${j.location}`.toLowerCase();
+      if (!hay.includes(qLower)) return false;
+    }
+    if (cutoff) {
+      if (!j.posted_date) return false;
+      const d = new Date(j.posted_date);
+      if (isNaN(d.getTime()) || d < cutoff) return false;
+    }
+    if (minScore > 0) {
+      const s = state.scores ? (state.scores.get(j.id) || 0) : 0;
+      if (s < minScore) return false;
+    }
+    return true;
+  });
+}
+
+function renderJobs() {
+  const list = $('jobsList');
+  const empty = $('emptyState');
+  let jobs = filteredJobs();
+
+  const scoring = !!state.scores;
+  if (scoring && state.sortMode === 'match') {
+    jobs = jobs.slice().sort((a, b) =>
+      (state.scores.get(b.id) || 0) - (state.scores.get(a.id) || 0));
+  }
+
+  $('resultSummary').textContent = `显示 ${jobs.length} / ${(state.data.jobs || []).length} 个职位`;
+  if (!jobs.length) {
+    list.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = jobs.map(j => {
+    let scoreHtml = '';
+    if (scoring) {
+      const s = state.scores.get(j.id) || 0;
+      const pct = Math.round(s * 100);
+      const cls = pct >= 40 ? 's-high' : pct >= 20 ? 's-mid' : 's-low';
+      scoreHtml = `<span class="score-pill ${cls}" title="基于简历主题加权命中">${pct}%</span>`;
+    }
+    const fav = isFavorite(j.id);
+    return `
+    <div class="job" role="button" tabindex="0" data-id="${escapeHtml(j.id)}">
+      <div class="job-top">
+        <span class="job-title">${escapeHtml(j.title)}</span>
+        <button class="fav-btn ${fav ? 'is-fav' : ''}" data-fav="${escapeHtml(j.id)}" type="button" aria-label="收藏" aria-pressed="${fav}"><span class="fav-icon">${fav ? '★' : '☆'}</span></button>
+        <span class="job-arrow">→</span>
+      </div>
+      <div class="job-tags">
+        ${scoreHtml}
+        <span class="job-pill ${j.company}">${escapeHtml(j.company_name || j.company)}</span>
+        ${j.category && j.category !== '其他' ? `<span class="job-tag">${escapeHtml(j.category)}</span>` : ''}
+      </div>
+      <div class="job-meta">
+        ${j.department ? `<span class="meta-dept">${escapeHtml(j.department)}</span>` : ''}
+        ${j.location ? `<span>📍 ${escapeHtml(j.location)}</span>` : ''}
+        ${j.posted_date ? `<span>${escapeHtml(j.posted_date)}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.fav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.fav;
+      toggleFavorite(id);
+      const nowFav = isFavorite(id);
+      btn.classList.toggle('is-fav', nowFav);
+      btn.querySelector('.fav-icon').textContent = nowFav ? '★' : '☆';
+      btn.setAttribute('aria-pressed', String(nowFav));
+      // If we're currently filtering to favorites only, drop the unfavorited
+      // card from view immediately.
+      if (state.filters.favoritesOnly && !nowFav) renderJobs();
+    });
+  });
+  list.querySelectorAll('.job').forEach(el => {
+    const id = el.dataset.id;
+    el.addEventListener('click', () => openJobModal(id));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openJobModal(id); }
+    });
+  });
+}
+
+// ── Wire up filter inputs ─────────────────────────────────────────────
+let searchTimer;
+$('searchInput').addEventListener('input', (e) => {
+  state.filters.q = e.target.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { saveToUrl(); renderJobs(); }, 150);
+});
+$('clearBtn').addEventListener('click', () => {
+  state.filters.q = '';
+  state.filters.companies.clear();
+  state.filters.categories.clear();
+  $('searchInput').value = '';
+  saveToUrl();
+  renderChips();
+  renderCategoryChips();
+  renderJobs();
+});
+
+// ── Data load ─────────────────────────────────────────────────────────
+function loadData() {
+  const btn = $('refreshBtn');
+  btn.classList.add('spin');
+  btn.disabled = true;
+  return fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' })
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      state.data = data || { jobs: [], companies: {}, categories: [] };
+      if (!Array.isArray(state.data.jobs)) state.data.jobs = [];
+      if (!state.data.companies) state.data.companies = {};
+      if (!Array.isArray(state.data.categories)) state.data.categories = [];
+      // Pre-compute per-job lowercase haystacks, then score with the
+      // built-in profile.
+      buildHaystacks(state.data.jobs);
+      scoreAllJobs();
+      $('sortSelect').value = state.sortMode;
+      renderHeader();
+      renderStaleBanner();
+      renderCategoryChips();
+      renderChips();
+      renderFavCount();
+      renderJobs();
+    })
+    .catch(err => {
+      console.error(err);
+      $('metaUpdated').textContent = '数据加载失败';
+      $('jobsList').innerHTML = '';
+      $('emptyState').style.display = '';
+      $('emptyState').innerHTML = '<span class="empty-emoji">⚠️</span><div>数据加载失败</div><div style="margin-top:6px;font-size:12px">' + escapeHtml(err.message) + '</div>';
+    })
+    .finally(() => {
+      // Keep the spin visible briefly so the user sees feedback even on a fast cache hit.
+      setTimeout(() => { btn.classList.remove('spin'); btn.disabled = false; }, 400);
+    });
+}
+
+// ── Refresh button (smart) ────────────────────────────────────────────
+// Without sync unlocked: just re-fetch data/jobs.json (same as before).
+// With sync unlocked: trigger the GitHub Actions workflow to re-scrape,
+// then poll for the bot's refresh commit, then re-fetch the JSON. So the
+// user actually sees fresh data instead of the same cached file.
+const REFRESH_WORKFLOW_FILE = 'jobs.yml';
+const REFRESH_REPO = 'chenruoyi0202-ship-it/cry';
+const REFRESH_POLL_MS = 5000;
+const REFRESH_TIMEOUT_MS = 180000;  // 3 min — workflow takes ~60-120s
+
+async function _refreshTriggerScrape() {
+  const cfg = state.syncConfig;
+  if (!cfg) return false;
+  // Note baseline last_updated so we can detect when the bot has pushed.
+  const baselineUpdated = (state.data && state.data.last_updated) || 0;
+  // Dispatch the workflow.
+  const dispatchResp = await fetch(
+    `https://api.github.com/repos/${REFRESH_REPO}/actions/workflows/${REFRESH_WORKFLOW_FILE}/dispatches`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${cfg.token}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ref: 'main', inputs: { company: 'all' } }),
+    },
+  );
+  if (!dispatchResp.ok && dispatchResp.status !== 204) {
+    throw new Error(`dispatch failed ${dispatchResp.status}`);
+  }
+  // Poll the data file until last_updated > baseline OR we time out.
+  const deadline = Date.now() + REFRESH_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, REFRESH_POLL_MS));
+    try {
+      const r = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+      if (r.ok) {
+        const data = await r.json();
+        const ts = data.last_updated || 0;
+        if (ts > baselineUpdated) {
+          // Found fresh data — apply it.
+          state.data = data;
+          if (!Array.isArray(state.data.jobs)) state.data.jobs = [];
+          if (!state.data.companies) state.data.companies = {};
+          if (!Array.isArray(state.data.categories)) state.data.categories = [];
+          buildHaystacks(state.data.jobs);
+          scoreAllJobs();
+          renderHeader();
+          renderStaleBanner();
+          renderCategoryChips();
+          renderChips();
+          renderFavCount();
+          renderJobs();
+          return true;
+        }
+      }
+    } catch (e) { /* keep polling */ }
+  }
+  return false;
+}
+
+$('refreshBtn').addEventListener('click', async () => {
+  const btn = $('refreshBtn');
+  btn.classList.add('spin');
+  btn.disabled = true;
+  if (state.syncConfig) {
+    // Unlocked: trigger a fresh scrape and wait for the bot to commit.
+    try {
+      const got = await _refreshTriggerScrape();
+      if (!got) {
+        // Workflow didn't produce a new commit in time — fall back to
+        // showing whatever the static file currently has.
+        await loadData();
+        console.warn('refresh: workflow timeout, showing cached data');
+      }
+    } catch (e) {
+      console.error('refresh: dispatch failed', e);
+      await loadData();   // fall back to plain reload
+    } finally {
+      btn.classList.remove('spin');
+      btn.disabled = false;
+    }
+  } else {
+    // Not unlocked: just re-fetch the static file (no extra power).
+    await loadData();
+    btn.classList.remove('spin');
+    btn.disabled = false;
+  }
+});
+
+// ── Bootstrap ─────────────────────────────────────────────────────────
+loadFromUrl();
+$('searchInput').value = state.filters.q;
+loadData();
+
+// Restore sync config. If present, run sync + start polling immediately.
+// If absent, prompt for the password the first time the user opens the
+// page (only once — closing the prompt without unlocking just leaves
+// favorites in local-only mode).
+state.syncConfig = _loadSyncConfig();
+if (state.syncConfig) {
+  _setSyncStatus('启动同步中…', 'syncing');
+  setTimeout(() => manualSync(), 200);
+} else if (!localStorage.getItem('jobs.sync.declined')) {
+  // Show the unlock prompt once.
+  setTimeout(() => {
+    if (!state.syncConfig) openSyncModal();
+  }, 600);
+  // Treat any close-without-unlock as "decline" until next refresh.
+  $('syncModalClose').addEventListener('click', () => {
+    if (!state.syncConfig) localStorage.setItem('jobs.sync.declined', '1');
+  });
+}
+</script>
+
+</body>
+</html>

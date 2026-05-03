@@ -189,6 +189,22 @@ body{
 .record-preview.expanded::after{display:none}
 .expand-toggle{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 0;font-size:12px;color:var(--gold-light);cursor:pointer;border-top:1px solid var(--border);margin-top:6px;opacity:.7;transition:opacity .2s}
 .expand-toggle:hover{opacity:1}
+
+/* CCASS report */
+.ccass-report{font-size:13px;line-height:1.7;color:var(--text-muted)}
+.ccass-report h1{font-size:18px;font-weight:700;color:var(--gold-light);margin:0 0 12px;border-bottom:2px solid var(--gold);padding-bottom:8px}
+.ccass-report h2{font-size:15px;font-weight:700;color:var(--text);margin:18px 0 8px;padding-left:8px;border-left:3px solid var(--gold)}
+.ccass-report table{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:12px;overflow-x:auto;display:block}
+.ccass-report th{background:rgba(234,179,8,0.1);color:var(--gold-light);padding:6px 8px;text-align:left;font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
+.ccass-report td{padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.ccass-report tr:hover td{background:rgba(255,255,255,0.02)}
+.ccass-report strong{color:var(--text)}
+.ccass-report ul,.ccass-report ol{padding-left:18px;margin:6px 0}
+.ccass-report li{margin:4px 0}
+.ccass-report blockquote{border-left:3px solid var(--border);padding-left:10px;color:var(--text-muted);opacity:.7;margin:10px 0;font-size:11px}
+.ccass-report hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+.ccass-report code{background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px;font-size:11px}
+.ccass-last-update{font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;opacity:.6}
 .record-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
 .record-actions .btn{padding:3px 10px;font-size:11px;opacity:.5;transition:opacity .2s}
 .record:hover .record-actions .btn,.record-actions .btn:focus{opacity:1}
@@ -291,9 +307,6 @@ body{
 
 <!-- Stock Header (Futu style) -->
 <div class="stock-header">
-  <div class="settings-btn" onclick="toggleTheme()" title="切换主题" style="right:40px" id="themeBtn">
-    <svg viewBox="0 0 24 24" id="themeIcon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-  </div>
   <div class="settings-btn" onclick="toggleSyncModal()" title="同步设置">
     <svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
   </div>
@@ -404,12 +417,13 @@ body{
 </div>
 
 <!-- Tab 4: CCASS -->
-<div class="tab-content" id="tabCCASS">
-  <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;opacity:.6">
-    港交所 CCASS 中央结算系统持股分布 · 每交易日 17:30 自动更新
+<div class="tab-content" id="tabCcass">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;gap:8px">
+    <a href="data/stock_02680_ccass_report.pdf" target="_blank" class="btn btn-secondary" style="font-size:11px;padding:4px 12px;text-decoration:none">下载 PDF</a>
+    <button class="btn btn-secondary" style="font-size:11px;padding:4px 12px" onclick="ccassLoaded=false;loadCcassReport()">刷新报告</button>
   </div>
-  <div id="ccassContent">
-    <div class="list-empty">加载中...</div>
+  <div class="ccass-report" id="ccassReport">
+    <div class="list-empty">加载 CCASS 报告中...</div>
   </div>
 </div>
 
@@ -897,9 +911,9 @@ function switchTab(name) {
     document.querySelectorAll('.tab')[2].classList.add('active');
     renderTimeline();
   } else if (name === 'ccass') {
-    document.getElementById('tabCCASS').classList.add('active');
+    document.getElementById('tabCcass').classList.add('active');
     document.querySelectorAll('.tab')[3].classList.add('active');
-    renderCCASS();
+    loadCcassReport();
   }
 }
 
@@ -2698,6 +2712,80 @@ function editCostPrice() {
   autoSync();
 }
 
+// ==================== CCASS Report ====================
+let ccassLoaded = false;
+
+async function loadCcassReport() {
+  if (ccassLoaded) return;
+  const container = document.getElementById('ccassReport');
+  try {
+    // Try to load from repo (same origin for GitHub Pages)
+    const resp = await fetch('data/stock_02680_ccass_report.md?t=' + Date.now(), { signal: AbortSignal.timeout(5000) });
+    if (!resp.ok) throw new Error('Not found');
+    const md = await resp.text();
+    container.innerHTML = renderMarkdown(md);
+    ccassLoaded = true;
+  } catch {
+    // Fallback: try via GitHub API
+    if (syncConfig) {
+      try {
+        const file = await ghGet(syncConfig.token, syncConfig.repo, 'data/stock_02680_ccass_report.md', 'main&t=' + Date.now());
+        if (file && file.content) {
+          const md = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+          container.innerHTML = renderMarkdown(md);
+          ccassLoaded = true;
+          return;
+        }
+      } catch {}
+    }
+    container.innerHTML = '<div class="list-empty">CCASS 报告暂未生成<br><small>GitHub Actions 每个工作日 HKT 17:30 自动更新</small></div>';
+  }
+}
+
+function renderMarkdown(md) {
+  // Simple markdown → HTML (handles tables, headers, lists, bold, hr, blockquote)
+  let html = esc(md);
+  // Headers
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // HR
+  html = html.replace(/^---$/gm, '<hr>');
+  // Blockquote
+  html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  // Tables
+  html = html.replace(/((?:^\|.+\|\n?)+)/gm, (match) => {
+    const rows = match.trim().split('\n').filter(r => r.trim());
+    if (rows.length < 2) return match;
+    // Check for separator row (|---|---|)
+    const sepIdx = rows.findIndex(r => /^\|[\s\-:|]+\|$/.test(r));
+    let headerRow = sepIdx > 0 ? rows[sepIdx - 1] : rows[0];
+    let dataRows = sepIdx > 0 ? rows.slice(sepIdx + 1) : rows.slice(1);
+    if (sepIdx <= 0) { headerRow = rows[0]; dataRows = rows.slice(1); }
+    const parseCells = r => r.split('|').slice(1, -1).map(c => c.trim());
+    const headers = parseCells(headerRow);
+    let t = '<table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+    for (const row of dataRows) {
+      if (/^\|[\s\-:|]+\|$/.test(row)) continue;
+      const cells = parseCells(row);
+      t += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+    }
+    t += '</tbody></table>';
+    return t;
+  });
+  // Unordered lists
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/((?:<li>.+<\/li>\n?)+)/gm, '<ul>$1</ul>');
+  // Remaining newlines → <br> (but not inside tags)
+  html = html.replace(/\n/g, '<br>');
+  // Clean up double <br> after block elements
+  html = html.replace(/(<\/(h[1-3]|table|ul|hr|blockquote)>)<br>/g, '$1');
+  html = html.replace(/<br>(<(h[1-3]|table|ul|hr|blockquote))/g, '$1');
+  return html;
+}
+
 // ==================== Utils ====================
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function highlight(s) { return esc(s).replace(/2680/g, '<span style="color:var(--gold-light);font-weight:600">2680</span>'); }
@@ -2753,35 +2841,13 @@ function getDayOfWeek(dateStr) {
 
 // ==================== Theme ====================
 function initTheme() {
-  const saved = localStorage.getItem('stock_02680_theme');
-  if (saved) {
-    document.documentElement.setAttribute('data-theme', saved);
-  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-    document.documentElement.setAttribute('data-theme', 'light');
+  function apply() {
+    if (window.matchMedia('(prefers-color-scheme: light)').matches)
+      document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
   }
-  updateThemeIcon();
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (!localStorage.getItem('stock_02680_theme')) {
-      document.documentElement.setAttribute('data-theme', e.matches ? '' : 'light');
-      updateThemeIcon();
-    }
-  });
-}
-function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'light' ? '' : 'light';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('stock_02680_theme', next || 'dark');
-  updateThemeIcon();
-}
-function updateThemeIcon() {
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  const icon = document.getElementById('themeIcon');
-  if (icon) {
-    icon.innerHTML = isLight
-      ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
-      : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>';
-  }
+  apply();
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', apply);
 }
 
 // ==================== Init ====================

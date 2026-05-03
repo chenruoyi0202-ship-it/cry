@@ -1193,25 +1193,25 @@
 
             <!-- Add form -->
             <div class="add-form" id="addForm">
-                <div class="form-row three-col">
+                <div class="form-row">
                     <div class="field">
                         <label>卖出价格</label>
                         <input type="number" step="0.001" inputmode="decimal" id="addPrice" placeholder="价格" oninput="updateAddPreview()">
                     </div>
                     <div class="field">
-                        <label>卖出股数</label>
-                        <div style="display:flex;gap:4px;align-items:stretch;">
-                            <button type="button" class="lot-btn" onclick="changeLots(-1)" title="-1手">−</button>
-                            <input type="number" step="1" inputmode="numeric" id="addShares" placeholder="股数" oninput="updateAddPreview()" style="flex:1;min-width:0;">
-                            <button type="button" class="lot-btn" onclick="changeLots(1)" title="+1手">+</button>
-                        </div>
-                    </div>
-                    <div class="field">
                         <label>类型</label>
-                        <select id="addType" onchange="updateAddPreview()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;">
+                        <select id="addType" onchange="updateAddPreview()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 8px;color:#fff;font-size:14px;outline:none;min-height:44px;">
                             <option value="done" style="background:#1E293B;">已卖出</option>
                             <option value="plan" style="background:#1E293B;">计划卖出</option>
                         </select>
+                    </div>
+                </div>
+                <div class="field" style="margin-top:10px">
+                    <label>卖出股数</label>
+                    <div style="display:flex;gap:6px;align-items:stretch;">
+                        <button type="button" class="lot-btn" onclick="changeLots(-1)" title="-1手">−</button>
+                        <input type="number" step="1" inputmode="numeric" id="addShares" placeholder="输入股数" oninput="updateAddPreview()" style="flex:1;min-width:0;">
+                        <button type="button" class="lot-btn" onclick="changeLots(1)" title="+1手">+</button>
                     </div>
                 </div>
                 <div id="addPreview" class="add-preview" style="display:none"></div>
@@ -1248,9 +1248,24 @@
         let records = [];
         let currentRtPrice = null;
 
-        // --- Currency (real-time via Yahoo Finance) ---
-        let FX_RATES = { HK: 0.89, US: 6.90 }; // fallback defaults
+        // --- Currency (real-time via Yahoo Finance, cached in localStorage) ---
+        const FX_CACHE_KEY = 'cry_fx_cache';
+        let FX_RATES = { HK: 0.89, US: 6.90 }; // hardcoded fallback if no cache
         let fxLoaded = false;
+        let fxCachedAt = null; // ISO timestamp of cached rates
+
+        // Load cached rates immediately on script parse
+        (function loadCachedFx() {
+            try {
+                const cache = JSON.parse(localStorage.getItem(FX_CACHE_KEY) || 'null');
+                if (cache && cache.HK && cache.US && cache.savedAt) {
+                    FX_RATES.HK = cache.HK;
+                    FX_RATES.US = cache.US;
+                    fxCachedAt = cache.savedAt;
+                    fxLoaded = true; // mark as loaded since we have real data
+                }
+            } catch {}
+        })();
 
         async function fetchFxRates() {
             const pairs = [
@@ -1262,6 +1277,7 @@
                 url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
                 url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
             ];
+            const newRates = {};
             for (const pair of pairs) {
                 const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${pair.symbol}?interval=1d&range=1d`;
                 for (const proxy of proxies) {
@@ -1270,20 +1286,44 @@
                         if (!resp.ok) continue;
                         const data = await resp.json();
                         const price = data.chart.result[0].meta.regularMarketPrice;
-                        if (price) { FX_RATES[pair.key] = price; fxLoaded = true; break; }
+                        if (price) { newRates[pair.key] = price; break; }
                     } catch { continue; }
                 }
+            }
+            // Only update + cache if we got both rates fresh
+            if (newRates.HK && newRates.US) {
+                FX_RATES.HK = newRates.HK;
+                FX_RATES.US = newRates.US;
+                fxLoaded = true;
+                fxCachedAt = new Date().toISOString();
+                try {
+                    localStorage.setItem(FX_CACHE_KEY, JSON.stringify({
+                        HK: newRates.HK, US: newRates.US, savedAt: fxCachedAt
+                    }));
+                } catch {}
             }
             updateFxDisplay();
             calculate();
         }
 
+        function fmtCachedAge(iso) {
+            const ms = Date.now() - new Date(iso).getTime();
+            const min = Math.floor(ms / 60000);
+            if (min < 1) return '刚刚';
+            if (min < 60) return `${min}分钟前`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr}小时前`;
+            return `${Math.floor(hr / 24)}天前`;
+        }
+
         function updateFxDisplay() {
             const el = document.getElementById('fxStatus');
             if (!el) return;
-            if (fxLoaded) {
-                el.textContent = `汇率: 1 HKD = ${FX_RATES.HK.toFixed(4)} CNY | 1 USD = ${FX_RATES.US.toFixed(4)} CNY · ${new Date().toLocaleTimeString('zh-CN')}`;
-                el.style.color = '#4caf50';
+            const isFresh = fxCachedAt && (Date.now() - new Date(fxCachedAt).getTime() < 60000);
+            if (fxLoaded && fxCachedAt) {
+                const age = fmtCachedAge(fxCachedAt);
+                el.textContent = `汇率: 1 HKD = ${FX_RATES.HK.toFixed(4)} CNY · 1 USD = ${FX_RATES.US.toFixed(4)} CNY · ${age}`;
+                el.style.color = isFresh ? '#4caf50' : '#94A3B8';
             } else {
                 el.textContent = `汇率获取失败，使用默认值 (HKD ${FX_RATES.HK} / USD ${FX_RATES.US})`;
                 el.style.color = '#ffb74d';
@@ -1487,7 +1527,6 @@
                 const div = document.createElement('div');
                 div.className = 'record-item';
                 div.dataset.index = i;
-                div.draggable = true;
                 div.innerHTML = `
                     <div class="record-top">
                         <div class="record-top-left">
@@ -1964,6 +2003,8 @@
             const items = list.querySelectorAll('.record-item');
 
             items.forEach(item => {
+                item.draggable = reorderMode;
+
                 // Desktop drag events
                 item.addEventListener('dragstart', onDragStart);
                 item.addEventListener('dragend', onDragEnd);
@@ -2137,7 +2178,6 @@
                 const div = document.createElement('div');
                 div.className = 'record-item';
                 div.dataset.index = records.indexOf(rec);
-                div.draggable = true;
                 div.innerHTML = `
                     <div class="record-top">
                         <div class="record-top-left">
@@ -2338,7 +2378,6 @@
         function clearAuth() {
             localStorage.removeItem('cry_gh_token');
             localStorage.removeItem('cry_gist_id');
-            localStorage.removeItem('cry_enc_key');
         }
         function isLoggedIn() { return !!getGHToken(); }
 
@@ -2426,10 +2465,13 @@
 
         // --- Auth UI ---
         function showAuth() {
-            document.getElementById('authError').textContent = '';
-            document.getElementById('authToken').value = getGHToken() || '';
-            document.getElementById('authPassword').value = '';
-            document.getElementById('authOverlay').classList.add('visible');
+            const overlay = document.getElementById('authOverlay');
+            if (!overlay) return;
+            overlay.classList.add('visible');
+            const errEl = document.getElementById('authError');
+            if (errEl) errEl.textContent = '';
+            const tokenEl = document.getElementById('authToken');
+            if (tokenEl) tokenEl.value = getGHToken() || '';
         }
         function hideAuth() {
             document.getElementById('authOverlay').classList.remove('visible');
@@ -2437,31 +2479,26 @@
 
         async function doAuth() {
             const token = document.getElementById('authToken').value.trim();
-            const password = document.getElementById('authPassword').value;
             const errEl = document.getElementById('authError');
             const btn = document.getElementById('authSubmitBtn');
             errEl.textContent = '';
 
             if (!token) { errEl.textContent = '请输入 GitHub Token'; return; }
-            if (password.length < 4) { errEl.textContent = '加密密码至少4位'; return; }
 
             btn.disabled = true;
             btn.textContent = '验证中...';
 
             try {
-                // Verify token works
                 const resp = await fetch('https://api.github.com/user', {
                     headers: { 'Authorization': 'token ' + token }
                 });
                 if (!resp.ok) { errEl.textContent = 'Token 无效，请检查'; return; }
 
-                // Find or remember gist
                 let gistId = getGistId();
                 if (!gistId) {
                     gistId = await gistFind(token);
                 }
 
-                localStorage.setItem('cry_enc_key', password);
                 setGHAuth(token, gistId);
                 hideAuth();
                 updateUserBar();
@@ -2470,14 +2507,13 @@
                 errEl.textContent = '网络错误: ' + e.message;
             } finally {
                 btn.disabled = false;
-                btn.textContent = '保存并同步';
+                btn.textContent = '同步';
             }
         }
 
         function logout() {
             if (!confirm('确定取消同步？本地方案不会丢失')) return;
             clearAuth();
-            localStorage.removeItem('cry_enc_key');
             updateUserBar();
         }
 
@@ -2524,8 +2560,7 @@
         async function syncPlans(forceUpload) {
             if (!isLoggedIn()) return;
             const token = getGHToken();
-            const password = localStorage.getItem('cry_enc_key');
-            if (!password) { showAuth(); return; }
+            const password = token;
 
             setSyncStatus('syncing');
 
@@ -2533,32 +2568,42 @@
                 let gistId = getGistId();
                 let finalPlans;
                 const deletedNames = getDeletedNames();
+                const lastSync = localStorage.getItem('cry_last_sync') || '';
 
                 if (forceUpload) {
-                    // After delete/save: local is the source of truth, push directly
                     finalPlans = getPlans();
                 } else {
-                    // Normal sync: merge local + cloud
+                    // Normal sync: cloud is source of truth
                     let cloudPlans = {};
                     if (gistId) {
                         const content = await gistGet(token, gistId);
                         if (content) {
                             try { cloudPlans = await decryptData(content, password); }
-                            catch (e) { console.warn('Decrypt failed, password may differ:', e); }
+                            catch (e) { console.warn('Decrypt failed:', e); }
                         }
                     }
                     const localPlans = getPlans();
+                    // Start with cloud as base
                     finalPlans = { ...cloudPlans };
+                    // Only add local plans that are NEW (created after last sync)
                     for (const name in localPlans) {
                         const local = localPlans[name];
                         const cloud = finalPlans[name];
-                        if (!cloud || (local.savedAt && (!cloud.savedAt || local.savedAt > cloud.savedAt))) {
-                            finalPlans[name] = local;
+                        if (cloud) {
+                            // Both exist: keep newer
+                            if (local.savedAt && (!cloud.savedAt || local.savedAt > cloud.savedAt)) {
+                                finalPlans[name] = local;
+                            }
+                        } else {
+                            // Only in local: keep ONLY if created after last sync (genuinely new)
+                            if (local.savedAt && local.savedAt > lastSync) {
+                                finalPlans[name] = local;
+                            }
+                            // Otherwise: was deleted from cloud, don't re-add
                         }
                     }
-                    // Remove plans that were deleted locally (tombstones)
+                    // Also remove tombstoned plans
                     deletedNames.forEach(name => { delete finalPlans[name]; });
-                    // Save merged locally
                     localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(finalPlans));
                     refreshPlanSelect();
                 }
@@ -2572,7 +2617,8 @@
                     localStorage.setItem('cry_gist_id', gistId);
                 }
 
-                // Sync succeeded, clear tombstones
+                // Record sync time and clear tombstones
+                localStorage.setItem('cry_last_sync', new Date().toISOString());
                 clearDeletedNames();
                 setSyncStatus('synced');
             } catch (e) {
@@ -3176,7 +3222,8 @@
             loadPresetPlans();
             refreshPlanSelect();
             refreshTagBar();
-            fetchFxRates();
+            updateFxDisplay(); // show cached rates immediately
+            fetchFxRates();    // then refresh in background
             updateUserBar();
             if (isLoggedIn()) {
                 syncPlans();
@@ -3188,30 +3235,26 @@
 <!-- Auth Modal (outside .card to avoid backdrop-filter breaking fixed positioning) -->
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-box">
-        <h2>云端同步设置</h2>
+        <h2>云端同步</h2>
         <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
-            使用 GitHub Gist 加密存储方案数据。<br>
-            需要一个 GitHub 个人令牌（PAT）和加密密码。
+            输入 GitHub Token 即可开启云端同步。<br>
+            Token 同时用于认证和加密，只需输入一次。
         </p>
         <div class="field">
             <label>GitHub Token</label>
-            <input type="password" id="authToken" placeholder="ghp_xxxx（需 gist 权限）">
-        </div>
-        <div class="field">
-            <label>加密密码</label>
-            <input type="password" id="authPassword" placeholder="用于加密数据（牢记，无法找回）">
+            <input type="password" id="authToken" placeholder="ghp_xxxx">
         </div>
         <div class="auth-error" id="authError"></div>
         <div class="auth-actions">
-            <button class="auth-btn-primary" id="authSubmitBtn" onclick="doAuth()">保存并同步</button>
+            <button class="auth-btn-primary" id="authSubmitBtn" onclick="doAuth()">同步</button>
         </div>
         <details style="margin-top:14px;font-size:11px;color:#475569">
-            <summary style="cursor:pointer">如何获取 GitHub Token？</summary>
+            <summary style="cursor:pointer">如何获取 Token？</summary>
             <ol style="padding-left:18px;line-height:1.8;margin-top:8px">
                 <li>打开 github.com → Settings → Developer settings</li>
                 <li>Personal access tokens → Tokens (classic)</li>
-                <li>Generate new token → 勾选 <b>gist</b> 权限</li>
-                <li>复制生成的 token 粘贴到上方</li>
+                <li>Generate new token → 勾选 <b>gist</b></li>
+                <li>复制 token 粘贴到上方</li>
             </ol>
         </details>
         <div class="auth-close" onclick="hideAuth()">取消</div>

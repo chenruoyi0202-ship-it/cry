@@ -1,0 +1,47 @@
+name: 深圳招聘 Watchdog
+
+# Backstop for jobs.yml. GitHub silently skips scheduled events under load
+# (especially at top-of-hour), so we run a tiny watchdog several times a day
+# that re-dispatches jobs.yml whenever today's BJT email hasn't been stamped.
+#
+# The "already notified today" check uses data/jobs_notified_date.txt, which
+# jobs.yml writes after a successful notification. So if the main schedule
+# fires and emails go out, the watchdog stays a no-op.
+
+on:
+  schedule:
+    # 每隔 ~2 小时检查一次：BJT 10:13 / 12:13 / 14:13 / 16:13 / 18:13 / 20:13 / 22:13
+    # (UTC 02:13 / 04:13 / 06:13 / 08:13 / 10:13 / 12:13 / 14:13)
+    - cron: '13 2,4,6,8,10,12,14 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: jobs-watchdog
+  cancel-in-progress: false
+
+jobs:
+  check-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dispatch jobs.yml if today's email is missing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          TODAY_BJT=$(TZ=Asia/Shanghai date +"%Y-%m-%d")
+          MARKER="data/jobs_notified_date.txt"
+          if [ -f "$MARKER" ] && [ "$(cat $MARKER | tr -d '[:space:]')" = "$TODAY_BJT" ]; then
+            echo "marker=$TODAY_BJT (BJT) — already notified, skip"
+            exit 0
+          fi
+          echo "marker is $(cat $MARKER 2>/dev/null || echo '<missing>'), expected $TODAY_BJT (BJT) — dispatching jobs.yml"
+          gh workflow run jobs.yml --repo "$REPO"
+          echo "dispatched"

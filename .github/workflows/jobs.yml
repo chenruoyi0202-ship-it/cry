@@ -1,0 +1,150 @@
+name: 深圳招聘 Daily Scrape
+
+on:
+  schedule:
+    # 主：09:07 北京时间 (UTC 01:07)。避开整点是因为 GitHub 在
+    # :00 时刻调度堆积严重，cron 经常被静默跳过。
+    - cron: '7 1 * * *'
+    # 备份：09:37 北京时间 (UTC 01:37)。若 09:07 已通知则跳过发送步骤。
+    - cron: '37 1 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'scraper/scrape_jobs.py'
+      - 'scraper/generate_jobs_digest.py'
+      - 'scraper/send_digest_email.py'
+      - 'scraper/jobs_sources/**'
+      - '.github/workflows/jobs.yml'
+  workflow_dispatch:
+    inputs:
+      company:
+        description: '只跑某家公司 (tencent/bytedance/meituan/all)'
+        required: false
+        default: 'all'
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: jobs-scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests markdown pycryptodome
+
+      - name: Scrape jobs
+        id: scrape
+        run: |
+          python scraper/scrape_jobs.py --company "${{ github.event.inputs.company || 'all' }}"
+
+      - name: Generate daily digest
+        if: steps.scrape.outcome == 'success'
+        id: digest
+        run: |
+          python scraper/generate_jobs_digest.py
+
+      - name: Compute notification dedup state
+        if: steps.scrape.outcome == 'success'
+        id: notify_state
+        run: |
+          TODAY_BJT=$(TZ=Asia/Shanghai date +"%Y-%m-%d")
+          MARKER="data/jobs_notified_date.txt"
+          if [ -f "$MARKER" ] && [ "$(cat $MARKER | tr -d '[:space:]')" = "$TODAY_BJT" ]; then
+            echo "already notified today ($TODAY_BJT BJT), notification steps will skip"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "not notified yet today ($TODAY_BJT BJT), will run notification steps"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "today_bjt=$TODAY_BJT" >> "$GITHUB_OUTPUT"
+
+      - name: Post digest to tracking issue
+        if: steps.scrape.outcome == 'success' && steps.notify_state.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TITLE: '🏢 深圳大厂招聘 · 每日新增报告'
+        run: |
+          DIGEST="data/jobs_digest_latest.md"
+          if [ ! -f "$DIGEST" ]; then exit 0; fi
+          # Find or create the tracking issue (matched by exact title).
+          ISSUE_NUMBER=$(gh issue list --repo "$REPO" --search "\"$TITLE\" in:title" --state open --json number,title --jq '.[] | select(.title == "'"$TITLE"'") | .number' | head -1)
+          if [ -z "$ISSUE_NUMBER" ]; then
+            URL=$(gh issue create --repo "$REPO" --title "$TITLE" \
+              --body "深圳大厂招聘每日新增推荐。每天 09:00 北京时间自动追加当天的高匹配岗位。订阅这个 issue 即可每天收到邮件通知。")
+            ISSUE_NUMBER=$(echo "$URL" | grep -oE '[0-9]+$')
+            echo "Created tracking issue #$ISSUE_NUMBER"
+          fi
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$DIGEST"
+
+      - name: Send digest by email (Resend)
+        if: steps.scrape.outcome == 'success' && steps.notify_state.outputs.skip != 'true'
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_TO: 512773445@qq.com
+        run: |
+          python scraper/send_digest_email.py
+
+      - name: Push digest to WeChat (pushplus)
+        if: steps.scrape.outcome == 'success' && steps.notify_state.outputs.skip != 'true'
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          if [ -z "$PUSHPLUS_TOKEN" ]; then
+            echo "PUSHPLUS_TOKEN not set, skip WeChat push"
+            exit 0
+          fi
+          DIGEST="data/jobs_digest_latest.md"
+          if [ ! -f "$DIGEST" ]; then exit 0; fi
+          DATE=$(date -u +"%Y-%m-%d")
+          TITLE="🏢 深圳招聘 · ${DATE} 新增推荐"
+          CONTENT=$(cat "$DIGEST")
+          curl -s -X POST "http://www.pushplus.plus/send" \
+            -H "Content-Type: application/json" \
+            -d "{\"token\":\"${PUSHPLUS_TOKEN}\",\"title\":\"${TITLE}\",\"content\":$(echo "$CONTENT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'),\"template\":\"markdown\"}" \
+            | python3 -c "import sys,json; r=json.load(sys.stdin); print(f'pushplus: {r.get(\"msg\",\"unknown\")}')"
+
+      - name: Stamp notified marker
+        # The Python email script writes the marker on success, but we also
+        # stamp it here so dedup holds even if email is skipped (no key) yet
+        # the issue/WeChat steps did fire. Belt + suspenders.
+        if: steps.scrape.outcome == 'success' && steps.notify_state.outputs.skip != 'true'
+        run: |
+          mkdir -p data
+          echo "${{ steps.notify_state.outputs.today_bjt }}" > data/jobs_notified_date.txt
+          echo "stamped data/jobs_notified_date.txt = ${{ steps.notify_state.outputs.today_bjt }}"
+
+      - name: Commit and push
+        if: steps.scrape.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/jobs.json data/jobs_seen.json data/jobs_digest_*.md data/jobs_notified_date.txt 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No jobs.json changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "chore(jobs): refresh 深圳大厂招聘 ($DATE)"
+            for i in 1 2 3 4; do
+              git push && break || sleep $((2 ** i))
+            done
+          fi
+# manual trigger: 2026-05-02 catch-up + watchdog rollout
