@@ -2128,20 +2128,20 @@
         const sorted = [...appData.photos].sort((a, b) => photoTime(b) - photoTime(a));
         sorted.forEach(p => {
             const origIdx = idxMap.get(p);
+            const src = getPhotoSrc(p.id) || p.data || '';
+            if (!src) return; // skip photos with no data (lost in migration)
             if (currentTag === 'all' || (p.tags || []).includes(currentTag)) {
-                filtered.push({ p, origIdx });
+                filtered.push({ p, origIdx, src });
             }
         });
         c.innerHTML = filtered.map(item => {
-            const p = item.p, origIdx = item.origIdx;
-            const src = getPhotoSrc(p.id) || p.data || '';
+            const p = item.p, origIdx = item.origIdx, src = item.src;
             const tagsText = (p.tags || []).length ? (p.tags || []).slice(0, 3).join(' · ') : '';
             const tagsOverlay = tagsText ? '<div class="item-tags-overlay">' + esc(tagsText) + '</div>' : '';
             return '<div class="gallery-item" data-idx="' + origIdx + '" onclick="onPhotoClick(' + origIdx + ')">' +
                 '<button class="item-del" onclick="event.stopPropagation();delItem(\'photos\',\'' + p.id + '\')">&times;</button>' +
                 '<button class="item-cat" onclick="event.stopPropagation();editPhotoTags(\'' + p.id + '\')">' + (tagsText ? '&#x270F;' : '+') + '</button>' +
-                (src ? '<img src="' + src + '" alt="">' :
-                       '<div class="skeleton-box" style="width:100%;padding-top:100%;"></div>') +
+                '<img src="' + src + '" alt="">' +
                 tagsOverlay + '</div>';
         }).join('');
         galleryRendered = true;
