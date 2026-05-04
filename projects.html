@@ -182,7 +182,8 @@ var DEFAULT = {sections:[
 var REPO='chenruoyi0202-ship-it/cry';
 var CONFIG_PATH='data/projects_config.json';
 var RAW_URL='https://raw.githubusercontent.com/'+REPO+'/main/'+CONFIG_PATH;
-var API_URL='https://api.github.com/repos/'+REPO+'/contents/'+CONFIG_PATH;
+var API_BASE='https://api.github.com/repos/'+REPO+'/contents/'+CONFIG_PATH;
+var API_URL=API_BASE+'?ref=main';
 var data,backup,editing=false,iconTarget=null,fileSha='';
 
 // ── GitHub Token (embedded, read/write to cry repo only) ──
@@ -230,7 +231,7 @@ function syncSave(d,cb){
       }
       var payload=JSON.stringify({message:'Update projects config',content:btoa(unescape(encodeURIComponent(body))),sha:fileSha,branch:'main'});
       var w=new XMLHttpRequest();
-      w.open('PUT',API_URL,true);
+      w.open('PUT',API_BASE,true);
       w.setRequestHeader('Authorization','Bearer '+token);
       w.setRequestHeader('Accept','application/vnd.github.v3+json');
       w.setRequestHeader('Content-Type','application/json');
