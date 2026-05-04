@@ -191,19 +191,29 @@ function getToken(){return _tk}
 
 // ── Cloud Sync via GitHub repo ──
 function syncLoad(cb){
+  var token=getToken();
   try{
     var x=new XMLHttpRequest();
-    x.open('GET',RAW_URL+'?t='+Date.now(),true);
+    x.open('GET',API_URL,true);
+    if(token)x.setRequestHeader('Authorization','Bearer '+token);
+    x.setRequestHeader('Accept','application/vnd.github.v3+json');
     x.timeout=6000;
     x.onload=function(){
-      if(x.status===200){try{cb(JSON.parse(x.responseText))}catch(e){cb(null)}}
-      else cb(null);
+      if(x.status===200){
+        try{
+          var info=JSON.parse(x.responseText);
+          fileSha=info.sha;
+          var raw=decodeURIComponent(escape(atob(info.content.replace(/\n/g,''))));
+          cb(JSON.parse(raw));
+        }catch(e){cb(null)}
+      }else cb(null);
     };
     x.onerror=x.ontimeout=function(){cb(null)};
     x.send();
   }catch(e){cb(null)}
 }
 function syncSave(d,cb){
+  d._ts=Date.now();
   var body=JSON.stringify(d);
   localStorage.setItem('projects-data',body);
   var token=getToken();
@@ -361,10 +371,15 @@ function showToast(msg){
 // ── Init ──
 (function(){
   var cached=localStorage.getItem('projects-data');
-  var fallback=cached?JSON.parse(cached):DEFAULT;
+  var local=cached?JSON.parse(cached):null;
+  var fallback=local||DEFAULT;
   syncLoad(function(remote){
-    data=remote||fallback;
-    if(remote)localStorage.setItem('projects-data',JSON.stringify(remote));
+    if(remote&&local){
+      data=(local._ts&&(!remote._ts||local._ts>remote._ts))?local:remote;
+    }else{
+      data=remote||local||DEFAULT;
+    }
+    localStorage.setItem('projects-data',JSON.stringify(data));
     render(data);
   });
   data=fallback;
