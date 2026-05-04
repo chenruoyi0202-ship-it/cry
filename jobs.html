@@ -36,11 +36,21 @@
 <meta name="apple-mobile-web-app-title" content="深圳招聘">
 <script>
   (function(){
+    // Three-state theme: 'auto' (follow system) | 'light' | 'dark'.
+    // 'auto' is the default and re-applies live when iOS/macOS swaps mode.
     var saved = localStorage.getItem('jobs.theme');
-    if (saved === 'light') document.documentElement.setAttribute('data-theme','light');
-    else if (saved === 'dark') document.documentElement.removeAttribute('data-theme');
-    else if (window.matchMedia('(prefers-color-scheme: light)').matches)
-      document.documentElement.setAttribute('data-theme','light');
+    var mql = window.matchMedia('(prefers-color-scheme: dark)');
+    function apply(){
+      var s = localStorage.getItem('jobs.theme');
+      var dark = (s === 'dark') || (s !== 'light' && mql.matches);
+      if (dark) document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme','light');
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', dark ? '#0f172a' : '#f5f7fb');
+    }
+    apply();
+    mql.addEventListener('change', apply);
+    window.__applyJobsTheme = apply;
   })();
 </script>
 <style>
@@ -1285,20 +1295,29 @@ $('favFilterBtn').addEventListener('click', () => {
 // Hide the match-score filter + sort dropdown when no resume is active so
 // the controls don't lie about what they do.
 // ── Theme ─────────────────────────────────────────────────────────────
+// Cycle: auto (follow system) → light → dark → auto. The button title
+// reflects the next state so users know what a click will do.
+function _currentThemeMode(){
+  return localStorage.getItem('jobs.theme') || 'auto';
+}
+function _updateThemeBtnTitle(){
+  const btn = $('themeBtn'); if (!btn) return;
+  const mode = _currentThemeMode();
+  const label = mode === 'auto' ? '跟随系统' : (mode === 'light' ? '浅色' : '深色');
+  btn.title = `主题：${label}（点击切换）`;
+  btn.setAttribute('aria-label', btn.title);
+}
 $('themeBtn').addEventListener('click', () => {
   // Disable all transitions during the swap. Without this every one of
   // the 2000+ rendered card elements animates its background/border
   // change, which on phones takes several seconds to repaint.
   const root = document.documentElement;
   root.classList.add('switching-theme');
-  const isLight = root.getAttribute('data-theme') === 'light';
-  if (isLight) {
-    root.removeAttribute('data-theme');
-    localStorage.setItem('jobs.theme', 'dark');
-  } else {
-    root.setAttribute('data-theme', 'light');
-    localStorage.setItem('jobs.theme', 'light');
-  }
+  const next = { auto: 'light', light: 'dark', dark: 'auto' }[_currentThemeMode()];
+  if (next === 'auto') localStorage.removeItem('jobs.theme');
+  else localStorage.setItem('jobs.theme', next);
+  if (window.__applyJobsTheme) window.__applyJobsTheme();
+  _updateThemeBtnTitle();
   // Re-enable transitions on the next paint, after the new colors have
   // committed. Two requestAnimationFrames so the class lands in the
   // following tick reliably across browsers.
@@ -1306,6 +1325,7 @@ $('themeBtn').addEventListener('click', () => {
     root.classList.remove('switching-theme');
   }));
 });
+_updateThemeBtnTitle();
 
 // ── URL state ─────────────────────────────────────────────────────────
 function loadFromUrl() {
