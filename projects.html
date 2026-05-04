@@ -178,27 +178,24 @@ var DEFAULT = {sections:[
   ]}
 ]};
 
-var SYNC_API='https://jsonblob.com/api/jsonBlob';
-var data,backup,editing=false,iconTarget=null;
+var REPO='chenruoyi0202-ship-it/cry';
+var CONFIG_PATH='data/projects_config.json';
+var RAW_URL='https://raw.githubusercontent.com/'+REPO+'/main/'+CONFIG_PATH;
+var API_URL='https://api.github.com/repos/'+REPO+'/contents/'+CONFIG_PATH;
+var data,backup,editing=false,iconTarget=null,fileSha='';
 
-// ── Cloud Sync ──
-function getSyncId(){
-  var h=location.hash.match(/#sync=(.+)/);
-  if(h)return h[1];
-  return localStorage.getItem('projects-sync-id')||'';
+// ── GitHub Token (from cookie, shared with love.html etc) ──
+function getToken(){
+  try{var m=document.cookie.match(/(?:^|;\s*)_gt=([^;]*)/);if(m)return decodeURIComponent(m[1])}catch(e){}
+  return '';
 }
-function setSyncId(id){
-  localStorage.setItem('projects-sync-id',id);
-  history.replaceState(null,'','#sync='+id);
-}
+
+// ── Cloud Sync via GitHub repo ──
 function syncLoad(cb){
-  var id=getSyncId();
-  if(!id)return cb(null);
   try{
     var x=new XMLHttpRequest();
-    x.open('GET',SYNC_API+'/'+id,true);
-    x.setRequestHeader('Accept','application/json');
-    x.timeout=5000;
+    x.open('GET',RAW_URL+'?t='+Date.now(),true);
+    x.timeout=6000;
     x.onload=function(){
       if(x.status===200){try{cb(JSON.parse(x.responseText))}catch(e){cb(null)}}
       else cb(null);
@@ -208,28 +205,38 @@ function syncLoad(cb){
   }catch(e){cb(null)}
 }
 function syncSave(d,cb){
-  var id=getSyncId();
   var body=JSON.stringify(d);
   localStorage.setItem('projects-data',body);
+  var token=getToken();
+  if(!token){if(cb)cb(false);return}
   try{
     var x=new XMLHttpRequest();
-    if(id){
-      x.open('PUT',SYNC_API+'/'+id,true);
-    }else{
-      x.open('POST',SYNC_API,true);
-    }
-    x.setRequestHeader('Content-Type','application/json');
-    x.setRequestHeader('Accept','application/json');
-    x.timeout=8000;
+    x.open('GET',API_URL,true);
+    x.setRequestHeader('Authorization','Bearer '+token);
+    x.setRequestHeader('Accept','application/vnd.github.v3+json');
+    x.timeout=6000;
     x.onload=function(){
-      if(!id&&x.status===201){
-        var loc=x.getResponseHeader('Location');
-        if(loc){var newId=loc.split('/').pop();setSyncId(newId)}
+      if(x.status===200){
+        try{var info=JSON.parse(x.responseText);fileSha=info.sha}catch(e){}
       }
-      if(cb)cb(true);
+      var payload=JSON.stringify({message:'Update projects config',content:btoa(unescape(encodeURIComponent(body))),sha:fileSha,branch:'main'});
+      var w=new XMLHttpRequest();
+      w.open('PUT',API_URL,true);
+      w.setRequestHeader('Authorization','Bearer '+token);
+      w.setRequestHeader('Accept','application/vnd.github.v3+json');
+      w.setRequestHeader('Content-Type','application/json');
+      w.timeout=8000;
+      w.onload=function(){
+        if(w.status===200||w.status===201){
+          try{var r=JSON.parse(w.responseText);fileSha=r.content.sha}catch(e){}
+          if(cb)cb(true);
+        }else{if(cb)cb(false)}
+      };
+      w.onerror=w.ontimeout=function(){if(cb)cb(false)};
+      w.send(payload);
     };
     x.onerror=x.ontimeout=function(){if(cb)cb(false)};
-    x.send(body);
+    x.send();
   }catch(e){if(cb)cb(false)}
 }
 
@@ -302,7 +309,7 @@ function saveEdit(){
   document.getElementById('editFab').style.display='';
   render(data);
   syncSave(data,function(ok){
-    showToast(ok?'已保存并同步':'已保存到本地');
+    showToast(ok?'已保存并同步到云端':'已保存到本地'+(getToken()?'':'（在其他页面设置 GitHub 同步后可云端同步）'));
   });
 }
 function moveCard(secKey,idx,dir){
