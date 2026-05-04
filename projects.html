@@ -373,18 +373,16 @@ function showToast(msg){
 (function(){
   var cached=localStorage.getItem('projects-data');
   var local=cached?JSON.parse(cached):null;
-  var fallback=local||DEFAULT;
-  syncLoad(function(remote){
-    if(remote&&local){
-      data=(local._ts&&(!remote._ts||local._ts>remote._ts))?local:remote;
-    }else{
-      data=remote||local||DEFAULT;
-    }
-    localStorage.setItem('projects-data',JSON.stringify(data));
-    render(data);
-  });
-  data=fallback;
+  data=local||DEFAULT;
   render(data);
+  syncLoad(function(remote){
+    if(!remote)return;
+    if(!local||!local._ts||( remote._ts&&remote._ts>=local._ts)){
+      data=remote;
+      localStorage.setItem('projects-data',JSON.stringify(data));
+      render(data);
+    }
+  });
 })();
 </script>
 </body>
