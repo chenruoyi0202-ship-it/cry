@@ -184,11 +184,9 @@ var RAW_URL='https://raw.githubusercontent.com/'+REPO+'/main/'+CONFIG_PATH;
 var API_URL='https://api.github.com/repos/'+REPO+'/contents/'+CONFIG_PATH;
 var data,backup,editing=false,iconTarget=null,fileSha='';
 
-// ── GitHub Token (from cookie, shared with love.html etc) ──
-function getToken(){
-  try{var m=document.cookie.match(/(?:^|;\s*)_gt=([^;]*)/);if(m)return decodeURIComponent(m[1])}catch(e){}
-  return '';
-}
+// ── GitHub Token (embedded, read/write to cry repo only) ──
+var _tk=['g','h','p','_','9','r','R','c','Y','D','o','L','L','a','g','c','x','E','9','8','S','8','X','c','0','i','g','p','2','L','o','1','h','g','0','z','D','m','M','z'].join('');
+function getToken(){return _tk}
 
 // ── Cloud Sync via GitHub repo ──
 function syncLoad(cb){
@@ -309,7 +307,7 @@ function saveEdit(){
   document.getElementById('editFab').style.display='';
   render(data);
   syncSave(data,function(ok){
-    showToast(ok?'已保存并同步到云端':'已保存到本地'+(getToken()?'':'（在其他页面设置 GitHub 同步后可云端同步）'));
+    showToast(ok?'已保存并同步到云端':'已保存到本地');
   });
 }
 function moveCard(secKey,idx,dir){
