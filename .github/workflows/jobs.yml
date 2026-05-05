@@ -2,10 +2,11 @@ name: 深圳招聘 Daily Scrape
 
 on:
   schedule:
-    # 每日 09:00 北京时间 (UTC 01:00)
-    - cron: '0 1 * * *'
-    # 备份：09:30 北京时间 (UTC 01:30)。若 09:00 已通知则跳过发送步骤。
-    - cron: '30 1 * * *'
+    # 主：09:07 北京时间 (UTC 01:07)。避开整点是因为 GitHub 在
+    # :00 时刻调度堆积严重，cron 经常被静默跳过。
+    - cron: '7 1 * * *'
+    # 备份：09:37 北京时间 (UTC 01:37)。若 09:07 已通知则跳过发送步骤。
+    - cron: '37 1 * * *'
   push:
     branches: [main]
     paths:
@@ -146,4 +147,4 @@ jobs:
               git push && break || sleep $((2 ** i))
             done
           fi
-# manual trigger: 2026-04-30 morning catch-up
+# manual trigger: 2026-05-05 catch-up (cron schedule still not firing)

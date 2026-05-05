@@ -2,11 +2,8 @@ name: CCASS 02680 Daily
 
 on:
   schedule:
-<<<<<<< HEAD
-=======
-    # 每个工作日 HKT 10:00 (UTC 02:00) — 晨间报告（前一交易日数据）
+    # 每个工作日 HKT 10:00 (UTC 02:00) — 晨间报告
     - cron: '0 2 * * 1-5'
->>>>>>> claude/stock-analysis-tracker-AjMEG
     # 每个工作日 HKT 17:30 (UTC 09:30) — CCASS 通常 17:00 后刷新
     - cron: '30 9 * * 1-5'
   push:
@@ -14,10 +11,7 @@ on:
     paths:
       - 'scraper/scrape_ccass.py'
       - 'scraper/analyze_ccass.py'
-<<<<<<< HEAD
-=======
       - 'scraper/generate_ccass_pdf.py'
->>>>>>> claude/stock-analysis-tracker-AjMEG
       - '.github/workflows/ccass.yml'
   workflow_dispatch:
     inputs:
@@ -51,16 +45,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-<<<<<<< HEAD
-          pip install requests beautifulsoup4
-=======
           pip install requests beautifulsoup4 markdown weasyprint
 
       - name: Install CJK fonts for PDF
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-noto-cjk-extra >/dev/null 2>&1
->>>>>>> claude/stock-analysis-tracker-AjMEG
 
       - name: Scrape CCASS
         id: scrape
@@ -78,25 +68,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Commit debug HTML on failure (for diagnostics)
-        if: always() && steps.scrape.outcome == 'failure'
-        run: |
-          mkdir -p data/_debug
-          mv data/ccass_history/_debug_*.html data/_debug/ 2>/dev/null || true
-          # 只保留最新一份，避免撑大仓库
-          ls -t data/_debug/*.html 2>/dev/null | tail -n +2 | xargs -r rm -f
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/_debug/
-          if git diff --cached --quiet; then
-            echo "No debug html to commit"
-          else
-            git commit -m "debug(ccass): capture HKEX response for diagnosis"
-            for i in 1 2 3 4; do
-              git push && break || sleep $((2 ** i))
-            done
-          fi
-
       - name: Generate analysis report
         if: steps.scrape.outcome == 'success'
         env:
@@ -104,26 +75,18 @@ jobs:
         run: |
           python scraper/analyze_ccass.py "${{ github.event.inputs.stock_code || '02680' }}"
 
-<<<<<<< HEAD
-=======
       - name: Generate PDF report
         if: steps.scrape.outcome == 'success'
         run: |
           python scraper/generate_ccass_pdf.py "${{ github.event.inputs.stock_code || '02680' }}"
 
->>>>>>> claude/stock-analysis-tracker-AjMEG
       - name: Commit and push
         if: steps.scrape.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # 不提交 debug HTML
           rm -f data/ccass_history/_debug_*.html
-<<<<<<< HEAD
-          git add data/stock_*_ccass*.json data/stock_*_ccass_report.md data/ccass_history/ 2>/dev/null || true
-=======
           git add data/stock_*_ccass*.json data/stock_*_ccass_report.md data/stock_*_ccass_report.pdf data/ccass_history/ 2>/dev/null || true
->>>>>>> claude/stock-analysis-tracker-AjMEG
           if git diff --cached --quiet; then
             echo "No CCASS changes to commit"
           else
@@ -143,20 +106,12 @@ jobs:
           TITLE: '📊 02680 创陞控股 · CCASS 每日报告'
         run: |
           REPORT_PATH="data/stock_${STOCK_CODE}_ccass_report.md"
-          if [ ! -f "$REPORT_PATH" ]; then
-            echo "Report file missing, skip"
-            exit 0
-          fi
-          # 查找置顶的追踪 issue(按标题精确匹配,只看 open 状态)
+          if [ ! -f "$REPORT_PATH" ]; then exit 0; fi
           ISSUE_NUMBER=$(gh issue list --repo "$REPO" --search "\"$TITLE\" in:title" --state open --json number,title --jq '.[] | select(.title == "'"$TITLE"'") | .number' | head -1)
           if [ -z "$ISSUE_NUMBER" ]; then
-            echo "Creating tracking issue..."
-            URL=$(gh issue create --repo "$REPO" --title "$TITLE" \
-              --body "这是 02680 创陞控股 CCASS 每日报告的追踪 issue。每个工作日 HKT 17:30 后会以评论形式追加当天的分析。订阅这个 issue 即可每天收到邮件通知。")
+            URL=$(gh issue create --repo "$REPO" --title "$TITLE" --body "CCASS 每日报告追踪 issue")
             ISSUE_NUMBER=$(echo "$URL" | grep -oE '[0-9]+$')
-            echo "Created issue #$ISSUE_NUMBER"
           fi
-          echo "Posting report to issue #$ISSUE_NUMBER"
           gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file "$REPORT_PATH"
 
       - name: Push report to WeChat (pushplus)
@@ -164,21 +119,12 @@ jobs:
         env:
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: |
-          if [ -z "$PUSHPLUS_TOKEN" ]; then
-            echo "PUSHPLUS_TOKEN not set, skip WeChat push"
-            exit 0
-          fi
+          if [ -z "$PUSHPLUS_TOKEN" ]; then exit 0; fi
           STOCK_CODE="${{ github.event.inputs.stock_code || '02680' }}"
           REPORT_PATH="data/stock_${STOCK_CODE}_ccass_report.md"
-          if [ ! -f "$REPORT_PATH" ]; then
-            echo "Report file missing, skip"
-            exit 0
-          fi
+          if [ ! -f "$REPORT_PATH" ]; then exit 0; fi
           DATE=$(date -u +"%Y-%m-%d")
           TITLE="📊 ${STOCK_CODE} CCASS 报告 ${DATE}"
-          CONTENT=$(cat "$REPORT_PATH")
-          # pushplus API: send markdown to WeChat
           curl -s -X POST "http://www.pushplus.plus/send" \
             -H "Content-Type: application/json" \
-            -d "{\"token\":\"${PUSHPLUS_TOKEN}\",\"title\":\"${TITLE}\",\"content\":$(echo "$CONTENT" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'),\"template\":\"markdown\"}" \
-            | python3 -c "import sys,json; r=json.load(sys.stdin); print(f'pushplus: {r.get(\"msg\",\"unknown\")}')"
+            -d "{\"token\":\"${PUSHPLUS_TOKEN}\",\"title\":\"${TITLE}\",\"content\":$(cat "$REPORT_PATH" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'),\"template\":\"markdown\"}"
