@@ -147,4 +147,4 @@ jobs:
               git push && break || sleep $((2 ** i))
             done
           fi
-# manual trigger: 2026-05-02 catch-up + watchdog rollout
+# manual trigger: 2026-05-05 catch-up (cron schedule still not firing)
