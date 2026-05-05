@@ -3373,10 +3373,13 @@
             const metaOutput = JSON.stringify({ encrypted: encMeta, updatedAt: now });
             const metaKB = Math.round(metaOutput.length / 1024);
 
-            // Always encrypt photos (ensure OSS has latest)
-            showToast('加密照片...');
-            const encPhotos = await encryptData(pwd, photosData);
-            const photosOutput = JSON.stringify({ encrypted: encPhotos });
+            // Only encrypt photos if changed
+            let photosOutput = null;
+            if (photosDirty) {
+                showToast('加密照片...');
+                const encPhotos = await encryptData(pwd, photosData);
+                photosOutput = JSON.stringify({ encrypted: encPhotos });
+            }
 
             // === Step 1: Upload to OSS first (fast in China) ===
             showToast('上传到阿里云...');
@@ -3441,7 +3444,7 @@
             }, '更新分支失败');
 
             cacheData(metaOutput);
-            cachePhotos(JSON.parse(photosOutput));
+            if (photosOutput) cachePhotos(JSON.parse(photosOutput));
             dirty = false;
             photosDirty = false;
             return true;
