@@ -1,18 +1,18 @@
 {
-  "last_updated": 1777695853298,
-  "last_updated_iso": "2026-05-02T12:24:13+08:00",
+  "last_updated": 1777952118344,
+  "last_updated_iso": "2026-05-05T11:35:18+08:00",
   "companies": {
     "tencent": {
-      "count": 1468,
+      "count": 1470,
       "status": "ok",
-      "fetched_at": 1777695580562,
+      "fetched_at": 1777951865513,
       "error": null,
       "name": "腾讯"
     },
     "bytedance": {
-      "count": 606,
+      "count": 595,
       "status": "ok",
-      "fetched_at": 1777695644836,
+      "fetched_at": 1777951921591,
       "error": null,
       "name": "字节跳动"
     },
@@ -63,7 +63,7 @@
       "count": 0,
       "status": "error",
       "fetched_at": 0,
-      "error": "all oppo endpoints rejected our payload :: https://careers.oppo.com/api/web/job/list: oppo probe https://careers.oppo.com/api/web/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/web/job/list :: {\"timestamp\":\"2026-05-02T04:23:52.296+00:00\",\"status\":500,\"error\":\"Internal Se"
+      "error": "all oppo endpoints rejected our payload :: https://careers.oppo.com/api/web/job/list: oppo probe https://careers.oppo.com/api/web/job/list: all 2 attempts failed: http 500 from https://careers.oppo.com/api/web/job/list :: {\"timestamp\":\"2026-05-05T03:34:58.276+00:00\",\"status\":500,\"error\":\"Internal Se"
     },
     "vivo": {
       "name": "vivo",
@@ -83,6 +83,34 @@
     "其他"
   ],
   "jobs": [
+    {
+      "id": "tencent_2046932836338003968",
+      "company": "tencent",
+      "company_name": "腾讯",
+      "title": "魂斗罗-服务器开发工程师-新星引力计划",
+      "category": "技术",
+      "category_raw": "技术",
+      "location": "深圳",
+      "department": "IEG · 魂斗罗-手游",
+      "posted_date": "2026-05-03",
+      "url": "http://careers.tencent.com/jobdesc.html?postId=2046932836338003968",
+      "source": "careers.tencent.com",
+      "description": "岗位职责：\n1.负责游戏服务器端的架构设计与优化工作；\n2.承担游戏服务器端的逻辑功能模块的开发、测试和发布工作；\n3.对游戏服务器端的线上问进行定位与修复；\n4.持续优化游戏服务器端性能，确保高并发场景下的稳定运行；\n5.开发和维护服务器端研发效能工具，提升团队开发效率。\n\n任职要求：\n1.本科及以上学历，计算机相关专业，1年以上游戏服务器开发经验；\n2.熟练掌握C/C++编程语言，熟悉shell脚本和Linux开发环境；\n3.具备扎实的计算机基础，良好的编程规范和工程开发能力；\n4.具备优秀的沟通协作能力，能够与团队高效配合。"
+    },
+    {
+      "id": "tencent_2048937503808978944",
+      "company": "tencent",
+      "company_name": "腾讯",
+      "title": "QQ飞车端游-客户端开发工程师-新星引力计划",
+      "category": "技术",
+      "category_raw": "技术",
+      "location": "深圳",
+      "department": "IEG · QQ飞车",
+      "posted_date": "2026-05-03",
+      "url": "http://careers.tencent.com/jobdesc.html?postId=2048937503808978944",
+      "source": "careers.tencent.com",
+      "description": "岗位职责：\n1.负责UE5的PC端游戏系统开发，根据需求制定合理技术方案和实现；\r\n2.负责具体系统及单局内玩法机制实现，包括但不限于技能/道具/场景交互等；\r\n3.负责相关优化内容，包括但不限于性能/内存/崩溃/帧率稳定性等；\r\n4.负责维护和优化现有基础组件与逻辑框架，提升内容制作易用性和扩展性。\n\n任职要求：\n1.本科及以上学历，两年以上UE4或Unity引擎相关开发经验，有UE4开发经验者优先；\n2.熟练掌握C++，有脚本开发能力，有扎实的计算机操作系统基础；\n3.扎实的3D数学、图形、数据结构、算法基础；\n4.熟悉UE对象系统以及资源管理底层实现，熟悉编译器原理优先；\n5.具备出色的学习能力，较强的问题分析与解决能力，良好的团队协作能力，善于沟通，责任心强。"
+    },
     {
       "id": "tencent_2006155119900643328",
       "company": "tencent",
@@ -266,20 +294,6 @@
       "description": "岗位职责：\n1.关注AI大模型等领域的最新动态、前沿技术突破和应用趋势，能够快速响应并及时整理和输出有价值观点；\n2.参与AI产品（AI图像/视频/3D/动画生成等）和游戏AI功能的深度测评，对技术架构、产品设计、用户体验等维度进行拆解，输出专业分析；\n3.针对AI技术与游戏领域的结合与应用（包括AI生成技术对游戏开发提效、AI驱动的玩法创新、AI与游戏的融合趋势等）进行分析研究，产出有洞察、可落地的结论，为管理层的策略制定提供支持。\n\n任职要求：\n1.计算机和机器学习等相关专业，本科及以上学历优先；\n2.对AI大模型、机器学习等技术有扎实的知识基础，能够熟练阅读理解相关论文；\n3.对游戏行业有浓厚的兴趣，熟悉游戏开发流程者优先；\n4.具备出色的信息搜集、分析、总结归纳能力，能够独立完成研究课题，并产出书面报告；\n5.具备优秀的沟通和团队协作能力，能够清晰有效地传达复杂概念和分析，英语水平出色者优先。"
     },
     {
-      "id": "tencent_2045074510201389056",
-      "company": "tencent",
-      "company_name": "腾讯",
-      "title": "腾讯会议-AI产品经理-AI应用体验方向",
-      "category": "产品",
-      "category_raw": "产品",
-      "location": "深圳",
-      "department": "CSIG · 腾讯会议",
-      "posted_date": "2026-04-30",
-      "url": "http://careers.tencent.com/jobdesc.html?postId=2045074510201389056",
-      "source": "careers.tencent.com",
-      "description": "岗位职责：\n1.负责AI技术在腾讯会议各场景的框架规划与功能落地，挖掘用户对AI的真实诉求，优化用户体验；\r\n2.结合AI技术的发展趋势和能力，深入探索AI技术在会议场景下的创新应用，提升产品竞争力；\r\n3.协同算法、研发、运营和设计等多团队，确保产品规划的落地实施与持续优化。\n\n任职要求：\n1.本科及以上学历，2年以上互联网产品经验，对AI行业趋势和大模型技术与应用边界有深刻的理解，对AI产品有热情；\n2.具备较强的用户思维、产品体验敏感度和出色的团队协作与沟通能力；\n3.善于系统化思考，对行业有深入的洞察、清晰的业务逻辑和产品判断；\n4.在同等条件下，通过腾讯云认证或取得同等资格认证的候选人，我们会优先考虑。"
-    },
-    {
       "id": "tencent_2046083747635425280",
       "company": "tencent",
       "company_name": "腾讯",
@@ -290,6 +304,20 @@
       "department": "CSIG · 腾讯会议",
       "posted_date": "2026-04-30",
       "url": "http://careers.tencent.com/jobdesc.html?postId=2046083747635425280",
+      "source": "careers.tencent.com",
+      "description": "岗位职责：\n1.负责AI技术在腾讯会议各场景的框架规划与功能落地，挖掘用户对AI的真实诉求，优化用户体验；\r\n2.结合AI技术的发展趋势和能力，深入探索AI技术在会议场景下的创新应用，提升产品竞争力；\r\n3.协同算法、研发、运营和设计等多团队，确保产品规划的落地实施与持续优化。\n\n任职要求：\n1.本科及以上学历，2年以上互联网产品经验，对AI行业趋势和大模型技术与应用边界有深刻的理解，对AI产品有热情；\n2.具备较强的用户思维、产品体验敏感度和出色的团队协作与沟通能力；\n3.善于系统化思考，对行业有深入的洞察、清晰的业务逻辑和产品判断；\n4.在同等条件下，通过腾讯云认证或取得同等资格认证的候选人，我们会优先考虑。"
+    },
+    {
+      "id": "tencent_2045074510201389056",
+      "company": "tencent",
+      "company_name": "腾讯",
+      "title": "腾讯会议-AI产品经理-AI应用体验方向",
+      "category": "产品",
+      "category_raw": "产品",
+      "location": "深圳",
+      "department": "CSIG · 腾讯会议",
+      "posted_date": "2026-04-30",
+      "url": "http://careers.tencent.com/jobdesc.html?postId=2045074510201389056",
       "source": "careers.tencent.com",
       "description": "岗位职责：\n1.负责AI技术在腾讯会议各场景的框架规划与功能落地，挖掘用户对AI的真实诉求，优化用户体验；\r\n2.结合AI技术的发展趋势和能力，深入探索AI技术在会议场景下的创新应用，提升产品竞争力；\r\n3.协同算法、研发、运营和设计等多团队，确保产品规划的落地实施与持续优化。\n\n任职要求：\n1.本科及以上学历，2年以上互联网产品经验，对AI行业趋势和大模型技术与应用边界有深刻的理解，对AI产品有热情；\n2.具备较强的用户思维、产品体验敏感度和出色的团队协作与沟通能力；\n3.善于系统化思考，对行业有深入的洞察、清晰的业务逻辑和产品判断；\n4.在同等条件下，通过腾讯云认证或取得同等资格认证的候选人，我们会优先考虑。"
     },
@@ -11368,6 +11396,20 @@
       "description": "岗位职责：\n1.任务设计：根据故事大纲对任务进行流程拆解和体验设计，产出节奏合理，体验丰富，符合IP调性的任务流程；\r\n2.任务落地: 根据任务需要，提出并验收相应的美术资源，程序功能，运用引擎工具整合,最终在版本中落地任务内容；\r\n3.IP氛围：结合IP世界观、使用交互玩法、氛围叙事、NPC生态等功能，增强玩家在游戏中的IP体验；\r\n4.工具迭代与维护：根据项目需求与开发合作，迭代编辑器、工具、AI，提高内容的表现力和工作效率，优化工作流规范。\n\n任职要求：\n1.本科以上学历,3年以上任务策划类工作经验,熟悉任务设计流程,有表现向设计及制作经验者优先；\r\n2.热爱游戏开发工作，对游戏涉猎广泛,有丰富的主机、PC游戏经验,熟悉相关游戏的任务流程和表现设计；\r\n3.对各类型小说、电影、以及二次元文化有足够的体验和理解，熟悉日漫IP，有一定日语基础者优先；\r\n4.沟通协调能力强,足够的抗压能力和责任心。"
     },
     {
+      "id": "tencent_1986387400112361472",
+      "company": "tencent",
+      "company_name": "腾讯",
+      "title": "国风预研项目-资深2D角色设计师",
+      "category": "设计",
+      "category_raw": "设计",
+      "location": "深圳",
+      "department": "IEG · 公共",
+      "posted_date": "2026-04-13",
+      "url": "http://careers.tencent.com/jobdesc.html?postId=1986387400112361472",
+      "source": "careers.tencent.com",
+      "description": "岗位职责：\n1.能够清晰感悟到产品的调性以及需求的意图，并且落地成具体的美术需求文档；\n2.具备极高审美，能够配合产品的诉求，敏锐捕捉到市场审美和题材热度的趋势，并且通过极强的设计能力将元素和内容完整结合，绘制出能够用于宣传级别的商业化立绘。同时能够理性把设计逻辑量化成对应的规范文档以便项目铺量；\n3.对角色制作和材质等有比较深入了解，清晰地预判自己的设计能够在游戏中呈现的效果，设计的时候也会考虑到结构体块实现在游戏内的打击感、技能展示效果的表现力；\n4.设计角色的时候能够兼顾文案的剧情要求，角色本身就能呈现出足够的感染力。在设计细节的时候有充分考虑到背后的故事；\n5.画风需国风偏写实、画面干净概括，需要清晰准确绘制出对应的材质给3D明确的参考。\n\n任职要求：\n1.2年以上工作经验，有过接口人或2D主美经验，能够独立输出美术风格，同时对接项目需求以及反馈外包；\n2.能够根据项目目标和资源，合理分配工作，顺利推进项目进度；\n3.美术功底扎实，基本功过硬，熟练使用各种软件，对AI也需要有一定程度的使用；\n4.有较强责任心，善于和团队合作，很好地与策划和程序共同开发，和谐相处，相互成就。工作态度端正，有自驱力；\n5.掌握国风写实、轻度写实、做过古风项目经验优先。"
+    },
+    {
       "id": "tencent_1962831949571706880",
       "company": "tencent",
       "company_name": "腾讯",
@@ -19530,20 +19572,6 @@
       "description": "岗位职责：\n1.采购供应系统资深产品设计/架构师，负责数据中心品类整个采购供应流程系统设计和系统产品规划；\n2.对采购供应行业非常对了解和熟悉，知道整个流对运转，以及系统的产品设计，支撑国内海外数据中心品类端到端的需求-采购-订单链条；\n3.强的全局拉通能力，应对复杂的链路，通用和局部架构设计能力。\n\n任职要求：\n1.5年以上B端产品经验，其中至少3年专注采购、供应链或ERP领域；\r\n2.有从0到1搭建或重构大型采购系统（如Coupa、Ariba、用友/金蝶SRM模块等）的实际经验；\r\n3.具备系统架构设计能力，熟悉微服务、云原生、低代码平台等现代技术架构者优先；\r\n4.精通采购业务流程（寻源、合同、订单、收货、对账等）及行业最佳实践；\r\n5.熟悉主流ERP（如SAP、Oracle、用友、金蝶）与采购模块的集成逻辑；\r\n6.具备SQL能力，能独立进行数据探查与指标定义；\r\n7.熟练使用Axure/Figma、Jira、Confluence等产品工具。"
     },
     {
-      "id": "bytedance_7615611382692235573",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "网络设备需求管理专家-数据中心与供应链",
-      "category": "其他",
-      "category_raw": "职能 / 支持",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2026-03-10",
-      "url": "https://jobs.bytedance.com/experienced/position/7615611382692235573/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责IDC网络资源的整体规划，制定中长期规划、跟进短期规划的实施并根据业务变化动态调整；\n2、负责业务网络资源需求管理，跟进业务需求滚动预测，了解交换机、光模块等核心网络设备的供需趋势，技术迭代方向；\n3、组织相关团队完成网络带宽及架构相关的规划；\n4、了解公司网络集群规划，依据集群规划，负责分业务的算力排布。\n\n任职要求：\n1、本科及以上学历，具有网络设备规划、需求管理工作经验；\n2、熟悉数据中心需求管理-需求排布的全流程并具备丰富的实操经验；\n3、逻辑性强，对数据敏感，有良好的数据分析和定位问题的能力，熟练掌握数据分析工具（Excel必选）；\n4、有一定项目管理经验，有PMP证书或PM经验优先；\n5、熟悉网络技术架构及带宽技术规划。"
-    },
-    {
       "id": "tencent_2031273482821726208",
       "company": "tencent",
       "company_name": "腾讯",
@@ -20272,20 +20300,6 @@
       "description": "岗位职责：\n1.负责游戏研发项目计划的制定、跟踪和维护，确保项目里程碑能按计划高质量完成； 2.负责游戏的资源协调以及确保项目干系人的协同工作和信息同步； 3.能及时发现并跟踪解决自研游戏项目中的问题，并有效管理项目风险； 4.推动项目组以及部门流程优化和知识沉淀。\n\n任职要求：\n1.本科及以上学历，从事项目管理工作2年以上； 2.熟悉敏捷项目管理，有一定网络游戏研发项目管理实践经验； 3.具有良好的执行力、责任心和合作沟通能力，能主动积极推动项目团队朝目标前进； 4.基于Unity研发项目管理实践或技术研发背景者优先考虑； 5.热爱游戏，有游戏行业项目工作经验优先。"
     },
     {
-      "id": "bytedance_7613232471257450757",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "数据中心需求管理工程师-Data（深圳）",
-      "category": "其他",
-      "category_raw": "职能 / 支持",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2026-03-04",
-      "url": "https://jobs.bytedance.com/experienced/position/7613232471257450757/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责IDC数据中心机房、网络等基础设施资源的整体规划，制定中长期规划、跟进短期规划的实施并根据业务变化动态调整；\n2、组织相关团队完成数据中心机房布局、电力容量、网络等基础设施规划项目；\n3、负责业务数据中心基础设施资源需求管理，跟进业务需求滚动预测和需求变更；\n4、负责业务数据中心资源交付进度的跟进和问题解决，确保交付SLA；\n5、负责IDC数据中心资源交付相关的项目管理。\n\n任职要求：\n1、本科及以上学历，具有数据中心基础设施规划、需求管理、交付管理工作经验；\n2、熟悉数据中心端到端交付全流程并具备丰富的实操经验；\n3、逻辑性强，对数据敏感，有良好的数据分析和定位问题的能力；\n4、具备项目管理经验，有PMP证书或项目管理经验优先；\n5、熟悉数据中心基础设施架构及机房、电力、网络资源规划。"
-    },
-    {
       "id": "tencent_2018988128957792256",
       "company": "tencent",
       "company_name": "腾讯",
@@ -20662,6 +20676,20 @@
       "url": "http://careers.tencent.com/jobdesc.html?postId=2016516371617304576",
       "source": "careers.tencent.com",
       "description": "岗位职责：\n1.负责游戏客户端功能开发，负责UI系统、战斗系统等模块的具体实现；\n2.协助完成游戏前端逻辑的编码、调试、优化和部分工具链的维护工作；\n3.与策划、美术人员密切沟通，理解需求并将其转化为稳定高效的代码；\n4.在资深工程师指导下，学习和应用引擎特性，解决开发中遇到的技术问题。\n\n任职要求：\n1.本科及以上学历，计算机、软件工程、数学或相关专业；\r\n2.熟练掌握C，C++或者C# 等编程语言，理解面向对象编程，具有良好的数据结构和算法基础；\r\n3.有Unity或UE开发经验者更佳，但强烈欢迎愿意深入学习和适应自研引擎的候选人；\r\n4.对图形渲染技术有浓厚兴趣或初步了解者优先（如OpenGL、DirectX、Metal或Vulkan）；\r\n5.具备多线程编程基础，了解性能优化和调试技巧；\r\n6.热爱游戏，有supercell游戏的长期体验，有RPG游戏的深度体验者；\r\n7.具有良好的团队协作精神和沟通能力，工作积极主动，责任心强。"
+    },
+    {
+      "id": "bytedance_7611855453735455029",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "HRBP-移动OS（北京/深圳）",
+      "category": "职能",
+      "category_raw": "人力",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2026-02-28",
+      "url": "https://jobs.bytedance.com/experienced/position/7611855453735455029/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、深入了解业务和组织状况，理解业务战略并促进人力资源战略在业务部门的有效实施；\n2、能够洞察组织和团队存在的问题，并应用专业理论、方法、工具，为业务团队提供全方位解决方案，包括但不限于：人才引进与选拔、员工发展、绩效与激励、文化建设等；\n3、牵头或参与部门组织和人才管理专题的调研、规划、设计和落地，构建系统化/专业化解决方案库，推动组织不断迭代和升级，助力业务拿结果。\n\n任职要求：\n1、本科及以上学历，有人力资源管理咨询公司相关工作经验，在人力资源的1-2个模块有深度沉淀；\n2、洞察力和逻辑性强，能够对复杂的问题抽丝剥茧，快速找到问题的切入点，并具有较强的驱动力，推动问题的解决；\n3、学习和求知欲强，能够适应业务的快速变化、应对复杂业务场景的挑战；\n4、可将英语作为工作语言者优先。"
     },
     {
       "id": "bytedance_7611498281491876149",
@@ -21644,20 +21672,6 @@
       "description": "岗位职责：\n1、深入探索剪映的Agent应用，构建端到端的Agent评测与评估体系，设计和研发领先的Agent模型与链路，推动AI技术在视频、图片创作领域中的突破；\n2、建立并迭代Agent模型与链路的评估体系，探索数据与模型的共进化反馈体系；\n3、通过Prompt/Context Engineering、SFT、RLHF等算法提升Agent能力上限，实现Agent在视频/图片生成、编辑等能力上的全面提升；\n4、参与领域模型的全流程工作，根据实际业务场景，将创新性技术方案高效落地，推动内容创作AI能力的持续突破。\n\n任职要求：\n1、本科及以上学历，计算机科学、人工智能、自然语言处理、计算机视觉等相关领域专业；\n2、具备大模型的训练与优化经验；精通PyTorch/TensorFlow等框架，对于主流大模型并行框架（DeepSpeed、Megatron）有相关了解；\n3、熟悉LLM/VLM的Post-Training相关技术，在相关领域有过良好的项目经验或研究经验的优先；\n4、积极拥抱行业变化，有全链路视角，有从0-1搭建AI Agent应用经验的优先。"
     },
     {
-      "id": "bytedance_7601086051352627509",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "Agent专家工程师-即梦AI（深圳/广州/北京）",
-      "category": "其他",
-      "category_raw": "前端",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2026-01-30",
-      "url": "https://jobs.bytedance.com/experienced/position/7601086051352627509/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、深入探索即梦AI Web主站和探索业务方向的Agent应用，构建端到端的Agent评测体系，设计和研发领先的Agent模型与链路，推动AI技术在视频、图片创作领域中的突破；\n2、建立并迭代Agent模型与链路的评估体系，探索数据与模型的共进化反馈体系；\n3、通过Prompt/Context Engineering、SFT、RLHF等算法提升Agent能力上限，实现Agent在视频/图片生成、编辑等能力上的全面提升；\n4、参与领域模型的全流程工作，根据实际业务场景，将创新性技术方案高效落地，推动内容创作AI能力的持续突破。\n\n任职要求：\n1、本科及以上学历，计算机科学、人工智能、自然语言处理、计算机视觉等相关领域专业；\n2、较强的工程能力，具备大模型的训练与优化经验；\n3、熟悉LLM/VLM的Post-Training相关技术，在相关领域有过良好的项目经验或研究经验；\n4、有从0-1搭建AI Agent应用经验。"
-    },
-    {
       "id": "bytedance_7600724569972279605",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -21726,20 +21740,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7599865262518913333/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n团队介绍：火山方舟是火山引擎推出的一站式大模型服务平台，是中国大模型市场产品和份额领跑者。平台提供模型推理、评测、精调等全流程服务。方舟搭载了豆包及业界主流大模型，提供丰富的插件生态和AI应用开发服务，并通过稳定可靠的安全互信方案、专业的算法技术服务，全方位保障企业级AI应用落地。\n\n1、面向字节跳动司内的业务运营，服务于抖音、电商、商业化、剪映等业务方，用好方舟平台的大模型服务；\n2、识别业务方的关键需求，包含方舟平台功能、模型推理、训练需求，推动方舟平台的产品研发团队并落实解决；\n3、解决业务方研发同学的算力资源、帮助研发的模型测试和上线、稳定性响应和问题解决；\n4、帮助业务方做方舟平台的预算、成本测算、解答账单疑问。\n\n任职要求：\n1、3年以上运营经验，对AI有较强的兴趣，对AI产品、模型推理、训练有认知；\n2、出色的沟通能力、能高效处理多线程沟通，良好的团队合作精神；\n3、具备项目管理能力、在变化中接受变化并找到主线推动关键项目；\n4、对数据敏感，有数据分析逻辑和方法论，能够熟练使用数据分析工具；\n5、具有创新思维和解决问题的能力，能够提出并实施新的运营策略。"
-    },
-    {
-      "id": "bytedance_7599968418585970997",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "东南亚物流精益管理-TikTok Shop",
-      "category": "运营",
-      "category_raw": "运营",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2026-01-27",
-      "url": "https://jobs.bytedance.com/experienced/position/7599968418585970997/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、流程精益优化：负责快递中转、分拣、配送全链路核心环节的流程设计与优化，搭建标准化作业体系；基于VSM/5S/SWOT等方法，主导中转场操作流程规划、集散集包环节流程设计，合理选型与推广作业工具，输出《中转场/网点操作流程手册》等标准化文件，解决现场作业瓶颈，提升整体作业效率与标准化水平；\n2、人力效率管理：通过标准工时测定，动作分析等，建立科学的人力配置模型与排班优化体系，结合订单量波动规律，动态调整人员配置及配套资源，平衡作业需求与人力成本；持续监控人员效率指标，输出优化方案，实现人效提升与人力成本精准管控；\n3、设备应用与规划：负责分拣设备、自动化设备的全生命周期管理与应用规划，搭建设备投入产出比（ROI）评估模型，优化设备运维与使用效率；主导自动化设备在快递场景的适配与落地，推动设备工业化升级，提升作业自动化、智能化水平；\n4、成本管控与资源效益分析：聚焦场地流程、资源配置等核心维度，通过流程优化、资源整合等方式实现人效提升与成本优化；开展人力外包成本分析，搭建外包价格模型，精准核算外包成本，输出成本优化建议，实现资源效益最大化；\n5、质量复盘与持续改善：建立常态化质量复盘机制与数据追踪体系，监控作业效率、成本、质量等核心指标，识别管理漏洞与改善空间；制定持续改善方案并推动落地，形成“分析-优化-落地-复盘”的闭环管理；\n6、系统迭代与技术落地：参与TMS系统功能设计与迭代优化，基于业务场景输出合理的设计理念与功能需求，推动系统与现场作业深度适配；探索AI技术、视频技术在库内作业中的应用，甄别流程浪费（等待、冗余动作等），实现精益管理数字化、可视化；跨部门协作与精益项目推进：联动中转、运输、场地规划等部门，参与中转场、运输场地的库内布局设计，确保场地布局符合效率优化与作业需求；主导精益优化项目（如5S管理、精益生产推广等），推动精益理念落地，提升组织整体运营能力。\n\n任职要求：\n1、本科及以上学历，工业工程、物流管理、供应链管理、机械工程等相关专业优先；\n2、3年及以上物流快递行业IE相关工作经验，熟悉快递中转、分拣、配送全流程，有中转场流程优化、自动化设备应用、精益项目落地经验者优先；\n3、精通IE基础工具（流程分析、动作分析、时间研究、线平衡等），熟练掌握精益管理方法（5S、持续改善、价值流分析等），能独立主导流程优化与精益项目；\n4、具备人力配置模型搭建、排班优化、成本分析能力，能运用数据分析工具（Excel、SQL、Power BI等）挖掘问题、输出方案；\n5、了解快递行业自动化分拣设备、TMS系统功能逻辑，有系统需求设计或设备ROI评估经验者加分；\n6、具备AI技术、视频分析技术在物流场景应用经验，或熟悉人力外包成本管控逻辑者优先。"
     },
     {
       "id": "bytedance_7599600826018269493",
@@ -21922,6 +21922,20 @@
       "url": "https://tencent.wd1.myworkdayjobs.com/Tencent_Careers/job/China-Shenzhen/HR-Business-Partner_R106771",
       "source": "careers.tencent.com",
       "description": "岗位职责：\nWhat the Role Entails\nTake active part in the training, learning, culture and employee engagement projects. Actively act as team member to contribute innovative ideas, and take on project management roles, when at the same time can be hands-on with project operation documents, including graphic, document design and drafting.\nSupport in sourcing internal and external partnership, vendor and speakers to ensure high quality, value adding content of different layers are provided in the program design.\nSupport HRBP leader in day to day HRBP responsibilities, providing BP support to business teams world-wide, and ensuring alignment with global HR strategies.\nBeing a trusted advisor to provide insights on business decisions from a human capital perspective which includes but not limited to talent management, performance management, workforce strategy, employee engagement & retention.\nCollaborate closely with the business leaders on people matters which may have short-, medium- or long-term effects on the business\nBuild strong partnerships with HR teams with both local and global investment companies and develop deep understanding of organizational dynamics in each entity\nIdentify opportunities for resource sharing and ensuring compliance in workforce decisions\nDriving and helping to connect the dots between global/local decisions in contrast with HQ decisions, to mediate and align expectations across all parties\nSupport cross-functional HR projects  as needed, and collaborate well with key HR stakeholders, including HRBP and HR function teams to ensure project success\nChallenges\nAbility to operate in ambiguous and grey-zone scopes — defining and creating value where frameworks don’t yet exist.\nRequires self-direction and initiative to build new relationships, identify gaps, and drive change.\nMust be comfortable navigating cross-cultural stakeholder management and regional diversity.\n\nWho We Look For\nAbove 5 years of experience as a HR Business Partner, demonstrating strong stakeholder management skills and business acumen\nPossess exposure across the gaming industry, ideally with experience supporting overseas businesses in their expansion\nPossess experience dealing with Performance Management, Rewards, Talent retention, Talent Management and Employee Relations\nGood experience in training, and employee engagement, creative and hands-on; strong capability in bi-lingual documentations, and communication graphic, video design is a plus\nSomeone who is positive, possess a can-do attitude and can navigate in highly matrixed and ambiguous environments\nStrong people skillsets and able to build relationships across all levels of staff, be culturally sensitive and adaptable to different people styles; a good team player, has strong sense of teamwork and are willing to work with others\nStrong learning agility, with good ability to bounce back and quickly learn from past experiences, improve, and adapt\nBilingual abilities (English/Chinese) will be considered a competitive edge as it will be required to deal with employees locally\n\nEqual Employment Opportunity at Tencent\nAs an equal opportunity employer, we firmly believe that diverse voices fuel our innovation and allow us to better serve our users and the community. We foster an environment where every employee of Tencent feels supported and inspired to achieve individual and common goals.\r\nWork Location: China-Shenzhen\n\n任职要求：\n岗位要求详情请见上方岗位职责内说明"
+    },
+    {
+      "id": "bytedance_7595508890540886325",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "大数据开发工程师-音视频技术",
+      "category": "技术",
+      "category_raw": "大数据",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2026-01-15",
+      "url": "https://jobs.bytedance.com/experienced/position/7595508890540886325/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责特征工程的开发与维护；\n2、负责指标体系、数据模型的设计，离线和实时数仓任务开发与维护；\n3、负责数据治理工作，提升数据易用性及数据质量；\n4、深入业务，理解业务需求，发挥数据价值，与业务团队紧密合作；\n5、参与大数据应用规划，为分析师、算法团队提供应用指导。\n\n任职要求：\n1、精通维度建模理论，具备数据仓库模型设计相关经验，深入了解数据仓库体系，并支撑过实际业务场景；\n2、具备较强的编码和SQL能力，熟悉Hadoop/Spark生态中的常用组件和基本原理，了解数据倾斜等分布式场景常见问题的解决方案；\n3、熟悉Kafka/Flink/Doris/ClickHouse等实时流式计算引擎的开发和使用；\n4、对业务敏感，能快速理解业务背景，具备优秀的技术与业务结合能力。"
     },
     {
       "id": "bytedance_7595439253190986037",
@@ -22204,6 +22218,20 @@
       "description": "岗位职责：\n1、负责责任采购政策体系搭建与流程优化，包括制定与更新行为守则、商家标准及其他责任采购相关的政策、流程和管理规范，保障政策流程科学合规、落地可行；\n2、主导商家社会责任培训体系建设，完成培训需求调研、定制化课程开发迭代，组织实施培训并评估效果，全面提升商家供应链合规能力；\n3、审阅商家审核报告和整改计划（CAP），精准识别风险点，跟踪整改进度并验证效果，确保问题闭环；\n4、策划推进供应链积极影响项目（如员工之声、妇女权益保障等），提升供应链可持续发展水平；\n5、跟踪行业标准动态，优化责任采购体系，维护对内对外沟通，定期输出工作报告支撑决策。\n\n任职要求：\n1、本科及以上学历，海外留学或工作经历或外企/国际化相关工作经历优先；\n2、从事供应链企业社会责任/CSR合规相关工作5年以上，熟悉BSCI，SMETA，SA8000等主流社会责任审核标准，有电商或零售行业涉外合规经验优先；\n3、具备政策流程梳理、培训体系搭建及课程开发经验；有供应链积极影响项目落地经验者和绿色可持续发展项目经验优先；\n4、英文熟练，听说读写优秀，能作为工作语言进行跨国沟通，理解文化多元性；\n5、具备较强的逻辑分析、项目推进及跨部门协作能力，具备高度责任心与严谨的工作态度。"
     },
     {
+      "id": "bytedance_7589860850852235525",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "游戏UE设计师",
+      "category": "其他",
+      "category_raw": "游戏美术",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2025-12-31",
+      "url": "https://jobs.bytedance.com/experienced/position/7589860850852235525/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、参与项目系统与玩法的交互设计：参与体验构思、搭建信息架构、产出设计原型与说明文档；\n2、跟进产品体验效果，利用Figma搭建可交互原型验证设计，衔接策划、程序、美术、重构，跟进方案功能落地；\n3、基于对功能、叙事与目标玩家的理解，为美术表现和功能体验提供创意方案；\n4、通过产品分析、玩家反馈，持续性提升体验设计；\n5、参与设计规范制定，并定期维护文档。\n\n任职要求：\n1、5年以上游戏交互设计经验，有深度的项目研发经历，主导过核心系统/玩法的交互设计，本科及以上学历；\n2、熟悉虚幻引擎，了解界面重构的框架与规范、熟悉控件调用；\n3、熟练使用Figma等设计工具产出Demo方案，并能评估不同方案实现成本；\n4、具备良好的沟通能力，逻辑严谨，能主动推进跨团队协作；\n5、具备良好的审美能力，能持续关注并吸收前沿的体验设计与视觉趋势；对玩家行为与游戏习惯有一定的思考，对流行文化有所涉猎与洞察；\n6、游戏经验丰富，拥有FPS或动作类端游经验者优先考虑。"
+    },
+    {
       "id": "bytedance_7589519381829241093",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -22258,20 +22286,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7589180457972779317/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、品类商家招商拓展：了解数码电器行业品类需求及商家格局，具备出海商家的招募和运营能力，基于商家需求提供全套整合方案；\n2、商家/品类运营：能够带领团队，有效地通过平台的多种模式为商家提供长效经营方案，为商家交易和品类增长负责；\n3、数据分析及策略制定：基于数据分析，制定业务规划，提供解决方案并落地；\n4、跨团队沟通协同：同产品、物流、治理等团队协同，统筹推进项目落地，推进目标达成。\n\n任职要求：\n1、本科及以上学历，5年以上电商行业运营工作经验，有出海跨境电商平台运营经验；\n2、对社交电商、内容营销有一定理解，且有实践经验者优先；\n3、具备英语无障碍沟通能力，有海外留学/工作经验优先；\n4、有责任心，优秀的谈判技巧，良好的人际关系处理能力，有团队精神。"
-    },
-    {
-      "id": "bytedance_7587715315024382213",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "游戏国内发行负责人（射击项目）-OAK Studio",
-      "category": "市场",
-      "category_raw": "市场",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-12-25",
-      "url": "https://jobs.bytedance.com/experienced/position/7587715315024382213/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、统筹游戏在中国大陆的发行工作，包括但不限于制定发行策略、发行执行计划、营销策略与创意、渠道合作、媒体PR、广告投放、市场活动等；\n2、根据产品特色、运营节奏和用户分析，制定并落地大陆市场发行全案，对预算进行分配，对项目经营结果负责；\n3、与研发、运营、美术、研发、UG等相关部门协作，确保市场推广与产品研发方向的一致性；\n4、深入了解主机/PC游戏领域，精准把握目标用户群体需求和市场趋势，输出有亮点有创意的发行营销方案；\n5、开拓和维护与行业相关的合作伙伴关系，整合资源推动游戏发展。\n\n任职要求：\n1、本科及以上学历，市场营销、传媒等相关专业优先；\n2、至少5年以上游戏市场工作经验，至少3年以上主机/PC游戏相关经验，对中国大陆游戏市场有深入理解和丰富经验，有FPS品类经验优先；\n3、具备出色的市场分析、策略制定和执行能力，熟悉国内发行推广各大模块；\n4、有整体策略性思维，且有良好的团队管理能力和沟通协调能力；\n5、具备较强的责任心和创新精神。"
     },
     {
       "id": "bytedance_7587708292272523525",
@@ -22624,20 +22638,6 @@
       "description": "岗位职责：\n1、负责字节跳动飞书AI生产力工具UX全流程设计工作；\n2、和产品负责人一起构思方案，打造具有业界竞争力的整体体验；\n3、时刻关注并分析流行产品设计趋势，研究目标用户需求，体验诉求与审美倾向，并迅速优化现有产品；\n4、参与用户调研，理解用户需求并转化成对应的设计思路。\n\n任职要求：\n1、本科及以上学历，有移动互联网设计经验优先；\n2、有生成式工具、大模型应用或者智能产品设计经验者优先；\n3、审美出色，重视细节，追求像素级完美，具备人机交互设计与用户洞察能力；\n4、逻辑清晰善于沟通，具备一定的工程化思维/结构性思维；\n5、对AI等前沿科技有浓厚兴趣，勇于实践、有较强的自驱力和学习能力。"
     },
     {
-      "id": "bytedance_7580280752274688309",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "多模态算法工程师（地理位置方向）-地理位置中台",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-12-05",
-      "url": "https://jobs.bytedance.com/experienced/position/7580280752274688309/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责图片拍摄位置推理，穿戴式设备语音地图导航、风格化地图生成工作等，探索前沿大模型技术在LBS领域的新应用、新技术，大模型技术赋能地图行业；\n2、负责字节跳动地理位置方向的基座大模型预训练、微调等工作，通过训练图像和文本以及地理模态，提高模型在POI生成、图像感知、图片定位等任务中的表现；\n3、负责研发空间智能核心技术，进行室内/室外/航拍/卫片等全场景高质量空间理解、重建与生成，包括但不限于基于图像、视频、点云、Mesh和3DGS等多种模态数据的空间智能基座与应用。\n\n任职要求：\n1、计算机/统计学/数学等相关专业本科及以上学历，具备LBS知识背景优先；\n2、熟悉多模态大模型、大语言模型、生成式AIGC等相关算法；熟悉三维重建、表征及渲染相关算法；\n3、有计算机图形学/视觉/机器学习等相关领域顶级学术成果者优先考虑；\n4、责任心强，积极主动，有良好的沟通能力和团队合作能力。"
-    },
-    {
       "id": "bytedance_7580329749831092533",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -22650,6 +22650,20 @@
       "url": "https://jobs.bytedance.com/experienced/position/7580329749831092533/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、拆解业务增长目标，基于目标搭建产品自然增长的路径，其中包括产品能力和玩法的设计，并且能够落地相关的能力；\n2、有良好的增长策略能力，对设计出的增长策略与落地收益负责，能够全链路对用户增长负责，包括新增用户，用户留存和活跃等指标，并且能够联动运营一起提升用户规模和质量；\n3、对业务自然增长的目标负责，构建产品持续增长的体系，规划匹配增长目标的能力迭代路径，具有策略能力带动用户自然增长的全局思维和自我思考能力。\n\n任职要求：\n1、有3年以上互联网用户增长相关经验，有针对增长目标的策略落地的成功案例；\n2、针对产品增长初期的能力搭建和优先级，有沉淀的思路和策略，并且有能够灵活运用的方法论；\n3、有主人翁意识和优秀的沟通能力，并且能和多团队进行复杂项目的合作，具有良好的团队协作力和影响力，让协作方们为共同目标努力。"
+    },
+    {
+      "id": "bytedance_7580041642654615861",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "AI内容策划运营（即梦）-剪映CapCut",
+      "category": "运营",
+      "category_raw": "运营",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2025-12-04",
+      "url": "https://jobs.bytedance.com/experienced/position/7580041642654615861/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、统筹即梦AI专业内容策划，协同产品、技术团队，共同探索AI工具在内容制作行业中的应用上限及未来发展方向；\n2、进行AI内容制作全流程统筹，包括项目立项、选题策划、剧本打磨、工具落地执行、制作跟进、上线运营对接等；\n3、主导AI生成内容在专业影视创作中的落地应用，包括分镜、画面生成、后期等环节的标准制定与效果审核，明确AI工具使用规范与交付标准；\n4、整合影视行业内容制作方及AI创作者资源，打通生产、制作、发行闭环；\n5、利用市场手段进行宣发，打造爆款出圈内容案例展示，引领AIGC内容行业趋势。\n\n任职要求：\n1、本科及以上学历，影视、编导、新媒体等相关专业优先，2年以上制片或项目管理经验；\n2、具备优秀的项目统筹、沟通协调与执行力，能独立推进从0到1完整项目；\n3、熟悉AIGC内容制作全链路，懂内容营销；自身为AIGC内容创作者优先；\n4、英语水平良好，能作为工作语言优先；\n5、主动学习及沟通能力强，逻辑清晰、自驱力足，善于总结沉淀可复用方法论。"
     },
     {
       "id": "bytedance_7579181916688550197",
@@ -22862,20 +22876,6 @@
       "description": "岗位职责：\n1、为新加坡TikTok Shop业务发掘并引入电子产品类目下高潜力的中国卖家和品牌；\n2、提供全周期的卖家孵化与支持，包括运营咨询、活动策略以及业绩优化，制定并实施针对卖家的类目增长策略，包括GMV提升、产品组合以及长期可持续发展；\n3、与内容创作者、MCN、TSP机构合作，通过内容驱动电商（短视频、直播等）提升卖家的曝光度和销售业绩；\n4、推动战略性类目项目和跨职能举措，改善卖家体验并提升业务影响力。\n\n任职要求：\n1、本科及以上学历，3年以上电子商务工作经验，与国际化品牌商家有良好合作关系者优先；\n2、对行业商家格局、消费者需求、数字化和移动互联网有深刻理解，对社交电商、内容营销、红人电商有一定理解且具备实践经验；\n3、具有良好判断力和独立思考能力，能快速学习、适应变化，具备客户服务导向及面向客户工作经验，结果与目标导向，具备商业思维；\n4、有海外留学/生活经验，具备英语无障碍沟通、表达及社交能力，能接受海外出差。"
     },
     {
-      "id": "bytedance_7574733716658522373",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "大模型应用产品架构师-火山引擎（深圳）",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-11-20",
-      "url": "https://jobs.bytedance.com/experienced/position/7574733716658522373/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、AI产品架构设计\n负责LLM/Agent产品的整体技术架构设计，包括模型层、知识层、数据层、服务层、编排层；设计可复用的Agent架构规范（如Leader Agent、Remote Agent、Tooling体系、通信协议等）；参与企业级AI工作台的产品设计；\n2、场景解决方案与技术方案输出\n基于政务、金融、医疗等行业场景，输出可落地的端到端AI解决方案；明确业务流程、知识需求、模型需求、数据流，撰写架构文档、方案白皮书、交付模板；\n3、项目落地与工程推进\n与交付团队协作，推动项目从PoC→Pilot→Production的完整落地；负责核心模块的技术决策（模型选型、推理架构、数据治理、知识图谱、安全/合规、性能优化等）；排查项目问题、定位性能和效果瓶颈；\n4、跨团队协作\n和产品经理设计业务流，和工程团队定义接口协议，和运营团队定义AI能力上线标准；作为技术负责人参与客户沟通与深度需求分析，能向非技术人员解释方案。\n\n任职要求：\n1、本科及以上学历，计算机科学、人工智能、数学等相关专业，5年以上后端/架构/AI产品经验，或2年以上大模型/NLP/推荐/搜索工程经验；\n2、有实际Agent/Workflow/Tooling构建经验（如Multi-agent、Function Calling等）；\n3、熟悉常见Agent组件，如RAG/GraphRAG架构、Embedding检索、知识库、LLM推理链设计；\n4、具备扎实的软件工程基础：API设计、微服务架构、消息队列、日志监控等；\n5、能独立完成架构设计文档（架构图、数据流、组件分层、评估指标）；\n6、强项目推进能力——能落地、能交付、能抗压。\n\n加分项\n1、有企业级产品落地经验（政务云/金融/医疗等）；\n2、熟悉GPU推理优化、Triton、Inference Engine、模型量化等性能方向；\n3、熟悉数据治理、知识图谱、NL2SQL等能力；\n4、有构建Agent Builder/Workflow Engine/企业AI工作台经验；\n5、有项目的开源贡献；\n6、有团队技术管理经验或复杂项目负责人经验。"
-    },
-    {
       "id": "bytedance_7574744082892261685",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -22946,6 +22946,20 @@
       "description": "岗位职责：\n1、负责字节跳动游戏业务游戏产品（包括手游、端游、主机游戏等）用户增长及渠道投放的寻源、发包、结算等工作；涵盖主流国内外渠道，包括但不限于：信息流广告、视频广告、社交媒体广告等渠道的资源采购与管理；\n2、理解游戏行业特性，结合不同游戏品类（如MMO、SLG、卡牌、休闲游戏）的目标用户画像，制定针对性的供应商资源拓展方案；通过谈判争取专属投放政策与最优价格；\n3、通过供应商绩效评估，供应商分层等培养优秀稳定的供应资源池，挖掘并培养高潜力的供应商资源，与供应商建立长期稳定的合作关系；\n4、收集分析市场及行业相关信息，根据品类特点和业务目标，制定采购策略；\n5、跟踪游戏行业前沿信息（如新兴渠道、玩法化广告、AIGC素材应用），定期输出行业洞察报告，帮助业务积极拓展、创新运作形式，洞察市场最热门资源，确保优质资源的供应保障。\n\n任职要求：\n1、本科以上学历，5年以上国内海外广告投放经验，有游戏媒介采购经验优先，对采购理念和采购过程管理具有清晰的认知和深刻的理解；\n2、熟悉各大投放平台及广告投放流程，有代理商，流量渠道管理，网盟渠道经验者优先，具备严谨而有效的网络广告投放分析思路，能独立分析和解决问题；\n3、对游戏有兴趣，熟悉主流游戏的玩法与用户需求，有意愿理解游戏产品的核心卖点，转化为有效的采购策略；\n4、熟悉招标流程，独立完成过招采项目，有意愿探索不同的采购模式，并高效推动落地，善于利用数据做评估总结，不断优化采购效果，具备成本分析及管控能力，助业务提升ROI；\n5、有良好的协调和沟通能力，能够独立进行商务谈判、业务合作洽谈，独立推进工作落地；学习能力强，善于系统性思考并使用创新性思维解决问题，逻辑性强；具有较强的抗压能力和创新能力，乐于接受有挑战的工作，敢于突破常规模式；\n6、有数据分析经验，具备良好的数据分析能力，能完成相应的考核指标；有英语沟通能力（商务谈判）或其他语言沟通能力者优先考虑。"
     },
     {
+      "id": "bytedance_7572104374242117893",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "IoT采购履行经理-光学电子结构件",
+      "category": "其他",
+      "category_raw": "采购",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2025-11-13",
+      "url": "https://jobs.bytedance.com/experienced/position/7572104374242117893/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责光学电子结构件等零部件（包括光机、波导、屏幕、摄像头等）的试产与量产端到端供需管理工作；\n2、协助研发、质量、商务完成供应商选择、新产品选型和能力评估工作；\n3、负责试产到量产的物料、产能、人力等资源准备工作落地；\n4、负责物料订单和合同处理；\n5、负责物料的预测分解、风险识别、缺口管理、异常处理等工作，并与研发、项目、资源开发等部门对物料进行风险或策略备料评估，做好项目物料资源规划；\n6、负责定期对账、结算和返利管理等。\n\n任职要求：\n1、本科及以上学历，5年以上硬件采购管理、项目管理或研发经验；\n2、熟悉智能硬件项目管理、生产全制程管理、MRP逻辑和运算，具有生产成本管理意识；\n3、熟悉电子结构物料的上下游供应商资源，熟悉相关制程及工艺；\n4、具备快速学习、自驱及团队协作能力，具备良好的沟通能力和团队意识，能主动发现问题并推动项目持续改进；\n5、英语口语较好，通过CPSM、PMP等认证者优先；\n6、乐于支持其它团队，分担工作。"
+    },
+    {
       "id": "tencent_1988280587038904320",
       "company": "tencent",
       "company_name": "腾讯",
@@ -22988,18 +23002,18 @@
       "description": "岗位职责：\n1、负责大消费零售行业生态里国内和跨境出海（包括但不限于美妆、日化、大健康）等行业客户，触达并维护决策关系，挖掘需求并捕获项目机会；\n2、推进双方在云、AI大模型应用和商务等多层面的沟通，全局掌控项目节点与节奏，并推进项目落地；\n3、协同产品和解决方案，对不同产品线在某行业拓展的标杆客户落地、开发客户，以及营收目标负责；\n4、体系化的数据化的业务思路，能够根据销售过程管理数据分析，发现业务问题，提出改进方案，制定业务策略和规划，优化业务模型，协助业务团队建立可执行、可追溯的动作；\n5、紧密联动业务团队及数据分析部门，优化销售流程、系统、工具，管理策略和战略规划等。\n\n任职要求：\n1、有云计算，推理/视觉/语音语义/生图生视频等AI大模型应用产品的商务拓展或销售经验优先；\n2、3年及以上大消费零售行业国内外的云计算/广告/电商/渠道等工作岗位经验优先；\n3、对大消费零售行业及客户的业务场景和需求有深入理解，并能进行产品和方案匹配，对行业客户资源有充分积累；\n4、快速学习、强执行力、跨团队协同和项目管理能力，善于沟通，自驱力强。"
     },
     {
-      "id": "bytedance_7568455565119195445",
+      "id": "bytedance_7568340447804082485",
       "company": "bytedance",
       "company_name": "字节跳动",
-      "title": "高级后端开发工程师-抖音支付",
-      "category": "技术",
-      "category_raw": "研发",
+      "title": "大前端研发Leader-抖音",
+      "category": "其他",
+      "category_raw": "前端",
       "location": "深圳",
       "department": "",
       "posted_date": "2025-11-03",
-      "url": "https://jobs.bytedance.com/experienced/position/7568455565119195445/detail",
+      "url": "https://jobs.bytedance.com/experienced/position/7568340447804082485/detail",
       "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、参与并负责抖音支付核心系统的开发及维护；\n2、参与并负责公司级别的春节、双十一等重要活动，解决高并发场景高可用问题；\n3、参与并负责支付系统的稳定性建设，报警，监控，容灾，降级等；\n4、参与设计并实现具备可扩展性和可维护性的系统方案；\n5、充分理解支付业务，抽象领域模型，推进平台型系统建设；\n6、沉淀技术能力和行业经验，与平台一起成长和发展。\n\n任职要求：\n1、本科及以上学历，2年以上后端开发经验，熟悉Java/PHP/C++/Go/Python中的至少一种技术语言；\n2、深刻理解计算机原理，有良好的数据结构和算法基础；\n3、有优秀的系统设计能力，熟练掌握数据库、缓存、消息队列的原理及应用；\n4、学习能力强，对产品有强烈的责任心，具备良好的沟通能力和优秀的团队协作能力；\n5、有服务治理，稳定性提升，容量规划等高可用、高并发、分布式系统的实际经验为加分项；\n6、有电商、金融业、银行业、第三方支付等核心系统研发经验为加分项。"
+      "description": "岗位职责：\n1、负责抖音账号大前端业务开发，编写高质量代码，实现头部用户渗透的功能；\n2、负责抖音账号大前端业务基础组件建设、业务架构设计。\n\n任职要求：\n1、五年以上前端/客户端开发经验，计算机、通信和电子信息科学等相关专业，扎实的计算机基础功底；\n2、有前端或客户端开发经验（FE/Flutter/React/Vue/RN/Android/iOS均可）；\n3、较强的学习意愿，及时跟进前沿技术，有技术好奇心并能主动落地实践；\n4、热爱移动产品研发，愿意在移动开发领域深入钻研，并成为专家；\n5、对软件产品有强烈的责任心，具备良好的沟通能力和优秀的团队协作能力；\n6、加分项：熟悉JavaScript/TypeScript语言，有Android Compose、iOS SwiftUI、鸿蒙ArkTs开发经验。"
     },
     {
       "id": "tencent_1985200301321379840",
@@ -23156,20 +23170,6 @@
       "description": "岗位职责：\n团队介绍\nLevel Infinite 是腾讯旗下国际游戏业务品牌，致力为全球玩家带来充满乐趣、原汁原味的游戏体验，让玩家随时随地进入游戏世界；并通过打造包容、互通、便捷的玩家社区，促进分享交流。\nLevel Infinite为合作工作室提供一系列支持及服务，助力其释放产品潜能。\nLevel Infinite发行产品包括《PUBG MOBILE》、《Goddess of Victory: NIKKE 》《Honor of King》等热门游戏，并与合作工作室联手推出了来自Fatshark的《战锤40K：暗潮》、Funcom的《沙丘：觉醒》、Inflexion Studios的《夜莺》在内多款产品。\n想进一步了解Level Infinite，请访问www.levelinfinite.com，并在Twitter、Facebook、Instagram和Youtube上关注我们的官方账号。\n\n岗位职责\nStrategy Management team is a central strategy management function for Tencent’s global gaming business. This team has a broad coverage, leading business strategy, goal mgmt., operational improvements, and key strategic initiatives for the entire global gaming business, including dev studios, publishing units and central platform.\nWe are looking for an experienced Strategy Manager to join our team. The successful candidate shall have exceptional strategic thinking, analytical, and problem-solving skills, with the ability to effectively communicate with cross-functional teams. This is an exciting and challenging position for a motivated candidate who is passionate about the gaming industry and enjoys working with professionals from diverse backgrounds.\nKey responsibilities: \nBusiness Strategy & Goal Management: Frame long-term business strategy and annual business plan, break down business plan to concrete business goals, and work with cross-function teams to set and track goal completion\nBusiness Review & Operational Improvement: Conduct monthly review and analysis of financial and business performance, identify problem areas, and drive initiatives to improve business operations\nStrategic initiatives: Support CEO’s key priorities and other strategic projects\nMarket analysis: Stay up-to date on industry trends and market insights to inform strategic decision-making\nStrategy communications: Develop written speech or presentation for CEO or senior leaders from management board\n\n岗位要求\nStructured-thinking, analytical, problem-solving skills are critical to success in this position. Experience in consulting, corporate strategy, financial analysis is strongly preferred\nDemonstrate strategic visions, business insights and passion in the gaming industry\nHave an entrepreneurial spirit with a track record of taking initiative and driving results\nSolid presentation and professional communication skills, with attention to details\nStrong leadership and interpersonal skills to lead cross-functional teams and support senior executives on strategic initiatives\nFluent in Mandarin and English, as 50% of the day-to-day work is conducted in English\n\n腾讯致力于提供平等就业机会\n在腾讯，我们始终秉承平等就业机会的原则，致力于为每一位员工打造公平、包容的工作环境。我们坚信，多元的声音能够激发出无限的创新活力，推动我们为用户和社会提供更优质的服务。我们用心营造一个充满支持与激励的氛围，帮助每一位员工找到属于自己的舞台，以实现个人及共同的发展目标。\r\nWork Location: China-Shanghai | China-Shenzhen\n\n任职要求：\n岗位要求详情请见上方岗位职责内说明"
     },
     {
-      "id": "bytedance_7564351706874611973",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "AI应用研发工程师-剪映CapCut（广州/深圳）",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-10-23",
-      "url": "https://jobs.bytedance.com/experienced/position/7564351706874611973/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责剪映的研发、优化与架构设计工作；\n2、负责剪映AI方向的研发，包含AI成片、智能图片等，解决复杂Agent成片/生图及架构上所面临的严峻挑战，打造极致的产品体验；\n3、负责项目重点、难点的技术攻坚任务，持续优化产品，提升产品质量。\n\n任职要求：\n1、具备Android或iOS的开发经验，具备App架构经验；\n2、优秀的编码习惯，对于设计模式等常见的编码技巧有很好的认知；\n3、有较强的技术好奇心、自驱力，具备优秀的解决问题和逻辑思维能力；\n4、对Agent应用有深入理解，有Agent项目经验优先；\n5、对AI Coding有浓厚兴趣，有AI Coding经验优先。"
-    },
-    {
       "id": "bytedance_7564349320661944629",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -23322,6 +23322,20 @@
       "url": "https://jobs.bytedance.com/experienced/position/7559889973807499527/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、负责小荷健康业务服务端系统以及平台的工程架构设计和研发，深度结合医疗大模型与AI技术进行创新与应用；\n2、与产品经理、大前端工程师一起负责需求的拆解、方案设计和功能开发，基于AI Native思想构建产品；\n3、负责大模型工程优化、服务性能优化、稳定性建设，技术驱动不断优化系统架构提升产品体验、研发效率/质量、降低数据中心成本。\n\n任职要求：\n1、计算机及相关专业本科及以上学历；熟悉Linux，掌握常用数据结构、算法、设计模式，至少熟练掌握Golang/Java/PHP/Python/C++一门编程语言；\n2、熟练掌握后端相关技术，对缓存、消息队列、负载均衡、分布式存储、分布式事务等有深入理解和实践；\n3、有大模型工程开发经验者优先，包括但不限于Agent、RAG、PE、模型安全、数据工程等；\n4、有高并发、大数据量系统开发经验者优先，了解微服务、Docker、K8s者优先；\n5、有良好的编码习惯，能编写干净整洁、可复用性高、可维护的代码；\n6、具备良好的沟通合作技巧，较强的责任心及团队合作精神；有较强的抗压能力，乐于接受新事物。"
+    },
+    {
+      "id": "bytedance_7559568316508670215",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "支付计费/计税产品经理-国际支付",
+      "category": "产品",
+      "category_raw": "产品经理",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2025-10-10",
+      "url": "https://jobs.bytedance.com/experienced/position/7559568316508670215/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责规划设计并落地国际支付、金融等业务的计费、收费、计税开票系统，在交易支付环节中对C类/B类客户进行各类费用/税费计算、费用收取、账单提供、发票开具等产品能力；\n2、承担计费、账单、计税、开票等通用平台能力建设，包括建立适配多业务场景、多类型费用的计费引擎、费用管理、实收/后收能力等产品，建立核心质量指标追踪并持续提升；\n3、负责协调公司内外部资源进行目落地，包括与技术、法务、财务、风控、政策等各岗位进行沟通和协调，推动系统对接外部服务商实现自动化开票等。\n\n任职要求：\n1、三年以上海外支付机构相关工作经验，或海外业务计收费、计税、商户结算等工作经验；\n2、熟悉电商、ToB业务、支付业务等的计收费系统设计；熟悉支付系统、交易系统或业财系统等的流程与产品方案设计；\n3、具备复杂平台产品需求抽象能力，有较强的数据分析能力，能够发现系统中的问题，并独立提出解决方案；\n4、推动力强，具有良好的协调沟通能力、组织能力和项目管理能力，能有效协调内外部资源推动项目进展。"
     },
     {
       "id": "bytedance_7559477410656160008",
@@ -23758,6 +23772,20 @@
       "description": "岗位职责：\n1、负责跨平台（iOS/Android/Linux）、跨端（服务端+客户端）语音交互SDK设计、开发与优化；\n2、和各产品线合作，接入成熟的语音交互相关处理算法，提升语音交互在产品中的表现效果；\n3、参与开发支持语音交互相关业务落地和技术研发；\n4、持续学习新编程技术、工业界学术界语音系统进展，精炼业务逻辑。\n\n任职要求：\n1、具有扎实的编程功底，良好的设计能力和编程基础、对设计模式有一定的了解；\n2、对现代C++，数据结构，多线程编程和网络编程（TCP/WebSocket）、操作系统有一定的了解和掌握；\n3、熟悉跨平台开发的流程和工具：如CMake、GitLab CI、JNI、OC/Swift等；\n4、有移动端音频开发相关经验者优先，如熟悉OpenSL/Audio、AudioQueue、Jack等音频API；\n5、有语音交互相关产品研发经验优先，如智能家居、车载；\n6、了解如下技能栈更佳：机器学习、Python、Kubernetes、Web Assembly、Web Audio、信号处理等。"
     },
     {
+      "id": "bytedance_7544966261186447624",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "结构件采购履行经理-智能硬件",
+      "category": "其他",
+      "category_raw": "职能 / 支持",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2025-09-01",
+      "url": "https://jobs.bytedance.com/experienced/position/7544966261186447624/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责结构件零器件采购（包括硅胶注塑、塑胶注塑、冲压或压铸等），以及试产与量产端到端供需管理工作；协助研发、质量、商务完成新产品选型评估和交付能力评估；\n2、负责试产到量产的物料、产能、人力储备工作的实施；\n3、管理物料订单和合同处理；\n4、负责物料预测分解、风险识别、缺口管理、异常处理等；\n5、与研发、项目、资源开发等部门，对物料进行风险或策略备料评估，做好项目物料资源规划；\n6、负责定期对账、结算和REBATE管理等。\n\n任职要求：\n1、本科及以上学历，5年以上智能硬件采购管理、项目管理经验，通过CPSM、PMP等认证优先；\n2、熟悉智能硬件项目管理、生产全制程管理，有生产成本管理意识；\n3、熟悉MRP逻辑和运算；\n4、熟悉结构件的上下游供应商资源，熟悉结构件制程及工艺；\n5、具备快速学习能力，团队沟通能力强，有团队意识，抗压能力强；\n6、自驱能力强，能主动发现问题，推动项目持续改进，乐于协作和跨团队协同。"
+    },
+    {
       "id": "bytedance_7545107615844436232",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -24052,20 +24080,6 @@
       "description": "岗位职责：\n项目介绍：抖音产品工程师计划，是面向全球具备技术能力的产品经理和策略运营的专属人才计划。在 AI 发展驱动下，我们希望寻找懂技术又有产品思维的复合型人才，打破常规“产品”、“运营”和“技术”的能力边界，在高挑战的业务实战中，亲手用代码实现产品构想。\n加入抖音，和优秀的人，做有挑战的事，一起定义 AI 时代的产品未来！\n\n1、负责抖音直播营收礼物相关产品功能策划，深入场景理解和挖掘用户需求，能够制定中长期的产品方向和方案，为营收目标负责；\n2、紧跟AI等新技术前沿发展，充分了解AI能力边界，结合需求洞察和机会分析，应用AI升级付费体验和打造新玩法，探索增量场景并沉淀相关方法；\n3、与模型算法、推荐技术等团队紧密协作，优化AI生成式礼物&特效内容的品质和工作流、以及相关的推荐分发策略，提升用户个性化体验和促进消费转化。\n\n任职要求：\n1、本科及以上学历，有AI/直播/策略经验加分；\n2、能把握用户心理，具备较强的数据分析能力，具备通过需求洞察和数据挖掘发现问题和机会的能力；\n3、自驱力强，有良好的沟通合作意识和团队协作能力；\n4、有较强好奇心与学习能力，对直播和AI行业有热爱，有强烈兴趣和快速学习能力，能快速拓展自己的知识范围。"
     },
     {
-      "id": "bytedance_7534736788822329618",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "全栈开发工程师-TikTok",
-      "category": "其他",
-      "category_raw": "前端",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-08-04",
-      "url": "https://jobs.bytedance.com/experienced/position/7534736788822329618/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n团队介绍：TikTok是一个覆盖150个国家和地区的国际短视频平台，我们希望通过TikTok发现真实、有趣的瞬间，让生活更美好。TikTok 在全球各地设有办公室，全球总部位于洛杉矶和新加坡，办公地点还包括纽约、伦敦、都柏林、巴黎、柏林、迪拜、雅加达、首尔和东京等多个城市。\n\nTikTok研发团队，旨在实现TikTok业务的研发工作，搭建及维护业界领先的产品。加入我们，你能接触到包括用户增长、社交、直播、电商C端、内容创造、内容消费等核心业务场景，支持产品在全球赛道上高速发展；也能接触到包括服务架构、基础技术等方向上的技术挑战，保障业务持续高质量、高效率、且安全地为用户服务；同时还能为不同业务场景提供全面的技术解决方案，优化各项产品指标及用户体验。 \n在这里， 有大牛带队与大家一同不断探索前沿， 突破想象空间。 在这里，你的每一行代码都将服务亿万用户。在这里，团队专业且纯粹，合作氛围平等且轻松。目前在北京，上海，杭州、广州、深圳分别开放多个岗位机会。\n\n1、参与AI代码智能平台各项功能的开发，包括Code Review，对话式代码检索，智能代码优化等能力；\n2、借助Code Agent能力，探索面向一线前端研发的代码智能Maintenance功能；\n3、参与界面和交互设计，通过组件化，流程化等方式高效开发。\n\n任职要求：\n1、1年以上全栈Node.js开发经验，或3年以上Web项目开发经验；\n2、有实际的系统架构和优化经验者优先；\n3、有AI相关开发经验优先；学习能力强，对技术有好奇心；\n4、有开源项目贡献经验优先。"
-    },
-    {
       "id": "bytedance_7534571456127174919",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -24176,6 +24190,20 @@
       "url": "https://jobs.bytedance.com/experienced/position/7529731040526518536/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、协同美术、程序，设计游戏内怪物玩法并跟进美术资源制作；\n2、制作怪物行为树与早期玩法DEMO；\n3、跟进调优怪物的玩法机制、打击感、行为细节、动画表现和数值参数；\n4、根据项目需求对现有生产工具进行持续优化，梳理管线，提高制作效率。\n\n任职要求：\n1、5年及以上游戏策划工作经验，熟悉UE4、UE5引擎的动作战斗系统、AI行为树等；\n2、具备第一、第三人称射击游戏开发经验、代码能力者优先；\n3、具备高度责任心与成就动机，关注细节，对负责方向有高标准要求；\n4、对新技术充满好奇心，了解相关前沿技术发展者优先；\n5、拥有丰富的PVE射击游戏经验且热爱PVE射击游戏者优先。"
+    },
+    {
+      "id": "bytedance_7529534526478878984",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "计算机视觉算法工程师-抖音直播（深圳/北京）",
+      "category": "技术",
+      "category_raw": "算法",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2025-07-21",
+      "url": "https://jobs.bytedance.com/experienced/position/7529534526478878984/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责计算机视觉相关算法研发，将最新的CV技术落地到抖音直播丰富的业务场景，提升直播内容表现和互动能力；\n2、支持大模型算法训练/推理相关的视觉/多模态相关CV算法处理，保证大模型算法更优的落地效果。\n\n任职要求：\n1、本科及以上学历，计算机/数学相关专业；\n2、在NIPS、ICML、CVPR、ICCV 、ECCV 、TPAMI等国际会议/期刊有论文发表者优先；\n3、在多媒体和计算机视觉某个领域有较深入的研究，包括但不限于识别、分割、生成式AI、3D视觉等，在图像生成和多模态等领域有深入研究及相关产品落地者优先；\n4、熟练使用C++/Python，在Kaggle，COCO，ImageNet，ActivityNet，ICPC，NOI/IOI等比赛获奖者优先； \n5、熟悉模型压缩加速最新研究和技术进展优先，如模型量化、剪枝、知识蒸馏等，及TRT Inference框架；\n6、动手能力强，有技术追求，善于表达沟通和协同合作。"
     },
     {
       "id": "bytedance_7529323182915537160",
@@ -24402,20 +24430,6 @@
       "description": "岗位职责：\n1、根据项目美术风格，设计关卡整体氛围及建筑、道具，完成白盒的美术包装；\n2、跟进场景外包的进度与质量，反馈修改并推动优化；\n3、配合上下游部门，根据引擎内场景表现进行画面效果的优化与迭代。\n\n任职要求：\n1、写实科幻类场景设计相关工作经验；\n2、对自然环境、物品道具具备良好的分析与审美能力；有硬表面道具设计经验优先；\n3、熟练掌握主流设计软件，具备快速输出手绘草图或概念模型的能力；\n4、热爱游戏行业，了解3A游戏制作流程，具备良好的沟通协作能力与团队意识。"
     },
     {
-      "id": "bytedance_7512289977942771976",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "UE5资深PCG技术美术-PVE主机射击",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-06-05",
-      "url": "https://jobs.bytedance.com/experienced/position/7512289977942771976/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责PCG管线目标制定，评估技术可行性、设计方案和实现；\n2、负责程序化生成场景地形、植被、建筑、角色、任务，在UE PCG/Houdini工具链及其它关键技术上研发；\n3、负责配合美术制定PCG相关美术资产的制作规格，制作流程以及规范；\n4、负责PCG管线相关各种视觉效果和游戏表现的开发工作；\n5、制定工作室PCG研发工具管线方案，与引擎同学协作实现具体功能，帮助研发团队提升研发效率；\n6、和美术及技术团队深入合作，实现较好的画面效果和性能适配方案。\n\n任职要求：\n1、3年以上游戏技术美术相关从业经验，完整参与过至少一款项目的开发；\n2、熟悉PCG生产流程和UE5引擎，有实际落地在项目中的PCG管线生产经验；\n3、较好的美术专业能力以及较高的审美能力，熟悉游戏美术各类资源开发流程和规范；\n4、熟悉Unreal引擎，具备良好的图形学基础，能够在引擎中实现复杂的Shader；\n5、熟悉UE PCG、Houdini等，有丰富的制作工具和流程工具的开发经验；\n6、具备良好的分析解决问题能力，责任心强、自我要求严格、学习能力强、有良好的沟通能力和团队合作精神；有UE5、端游和主机引擎PCG开发经验优先，对射击游戏熟悉和热爱优先。"
-    },
-    {
       "id": "bytedance_7511970061256132882",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -24470,20 +24484,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7509537768427768072/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、负责抖音系产品中视频、直播、图文等不同体裁下评论（文评、图评、音评等）、弹幕等互动内容的安全、体验、增长、创新工作；\n2、面向互动内容中存在的对抗表达、隐晦表达、知识依赖等语义挑战，时序性、多模态、交互性等结构挑战，研发大模型驱动的机审系统，提升互动内容的安全、画风、生态的治理能力，有效降低互动内容的潜在风险；\n3、分析和挖掘互动内容中蕴含的用户真实意图，探索基于大模型增强的统一内容理解技术，优化排序和分发策略以调控互动体验，提升平台口碑与用户粘性，支持在推荐、搜索、推送、广告、精选等场景中的应用；\n4、探索技术驱动的创新互动内容产品形态，如智能总结、主播助理等，促进互动效率提升与用户增长；\n5、基础技术方面持续探索LLM/MLLM等通用大模型在内容安全和理解领域的适配，从Pre-Train、Post-Train（SFT、RL）等方面优化，增强模型的感知和推理能力；同时探索围绕大模型相关的应用技术能力，如Auto-prompt Engineering、Embedding、Incontext learning、RAG等。\n\n任职要求：\n1、具有扎实的人工智能方面的基础知识，对CV、VLM、MLLM等技术有深入的理解，数学功底扎实，学习能力强；\n2、有扎实的编码能力，熟悉主流的深度学习训练框架、工程框架等；\n3、在CV、VLM、MLLM领域有成熟的项目落地经验，在短视频、图文、直播算法领域有经验者优先；\n4、在计算机科学高水平会议和期刊如NIPS、ICML、CVPR、ICCV、ECCV、IJCAI、AAAI、KDD、SIGIR、WWW、ACL、PAMI、IJCV等论文发表或有竞赛经验者优先；\n5、具有独立的分析问题和解决问题的能力，对解决具有挑战性问题充满激情；对技术有热情，追求极致，自驱力强；有良好的团队合作意识、沟通表达能力。"
-    },
-    {
-      "id": "bytedance_7509138278206998791",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "硬件研发工程师（基带）-AI创新业务",
-      "category": "其他",
-      "category_raw": "硬件",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-05-27",
-      "url": "https://jobs.bytedance.com/experienced/position/7509138278206998791/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责硬件基带相关研发工作，根据产品需求完成硬件方案评估、方案设计和器件选型；\n2、进行原理图设计、PCB布局布线指导，以及功能和性能调试、解决测试过程中出现的问题；\n3、以提升能效比为目标进行系统电源设计，进行功耗优化，达成整机续航目标；\n4、支持产线试产工作，解决产线试产工作中出现的问题。\n\n任职要求：\n1、本科及以上学历，电子工程、通信工程、微电子等电子相关专业，5年以上硬件工作经验，具备清晰的逻辑思维和较强的动手能力；\n2、熟练使用PADS、Cadence等设计工具，能熟练操作实验设备，如示波器、频谱仪等；\n3、有高通平台设计和系统电源设计、功耗优化经验优先；\n4、有责任心，做事积极主动，具有团队协作精神。"
     },
     {
       "id": "bytedance_7509030774952216839",
@@ -24778,20 +24778,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7497837966682638610/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、AI转型全周期服务：基于飞书开发套件产品（飞书Apaas、飞书Aily、飞书妙搭等），为企业提供从产品Onboarding到业务痛点场景挖掘再到AI场景设计以及效果回收的全周期服务，解决客户在AI转型中“场景难识别、落地难、价值难量化”的问题，让客户将AI产品与场景真正用起来；\n2、AI场景挖掘验证与规模化尝试：结合企业的业务场景与AI场景诉求，挖掘可复制、可规模化的客户画像与最佳实践，并进行推广验证，以点及面的找到能够打动各行业、类型与画像客户的AI场景，带动更多的AI价值。\n\n任职要求：\n1、本科及以上学历，计算机、软件工程等相关专业优先；\n2、优秀的客户高层沟通能力，能清晰传递“AI+业务”融合的价值，并不仅仅浮于战略上，还可与客户业务场景相融合；\n3、优秀的业务洞察能力，能够通过自身对于不同领域客户的理解以及日常的挖掘，洞察客户的场景，挖掘出客户中能够被AI加强的高价值场景；\n4、AI与新技术的追随者，熟悉生成式AI、LLM（大语言模型）应用，在工作中不断的高频尝试使用AI工具来改变自己的工作方式者优先；\n5、拥有产品化与规模化意识，针对点状场景所挖掘出来的机会，能够主动挖掘更多可复制的机会，并主动推动拿到结果；\n6、具备强项目管理能力，能在多任务并行下独立推进客户项目落地，抗压能力与问题解决能力突出。"
-    },
-    {
-      "id": "bytedance_7497102903484991751",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "大数据产品解决方案架构师-数据平台",
-      "category": "产品",
-      "category_raw": "产品",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-04-25",
-      "url": "https://jobs.bytedance.com/experienced/position/7497102903484991751/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、与销售、行业解决方案等团队一起，在售前交流、技术方案设计、招投标等工作上，为客户及合作伙伴提供火山引擎数据中台及相应解决方案的支持；\n2、作为解决方案架构师，能够将业务需求转换为大数据和中台技术方案，针对具体项目规划大数据信息架构顶层设计，并为客户提供业务咨询及技术咨询服务；\n3、为客户提供远程或现场技术支持，协助客户完成项目规划、架构设计和产品POC测试；\n4、负责技术方案、用户案例、行业解决方案、市场营销材料等方面的信息收集、总结及文档编写。\n\n任职要求：\n1、计算机相关专业，本科及以上学历；\n2、熟悉机器学习、深度学习和强化学习等常用的场景和算法；\n3、深度理解LLM/VLM（训练和推理）在文本、图片和音视频数据处理场景的业务流程；\n4、熟悉vLLM、Ray、DeepSpeed、Mujoco、Omniverse等框架；\n5、具备互联网搜广推、大语言模型、智能驾驶、具身智能、AI for Science、机器人方向、垂类大模型、AI智能体方向等任意两个方向的解决方案能力；\n6、具有Data Science项目/工程或者Data+AI解决方案落地实践能力。"
     },
     {
       "id": "bytedance_7496818500473932050",
@@ -25256,20 +25242,6 @@
       "description": "岗位职责：\n1、发现优化大模型的简单、普适的创意，并应用到各个规模的模型中提升效果；\n2、推进数据建设、指令微调、偏好对齐、继续预训练等模型优化方面的工作，提高模型质量和适应性；\n3、探索复杂指令、长上下文、多轮对话下，大模型更为复杂的理解、推理和生成能力；\n4、基于语言处理、内容创作、教育Tutor、角色扮演、复杂Agent、AI搜索和工具、代码助手等服务和应用优化模型效果；\n5、推进大模型效果评估与企业场景应用探索：\n1）推进大模型效果评估，尤其是复杂场景（多轮对话、开放领域）评估集建设和自动化评估能力建设；\n2）深入研究和探索大模型在To B企业服务中的更多使用场景，拓展模型的应用范围，如搜索、推荐、广告、创作、客服和办公等各类场景。\n\n任职要求：\n1、计算机相关专业本科及以上学历，1年以上算法研发工作经验，有相关方向技术和研究背景的候选人优先；\n2、优秀的代码能力、数据结构和基础算法功底，C/C++或Python熟练；\n3、有领域会议文章（NeurIPS、ICML、ICLR、CVPR、ICCV、ACL、KDD等）、有编程/AI比赛获奖（ACM/ICPC、NOI/IOI、Top Coder、Kaggle等）优先；\n4、熟悉NLP相关的算法和技术，在相关领域有过良好研究记录者优先，熟悉大模型预训练、SFT与RL算法者优先，或在大模型领域主导参与过大影响力的项目或论文者优先；\n5、出色的独立分析和解决问题的能力，能深入解决大模型优化和应用存在的问题；\n6、良好自驱力和沟通协作能力，能和团队一起探索新技术，推进技术进步。"
     },
     {
-      "id": "bytedance_7472590753940670727",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "Camera软件开发工程师",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-02-18",
-      "url": "https://jobs.bytedance.com/experienced/position/7472590753940670727/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责Camera软件架构设计与开发；\n2、负责集成Camera软、硬件算法，与APP/算法合作提升影像竞争力；\n3、负责Camera各个场景中性能、稳定性、系统资源优化工作。\n\n任职要求：\n1、本科及以上学历，计算机、软件工程等相关专业，1-3年Camera开发经验；\n2、熟练掌握计算机基础，包括但不限于操作系统原理，计算机组成原理；\n3、熟练掌握一门计算机编程语言，C/C++优先，或Matlab/Python；\n4、热爱摄影，对影像业务感兴趣，有Android Camera Hal特性开发、影像算法集成、图像处理相关项目经验优先。"
-    },
-    {
       "id": "bytedance_7472810511564228872",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -25310,20 +25282,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7472812507841743111/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、负责数据中心内ASIC芯片的需求分析、方案设计；\n2、负责ASIC微架构设计、RTL开发；\n3、支持ASIC验证和集成。\n\n任职要求：\n1、微电子、计算机等相关专业本科及以上学历，对芯片前端设计有深入理解，精通Verilog等硬件设计语言；\n2、有网卡芯片、交换芯片等网络芯片开发、流片经验；\n3、熟悉常用网络协议栈，并了解相关业务应用背景；\n4、熟悉计算机体系结构，熟悉MAC、PCIe、AMBA等总线接口协议，熟悉DDR、HBM；\n5、掌握常见的脚本语言，如TCL/Perl/Makefile/Python等。\n\n加分项：\n1、熟悉Network Processor或者P4实现架构；\n2、熟悉PCIe协议，并了解相关软硬件交互机制；\n3、熟悉200G/400G/800G Ethernet PHY/MAC；\n4、有网络相关芯片性能建模优化经验。"
-    },
-    {
-      "id": "bytedance_7472816929540245778",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "ASIC设计工程师（RDMA方向）-Data",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2025-02-18",
-      "url": "https://jobs.bytedance.com/experienced/position/7472816929540245778/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责数据中心内ASIC芯片的需求分析、方案设计；\n2、负责ASIC微架构设计、RTL开发；\n3、支持ASIC验证和集成。\n\n任职要求：\n1、微电子、计算机等相关专业本科及以上学历，对芯片前端设计有深入理解，精通Verilog等硬件设计语言；\n2、熟悉RDMA协议，在RDMA领域有2年以上的功能或架构设计开发经验；\n3、有软硬件性能调优经验和丰富的上板测试经验；\n4、熟悉计算机体系结构，熟悉MAC、PCIe、AMBA等总线接口协议，熟悉DDR、HBM；\n5、掌握常见的脚本语言，如TCL/Perl/Makefile/Python等。\n\n加分项\n1、有网卡芯片、交换芯片等网络芯片开发、流片经验；\n2、熟悉AI训练的并行策略，熟悉AI硬件加速器架构或者GPU架构；\n3、有高速网络组网经验和线上运维经验，熟悉拥塞控制；\n4、熟悉RDMA内核态用户态驱动，熟悉集合通信软件；\n5、具备RDMA领域预研类经验，熟悉业界最新技术趋势。"
     },
     {
       "id": "bytedance_7472244086189082898",
@@ -25522,20 +25480,6 @@
       "description": "岗位职责：\n1、负责射击游戏关卡的设计与制作，推动关卡内容创意的设计和迭代，对关卡的最终质量负责；\n2、绘制2D Layout，搭建关卡白盒，设计并实现关卡玩法原型，快速验证并敏捷迭代；\n3、负责局内玩法的设计与制作，跟进相关功能特性的落地，协同战斗、系统模块团队一起推进高重复可玩性的局内外体验；\n4、深度与美术、叙事管线合作，推进关卡的情景氛围、艺术表现、可玩性达到市面标杆水准。\n\n任职要求：\n1、5年以上关卡设计工作经验，需提供关卡作品集（可附上相关设计稿、截图、视频或链接）；\n2、具备丰富射击游戏经验且理解深刻者优先；\n3、关注PCG方向，有相关设计及实践经验者优先；\n4、熟练使用游戏引擎与美术工具，可快速制作关卡Demo原型；\n5、具备高度责任心与成就动机，注重细节，对负责工作有高标准要求；\n6、拥有UE4/5项目经验或主机游戏开发经验者优先。"
     },
     {
-      "id": "bytedance_7446633165428574482",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "AI产品经理-飞书多维表格（深圳/北京）",
-      "category": "产品",
-      "category_raw": "产品经理",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2024-12-10",
-      "url": "https://jobs.bytedance.com/experienced/position/7446633165428574482/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责飞书多维表格AI产品方向的规划和落地；将大模型、Agent等前沿技术与多维表格业务系统深度融合；\n2、深入理解客户复杂的业务场景，结合产品定位明确落地具有创新性、前瞻性的产品；\n3、深度协同研发、算法、设计及各业务方，在技术边界与用户体验之间找到最优解，高效推动高复杂度AI项目的上线与迭代，达成业务目标。\n\n任职要求：\n1、本科及以上学历；\n2、对Agent的构建、调优及应用场景有独到见解；\n3、对生产力工具、效率工具充满热情，乐于研究并拆解市面上的优秀产品；\n4、逻辑缜密，善于且乐于拆解复杂问题；\n5、深刻理解AI基础原理，技术背景加分。"
-    },
-    {
       "id": "bytedance_7444815962894797064",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -25716,20 +25660,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7437076469639317767/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、负责公司番茄系产品(番茄小说/番茄畅听/红果短剧等）业务增长方向研发工作，深入参与产品需求讨论和功能定义，保障需求高效高质量交付，达成业务目标；\n2、负责工程架构设计优化，平台化建设，提升研发效率和质量；\n3、负责重点、难点技术攻坚，持续提升性能品质，打造一流产品体验。\n\n任职要求：\n1、本科及以上学历，计算机、通信等相关专业优先；\n2、熟练掌握Java，Kotlin，深入理解语言特性，熟悉Android系统API，对重要系统特性和原理有一定的理解；\n3、具有扎实的编程功底，良好的设计能力和编程习惯；\n4、优秀的沟通表达能力，有一定的产品和业务意识；\n5、能够快速的学习新的知识并应用到产品者优先。"
-    },
-    {
-      "id": "bytedance_7433380100156082482",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "用户运营经理（Web端）-剪映CapCut",
-      "category": "运营",
-      "category_raw": "运营",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2024-11-04",
-      "url": "https://jobs.bytedance.com/experienced/position/7433380100156082482/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、以桌面端用户规模为核心目标，负责剪映CapCut在Web端与PC端的用户需求梳理和用户画像建设；\n2、管理和运营相关的社交媒体账号，发布高质量的内容并与用户进行互动；\n3、分析用户的使用场景和用户反馈，提炼产品优化方向并提出改善建议；\n4、与产品经理合作，提高产品自传播能力。\n\n任职要求：\n1、本科以上学历，对视频创作或者广告营销有一定接触；具备视频剪辑能力优先；\n2、熟悉各种海外社交媒体平台，并能够制定并执行有效的社交媒体营销策略；\n3、具备团队合作能力，能够与不同部门的同事进行有效沟通和协作；\n4、具备创新思维和解决问题的能力，能够应对市场变化并提出相应的策略调整，\n5、英语可作为工作语言。"
     },
     {
       "id": "bytedance_7431482491745241383",
@@ -26094,20 +26024,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7403730878693132570/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、设计趋势洞察：对审美趋势和技术趋势有敏感的洞察，能够时刻保持同理心感知用户需求；\n2、产品外观设计：负责穿戴类产品的整体外观形态设计，确保产品在市场上具有独特的视觉吸引力和视觉符号；\n3、用户体验设计：关注用户体验，设计符合人体工程学的产品外观材质和交互体验，确保产品易于使用和操作；\n4、设计故事表达：使用专业设计软件进行产品的3D建模和渲染，绘制故事版，高效准确表达设计概念；\n5、材料工艺选择:  研究并选择符合产品性能和设计要求的材料，考虑材料的质感、耐用性和可制造性；\n6、设计原型制作：参与制作产品原型，确保设计的可行性和实用性，并通过原型验证设计的有效性；跨团队协作：与市场，研发，销售等跨部门工团队紧密合作，确保设计符合用户需求，并顺利研发量产。\n\n任职要求：\n1、本科以上学历，并有3年以上从事工业设计工作的经验，且热爱设计、乐于创新爱好广泛，对3C产品有浓厚的兴趣爱好，善于发现新事物、接受新思维；\n2、具有良好的空间思维能力、产品效果图表达能力和综合设计能力，具备较好的创意快速表达能力；\n3、具备CMF外观零部件材料加工与表面处理的丰富经验和问题解决能力；\n4、工作积极主动、性格开朗、有较强的逻辑思维能力、有责任感有担当。"
-    },
-    {
-      "id": "bytedance_7403732133930043675",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "人因研究员-Industrial Design",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2024-08-16",
-      "url": "https://jobs.bytedance.com/experienced/position/7403732133930043675/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、根据业务需求，负责制定具体的人因研究计划与方案，全流程跟踪并推动完成产品的用户体验需求，与周边团队高效合作，达成产品的设计目标；\n2、参与产品新形态的概念设计和原型开发，提供人因方面的专业意见和工程解决方案，编写技术文档和报告，记录设计过程和测试结果；\n3、从生理、心理、行为等视角出发，分解用户在实际使用场景下的体验需求，开展专项的人因研究，找到最佳体验值与体验阈限值，将用户需求转化为研发设计点并推动落地；\n4、推动人因研究能力建设，跟踪最前沿的人因研究成果和行业趋势，持续提升研究方法的信效度和效率，优化人因评测标准。\n\n任职要求：\n1、人因工程、工程心理学、计算机人机交互、用户体验设计相关专业；\n2、5年及以上消费智能硬件产品的相关工作经验，对前沿的软硬件相关交互技术有一定的认知； \n3、具备扎实的人因理论基础，了解人的基本感知觉机制，能科学、严谨地分析人因问题，独立完成人因研究全流程工作；\n4、熟悉各种人因研究的定性定量方法，熟练掌握统计分析方法和工具； \n5、有较强的逻辑思维能力、沟通表达能力，主动性强，对产品体验有敏锐洞察力，能够承受一定工作压力。"
     },
     {
       "id": "bytedance_7402228573991487781",
@@ -26572,6 +26488,20 @@
       "description": "岗位职责：\n1、参与商家平台方向相关系统的开发与优化，包括商家入驻、商家工作台、商客服等子方向；\n2、参与国际化电商商家基础模型的设计讨论，以及优化落地；\n3、参与系统架构改进，对系统进行稳定性、高可用建设和运维。\n\n任职要求：\n1、本科及以上学历，计算机，软件，电信或相关专业；\n2、具备扎实的编程能力、优秀的设计能力，热爱编程；\n3、深度理解计算机系统，有良好的数据结构和算法基础；\n4、有高并发服务设计和实现经验，对分布式系统有深入理解；\n5、熟悉MySQL、NoSQL、Redis、消息队列等开源组件；\n6、对软件产品有强烈的责任心，具备良好的沟通能力和优秀的团队协作能力。\n\n加分项：\n1、善于进行业务建模&抽象，有过领域驱动设计（DDD）的实践落地经验；\n2、对系统SLA&监控敏感，有过高流量场景的系统建设&业务组织经验或有SRE经验；\n3、有海外电商系统开发经验者优先。"
     },
     {
+      "id": "bytedance_7355323081811314954",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "游戏产品经理（搜索方向）-抖音",
+      "category": "产品",
+      "category_raw": "产品",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2024-04-08",
+      "url": "https://jobs.bytedance.com/experienced/position/7355323081811314954/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责游戏短视频、游戏直播等游戏内容消费产品的功能设计，挖掘更多的游戏用户需求场景（包括但不限于游戏内容搜索、游戏评价等场景），不断优化用户体验路径，促进游戏内容消费价值的持续增长；\n2、负责为游戏用户打造一站式游戏服务体验，包括游戏小手柄、游戏详情页、游戏资讯/礼包/活动等服务的产品设计，提升抖音生态内的游戏用户体验、游戏转化效率；\n3、有效理解抖音游戏业务模式特点，结合用户/主播&创作者/游戏厂商多方视角，推动产品落地及效果验证。\n\n任职要求：\n1、本科及以上学历，有内容行业的C端用户产品经验者优先；\n2、热爱游戏，对游戏内容保持充分的热情和好奇心，有游戏内容/社区/平台从业经验者优先；\n3、具备良好的项目统筹能力及跨部门协作能力，沟通能力强，能够处理复杂的沟通场景；\n4、拥有良好的逻辑思维与归纳总结能力，熟悉用户研究方法及常见的数据分析方法。"
+    },
+    {
       "id": "bytedance_7353532106780346675",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -26936,20 +26866,6 @@
       "description": "岗位职责：\n1、负责用户运营平台基础能力建设，通过用户运营平台助力业务核心指标增长；\n2、有深入业务一起共创的初心，用户意识、目标感强，并协同上下游团队解决问题拿到结果，持续提升产品的核心能力和用户体验；\n3、较好的协作能力，与产品/运营/质量等部门密切合作，推进业务系统的快速迭代，保证产品按时、高质量上线；\n4、负责技术规划、项目管理和团队人员培养。\n\n任职要求：\n1、5年以上服务端开发经验，本科以上学历；\n2、扎实的技术基本功，良好的架构设计能力；\n3、拥有技术好奇心、创新意识以及宽阔的技术视野，因为日常你会和算法、大数据、前端广泛的一起合作成事；\n4、具备良好的业务意识，优秀的的主人翁精神，良好的沟通和协作能力优先；\n5、有团队管理优先，有用户运营平台SaaS开发经验优先。"
     },
     {
-      "id": "bytedance_7312108248470456613",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "高级测试开发工程师-抖音支付",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2023-12-13",
-      "url": "https://jobs.bytedance.com/experienced/position/7312108248470456613/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、深度参与相关业务战略，为核心工程项目提供高质量交付工作；\n2、构建适合相关业务发展的质量保障体系；  \n3、沉淀通用测试解决方案，负责关键技术专项建设，开发相关工具或服务提高测试效率；\n4、解决测试过程中遇到的复杂技术问题，提炼相应的测试方法论、工具、服务、平台。\n\n任职要求：\n1、本科及以上学历，计算机及其相关专业，熟悉Go、Python、Java等至少一门编程语言；\n2、扎实的技术功底，具备测试/技术领域前瞻性探索能力，能够从技术角度主导和推进质量改进， 技术革新，效率提升，专项测试，平台开发等工作；  \n3、熟悉软件开发和测试流程，有一定的技术架构能力； \n4、具备搭建相关业务相关的测试工具、平台、框架、监控等工作测试工程师；\n5、有金融行业经验优先。"
-    },
-    {
       "id": "bytedance_7307460390424742182",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -27074,20 +26990,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7304589204120406309/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、深入团队业务，协助互娱研发团队，负责重点项目的流程管控，制定并推动流程落地、持续改进；\n2、针对团队协作优化、效率提升，协同各部门、各角色，保证项目过程和结果的按质按量持续交付；\n3、持续发现和分析团队、业务、项目中的共性问题，进行风险管理以及改进措施的落地；\n4、结合业务和团队特点，积累和沉淀项目管理经验及方法论、团队知识库，赋能培训团队项目管理相关内容以优化团队整体协作效率；\n5、作为PMO团队（项目管理办公室）一员，支持互娱研发相关的其他公用项目跟进及目标达成。\n\n任职要求：\n1、本科及以上学历，有项目管理相关技能（规划、执行、监控）及经验（3~5年），较强的项目把控能力和极强的项目交付能力；\n2、有较强的沟通能力（满足跨部门、跨角色、跨团队沟通），良好的与人交流协作的能力；\n3、有较高的责任心、较强的抗压能力，以及目标导向的落地执行能力、问题解决能力；\n4、有较强的本质思考和根因归纳分析能力，具有一定的数据分析能力；\n5、乐意迎接变化接受挑战，持续学习，自律；\n6、加分项：有技术背景、英语流利、持有PMP或Scrum等认证。"
-    },
-    {
-      "id": "bytedance_7301663675638401307",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "资深创意视觉设计经理-剪映CapCut",
-      "category": "设计",
-      "category_raw": "设计",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2023-11-15",
-      "url": "https://jobs.bytedance.com/experienced/position/7301663675638401307/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责剪映CapCut相关产品的创意视觉设计团队管理工作；\n2、带领团队针对不同国家与用户，配合运营，高效产出高质量的设计，并支持运营市场的线上线下活动宣传；\n3、洞察海外用户诉求与审美倾向，快速理解目标用户与目标地区，与团队一起深入调研本地化设计；\n4、定义设计语言，总结沉淀设计趋势，提炼创意方法，能够用设计解决业务与用户的问题，用创意为用户带来新鲜视角与体验。\n\n任职要求：\n1、本科及以上学历，设计相关专业毕业，具备设计行业经验与视觉设计团队管理经验；\n2、具备顶尖的审美及创意能力，设计风格多元，对前沿设计趋势敏锐，勇于探索视觉语言；\n3、沟通能力强，心态开放，有深度的思考能力，能够赋能团队并与其他团队进行良好的团队合作；\n4、加分项：了解海外产品、市场与风格或者有海外留学或工作经历优先。"
     },
     {
       "id": "bytedance_7299363065395562778",
@@ -27944,6 +27846,20 @@
       "description": "岗位职责：\n1、负责数据中心内ASIC芯片的微架构设计、RTL设计和集成；\n2、支持AI加速芯片的Power/Performance/Area优化和设计流程优化；\n3、支持AI加速芯片的验证和其他开发。\n\n任职要求：\n1、微电子、计算机等相关专业本科及以上学历，3年及以上IC设计经验；\n2、对芯片前端设计有深入理解，有坚实的RTL设计基础，精通Verilog等硬件设计语言；\n3、有主动学习、深入分析和解决问题的能力、自我驱动力。\n\n加分项：\n1、熟悉ASIC芯片的前端设计，有过7nm或更先进工艺流片或量产经验；\n2、深入理解芯片架构和微架构设计，能够设计出满足PPA要求的RTL实现；\n3、有CPU/NoC/高性能计算的设计经验；\n4、了解DDR/PCIE等协议，有相关的IP集成经验；\n5、熟悉AMBA等总线标准，有相关模块设计经验；熟悉ASIC实现流程，有综合/FV/CLP/STA等经验；\n6、有ISP/display设计经验优先；了解主流的AI算法，如：视觉、NLP处理、语音等。"
     },
     {
+      "id": "bytedance_7138398356012108068",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "桌面端研发工程师-醒图（深圳/广州）",
+      "category": "其他",
+      "category_raw": "客户端",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2022-09-01",
+      "url": "https://jobs.bytedance.com/experienced/position/7138398356012108068/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责醒图桌面端图片编辑创作的研发工作；\n2、负责图像编辑架构优化和性能调优；\n3、共同建专业的图片编辑工具，打造行业领先的图像创作平台。\n\n任职要求：\n1、有Windows、Mac平台，或图片渲染相关开发经验；\n2、优秀的编码习惯，有较强的技术好奇心、自驱力，具备良好的架构、性能优化和技术攻坚能力；\n3、有产品开发经验，或有复杂视频、图像创作工具开发经验者优先。"
+    },
+    {
       "id": "bytedance_7138070729950841095",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -28140,20 +28056,6 @@
       "description": "岗位职责：\n1、通过软件开发实现数据中心网络管理的自动化、智能化、数字化，提升网络建设运维效率；\n2、研发具备网络规划、部署、变更、验证和监控等能力的平台产品，提升网络自动化水平。\n\n任职要求：\n1、本科及以上学历，计算机、通信等相关专业；\n2、精通 HTML、CSS、JavaScript、TypeScript 等前端技术，熟练运用 React 或 Vue；\n3、精通至少一种后端编程语言，Python/Go/C/C++ 等不限；\n4、熟悉主流 SQL 和 NoSQL 数据库工作原理，具备数据库编程及优化能力；\n5、对代码和设计质量有严格要求，重视 Code Review，有良好的编码习惯；\n6、有强烈的求知欲、好奇心和进取心，能及时关注和学习业界最新技术。"
     },
     {
-      "id": "bytedance_7103498763114055950",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "交换机软件工程师",
-      "category": "技术",
-      "category_raw": "基础架构",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2022-05-30",
-      "url": "https://jobs.bytedance.com/experienced/position/7103498763114055950/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、研发自研交换机、路由器、网关、P4可编程设备等，用于百万服务器规模的超大型数据中心、骨干网、边缘、字节云火山引擎等场景；\n2、同时在AI/机器学习场景，利用P4可编程、在网计算、端网融合等技术，研发RDMA高性能网络的解决方案；\n3、在网络可编程方向，利用P4可编程芯片、DPU、FPGA，研发超融合可编程平台，实习网关、边缘、在网计算等网络业务的芯片卸载。\n\n任职要求：\n1、本科及以上学历，计算机、通信等相关专业；\n2、编程基础扎实，精通 C/C++, Python, Go 等主流编程语言；\n3、熟悉交换机操作系统，有SONIC、FRR(BGP)等开源软件研发经验优先;\n4、熟悉交换芯片 SDK 代码，有 SDK 代码适配或 SAI 开发经验者优先；\n5、熟悉交换机硬件架构，有 BSP 开发经验者优先；\n6、熟悉交换机业务功能，有二三层功能或协议开发经验者优先；\n7、对代码和设计质量有严格要求，有良好的编码习惯。"
-    },
-    {
       "id": "bytedance_7103497075136055589",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -28194,6 +28096,20 @@
       "url": "https://jobs.bytedance.com/experienced/position/7102355212429789454/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、负责大数据、计算平台、云原生及分布式存储等核心系统的可靠性保障与稳定性建设，持续关注系统运行成本，推动降本增效；\n2、主导设计并落地面向大规模集群的自动化运维平台，构建覆盖全生命周期的自动化运营解决方案，提升运维效率与系统交付速度；\n3、建设并完善全链路监控体系，通过系统组件可用性与关键性能指标的实时监测，显著提升系统可观测性，赋能研发团队快速定位与排查故障；\n4、与系统开发团队深度协作，从架构设计、容量规划到发布上线的全流程中嵌入可靠性工程实践，保障系统SLA目标达成；\n5、基于真实业务场景，深入推进服务治理最佳实践，包括但不限于：关键链路性能瓶颈分析与调优、复杂业务问题的定位排障、系统高可用架构的改造与升级。\n\n任职要求：\n1、本科及以上学历，计算机科学、软件工程等相关专业，具备2年以上SRE、基础架构或相关领域工作经验；\n2、具备扎实的计算机基础，深入理解Linux操作系统原理，熟悉存储架构、网络I/O模型等底层机制；\n3、熟练掌握至少一门编程语言（Go/Python/Java/Shell等），具备良好的代码工程化能力；\n4、具备系统性分析与解决复杂问题的能力，拥有良好的跨团队沟通协作能力及主人翁意识。"
+    },
+    {
+      "id": "bytedance_7096109616862890248",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "前端开发工程师-飞书文档",
+      "category": "其他",
+      "category_raw": "前端",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2022-05-10",
+      "url": "https://jobs.bytedance.com/experienced/position/7096109616862890248/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责飞书文档「文档开放」以及「AI方向」功能开发；\n2、负责高质量的设计和编码，承担重点、难点的技术攻坚；\n3、和产品经理配合，深度参与产品需求讨论，功能定义等工作。\n\n任职要求：\n1、本科及以上学历，具备丰富的前端技术开发经验； \n2、能够熟练运用JS/AJAX/HTML5/CSS/AS等前端开发技术构建高性能Web应用程序；\n3、理解Web标准和兼容性，对可用性/响应式相关知识有实际的了解和实践经验；\n4、熟悉移动端Web开发或Hybrid开发模式更佳；\n5、能够熟练运用至少一款主流的JS框架技术，了解小程序架构更佳；\n6、具备良好的沟通表达能力，对于陌生领域有快速的学习能力。"
     },
     {
       "id": "bytedance_7095579319473031460",
@@ -28518,20 +28434,6 @@
       "description": "岗位职责：\n团队介绍：TikTok是一个覆盖150个国家和地区的国际短视频平台，我们希望通过TikTok发现真实、有趣的瞬间，让生活更美好。TikTok 在全球各地设有办公室，全球总部位于洛杉矶和新加坡，办公地点还包括纽约、伦敦、都柏林、巴黎、柏林、迪拜、雅加达、首尔和东京等多个城市。\n\nTikTok直播研发团队，旨在实现TikTok直播业务的研发工作，搭建及维护业界领先的产品。\n加入我们，你能接触到包括：社交互动、营收活动、主播生态、消费订阅、游戏直播、公会&运营平台等核心业务场景，支持产品在全球赛道上高速发展；\n也能接触到包括服务架构、大模型算法、基础技术等方向上的技术挑战，保障业务持续高质量、高效率、且安全地为用户服务；同时还能为不同业务场景提供全面的技术解决方案，优化各项产品指标及用户体验。 \n在这里， 有大牛带队与大家一同不断探索前沿， 突破想象空间。 \n在这里，你的每一行代码都将服务亿万用户。\n在这里，团队专业且纯粹，合作氛围平等且轻松。\n目前在北京，上海，杭州、广州、深圳分别开放多个岗位机会。\n\n1、负责TikTok直播场景下多人连麦与游戏直播业务Android端/iOS端/Web端/PC端/服务端质量保障；\n2、参与产品需求评审和技术评审，制定合理的测试方案，协同产品和研发团队高质量交付产品；\n3、参与质量度量，能够在项目跟进中分析出线上线下的质量问题并推动解决；\n4、参与搭建及优化自动化测试框架，设计、编写、维护自动化测试用例代码；\n5、参与专项测试建设，包括：接口测试、客户端性能测试、服务端压测、稳定性测试等；\n6、基于业务痛点开发测试工具提升测试的效率。\n\n任职要求：\n1、计算机或相关专业本科及以上学历；\n2、在客户端/前端/服务端/PC端至少一个方向有扎实的测试实践经验；\n3、能熟练使用Java/C/C++/Go/Python其中任意一门语言进行自动化测试开发和测试工具开发；\n4、在客户端自动化测试、客户端性能测试、接口自动化测试、性能压测等任一方向有测试实践经验；\n5、具备较好的逻辑思维能力和沟通理解力，能够快速学习新业务与新技术，自驱能力强，能主动发现问题，推动持续改进；\n6、加分项：具备基本的英文表达能力，有海外学习或项目经验。"
     },
     {
-      "id": "bytedance_7065509110472722725",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "服务端研发工程师-直播电商-今日头条",
-      "category": "其他",
-      "category_raw": "后端",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2022-02-17",
-      "url": "https://jobs.bytedance.com/experienced/position/7065509110472722725/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责头条直播电商的服务端技术架构设计和系统优化；\n2、负责高并发大流量分布式系统设计及实现，攻克各种技术难关；\n3、主导或参与制定研发规范，对研发团队的项目交付质量负责，review具体技术方案和代码实现；\n4、具备较好的业务理解能力，和产品经理，业务团队紧密配合，推进项目高质量落地。\n\n任职要求：\n1、本科及以上学历，计算机、通信等相关专业，3年以上服务端开发经验, 对高并发、高可用架构系统有深刻的理解；\n2、熟练掌握C/C++/Java/Go/Python/Shell/PHP等至少一门服务端编程语言；\n3、有扎实的编程能力，有优秀的设计和代码品位，深刻理解计算机原理，有良好的数据结构和算法基础；\n4、熟悉MySQL 、Redis、MQ等常用开源组件，并有能力进行定制化改进；\n5、积极乐观，责任心强，学习能力强，工作认真细致，具有良好的团队沟通、协作能力和求知欲；\n6、有货架电商、直播电商、内容电商、营销等经验，理解C端电商生态，落地过大型电商系统者优先。"
-    },
-    {
       "id": "bytedance_7065601719078127909",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -28572,20 +28474,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/7047754546261428517/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n团队介绍：推荐架构团队支撑字节跳动旗下多款APP产品，如抖音、今日头条、番茄小说、西瓜视频、剪映等推荐系统架构的设计和开发，保障系统的稳定和高可用，致力于抽象系统通用组件和服务，建设推荐中台、数据中台；关于在线服务，在这里你有机会参与大规模机器学习在线预估框架的研发与优化，也有机会参与模型训练与调度等相关问题的研究与突破，解决系统瓶颈，降低成本开销；如你对大数据感兴趣，在这里也有机会参与通用实时计算系统的开发、构建统一的推荐特征中台，为推荐业务实现先进的消重、计数、特征服务等；我们期待热爱技术的你加入，一起创造更多可能。\n\n1、为大规模推荐系统设计和实现合理的分布式计算和训练系统；\n2、设计和实现灵活可扩展、稳定、高性能的离线存储、计算、训练组件；\n3、生产系统的Trouble-shooting，设计和实现必要的机制和工具保障生产系统整体运行的稳定性；\n4、打造业界领先推荐系统分布式训练和计算框架等分布式系统，为海量数据和大规模业务系统提供可靠的基础设施。\n\n任职要求：\n1、对分布式计算系统有深入了解，有生产环境有TB/PB级别实时计算系统应用经验，熟练掌握多项或一项分布式计算框架，如Flink/Spark/Ray等；\n2、有数据湖开发经验，熟悉Hudi、Iceberg、Paimon、Delta Lake等至少一项数据湖技术；\n3、熟练掌握Java、C++、Scala、Python等至少一项编程语言，有出色的编码和Trouble-shooting能力。\n\n加分项：\n1、有分布式计算或存储开源框架的源码经验；\n2、推荐/搜索/广告相关业务背景；\n3、了解Pytorch、Ray、Transformers等AI生态，有过生产场景的实践；\n4、熟悉大模型LLM、多模态等基本原理，了解LLM和推荐系统结合的常见范式；\n5、有技术信仰，能持续关注业界最新的论文等。"
-    },
-    {
-      "id": "bytedance_7044435284037798174",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "Agent产品经理-火山引擎",
-      "category": "产品",
-      "category_raw": "产品经理",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2021-12-22",
-      "url": "https://jobs.bytedance.com/experienced/position/7044435284037798174/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责火山引擎AI云原生以及Agent平台产品的产品规划、设计与迭代，调研与分析客户痛点，研究市场需求和产品情况；\n2、管理产品全生命周期的各个阶段，包括需求收集和洞察、产品规划、设计、开发、测试和发布等；\n3、定义产品上市策略，包括目标客户画像和产品定位、定价以及运营策略；\n4、定义产品目标和核心商业指标，并持续跟踪指标以进行产品增强；\n5、管理和维护产品指标，并能够清晰地向客户阐述每个功能的价值；\n6、进行行业分析，跟踪行业技术趋势，制定产品的远期规划。\n\n任职要求：\n1、本科及以上学历，计算机科学与技术、软件工程等相关专业优先；\n2、了解LLM的技术原理和进展，熟悉海内外大模型产品，能够阅读和理解相关文档及论文；\n3、优秀的文字功底和数据意识，对不同专业和兴趣领域的数据质量有判断力，有深入的产品思考；\n4、熟练运用Prompt Engineering、各类大模型的API调用、Agent等模型能力，可以将大模型融入工作流；\n5、具有愿景和目标驱动，具备较强交付意识和沟通协作能力，适应快节奏的工作方式；\n6、对IT行业的新技术以及云基础设施、AI、信息安全等领域的业界趋势有很强的好奇心，能够持续学习。"
     },
     {
       "id": "bytedance_7041566959129594142",
@@ -28812,20 +28700,6 @@
       "description": "岗位职责：\n1、负责抖音/抖音火山版等产品内容安全相关的视频理解相关AI算法的研究开发；\n2、从事AI深度学习（视频理解，自然语言处理，语音等领域）前沿技术的探索与研发；\n3、从事短视频/直播等相关业务的内容分析，包括但不限于视频分类、场景识别、目标检测与跟踪、图像分类、音频分类和特征提取、聚类、OCR、文本模型等技术，并应用于实际业务产品中。\n\n任职要求：\n1、具有扎实的机器学习基础，推荐系统、计算机视觉、图像处理、模式识别、语音识别、机器学习、自然语言处理等相关专业，数理功底扎实，自学能力强；\n2、熟悉TensorFlow/MxNet/Caffe等框架，熟练使用C++/Python编程；\n3、有计算机视觉、NLP等相关经验者，熟悉推荐算法、语音识别、音频分析、OCR、多模态其中多个领域者优先；\n4、在计算机科学高水平会议和期刊如NIPS、ICML、CVPR、ICCV、ECCV、IJCAI、AAAI、KDD、SIGIR、WWW、ACL、PAMI、IJCV等发表过论文或有竞赛经验者优先。"
     },
     {
-      "id": "bytedance_6942396333992479006",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "芯片板级验证开发工程师",
-      "category": "技术",
-      "category_raw": "研发",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2021-03-22",
-      "url": "https://jobs.bytedance.com/experienced/position/6942396333992479006/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1. 深入理解芯片板级验证硬件系统、硬件产品设计的各种约束，定义系统规格，输出总体设计方案、详细设计，并和芯片后端团队协同定义芯片到板级的信号、电气、封装、热特性；\n2. 输出各板卡layout层叠结构、power拓扑、时钟拓扑、系统管理拓扑、主要元器件和连接器选型等，与板级硬件合作伙伴一起进行原理图设计、PCB设计，对设计的质量负责；在产品研发周期内与ODM厂商一起保障硬件设计质量；\n3. 主导验证系统、产品化硬件的功能调测和单元测试，并负责开发验证过程中的硬件、系统问题解决和优化改进；\n4. 与板级硬件合作伙伴、芯片后端团队紧密合作，主导芯片package level、board level 的硬件测试过程（包括功能、PI、SI、可靠性测试等），输出测试报告；\n5. 跟进硬件产品PCB&PCBA加工过程，推动制定合适的工艺流程和参数，推动生产加工相关问题的解决，与合作伙伴一起完成板卡工厂端功能测试的导入工作。\n\n任职要求：\n1. 微电子、电子工程或者相关专业，硕士，10年及以上芯片的上电调测经验，具备服务器系统硬件设计或者服务器级别CPU硅后验证经验者优先；\n2. 芯片的硅后验证平台开发经验；\n3. 具备和芯片封测团队沟通经验，定义满足封测厂要求的SLT、ATE、HTOL、Burn In等工艺板卡能力；\n4. 具备和芯片设计团队沟通经验，定义满足芯片电气特性验证的各种Bench Board，如高速IO Bench Board，SOC Power Bench Board等；\n5. 芯片的物理特性测试和验证经验，至少包括但不限于DDR，PCIe，USB等高速串行链路的物理特性验证经验；\n6. 具备独立的芯片回片后的Bring Up调试能力；\n7. 熟练掌握Cadence原理图设计工具；\n8. 有能力制定高速信号Layout规则约束，执行Layout Review，并确保设计阶段单板的信号质量；\n9. 熟悉单板BOM配置方法、了解PCBA制程，确保板卡的顺利加工下线；\n10. 具备板级的CPLD粘合逻辑设计能力，确保单板的上电、复位控制时序正确；\n11. 熟练掌握常用的测试工具，如高速示波器、逻辑分析仪等仪器设备；\n12. 研发阶段文档写作，包含平台设计总体文档、详细设计文档等。"
-    },
-    {
       "id": "bytedance_6938367940656171295",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -28852,6 +28726,20 @@
       "url": "https://jobs.bytedance.com/experienced/position/6938368267498359048/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、负责国际支付系统的质量保障工作；\n2、分析业务产品需求，参考技术方案，编写测试用例，制定合理高效的测试方案；\n3、独立搭建并维护测试环境，执行测试用例，输出测试报告等相关文档，保证业务和系统质量和进度；\n4、发现、定位、跟踪产品缺陷，协同开发工程师快速解决问题；\n5、优化测试框架，根据要求编写测试脚本、开发测试工具，提高测试工作效率。\n\n任职要求：\n1、本科及以上学历，计算机相关专业，1年及以上互联网测试开发经验；\n2、熟悉 Linux 环境操作、 SQL 数据库操作，熟悉消息队列，有 Html5 /服务端测试经验；\n3、熟练使用至少一种编程语言，包括但不仅限于：Java、OC、C、C++、Python、Go、PHP；\n4、具有良好的沟通协调和文档撰写能力，善于发现、定位、分析和总结问题，责任心强，吃苦耐劳，有一定抗压能力；\n5、有支付行业经验优先，有开发经验者优先。"
+    },
+    {
+      "id": "bytedance_6935327562403137823",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "高级前端开发工程师-即梦AI（深圳/广州/北京）",
+      "category": "其他",
+      "category_raw": "前端",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2021-03-03",
+      "url": "https://jobs.bytedance.com/experienced/position/6935327562403137823/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责即梦AI相关创新方向工具产品能力及用户产品能力建设，打造极致的用户体验；\n2、探索基于图片、视频生成的新的创作场景与AIGC/大模型的结合点，实现创新功能；\n3、研发AI应用基础服务组件，解决共性需求，减少重复开发；\n4、AI应用领域的新技术研究和应用，推动适合的技术应用于生产。\n\n任职要求：\n1、掌握主流前端框架的源码实现，理解框架背后的思想，并能持续改进和完善业务框架；\n2、对前后端的协作模式、产品和项目流程有深入理解；\n3、关注用户体验，能够以用户为出发点，结合业务有效落地并实现收益；\n4、关注前端前沿技术，具备较强的学习能力，前端技术社区活跃者、有自己的开源项目者优先；有画布项目开发经验优先；\n5、具备较强的责任感、团队合作精神、逻辑思维能力和表达能力。\n\n加分项\n1、对AIGC有了解和动手经验；\n2、有跨端或者全栈开发经验优先。"
     },
     {
       "id": "bytedance_6923071804525725959",
@@ -29022,6 +28910,20 @@
       "description": "岗位职责：\n1、负责直播业务的数据分析工作；\n2、分析各项影响产品提升与增长的因素、各项业务细节，结合业务方向，给出可落地的整体的产品优化方案；\n3、与产品/运营/研发等配合，推进优化方案落地执行，带来业务的实际提升增长；\n4、负责业务上各类A/B实验设计与分析，产品优化效果评估，市场活动分析评估，核心指标异动分析，客户端版本效果评估等工作；\n5、负责业务上特化模型的建设工作。\n\n任职要求：\n1、数学、统计学、计算机相关专业优先；\n2、有数据分析经验、一线产品或运营业务优化经验者优先；\n3、逻辑清晰，对数据敏感，能发掘业务细节和数据之间的联系，并通过数据指标推动优化；\n4、具有良好的团队配合能力，沟通能力；\n5、精通SQL，熟练使用R/Python进行数据分析、挖掘；\n6、掌握Tableau等BI工具尤佳；爱看直播，对直播行业感兴趣，有深入思考或分析经验者优先。"
     },
     {
+      "id": "bytedance_6760633510895028488",
+      "company": "bytedance",
+      "company_name": "字节跳动",
+      "title": "海外广告运营经理-游戏",
+      "category": "产品",
+      "category_raw": "产品运营",
+      "location": "深圳",
+      "department": "",
+      "posted_date": "2019-11-18",
+      "url": "https://jobs.bytedance.com/experienced/position/6760633510895028488/detail",
+      "source": "jobs.bytedance.com",
+      "description": "岗位职责：\n1、负责海外平台的游戏行业客户及产品运营工作，对客户消耗指标与重点专项/出价产品的消耗指标负责；\n2、与海内外销售团队紧密合作，根据不同区域定义和落地区域运营策略，并协调多个内外协作方，达成区域收入增长目标；\n3、为头部广告主制定增长方案，挖掘和培育标杆案例，定期进行面向海外销售团队，代理商或客户的产品教育和培训；推动广告产品使用和预算提升；\n4、调研，收集及评估客户需求，提炼总结不同类型广告主的诉求，优化行业解决方案。\n\n任职要求：\n1、本科及以上学历，2年以上广告平台产品/运营相关经验或游戏行业广告投放经验；\n2、英语听说读写非常流利，可以作为工作语言，日语流利优先；\n3、具备复杂项目的管理能力，资源整合的意识和能力；沟通和推进能力强、有团队合作精神与主人翁意识；\n4、学习能力强，具有较强的独立思考能力和自我驱动力。"
+    },
+    {
       "id": "bytedance_6754998106481232135",
       "company": "bytedance",
       "company_name": "字节跳动",
@@ -29076,20 +28978,6 @@
       "url": "https://jobs.bytedance.com/experienced/position/6704578947801155852/detail",
       "source": "jobs.bytedance.com",
       "description": "岗位职责：\n1、深度参与对字节跳动自研模型Seedance/Seedream/Seed-VLM，以及开源LLM/VLM模型的软硬件协同优化和算法优化，构建业界领先的模型优化能力矩阵；\n2、研发面向多端异构平台的量化&稀疏，MOE压缩，Token压缩，Cache复用，投机解码，KV Cache压缩等加速算法，构建Training-Free或结合Post-training/RL-Training的加速算法矩阵；\n3、面向分布式训练/推理场景，深度挖掘模型表示位宽/分辨率/步数/结构等维度的冗余，并加速训练和推理过程，通过算法和工程创新实现降本增效；\n4、探索Efficient AIGC，Efficient LLM领域的问题，结合具体应用场景，通过高质量数据合成、偏好对齐等手段，提升预训练大模型能力和效率，支持公司的基础模型落地；\n5、研发业界效果领先的端侧SLLM/SVLM，赋能抖音/剪映等产品的端侧大模型需求，服务全球数十亿用户。\n\n任职要求：\n1、硕士学位及以上，计算机、人工智能、软件工程相关专业；\n2、具备优秀的编程能力，扎实的数据结构和基础算法功底，熟练掌握Python，熟悉深度学习框架（如PyTorch），有CUDA/Triton使用经验者优先；\n3、在计算机视觉、深度学习领域期刊或会议（如CVPR、ICCV、NeurIPS、PAMI等）发表过论文者优先；对扩散模型、视觉Transformer或生成式AI有深入研究者优先；\n4、熟悉扩散模型优化技术（如步数蒸馏，高效模型结构设计）、模型优化（如量化、剪枝、稀疏化）、了解推理加速（如算子优化、分布式推理、多卡并行等）；\n5、具备优秀的问题分析与解决能力，能够自主探索并设计创新性解决方案；具备良好的沟通与协作能力，能够与团队成员共同探索新技术，推动研究进展与项目落地。"
-    },
-    {
-      "id": "bytedance_6704520120804313357",
-      "company": "bytedance",
-      "company_name": "字节跳动",
-      "title": "数据库工程师（DBA）-基础设施",
-      "category": "技术",
-      "category_raw": "基础架构",
-      "location": "深圳",
-      "department": "",
-      "posted_date": "2018-07-19",
-      "url": "https://jobs.bytedance.com/experienced/position/6704520120804313357/detail",
-      "source": "jobs.bytedance.com",
-      "description": "岗位职责：\n1、负责数据库的监控，备份，性能优化及故障处理等；\n2、数据库分库分表方案的设计、实施及数据迁移；\n3、负责根据项目需求设计并制定数据库解决方案；\n4、负责数据库中间件的相关测试、维护及管理工作；\n5、制定并不断完善数据库的运维规范、开发规范及安全规范。\n\n任职要求：\n1、熟悉业界主流关系型数据库或NoSQL数据库；知晓数据库原理并有大规模运维经验，能结合业务情况给出最佳实践；\n2、熟悉数据库运维体系架构，如HA模块，备份模块，监控模块等产品设计（有相关模块经历优先）；\n3、熟悉K8s框架技术体系以及云产品技术体系；\n4、熟悉Go，Python等任意一种开发语言，具备一定的研发能力；\n5、对工作保持激情，有上进心，有责任心。"
     },
     {
       "id": "bytedance_6704578203035371790",
