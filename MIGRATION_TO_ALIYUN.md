@@ -1,316 +1,356 @@
-# 阿里云迁移交接文档
+# 项目迁移交接文档：GitHub Pages → 阿里云服务器
 
-把整个 `cry` 项目（深圳招聘聚合 + 静态站 + 邮件推送）从 GitHub Pages / GitHub Actions
-迁到一台阿里云 ECS 上。迁完之后 GitHub 仓库可保留作为代码备份，也可以彻底关闭。
+## 一、项目概览
 
-> 现状：GitHub Actions 的 schedule 触发器在 `chenruoyi0202-ship-it/cry` 这个 ship-it
-> 自动账号下从来没成功跑过一次，导致每日邮件依赖 PR 合并副作用才能触发。迁到自管 cron
-> 之后，可靠性问题彻底解决。
+| 项目 | 说明 |
+|---|---|
+| 项目名 | cry — 个人工具集合站 |
+| 当前部署 | GitHub Pages（chenruoyi0202-ship-it.github.io/cry） |
+| 技术栈 | 纯静态 HTML/CSS/JS（无框架），Python 爬虫，Node.js 后端（可选） |
+| 总文件数 | ~172 个 |
+| 项目体积 | ~440MB（含 21MB 的 love_photos.json） |
 
 ---
 
-## 1. 总览
+## 二、项目结构
 
-| 组件 | 现状 | 迁移后 |
+```
+cry/
+├── 前端页面（纯静态 HTML）
+│   ├── index.html          # 止盈计算推演（股票工具）
+│   ├── 02680.html          # 02680 创陞控股分析追踪（核心页面）
+│   ├── 02680-sw.js         # Service Worker（可删除，迁移后不需要）
+│   ├── love.html           # Our Memory（情侣记忆城堡）
+│   ├── migraine.html       # 偏头痛记录
+│   ├── projects.html       # 项目导航页
+│   ├── property.html       # 房产数据
+│   ├── currency.html       # 汇率工具
+│   └── *.png/svg           # 各页面图标
+│
+├── data/                   # 数据文件
+│   ├── stock_02680_encrypted.json    # 02680 分析数据（AES-256 加密）
+│   ├── stock_02680_quote.json        # 02680 行情缓存
+│   ├── stock_02680_ccass.json        # CCASS 最新数据
+│   ├── stock_02680_ccass_report.md   # CCASS 报告（Markdown）
+│   ├── stock_02680_ccass_report.pdf  # CCASS 报告（PDF）
+│   ├── ccass_history/                # CCASS 历史快照
+│   ├── love_encrypted.json           # 情侣数据（加密）
+│   ├── love_photos.json              # 照片数据（21MB）
+│   ├── migraine_encrypted.json       # 偏头痛数据（加密）
+│   ├── property.json                 # 房产数据
+│   └── 02680_full_analysis_report.md # 完整分析报告
+│
+├── scraper/                # Python 爬虫脚本
+│   ├── scrape_ccass.py             # CCASS 数据抓取（港交所）
+│   ├── analyze_ccass.py            # CCASS 分析报告生成
+│   ├── generate_ccass_pdf.py       # CCASS PDF 生成
+│   ├── participant_names.py        # 券商名称翻译
+│   ├── scrape_property.py          # 房产数据抓取
+│   └── requirements.txt            # Python 依赖
+│
+├── worker/                 # Cloudflare Worker（Yahoo Finance 代理）
+│   ├── index.js
+│   └── wrangler.toml
+│
+├── backend/                # Node.js 后端（阿里云 OSS 相关）
+│   ├── index.mjs
+│   ├── package.json
+│   └── deploy.md
+│
+├── .github/workflows/      # GitHub Actions（需要替换）
+│   ├── ccass.yml           # CCASS 定时抓取（每日 10:00 + 17:30）
+│   ├── static.yml          # 静态页面部署
+│   └── jobs-watchdog.yml   # 其他定时任务
+│
+└── tests/                  # 测试文件
+```
+
+---
+
+## 三、需要迁移的服务（按优先级）
+
+### 3.1 静态页面托管（替代 GitHub Pages）
+
+**当前**：GitHub Pages 自动部署 main 分支的所有文件。
+
+**阿里云方案**：
+- **方案 A（推荐）**：阿里云 OSS + CDN
+  - 把所有 HTML/CSS/JS/图片上传到 OSS Bucket
+  - 配置 CDN 加速 + 自定义域名
+  - 成本：约 ¥10/月
+- **方案 B**：轻量服务器 + Nginx
+  - 把文件放到 `/var/www/cry/`
+  - Nginx 配置静态文件服务
+  - 成本：服务器本身费用
+
+**注意事项**：
+- 需要修改所有页面中的 `chenruoyi0202-ship-it.github.io/cry` 为新域名
+- og:image、og:url 等 meta 标签需要更新
+- Service Worker（02680-sw.js）可以删除或保留（看需要）
+
+### 3.2 数据同步（替代 GitHub API）
+
+**当前**：02680.html 通过 GitHub Contents API 实现多设备同步：
+- 用户输入 GitHub Token
+- 数据 AES-256 加密后存到 `data/stock_02680_encrypted.json`
+- 其他页面（love.html、migraine.html）也用类似方式
+
+**阿里云方案**：需要一个简单的后端 API 来替代 GitHub API。
+
+```
+需要实现的 API：
+POST /api/sync/pull   — 拉取最新数据
+POST /api/sync/push   — 推送更新数据
+POST /api/auth        — 验证 Token（或密码）
+
+数据存储选项：
+- 阿里云 OSS（最简单，直接存 JSON 文件）
+- 阿里云 RDS（MySQL/PostgreSQL）
+- 阿里云 Redis（如果数据量小）
+- 直接存服务器本地文件（最省钱）
+```
+
+**需要改动的文件**（搜索 `ghGet`/`ghPut`/`ghAuth`/`api.github.com`）：
+
+| 文件 | GitHub 依赖 | 改动量 |
 |---|---|---|
-| 静态站点（jobs.html / 02680.html / migraine.html / love.html / projects.html） | GitHub Pages 自动部署 | Nginx 直接对外暴露 `/var/www/cry/` |
-| 数据文件（`data/*.json` `data/jobs_digest_*.md`） | git 提交回仓库 | 直接写到 `/var/www/cry/data/` 由 Nginx 服务 |
-| 招聘爬虫 + digest + 邮件 | GitHub Actions cron（不靠谱） | systemd timer 或 `crontab` 每天定时跑 |
-| 收藏云同步（favorites） | 写 GitHub 仓库的 `data/jobs_favorites.json` | 见 §8，二选一：继续用 GitHub 仓库 / 改写到阿里云本地 |
-| 邮件出口（Resend） | 不动 | 不动 |
-| 微信推送（PushPlus） | 不动 | 不动 |
+| `02680.html` | 同步 CRUD、行情缓存推送 | ~100 行（替换 ghGet/ghPut） |
+| `index.html` | Gist 同步 | ~50 行 |
+| `love.html` | GitHub Contents API 同步 | ~80 行 |
+| `migraine.html` | GitHub Contents API 同步 | ~80 行 |
 
----
+### 3.3 定时任务（替代 GitHub Actions）
 
-## 2. 服务器要求
+**当前**：GitHub Actions cron 任务：
+- CCASS 抓取：每日 HKT 10:00 + 17:30
+- PDF 报告生成
+- GitHub Issue 通知 + pushplus 微信推送
 
-最小规格够用：
+**阿里云方案**：
+- **方案 A**：服务器 crontab
+  ```bash
+  # /etc/crontab
+  0  2 * * 1-5  root  cd /var/www/cry && python3 scraper/scrape_ccass.py && python3 scraper/analyze_ccass.py && python3 scraper/generate_ccass_pdf.py
+  30 9 * * 1-5  root  cd /var/www/cry && python3 scraper/scrape_ccass.py && python3 scraper/analyze_ccass.py && python3 scraper/generate_ccass_pdf.py
+  ```
+- **方案 B**：阿里云函数计算（FC）+ 定时触发器
+- **方案 C**：阿里云 ARMS 任务调度
 
-- **阿里云 ECS**：1 核 2 GB，40 GB 系统盘，**强烈建议选国内地域**（爬腾讯/字节/美团 API 比海外 IP 快很多且不容易被风控）
-- **OS**：Ubuntu 22.04 LTS（下面所有命令都按这个写）
-- **公网带宽**：1 Mbps 起步够用（静态站 + 偶发的数据下载）
-- **域名**：建议自有域名一个（备案过的最好），然后把 A 记录指到 ECS 公网 IP。如果只想用 IP 直接访问也行，但 Resend 邮件里的链接和 PWA 图标会丑
-
----
-
-## 3. 一次性环境准备
-
-SSH 上服务器后，以 root 跑：
-
+**Python 依赖**：
 ```bash
-# 基础包
-apt update && apt install -y python3 python3-pip python3-venv nginx git curl certbot python3-certbot-nginx
+pip install requests beautifulsoup4 markdown weasyprint
+apt install fonts-noto-cjk-extra  # PDF 中文字体
+```
 
-# 项目目录
-mkdir -p /opt/cry /var/www/cry/data /var/log/cry
-chown -R www-data:www-data /var/www/cry
+### 3.4 行情数据代理（替代 Cloudflare Worker）
 
-# Python 虚拟环境
-python3 -m venv /opt/cry/venv
-/opt/cry/venv/bin/pip install --upgrade pip
-/opt/cry/venv/bin/pip install requests markdown pycryptodome
+**当前**：`worker/index.js` 是一个 Cloudflare Worker，代理 Yahoo Finance API 请求。
+
+**阿里云方案**：
+- 在服务器上跑一个简单的 Node.js/Python 反向代理
+- 或者直接在 Nginx 里配 proxy_pass
+- 02680.html 里的 `stock-quote-proxy.chenruoyi0202.workers.dev` 换成新地址
+
+---
+
+## 四、02680.html 核心改动清单
+
+这是最复杂的文件（~3000 行），以下是需要改的 GitHub 依赖：
+
+### 4.1 同步模块（~200 行需要重写）
+
+```javascript
+// 当前代码中需要替换的函数：
+ghAuth(token)           → 改为你的 API 认证方式
+ghGetDefaultBranch()    → 删除（不再需要）
+ghGet(token, repo, path, branch)  → 改为 fetch('/api/sync/pull')
+ghPut(token, repo, path, content, sha, branch) → 改为 fetch('/api/sync/push')
+pullFromCloud()         → 调用新的拉取 API
+pushToCloud()           → 调用新的推送 API
+pushQuoteCache()        → 调用新的行情缓存 API
+
+// 常量需要替换：
+SYNC_REPO = 'chenruoyi0202-ship-it/cry'  → 删除
+SYNC_BRANCH = 'main'                     → 删除
+SYNC_PASSWORD = 'cry-02680-sync-2026'    → 保留（加密用）
+```
+
+### 4.2 行情数据（~20 行需要改）
+
+```javascript
+// worker URL 替换
+'https://stock-quote-proxy.chenruoyi0202.workers.dev/...'
+→ 'https://你的域名/api/quote/...'  或直接用腾讯/新浪接口（已有）
+```
+
+### 4.3 CCASS 报告加载（~5 行需要改）
+
+```javascript
+// 当前从同源加载
+fetch('data/stock_02680_ccass_report.md')
+// 迁移后保持不变（只要文件路径正确）
+```
+
+### 4.4 og 标签（~4 行需要改）
+
+```html
+<!-- 替换域名 -->
+<meta property="og:image" content="https://新域名/02680-icon.png">
+<meta property="og:url" content="https://新域名/02680.html">
 ```
 
 ---
 
-## 4. 把代码搬上去
+## 五、加密与安全
 
-在本地：
+### 5.1 当前加密方案
 
-```bash
-# 在仓库根跑
-rsync -avz --exclude='.git' --exclude='node_modules' --exclude='__pycache__' \
-  ./ root@<ECS_IP>:/opt/cry/repo/
-
-# 静态文件 + 已有数据
-ssh root@<ECS_IP> '
-  cp /opt/cry/repo/*.html /var/www/cry/
-  cp /opt/cry/repo/*.svg /var/www/cry/ 2>/dev/null || true
-  cp /opt/cry/repo/*.png /var/www/cry/ 2>/dev/null || true
-  cp /opt/cry/repo/*.json /var/www/cry/ 2>/dev/null || true
-  cp -r /opt/cry/repo/data/* /var/www/cry/data/
-  chown -R www-data:www-data /var/www/cry
-'
+```
+算法：AES-256-GCM
+密钥派生：PBKDF2（100,000 iterations, SHA-256）
+盐：每次加密随机 16 字节
+IV：每次加密随机 12 字节
+密码：硬编码 'cry-02680-sync-2026'（建议迁移后改为用户输入）
 ```
 
-之后 `/opt/cry/repo` 是代码仓库（含 scraper），`/var/www/cry` 是 Nginx 服务的目录（HTML + JSON）。
+数据格式：`[salt(16)][iv(12)][ciphertext]` → Base64
+
+### 5.2 访客模式
+
+```
+密码：'zuge2680'（硬编码在 JS 中）
+Owner 检测：localStorage 'stock_02680_owner' 或有 sync config
+Guest：输过密码后记住（localStorage 'stock_02680_guest_ok'）
+```
+
+### 5.3 迁移建议
+
+- 加密密码从硬编码改为用户首次设置
+- 访客密码改为服务端验证（不暴露在前端 JS）
+- Token 认证改为你自己的认证系统
 
 ---
 
-## 5. Nginx 站点配置
+## 六、数据文件说明
 
-`/etc/nginx/sites-available/cry`：
+| 文件 | 大小 | 说明 | 敏感度 |
+|---|---|---|---|
+| `stock_02680_encrypted.json` | ~60KB | 分析/线索/时间线（AES加密） | 高 |
+| `stock_02680_quote.json` | ~4KB | 行情缓存（明文） | 低 |
+| `stock_02680_ccass.json` | ~60KB | CCASS 最新数据 | 低 |
+| `love_encrypted.json` | ~15KB | 情侣数据（加密） | 高 |
+| `love_photos.json` | ~21MB | 照片数据（加密） | 高 |
+| `migraine_encrypted.json` | ~350B | 偏头痛数据（加密） | 高 |
+| `property.json` | ~8KB | 房产数据（明文） | 中 |
+| `ccass_history/*.json` | ~若干 | CCASS 历史快照 | 低 |
+
+---
+
+## 七、localStorage 键名清单
+
+02680.html 使用的所有 localStorage 键：
+
+| 键名 | 内容 |
+|---|---|
+| `stock_02680_analyses_v1` | 分析记录（JSON 数组） |
+| `stock_02680_events_v1` | 线索记录 |
+| `stock_02680_timeline_v1` | 推演时间线 |
+| `stock_02680_deleted_v1` | 删除墓碑 |
+| `stock_02680_sync_config` | 同步配置（Token等） |
+| `stock_02680_seeded_v1` | 种子数据标记 |
+| `stock_02680_timeline_seeded_v1` | 时间线种子标记 |
+| `stock_02680_cost` | 成本价 |
+| `stock_02680_owner` | Owner 标记 |
+| `stock_02680_guest_ok` | 访客已验证标记 |
+| `stock_02680_theme` | 主题偏好 |
+
+---
+
+## 八、迁移步骤（建议顺序）
+
+### 第一步：部署静态文件（1小时）
+1. 在阿里云服务器安装 Nginx
+2. 把所有 HTML/CSS/JS/图片/data 文件上传到 `/var/www/cry/`
+3. 配置 Nginx 虚拟主机
+4. 绑定域名 + HTTPS 证书
+5. 验证所有页面可以访问
+
+### 第二步：搭建同步 API（2-4小时）
+1. 写一个简单的 Node.js/Python 后端
+2. 实现 pull/push/auth 三个接口
+3. 数据存本地 JSON 文件（最简单）
+4. 修改 02680.html/love.html/migraine.html 的同步代码
+5. 测试多设备同步
+
+### 第三步：配置定时任务（30分钟）
+1. 安装 Python 依赖
+2. 配置 crontab 跑 CCASS 抓取
+3. 配置 pushplus 微信推送（如果需要）
+4. 验证每日自动运行
+
+### 第四步：迁移行情代理（30分钟）
+1. 在 Nginx 配反向代理到 Yahoo Finance（或直接用腾讯接口）
+2. 或部署 worker/index.js 为 Node.js 服务
+3. 更新 02680.html 中的代理 URL
+
+### 第五步：清理 GitHub 依赖（1小时）
+1. 全局搜索替换 `chenruoyi0202-ship-it.github.io/cry` → 新域名
+2. 删除 `.github/workflows/` 目录
+3. 删除 `02680-sw.js`（或更新缓存策略）
+4. 删除 `.deploy`、`.nojekyll` 等 GitHub 专用文件
+5. 移除 JS 中的 `ghAuth`/`ghGet`/`ghPut` 函数
+
+---
+
+## 九、Nginx 配置参考
 
 ```nginx
 server {
-    listen 80;
-    server_name your.domain.com;          # ← 改成你的域名（或 _ 接受任意）
+    listen 443 ssl http2;
+    server_name your-domain.com;
+    
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+    
     root /var/www/cry;
-    index projects.html jobs.html index.html;
-
-    # JSON 数据文件不要 gzip 缓存，前端轮询要看实时
-    location ~* \.(json|md)$ {
-        add_header Cache-Control "no-cache, must-revalidate";
-        add_header Access-Control-Allow-Origin "*";
-    }
-
-    # HTML 文件可以短期缓存
-    location ~* \.html$ {
-        add_header Cache-Control "public, max-age=300";
-    }
-
+    index index.html;
+    
+    # 静态文件
     location / {
         try_files $uri $uri/ =404;
+        add_header Cache-Control "public, max-age=3600";
+    }
+    
+    # 数据文件不缓存
+    location /data/ {
+        add_header Cache-Control "no-cache";
+    }
+    
+    # 同步 API 代理（如果后端跑在 3000 端口）
+    location /api/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+    }
+    
+    # 行情代理
+    location /api/quote/ {
+        proxy_pass https://query1.finance.yahoo.com/;
+        proxy_set_header Host query1.finance.yahoo.com;
     }
 }
 ```
 
-启用：
+---
 
-```bash
-ln -s /etc/nginx/sites-available/cry /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default 2>/dev/null
-nginx -t && systemctl reload nginx
-```
+## 十、风险与注意事项
 
-HTTPS（有域名的话）：
-
-```bash
-certbot --nginx -d your.domain.com --non-interactive --agree-tos -m you@example.com
-# 自动续期已被 certbot 装的 systemd timer 接管，不用动
-```
+1. **加密数据迁移**：`*_encrypted.json` 文件直接复制即可，不需要解密。密码硬编码在 JS 中，换服务器不影响。
+2. **21MB 照片数据**：`love_photos.json` 很大，建议迁移后改用 OSS 存储。
+3. **CCASS 抓取**：依赖港交所网站，可能有 IP 限制。阿里云香港节点最佳。
+4. **微信分享**：og 标签的图片 URL 必须是 HTTPS 且可公网访问。
+5. **PWA**：当前 Service Worker 被禁用了（之前有缓存问题），迁移后可以重新启用。
 
 ---
 
-## 6. 密钥管理
-
-阿里云上不再用 GitHub Secrets，用环境变量文件：
-
-```bash
-cat > /opt/cry/secrets.env <<'EOF'
-RESEND_API_KEY=re_QsM6pHMs_3CXmVqdgUhXBN78TrDFm9JRV
-PUSHPLUS_TOKEN=
-# 如果继续用 GitHub 同步收藏，留这个 PAT；否则可删
-GITHUB_PAT=ghp_xxxxxxxxxxxxxxxxxxxxxxxx
-EOF
-chmod 600 /opt/cry/secrets.env
-```
-
-之后 cron 脚本会 `source` 这个文件读环境变量。
-
-> **强烈建议**：迁移完成后立刻去 Resend dashboard 把当前这把 key revoke，建一把新的，
-> 因为旧 key 加密后嵌在公开 repo 里，密码（020608）也写在前端 JS 里，等于半公开。
-> 拿到新 key 后只需替换 `/opt/cry/secrets.env` 里的 `RESEND_API_KEY`。
-
----
-
-## 7. 每日 cron
-
-`/opt/cry/run_daily.sh`：
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-cd /opt/cry/repo
-source /opt/cry/secrets.env
-export RESEND_API_KEY PUSHPLUS_TOKEN
-export EMAIL_TO=512773445@qq.com
-export DIGEST_PATH=/var/www/cry/data/jobs_digest_latest.md
-
-PY=/opt/cry/venv/bin/python
-LOG=/var/log/cry/daily-$(date +%Y%m%d).log
-
-{
-  echo "==== $(date -Iseconds) start ===="
-  $PY scraper/scrape_jobs.py --company all
-  $PY scraper/generate_jobs_digest.py
-  # 把生成的数据同步到 Nginx 目录
-  cp data/jobs.json data/jobs_seen.json /var/www/cry/data/
-  cp data/jobs_digest_*.md /var/www/cry/data/
-  $PY scraper/send_digest_email.py
-  if [ -n "${PUSHPLUS_TOKEN:-}" ]; then
-    DATE=$(date +%Y-%m-%d)
-    TITLE="🏢 深圳招聘 · ${DATE} 新增推荐"
-    CONTENT=$(cat /var/www/cry/data/jobs_digest_latest.md)
-    curl -sS -X POST "http://www.pushplus.plus/send" \
-      -H "Content-Type: application/json" \
-      -d "$($PY -c "import sys,json,os; print(json.dumps({'token':os.environ['PUSHPLUS_TOKEN'],'title':'${TITLE}','content':sys.stdin.read(),'template':'markdown'}))" <<< "$CONTENT")"
-  fi
-  echo "==== $(date -Iseconds) ok ===="
-} >> "$LOG" 2>&1
-```
-
-```bash
-chmod +x /opt/cry/run_daily.sh
-
-# crontab
-crontab -e
-# 加这一行（北京时间 09:07 每日）：
-7 9 * * * /opt/cry/run_daily.sh
-```
-
-迁移后 **不再需要** dedup 标记文件 / watchdog / 备份 cron——本地 cron 几乎不会丢。
-
-测试：
-
-```bash
-/opt/cry/run_daily.sh && tail -50 /var/log/cry/daily-$(date +%Y%m%d).log
-```
-
-输出末尾应该看到 `email sent to 512773445@qq.com (id=...)`，QQ 邮箱也应该收到一封。
-
----
-
-## 8. 收藏云同步怎么处理
-
-前端 `jobs.html` 里有"密码 020608 解锁后跨设备同步收藏"的功能，用的是 GitHub Contents
-API 写仓库里的 `data/jobs_favorites.json`。迁移后两条路：
-
-### 8a. 保留 GitHub 仓库做云同步（最省事）
-
-什么都不改。`jobs.html` 继续读写 GitHub 仓库的那个 JSON 文件。即使主数据流跑在阿里
-云上，GitHub 仓库仍然是你的"配置/收藏后端"。代价：仍然依赖 GitHub 可用性 + 那个 PAT
-不过期。
-
-### 8b. 改用阿里云后端
-
-写一个极简 Flask/FastAPI 服务在 `/opt/cry/sync_api/`，监听 `127.0.0.1:8765`，Nginx
-反代到 `/api/sync`。前端把 GitHub Contents API 的几次 fetch 换成 `/api/sync/get` /
-`/api/sync/put`。数据落到 SQLite 或单个 JSON 文件。代码量大概 50 行。
-
-> 推荐先 8a，等需要彻底切断 GitHub 依赖时再做 8b。
-
----
-
-## 9. 日常运维
-
-**查最近一次 cron 日志**：
-
-```bash
-ls -lt /var/log/cry/ | head -5
-tail -100 /var/log/cry/daily-$(date +%Y%m%d).log
-```
-
-**改代码**：
-
-```bash
-# 本地改完 push 到 GitHub 仓库（如果保留），然后：
-ssh root@<ECS_IP> 'cd /opt/cry/repo && git pull'
-
-# 或者直接 rsync：
-rsync -avz scraper/ root@<ECS_IP>:/opt/cry/repo/scraper/
-```
-
-**改 HTML 后让站点立刻生效**：
-
-```bash
-ssh root@<ECS_IP> 'cp /opt/cry/repo/*.html /var/www/cry/'
-```
-
-**手动重发当天邮件**：
-
-```bash
-ssh root@<ECS_IP> '/opt/cry/run_daily.sh'
-```
-
----
-
-## 10. 收尾：从 GitHub 退役
-
-确认阿里云上稳定跑了一周邮件都正常之后：
-
-1. **删 GitHub Actions workflows**（保留代码，去掉自动跑的部分）：
-   ```bash
-   git rm .github/workflows/jobs.yml .github/workflows/jobs-watchdog.yml \
-          .github/workflows/ccass.yml .github/workflows/ccass-backfill.yml
-   git commit -m "Retire GitHub Actions, migrated to Aliyun"
-   git push
-   ```
-
-2. **关 GitHub Pages**：仓库 Settings → Pages → Source 改成 None。
-
-3. （可选）**仓库设为 archive 或 private**：Settings 底部。
-
-4. **DNS 切流**：之前 GitHub Pages 的域名（如有）的 A 记录改指阿里云 IP。
-
----
-
-## 11. 参考：当前项目的关键代码位置
-
-迁移过去后这些路径都按原样保留，方便 cron 脚本引用：
-
-| 文件 | 作用 |
-|---|---|
-| `scraper/scrape_jobs.py` | 入口，`--company all` 跑全部 10 个数据源 |
-| `scraper/jobs_sources/*.py` | 单个数据源的爬虫（tencent / bytedance / meituan / dji / byd / jd / netease / xiaomi / oppo / vivo） |
-| `scraper/generate_jobs_digest.py` | 读 `data/jobs.json` + `data/jobs_seen.json` 算"今日新增"，按简历画像评分，写 `data/jobs_digest_YYYY-MM-DD.md` 和 `latest.md`。无新增时降级为最近 7 天 Top 15 |
-| `scraper/send_digest_email.py` | 读 latest digest，渲染 markdown→HTML，调 Resend API 发到 `EMAIL_TO`。Resend key 来源：`$RESEND_API_KEY` 环境变量 → 否则从源码内嵌的密文解密 |
-| `data/jobs.json` | 当前在招岗位全量 |
-| `data/jobs_seen.json` | 历史首次出现日期，用来识别"今日新增" |
-| `data/jobs_digest_latest.md` | 给邮件 / 微信 / Issue 用的最新一份 digest |
-| `jobs.html` | 前端页面，`fetch('data/jobs.json?t=' + Date.now())` 读数据 |
-
----
-
-## 12. 一份"懒人速查"清单
-
-```
-□ 开通 ECS（国内地域，1c2g，Ubuntu 22.04）
-□ apt install python3 python3-pip python3-venv nginx git curl certbot python3-certbot-nginx
-□ 创建 venv，pip install requests markdown pycryptodome
-□ rsync 项目代码到 /opt/cry/repo
-□ 拷贝 HTML/数据到 /var/www/cry
-□ 写 /etc/nginx/sites-available/cry，启用，nginx -t && reload
-□ 域名 A 记录指 ECS 公网 IP，certbot 拿 HTTPS 证书
-□ 写 /opt/cry/secrets.env（chmod 600）
-□ 写 /opt/cry/run_daily.sh（chmod +x）
-□ crontab -e 加 "7 9 * * * /opt/cry/run_daily.sh"
-□ 手动跑一次 /opt/cry/run_daily.sh，确认 QQ 邮箱收到
-□ 观察 7 天，全绿后删 .github/workflows/，关 Pages
-□ Resend 后台 revoke 旧 key，新 key 写进 /opt/cry/secrets.env
-```
-
----
-
-迁完一切照旧：每天 09:07 自动到一封日报邮件，前端可正常访问，但**不再依赖 GitHub
-任何 cron / 部署机制**。
+*文档生成时间：2026-05-06*
+*适用范围：cry 项目完整迁移至阿里云自有服务器*
