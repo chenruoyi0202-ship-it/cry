@@ -377,9 +377,12 @@ function showToast(msg){
   render(data);
   syncLoad(function(remote){
     if(!remote)return;
-    if(!local||!local._ts||( remote._ts&&remote._ts>=local._ts)){
+    var remoteStr=JSON.stringify(remote);
+    var localStr=JSON.stringify(data);
+    if(remoteStr===localStr)return;
+    if(!local||!local._ts||(remote._ts&&remote._ts>=local._ts)){
       data=remote;
-      localStorage.setItem('projects-data',JSON.stringify(data));
+      localStorage.setItem('projects-data',remoteStr);
       render(data);
     }
   });
