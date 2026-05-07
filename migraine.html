@@ -607,12 +607,18 @@
     </div>
 
     <script>
-        const APP_VERSION = '2026.04.13.3';
+        const APP_VERSION = '2026.05.07';
+        const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         let records = [];
         let deletedIds = [];
         let lastSyncAt = 0;
         let syncConfig = null;
         let fileSha = null;
+        let toastTimer = null;
+
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function ghHeaders(token) { return { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }; }
+        function decodeGhFile(file) { return decodeURIComponent(escape(atob(file.content.replace(/\n/g, '')))); }
 
         // ==================== Dark Mode ====================
         function initDarkMode() {
@@ -692,10 +698,10 @@
         // ==================== Tabs ====================
         function switchTab(name) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(el => el.classList.remove('active'));
             const tabEl = document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1));
             if (tabEl) tabEl.style.display = '';
-            const tabs = document.querySelectorAll('.tab');
             const tabMap = { record: 0, calendar: 1, history: 2, stats: 3, sync: 4 };
             if (tabMap[name] !== undefined && tabs[tabMap[name]]) tabs[tabMap[name]].classList.add('active');
             if (name === 'calendar') renderCalendar();
@@ -804,7 +810,8 @@
             btn.innerHTML = '<span class="spinner"></span>' + (editingId ? '更新中...' : '保存中...');
 
             const intensity = parseInt(document.getElementById('inputIntensity').value);
-            const duration = parseFloat(document.getElementById('inputDuration').value) || 0;
+            const durVal = document.getElementById('inputDuration').value;
+            const duration = durVal ? parseFloat(durVal) : null;
             const location = getTagValues('groupLocation');
             const symptoms = getTagValues('groupSymptoms');
             let triggers = getTagValues('groupTriggers');
@@ -839,7 +846,8 @@
             const t = document.getElementById('toast');
             t.textContent = msg;
             t.className = 'toast show' + (isError ? ' error' : '');
-            setTimeout(() => t.className = 'toast', 2000);
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.className = 'toast', 2000);
         }
 
         // ==================== History ====================
@@ -852,9 +860,9 @@
                 const label = getIntensityLabel(r.intensity);
                 let details = '';
                 if (r.duration) details += `持续 ${r.duration} 小时<br>`;
-                if (r.weather) details += `天气: <span>${r.weather}</span><br>`;
-                if (r.medication) details += `用药: <span>${r.medication}</span><br>`;
-                if (r.notes) details += `备注: <span>${r.notes}</span><br>`;
+                if (r.weather) details += `天气: <span>${esc(r.weather)}</span><br>`;
+                if (r.medication) details += `用药: <span>${esc(r.medication)}</span><br>`;
+                if (r.notes) details += `备注: <span>${esc(r.notes)}</span><br>`;
                 const tags = [...(r.location || []), ...(r.symptoms || []), ...(r.triggers || [])];
                 return `<div class="history-item">
                     <div class="hi-top">
@@ -862,7 +870,7 @@
                         <div class="hi-intensity" style="background:${color}18;color:${color}">${label} ${r.intensity}</div>
                     </div>
                     ${details ? `<div class="hi-details">${details}</div>` : ''}
-                    ${tags.length ? `<div class="hi-tags">${tags.map(t => `<span class="hi-tag">${t}</span>`).join('')}</div>` : ''}
+                    ${tags.length ? `<div class="hi-tags">${tags.map(t => `<span class="hi-tag">${esc(t)}</span>`).join('')}</div>` : ''}
                     <div class="hi-actions">
                         <button class="hi-btn edit" onclick="editEpisode(${r.id})">编辑</button>
                         <button class="hi-btn del" onclick="deleteEpisode(${r.id})">删除</button>
@@ -908,7 +916,7 @@
             if (data.length === 0) return '';
             const max = data[0].count;
             return `<div class="stat-section"><h3>${title}</h3>${data.map(d =>
-                `<div class="stat-bar-row"><div class="stat-bar-label">${d.value}</div><div class="stat-bar-track"><div class="stat-bar-fill" style="width:${(d.count / max * 100)}%"></div></div><div class="stat-bar-count">${d.count}</div></div>`
+                `<div class="stat-bar-row"><div class="stat-bar-label">${esc(d.value)}</div><div class="stat-bar-track"><div class="stat-bar-fill" style="width:${(d.count / max * 100)}%"></div></div><div class="stat-bar-count">${d.count}</div></div>`
             ).join('')}</div>`;
         }
 
@@ -1000,14 +1008,14 @@
             const dayRecords = byDate[dateStr] || [];
             if (dayRecords.length === 0) return;
 
-            const d = new Date(dateStr);
+            const d = new Date(dateStr + 'T00:00:00');
             const title = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
             let html = `<div class="cal-detail"><div class="cal-detail-title">${title} · ${dayRecords.length}次发作</div>`;
             dayRecords.forEach(r => {
                 const time = r.datetime.slice(11, 16) || '未知时间';
                 const color = getIntensityColor(r.intensity);
                 const label = getIntensityLabel(r.intensity);
-                const loc = (r.location || []).join('、') || '';
+                const loc = (r.location || []).map(esc).join('、');
                 html += `<div class="cal-detail-item" onclick="editEpisode(${r.id})">
                     <div class="cal-detail-time">${time}</div>
                     <div class="cal-detail-info" style="color:${color}">${label} ${r.intensity}${loc ? ' · ' + loc : ''}</div>
@@ -1021,29 +1029,28 @@
         function formatDate(dt) {
             if (!dt) return '';
             const d = new Date(dt);
-            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-            return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${weekdays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${WEEKDAYS[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
 
         // ==================== GitHub API ====================
         async function ghGetUser(token) {
             const res = await fetch('https://api.github.com/user', {
-                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                headers: ghHeaders(token)
             });
-            if (!res.ok) throw new Error('Token 无效或缺少权限');
+            if (!res.ok) throw new Error(res.status === 401 ? 'Token 无效' : 'Token 缺少 repo 权限');
             return res.json();
         }
         async function ensureRepo(token, owner) {
             // Check if repo exists
             const check = await fetch(`https://api.github.com/repos/${owner}/migraine-data`, {
-                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                headers: ghHeaders(token)
             });
             if (check.ok) return;
             if (check.status !== 404) throw new Error(`检查仓库失败: ${check.status}`);
             // Create private repo
             const create = await fetch('https://api.github.com/user/repos', {
                 method: 'POST',
-                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                headers: { ...ghHeaders(token), 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: 'migraine-data',
                     description: '偏头痛记录数据（自动创建）',
@@ -1060,7 +1067,7 @@
         }
         async function ghGetDefaultBranch(token, repo) {
             const res = await fetch(`https://api.github.com/repos/${repo}`, {
-                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                headers: ghHeaders(token)
             });
             if (!res.ok) throw new Error('无法获取仓库信息');
             const data = await res.json();
@@ -1069,7 +1076,7 @@
         async function ghGet(token, repo, path, branch) {
             const url = `https://api.github.com/repos/${repo}/contents/${path}` + (branch ? `?ref=${branch}` : '');
             const res = await fetch(url, {
-                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+                headers: ghHeaders(token)
             });
             if (res.status === 404) return null;
             if (!res.ok) throw new Error(`GitHub GET failed: ${res.status}`);
@@ -1081,7 +1088,7 @@
             if (branch) body.branch = branch;
             const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
                 method: 'PUT',
-                headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                headers: { ...ghHeaders(token), 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
             if (!res.ok) {
@@ -1143,7 +1150,7 @@
         }
 
         async function ensurePrivateRepo() {
-            // Migrate from any non-private-migraine-data repo to the standard one
+            if (syncConfig._repoEnsured) return;
             if (!syncConfig.repo || !syncConfig.repo.endsWith('/migraine-data')) {
                 const user = await ghGetUser(syncConfig.token);
                 syncConfig.repo = `${user.login}/migraine-data`;
@@ -1151,6 +1158,7 @@
                 await ensureRepo(syncConfig.token, user.login);
                 localStorage.setItem('migraine_sync_config', JSON.stringify(syncConfig));
             }
+            syncConfig._repoEnsured = true;
         }
 
         async function manualSync() {
@@ -1189,8 +1197,7 @@
                     return;
                 }
                 fileSha = file.sha;
-                const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
-                const parsed = JSON.parse(content);
+                const parsed = JSON.parse(decodeGhFile(file));
                 records = parsed.records || [];
                 deletedIds = parsed.deletedIds || [];
                 lastSyncAt = Date.now();
@@ -1215,6 +1222,7 @@
             } catch (e) {
                 console.error('Auto sync error:', e);
                 setSyncStatus('error', '同步失败');
+                showToast('同步失败', true);
             }
         }
 
@@ -1232,8 +1240,7 @@
             const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch);
             if (!file) return;
             fileSha = file.sha;
-            const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
-            const parsed = JSON.parse(content);
+            const parsed = JSON.parse(decodeGhFile(file));
             const cloudRecords = parsed.records || [];
             const cloudDeleted = parsed.deletedIds || [];
             const cloudIds = new Set(cloudRecords.map(r => r.id));
@@ -1280,9 +1287,6 @@
         async function pushToCloud() {
             const branch = await getDefaultBranch();
             const content = JSON.stringify({ records, deletedIds, updatedAt: new Date().toISOString() }, null, 2);
-            // Fetch with cache-bust to avoid stale SHA
-            const file = await ghGet(syncConfig.token, syncConfig.repo, DATA_PATH, branch + '&t=' + Date.now());
-            fileSha = file ? file.sha : null;
             try {
                 const result = await ghPut(syncConfig.token, syncConfig.repo, DATA_PATH, content, fileSha, branch);
                 fileSha = result.content.sha;
