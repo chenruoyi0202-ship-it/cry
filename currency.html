@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>汇率计算 · 人民币 / 港币 / 美元</title>
+
+    <!-- Sharing meta (WeChat / Weibo / OG) -->
+    <meta name="description" content="人民币、港币、美元三向实时汇率换算，支持一键获取最新汇率。">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="汇率计算 · 人民币 / 港币 / 美元">
+    <meta property="og:description" content="人民币、港币、美元三向实时汇率换算，支持一键获取最新汇率。">
+    <meta property="og:image" content="https://chenruoyi0202-ship-it.github.io/cry/currency-icon.png">
+    <meta property="og:url" content="https://chenruoyi0202-ship-it.github.io/cry/currency.html">
+    <meta itemprop="image" content="https://chenruoyi0202-ship-it.github.io/cry/currency-icon.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="汇率计算 · 人民币 / 港币 / 美元">
+    <meta name="twitter:description" content="人民币、港币、美元三向实时汇率换算，支持一键获取最新汇率。">
+    <meta name="twitter:image" content="https://chenruoyi0202-ship-it.github.io/cry/currency-icon.png">
+
+    <!-- Add to home screen -->
+    <link rel="icon" href="currency-icon.png" type="image/png">
+    <link rel="shortcut icon" href="currency-icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="currency-icon-180.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="currency-icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="汇率计算">
+    <meta name="application-name" content="汇率计算">
+    <meta name="theme-color" content="#181c28">
+    <link rel="manifest" href="currency-manifest.json">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #12131a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 460px;
+            background: linear-gradient(180deg, #1e2230 0%, #181c28 100%);
+            border-radius: 20px;
+            padding: 28px 22px 24px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            height: fit-content;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(123,97,255,0.15);
+            color: #b39bff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 5px 16px;
+            border-radius: 20px;
+            margin: 0 auto 14px;
+        }
+        .badge::before {
+            content: '';
+            width: 8px; height: 8px;
+            background: #b39bff;
+            border-radius: 50%;
+        }
+
+        .header { text-align: center; margin-bottom: 22px; }
+        .header h1 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: 2px; }
+        .header .sub { font-size: 12px; color: #6b7394; }
+
+        .currency-row {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .currency-row:focus-within {
+            border-color: #7b61ff;
+            background: rgba(123,97,255,0.06);
+        }
+        .currency-row.active {
+            border-color: #7b61ff;
+            background: rgba(123,97,255,0.08);
+        }
+
+        .flag {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 12px;
+            background: rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .info { flex: 1; min-width: 0; }
+        .info .code { font-size: 15px; font-weight: 700; color: #fff; }
+        .info .name { font-size: 11px; color: #6b7394; margin-top: 2px; }
+
+        .amount-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+        .amount-wrap .symbol {
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b7394;
+        }
+        .amount-col {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-width: 0;
+            flex: 0 1 auto;
+        }
+        .amount {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            text-align: right;
+            width: 140px;
+            max-width: 100%;
+            min-width: 0;
+            font-family: inherit;
+        }
+        .amount::placeholder { color: #3a3f55; font-weight: 500; }
+        .amount::-webkit-outer-spin-button,
+        .amount::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .amount[type=number] { -moz-appearance: textfield; }
+
+        .eval-preview {
+            font-size: 11px;
+            font-weight: 500;
+            color: #6b7394;
+            min-height: 14px;
+            line-height: 14px;
+            margin-top: 2px;
+            text-align: right;
+            transition: color 0.2s;
+        }
+        .eval-preview.has { color: #b39bff; }
+        .eval-preview.error { color: #f44336; }
+
+        .op-bar {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+        .op-bar button {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #d8dcec;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 10px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, transform 0.05s;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .op-bar button:hover { background: rgba(255,255,255,0.1); }
+        .op-bar button:active { transform: scale(0.94); }
+        .op-bar button:focus-visible {
+            outline: 2px solid #7b61ff;
+            outline-offset: 2px;
+        }
+        .op-bar button.op { color: #b39bff; }
+        .op-bar button.warn { color: #ff8a80; }
+
+        .swap-divider {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 4px 0;
+        }
+        .swap-divider .line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+        }
+        .swap-divider .arrow {
+            color: #4a5070;
+            font-size: 12px;
+            margin: 0 10px;
+        }
+
+        .rates-section {
+            margin-top: 22px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .rates-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #8892b0;
+            margin-bottom: 12px;
+            padding-left: 10px;
+            border-left: 3px solid #7b61ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .rates-title .actions { display: flex; gap: 6px; }
+        .rates-title .btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #8892b0;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s, color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .rates-title .btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .rates-title .btn.primary {
+            background: rgba(123,97,255,0.15);
+            border-color: rgba(123,97,255,0.35);
+            color: #b39bff;
+        }
+        .rates-title .btn.primary:hover {
+            background: rgba(123,97,255,0.25);
+            color: #fff;
+        }
+        .rates-title .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .rates-title .btn .spinner {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border: 1.5px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .rates-meta {
+            font-size: 11px;
+            color: #4a5070;
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+        .rates-meta.error { color: #f44336; }
+        .rates-meta.success { color: #4caf50; }
+
+        .rate-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 4px;
+            font-size: 13px;
+        }
+        .rate-row .pair { color: #6b7394; }
+        .rate-row .pair strong { color: #b8c0d9; font-weight: 600; }
+        .rate-row .rate-input {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #fff;
+            font-weight: 600;
+            /* 16px so iOS Safari doesn't zoom on focus */
+            font-size: 16px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            width: 120px;
+            text-align: right;
+            outline: none;
+            font-family: inherit;
+        }
+        .rate-row .rate-input:focus { border-color: #7b61ff; }
+        .rate-row .rate-input[readonly] { color: #b8c0d9; cursor: default; }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: #4a5070;
+            margin-top: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div style="text-align:center;">
+            <div class="badge">实时换算</div>
+        </div>
+        <div class="header">
+            <h1>汇率计算</h1>
+            <div class="sub">人民币 / 港币 / 美元 三向互转</div>
+        </div>
+
+        <div class="currency-row" data-code="CNY">
+            <div class="flag">🇨🇳</div>
+            <div class="info">
+                <div class="code">CNY</div>
+                <div class="name">人民币</div>
+            </div>
+            <div class="amount-wrap">
+                <span class="symbol">¥</span>
+                <div class="amount-col">
+                    <input type="text" class="amount" id="amount-CNY" placeholder="0.00" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="人民币金额（支持加减乘除）" enterkeyhint="done">
+                    <div class="eval-preview" id="eval-CNY" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="swap-divider"><div class="line"></div><div class="arrow">⇅</div><div class="line"></div></div>
+
+        <div class="currency-row" data-code="HKD">
+            <div class="flag">🇭🇰</div>
+            <div class="info">
+                <div class="code">HKD</div>
+                <div class="name">港币</div>
+            </div>
+            <div class="amount-wrap">
+                <span class="symbol">HK$</span>
+                <div class="amount-col">
+                    <input type="text" class="amount" id="amount-HKD" placeholder="0.00" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="港币金额（支持加减乘除）" enterkeyhint="done">
+                    <div class="eval-preview" id="eval-HKD" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="swap-divider"><div class="line"></div><div class="arrow">⇅</div><div class="line"></div></div>
+
+        <div class="currency-row" data-code="USD">
+            <div class="flag">🇺🇸</div>
+            <div class="info">
+                <div class="code">USD</div>
+                <div class="name">美元</div>
+            </div>
+            <div class="amount-wrap">
+                <span class="symbol">$</span>
+                <div class="amount-col">
+                    <input type="text" class="amount" id="amount-USD" placeholder="0.00" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="美元金额（支持加减乘除）" enterkeyhint="done">
+                    <div class="eval-preview" id="eval-USD" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="op-bar" id="opBar" role="toolbar" aria-label="运算符按钮">
+            <button type="button" class="op" data-op="(" aria-label="左括号">(</button>
+            <button type="button" class="op" data-op=")" aria-label="右括号">)</button>
+            <button type="button" class="op" data-op="+" aria-label="加">+</button>
+            <button type="button" class="op" data-op="-" aria-label="减">−</button>
+            <button type="button" class="op" data-op="*" aria-label="乘">×</button>
+            <button type="button" class="op" data-op="/" aria-label="除">÷</button>
+            <button type="button" data-op="bksp" aria-label="退格" title="退格">⌫</button>
+            <button type="button" class="warn" data-op="clear" aria-label="清空" title="清空">AC</button>
+        </div>
+
+        <div class="rates-section">
+            <div class="rates-title">
+                <span>参考汇率（可编辑）</span>
+                <span class="actions">
+                    <button class="btn primary" id="refreshBtn" title="获取最新汇率">🔄 获取最新</button>
+                    <button class="btn" id="resetBtn">重置默认</button>
+                </span>
+            </div>
+            <div class="rates-meta" id="ratesMeta">汇率更新于：—</div>
+            <div class="rate-row">
+                <span class="pair">1 <strong>USD</strong> = ? <strong>CNY</strong></span>
+                <input type="number" class="rate-input" id="rate-USD-CNY" step="0.0001">
+            </div>
+            <div class="rate-row">
+                <span class="pair">1 <strong>USD</strong> = ? <strong>HKD</strong></span>
+                <input type="number" class="rate-input" id="rate-USD-HKD" step="0.0001">
+            </div>
+            <div class="rate-row">
+                <span class="pair">1 <strong>HKD</strong> = ? <strong>CNY</strong></span>
+                <input type="number" class="rate-input" id="rate-HKD-CNY" readonly style="opacity:0.7;">
+            </div>
+        </div>
+
+        <div class="footer-note">汇率仅供参考 · 数据保存在本地浏览器</div>
+    </div>
+
+    <script>
+        const DEFAULT_RATES = {
+            'USD-CNY': 6.83,
+            'USD-HKD': 7.83,
+            date: '2026-04-24'
+        };
+
+        const STORAGE_KEY = 'currency_rates_v2';
+
+        function loadRates() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                if (saved
+                    && typeof saved['USD-CNY'] === 'number' && saved['USD-CNY'] > 0
+                    && typeof saved['USD-HKD'] === 'number' && saved['USD-HKD'] > 0) {
+                    return saved;
+                }
+            } catch (e) {}
+            return { ...DEFAULT_RATES };
+        }
+
+        function saveRates(rates) {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(rates)); } catch (e) {}
+        }
+
+        let rates = loadRates();
+
+        const inputs = {
+            CNY: document.getElementById('amount-CNY'),
+            HKD: document.getElementById('amount-HKD'),
+            USD: document.getElementById('amount-USD')
+        };
+        const evalPreviews = {
+            CNY: document.getElementById('eval-CNY'),
+            HKD: document.getElementById('eval-HKD'),
+            USD: document.getElementById('eval-USD')
+        };
+        const rows = {
+            CNY: document.querySelector('.currency-row[data-code="CNY"]'),
+            HKD: document.querySelector('.currency-row[data-code="HKD"]'),
+            USD: document.querySelector('.currency-row[data-code="USD"]')
+        };
+        const rateUSDCNY = document.getElementById('rate-USD-CNY');
+        const rateUSDHKD = document.getElementById('rate-USD-HKD');
+        const rateHKDCNY = document.getElementById('rate-HKD-CNY');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const ratesMeta = document.getElementById('ratesMeta');
+        const opBar = document.getElementById('opBar');
+
+        function format(n) {
+            if (!isFinite(n)) return '';
+            // Round half-up while compensating for FP error like 1.005 → 1.00
+            const rounded = Math.round((n + Number.EPSILON * Math.sign(n || 1)) * 100) / 100;
+            return rounded.toFixed(2);
+        }
+
+        // Safe expression evaluator: only +, -, *, /, parens, decimals.
+        // Recursive descent, no eval/Function.
+        function evalExpr(raw) {
+            if (typeof raw !== 'string') return { value: NaN, complete: false };
+            const expr = raw.replace(/[×]/g, '*').replace(/[÷]/g, '/').replace(/[−–—]/g, '-').replace(/\s+/g, '');
+            if (expr === '') return { value: NaN, complete: false };
+            if (!/^[\d+\-*/().]*$/.test(expr)) return { value: NaN, complete: false };
+
+            let pos = 0;
+            const peek = () => expr[pos];
+            const consume = () => expr[pos++];
+
+            function parseExpr() {
+                let left = parseTerm();
+                while (peek() === '+' || peek() === '-') {
+                    const op = consume();
+                    const right = parseTerm();
+                    if (!isFinite(right)) return NaN;
+                    left = op === '+' ? left + right : left - right;
+                }
+                return left;
+            }
+            function parseTerm() {
+                let left = parseFactor();
+                while (peek() === '*' || peek() === '/') {
+                    const op = consume();
+                    const right = parseFactor();
+                    if (!isFinite(right)) return NaN;
+                    left = op === '*' ? left * right : (right === 0 ? NaN : left / right);
+                }
+                return left;
+            }
+            function parseFactor() {
+                if (peek() === '(') {
+                    consume();
+                    const v = parseExpr();
+                    if (peek() === ')') { consume(); return v; }
+                    return NaN; // unmatched paren
+                }
+                if (peek() === '-') { consume(); return -parseFactor(); }
+                if (peek() === '+') { consume(); return parseFactor(); }
+                let num = '';
+                let dots = 0;
+                while (peek() && /[\d.]/.test(peek())) {
+                    if (peek() === '.') dots++;
+                    num += consume();
+                }
+                if (num === '' || num === '.' || dots > 1) return NaN;
+                const n = parseFloat(num);
+                return isFinite(n) ? n : NaN;
+            }
+
+            try {
+                const v = parseExpr();
+                const complete = pos === expr.length && isFinite(v);
+                return { value: v, complete };
+            } catch (e) {
+                return { value: NaN, complete: false };
+            }
+        }
+
+        function isPlainNumber(s) {
+            return /^-?\d*(\.\d+)?$/.test((s || '').trim()) && (s || '').trim() !== '';
+        }
+
+        function setEvalPreview(code, text, state) {
+            const el = evalPreviews[code];
+            if (!el) return;
+            el.classList.remove('has', 'error');
+            el.textContent = text || '';
+            if (state === 'has') el.classList.add('has');
+            if (state === 'error') el.classList.add('error');
+        }
+
+        function sanitizeInput(raw) {
+            // Allow digits, operators, parens, decimals, ×, ÷, − (minus look-alike).
+            return (raw || '').replace(/[^0-9+\-*/().×÷−–—\s]/g, '');
+        }
+
+        function toUSD(amount, code) {
+            if (code === 'USD') return amount;
+            if (code === 'CNY') return amount / rates['USD-CNY'];
+            if (code === 'HKD') return amount / rates['USD-HKD'];
+        }
+
+        function fromUSD(usd, code) {
+            if (code === 'USD') return usd;
+            if (code === 'CNY') return usd * rates['USD-CNY'];
+            if (code === 'HKD') return usd * rates['USD-HKD'];
+        }
+
+        let activeCode = null;
+
+        function recalc(sourceCode) {
+            const raw = inputs[sourceCode].value;
+
+            // Empty: clear all secondary fields and previews
+            if (raw === '' || raw === undefined) {
+                ['CNY', 'HKD', 'USD'].forEach(c => {
+                    if (c !== sourceCode) {
+                        inputs[c].value = '';
+                        setEvalPreview(c, '');
+                    }
+                });
+                setEvalPreview(sourceCode, '');
+                return;
+            }
+
+            const { value, complete } = evalExpr(raw);
+            const sourceIsExpr = !isPlainNumber(raw);
+
+            // Incomplete or invalid: show hint, leave other rows untouched
+            if (!complete) {
+                if (sourceIsExpr) {
+                    setEvalPreview(sourceCode, '= …', 'has');
+                } else {
+                    setEvalPreview(sourceCode, '');
+                }
+                return;
+            }
+
+            // Complete: show "= 20.00" preview only for expressions
+            if (sourceIsExpr) {
+                setEvalPreview(sourceCode, '= ' + format(value), 'has');
+            } else {
+                setEvalPreview(sourceCode, '');
+            }
+
+            const usd = toUSD(value, sourceCode);
+            ['CNY', 'HKD', 'USD'].forEach(c => {
+                if (c !== sourceCode) {
+                    inputs[c].value = format(fromUSD(usd, c));
+                    setEvalPreview(c, '');
+                }
+            });
+        }
+
+        function setActive(code) {
+            const changed = activeCode !== code;
+            activeCode = code;
+            Object.entries(rows).forEach(([c, el]) => {
+                el.classList.toggle('active', c === code);
+                // Stale "= …" from a previous row is confusing; clear on switch
+                if (changed && c !== code) setEvalPreview(c, '');
+            });
+        }
+
+        function updateDerivedRateDisplay() {
+            const hkdToCny = rates['USD-CNY'] / rates['USD-HKD'];
+            rateHKDCNY.value = (Math.round(hkdToCny * 10000) / 10000).toFixed(4);
+        }
+
+        function syncRateInputs() {
+            rateUSDCNY.value = rates['USD-CNY'];
+            rateUSDHKD.value = rates['USD-HKD'];
+            updateDerivedRateDisplay();
+            updateMeta();
+        }
+
+        function updateMeta(state) {
+            ratesMeta.classList.remove('error', 'success');
+            if (state === 'loading') {
+                ratesMeta.textContent = '正在获取最新汇率…';
+            } else if (state === 'error') {
+                ratesMeta.classList.add('error');
+                ratesMeta.textContent = '获取失败，请稍后重试';
+            } else {
+                const d = rates.date || '—';
+                ratesMeta.textContent = `汇率更新于：${d}`;
+                if (state === 'success') ratesMeta.classList.add('success');
+            }
+        }
+
+        async function fetchLatestRates() {
+            const sources = [
+                {
+                    url: 'https://api.frankfurter.app/latest?from=USD&to=CNY,HKD',
+                    parse: (j) => ({ cny: j.rates && j.rates.CNY, hkd: j.rates && j.rates.HKD, date: j.date })
+                },
+                {
+                    url: 'https://open.er-api.com/v6/latest/USD',
+                    parse: (j) => ({
+                        cny: j.rates && j.rates.CNY,
+                        hkd: j.rates && j.rates.HKD,
+                        date: (j.time_last_update_utc || '').slice(5, 16) ||
+                              (j.time_last_update_unix ? new Date(j.time_last_update_unix * 1000).toISOString().slice(0, 10) : '')
+                    })
+                }
+            ];
+            let lastErr = null;
+            for (const src of sources) {
+                try {
+                    const res = await fetch(src.url);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const json = await res.json();
+                    const r = src.parse(json);
+                    if (typeof r.cny === 'number' && typeof r.hkd === 'number' && r.cny > 0 && r.hkd > 0) {
+                        return { cny: r.cny, hkd: r.hkd, date: r.date || new Date().toISOString().slice(0, 10) };
+                    }
+                    throw new Error('invalid payload');
+                } catch (e) { lastErr = e; }
+            }
+            throw lastErr || new Error('all sources failed');
+        }
+
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.disabled = true;
+            const original = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<span class="spinner"></span> 获取中';
+            updateMeta('loading');
+            try {
+                const r = await fetchLatestRates();
+                rates['USD-CNY'] = Math.round(r.cny * 10000) / 10000;
+                rates['USD-HKD'] = Math.round(r.hkd * 10000) / 10000;
+                rates.date = r.date;
+                saveRates(rates);
+                syncRateInputs();
+                updateMeta('success');
+                if (activeCode && inputs[activeCode].value !== '') recalc(activeCode);
+            } catch (e) {
+                updateMeta('error');
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = original;
+            }
+        });
+
+        ['CNY', 'HKD', 'USD'].forEach(code => {
+            inputs[code].addEventListener('input', (e) => {
+                const cleaned = sanitizeInput(e.target.value);
+                if (cleaned !== e.target.value) {
+                    const start = e.target.selectionStart;
+                    e.target.value = cleaned;
+                    try { e.target.setSelectionRange(start, start); } catch (_) {}
+                }
+                setActive(code);
+                recalc(code);
+            });
+            inputs[code].addEventListener('focus', () => setActive(code));
+        });
+
+        // Operator bar: insert at cursor position of the active input.
+        function handleOp(btn) {
+            const op = btn.dataset.op;
+            const code = activeCode || 'CNY';
+            const inp = inputs[code];
+            inp.focus();
+
+            if (op === 'clear') {
+                inp.value = '';
+                recalc(code);
+                return;
+            }
+            if (op === 'bksp') {
+                const s = inp.selectionStart, eSel = inp.selectionEnd;
+                if (s === null || s === eSel) {
+                    if (s > 0) {
+                        inp.value = inp.value.slice(0, s - 1) + inp.value.slice(s);
+                        try { inp.setSelectionRange(s - 1, s - 1); } catch (_) {}
+                    }
+                } else {
+                    inp.value = inp.value.slice(0, s) + inp.value.slice(eSel);
+                    try { inp.setSelectionRange(s, s); } catch (_) {}
+                }
+                recalc(code);
+                return;
+            }
+
+            const ch = op;
+            const s = inp.selectionStart ?? inp.value.length;
+            const eSel = inp.selectionEnd ?? inp.value.length;
+            inp.value = inp.value.slice(0, s) + ch + inp.value.slice(eSel);
+            try { inp.setSelectionRange(s + ch.length, s + ch.length); } catch (_) {}
+            recalc(code);
+        }
+
+        // pointerdown + preventDefault so the input keeps focus and the
+        // mobile keyboard doesn't dismiss between taps. Click would let
+        // the button steal focus and dismiss the iOS keyboard.
+        opBar.addEventListener('pointerdown', (e) => {
+            const btn = e.target.closest('button[data-op]');
+            if (!btn) return;
+            e.preventDefault();
+            handleOp(btn);
+        });
+        // Keyboard accessibility: pointerdown doesn't fire on Enter/Space.
+        opBar.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const btn = e.target.closest('button[data-op]');
+            if (!btn) return;
+            e.preventDefault();
+            handleOp(btn);
+        });
+
+        function onRateChange() {
+            const c = parseFloat(rateUSDCNY.value);
+            const h = parseFloat(rateUSDHKD.value);
+            if (isFinite(c) && c > 0) rates['USD-CNY'] = c;
+            if (isFinite(h) && h > 0) rates['USD-HKD'] = h;
+            rates.date = '手动编辑';
+            saveRates(rates);
+            updateDerivedRateDisplay();
+            updateMeta();
+            if (activeCode && inputs[activeCode].value !== '') recalc(activeCode);
+        }
+        rateUSDCNY.addEventListener('input', onRateChange);
+        rateUSDHKD.addEventListener('input', onRateChange);
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            rates = { ...DEFAULT_RATES };
+            saveRates(rates);
+            syncRateInputs();
+            if (activeCode && inputs[activeCode].value !== '') recalc(activeCode);
+        });
+
+        syncRateInputs();
+        inputs.CNY.focus();
+        setActive('CNY');
+    </script>
+</body>
+</html>

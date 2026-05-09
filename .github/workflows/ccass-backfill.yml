@@ -1,0 +1,86 @@
+name: CCASS 02680 Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: '回填多少个工作日(从今天往前推)'
+        required: false
+        default: '10'
+      stock_code:
+        description: '股票代码'
+        required: false
+        default: '02680'
+  # 当 backfill 脚本被推送时自动跑一次 — 初次 PR 合并后触发历史回填
+  push:
+    branches: [main]
+    paths:
+      - 'scraper/backfill_ccass.py'
+      - '.github/workflows/ccass-backfill.yml'
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: ccass-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: Backfill CCASS history
+        run: |
+          python scraper/backfill_ccass.py \
+            "${{ github.event.inputs.days || '10' }}" \
+            "${{ github.event.inputs.stock_code || '02680' }}"
+
+      - name: Regenerate analysis report
+        env:
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+        run: |
+          python scraper/analyze_ccass.py "${{ github.event.inputs.stock_code || '02680' }}"
+
+      - name: Commit history and updated report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f data/ccass_history/_debug_*.html
+          git add data/ccass_history data/stock_*_ccass*.json data/stock_*_ccass_report.md 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No new CCASS snapshots to commit"
+          else
+            N=$(git diff --cached --numstat | wc -l)
+            git commit -m "chore(ccass): backfill 02680 history (+${N} files)"
+            for i in 1 2 3 4; do
+              git push && break || sleep $((2 ** i))
+            done
+          fi
+
+      - name: Post backfill summary to tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TITLE: '📊 02680 创陞控股 · CCASS 每日报告'
+        run: |
+          REPORT_PATH="data/stock_02680_ccass_report.md"
+          if [ ! -f "$REPORT_PATH" ]; then exit 0; fi
+          ISSUE_NUMBER=$(gh issue list --repo "$REPO" --search "\"$TITLE\" in:title" --state open --json number,title --jq '.[] | select(.title == "'"$TITLE"'") | .number' | head -1)
+          if [ -z "$ISSUE_NUMBER" ]; then exit 0; fi
+          { echo "### 🔄 历史数据回填完成"; echo ""; echo "以下为回填后的最新分析报告:"; echo ""; cat "$REPORT_PATH"; } > /tmp/report.md
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body-file /tmp/report.md

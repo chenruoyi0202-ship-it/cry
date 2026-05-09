@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <linearGradient id="bldg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="22" fill="url(#bg)"/>
+  <!-- two skyscrapers -->
+  <rect x="22" y="32" width="22" height="50" rx="2" fill="url(#bldg)"/>
+  <rect x="48" y="22" width="26" height="60" rx="2" fill="url(#bldg)" opacity="0.95"/>
+  <!-- windows on left building -->
+  <g fill="#0f172a" opacity="0.85">
+    <rect x="26" y="38" width="4" height="4" rx="1"/>
+    <rect x="34" y="38" width="4" height="4" rx="1"/>
+    <rect x="26" y="46" width="4" height="4" rx="1"/>
+    <rect x="34" y="46" width="4" height="4" rx="1"/>
+    <rect x="26" y="54" width="4" height="4" rx="1"/>
+    <rect x="34" y="54" width="4" height="4" rx="1"/>
+    <rect x="26" y="62" width="4" height="4" rx="1"/>
+    <rect x="34" y="62" width="4" height="4" rx="1"/>
+    <rect x="26" y="70" width="4" height="4" rx="1"/>
+    <rect x="34" y="70" width="4" height="4" rx="1"/>
+  </g>
+  <!-- windows on right building -->
+  <g fill="#0f172a" opacity="0.85">
+    <rect x="52" y="28" width="4" height="4" rx="1"/>
+    <rect x="60" y="28" width="4" height="4" rx="1"/>
+    <rect x="68" y="28" width="4" height="4" rx="1"/>
+    <rect x="52" y="36" width="4" height="4" rx="1"/>
+    <rect x="60" y="36" width="4" height="4" rx="1"/>
+    <rect x="68" y="36" width="4" height="4" rx="1"/>
+    <rect x="52" y="44" width="4" height="4" rx="1"/>
+    <rect x="60" y="44" width="4" height="4" rx="1"/>
+    <rect x="68" y="44" width="4" height="4" rx="1"/>
+    <rect x="52" y="52" width="4" height="4" rx="1"/>
+    <rect x="60" y="52" width="4" height="4" rx="1"/>
+    <rect x="68" y="52" width="4" height="4" rx="1"/>
+    <rect x="52" y="60" width="4" height="4" rx="1"/>
+    <rect x="60" y="60" width="4" height="4" rx="1"/>
+    <rect x="68" y="60" width="4" height="4" rx="1"/>
+    <rect x="52" y="68" width="4" height="4" rx="1"/>
+    <rect x="60" y="68" width="4" height="4" rx="1"/>
+    <rect x="68" y="68" width="4" height="4" rx="1"/>
+  </g>
+  <!-- 深 marker dot -->
+  <circle cx="78" cy="22" r="6" fill="#facc15"/>
+  <text x="78" y="26" font-family="-apple-system,sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#0f172a">深</text>
+</svg>
