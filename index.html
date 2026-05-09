@@ -2480,102 +2480,15 @@
             return n.toFixed(2);
         }
 
-        // --- Cloud Sync via GitHub Gist + AES-GCM Encryption ---
-        // No backend needed. Data encrypted client-side, stored in a secret GitHub Gist.
+        // --- Cloud Sync via Aliyun Server API ---
+        // Simple PIN-based sync. Server stores JSON files at /sync/{hash}.json.
+        // Configure SYNC_API to your Aliyun server URL.
+        const SYNC_API = ''; // e.g. 'https://你的域名/api/cry'
 
-        function getGHToken() { return localStorage.getItem('cry_gh_token'); }
-        function getGistId() { return localStorage.getItem('cry_gist_id'); }
-        function setGHAuth(token, gistId) {
-            localStorage.setItem('cry_gh_token', token);
-            if (gistId) localStorage.setItem('cry_gist_id', gistId);
-        }
-        function clearAuth() {
-            localStorage.removeItem('cry_gh_token');
-            localStorage.removeItem('cry_gist_id');
-        }
-        function isLoggedIn() { return !!getGHToken(); }
-
-        // --- AES-GCM Encryption (Web Crypto API) ---
-        async function deriveKey(password) {
-            const enc = new TextEncoder();
-            const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-            return crypto.subtle.deriveKey(
-                { name: 'PBKDF2', salt: enc.encode('cry-salt-2026'), iterations: 100000, hash: 'SHA-256' },
-                keyMaterial,
-                { name: 'AES-GCM', length: 256 },
-                false,
-                ['encrypt', 'decrypt']
-            );
-        }
-
-        async function encryptData(data, password) {
-            const key = await deriveKey(password);
-            const enc = new TextEncoder();
-            const iv = crypto.getRandomValues(new Uint8Array(12));
-            const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data)));
-            // Pack iv + ciphertext as base64
-            const buf = new Uint8Array(iv.length + encrypted.byteLength);
-            buf.set(iv);
-            buf.set(new Uint8Array(encrypted), iv.length);
-            return btoa(String.fromCharCode(...buf));
-        }
-
-        async function decryptData(base64, password) {
-            const key = await deriveKey(password);
-            const buf = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-            const iv = buf.slice(0, 12);
-            const data = buf.slice(12);
-            const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
-            return JSON.parse(new TextDecoder().decode(decrypted));
-        }
-
-        // --- GitHub Gist API ---
-        const GIST_FILENAME = 'cry_plans.enc';
-
-        async function gistGet(token, gistId) {
-            const resp = await fetch('https://api.github.com/gists/' + gistId, {
-                headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
-            });
-            if (resp.status === 404) return null;
-            if (!resp.ok) throw new Error('GitHub API error: ' + resp.status);
-            const gist = await resp.json();
-            return gist.files[GIST_FILENAME]?.content || null;
-        }
-
-        async function gistCreate(token, content) {
-            const resp = await fetch('https://api.github.com/gists', {
-                method: 'POST',
-                headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    description: 'cry plans (encrypted)',
-                    public: false,
-                    files: { [GIST_FILENAME]: { content } }
-                })
-            });
-            if (!resp.ok) throw new Error('创建 Gist 失败: ' + resp.status);
-            const gist = await resp.json();
-            return gist.id;
-        }
-
-        async function gistUpdate(token, gistId, content) {
-            const resp = await fetch('https://api.github.com/gists/' + gistId, {
-                method: 'PATCH',
-                headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ files: { [GIST_FILENAME]: { content } } })
-            });
-            if (!resp.ok) throw new Error('更新 Gist 失败: ' + resp.status);
-        }
-
-        // Find existing cry gist
-        async function gistFind(token) {
-            const resp = await fetch('https://api.github.com/gists?per_page=100', {
-                headers: { 'Authorization': 'token ' + token }
-            });
-            if (!resp.ok) return null;
-            const gists = await resp.json();
-            const found = gists.find(g => g.files[GIST_FILENAME]);
-            return found ? found.id : null;
-        }
+        function getSyncPin() { return localStorage.getItem('cry_sync_pin'); }
+        function setSyncPin(pin) { localStorage.setItem('cry_sync_pin', pin); }
+        function clearAuth() { localStorage.removeItem('cry_sync_pin'); }
+        function isLoggedIn() { return !!getSyncPin() && !!SYNC_API; }
 
         // --- Auth UI ---
         function showAuth() {
@@ -2584,36 +2497,34 @@
             overlay.classList.add('visible');
             const errEl = document.getElementById('authError');
             if (errEl) errEl.textContent = '';
-            const tokenEl = document.getElementById('authToken');
-            if (tokenEl) tokenEl.value = getGHToken() || '';
+            const pinEl = document.getElementById('authPin');
+            if (pinEl) pinEl.value = getSyncPin() || '';
         }
         function hideAuth() {
             document.getElementById('authOverlay').classList.remove('visible');
         }
 
         async function doAuth() {
-            const token = document.getElementById('authToken').value.trim();
+            const pin = document.getElementById('authPin').value.trim();
             const errEl = document.getElementById('authError');
             const btn = document.getElementById('authSubmitBtn');
             errEl.textContent = '';
 
-            if (!token) { errEl.textContent = '请输入 GitHub Token'; return; }
+            if (!pin || pin.length < 4) { errEl.textContent = 'PIN 码至少4位'; return; }
+            if (!SYNC_API) { errEl.textContent = '同步服务未配置（SYNC_API 为空）'; return; }
 
             btn.disabled = true;
-            btn.textContent = '验证中...';
+            btn.textContent = '同步中...';
 
             try {
-                const resp = await fetch('https://api.github.com/user', {
-                    headers: { 'Authorization': 'token ' + token }
+                const resp = await fetch(SYNC_API + '/pull', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin })
                 });
-                if (!resp.ok) { errEl.textContent = 'Token 无效，请检查'; return; }
+                if (!resp.ok) { errEl.textContent = '连接失败: ' + resp.status; return; }
 
-                let gistId = getGistId();
-                if (!gistId) {
-                    gistId = await gistFind(token);
-                }
-
-                setGHAuth(token, gistId);
+                setSyncPin(pin);
                 hideAuth();
                 updateUserBar();
                 await syncPlans();
@@ -2635,7 +2546,7 @@
             const infoEl = document.getElementById('userInfo');
             const actEl = document.getElementById('userActions');
             if (isLoggedIn()) {
-                infoEl.innerHTML = '<span class="sync-dot synced"></span>已连接 GitHub 同步';
+                infoEl.innerHTML = '<span class="sync-dot synced"></span>已连接云端同步';
                 actEl.innerHTML = `
                     <button class="user-bar-btn" onclick="syncPlans()">同步</button>
                     <button class="user-bar-btn user-bar-btn-out" onclick="showAuth()">设置</button>
@@ -2653,7 +2564,7 @@
             dot.className = 'sync-dot ' + status;
             const info = document.getElementById('userInfo');
             if (status === 'syncing') info.innerHTML = '<span class="sync-dot syncing"></span>同步中...';
-            else if (status === 'synced') info.innerHTML = '<span class="sync-dot synced"></span>已连接 GitHub 同步';
+            else if (status === 'synced') info.innerHTML = '<span class="sync-dot synced"></span>已连接云端同步';
             else if (status === 'error') info.innerHTML = '<span class="sync-dot error"></span>同步失败';
         }
 
@@ -2673,65 +2584,56 @@
 
         async function syncPlans(forceUpload) {
             if (!isLoggedIn()) return;
-            const token = getGHToken();
-            const password = token;
+            const pin = getSyncPin();
 
             setSyncStatus('syncing');
 
             try {
-                let gistId = getGistId();
-                let finalPlans;
                 const deletedNames = getDeletedNames();
                 const lastSync = localStorage.getItem('cry_last_sync') || '';
+                let finalPlans;
 
                 if (forceUpload) {
                     finalPlans = getPlans();
                 } else {
-                    // Normal sync: cloud is source of truth
+                    // Pull from server
                     let cloudPlans = {};
-                    if (gistId) {
-                        const content = await gistGet(token, gistId);
-                        if (content) {
-                            try { cloudPlans = await decryptData(content, password); }
-                            catch (e) { console.warn('Decrypt failed:', e); }
-                        }
-                    }
+                    try {
+                        const resp = await fetch(SYNC_API + '/pull', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pin })
+                        });
+                        if (resp.ok) cloudPlans = await resp.json();
+                    } catch (e) { console.warn('Pull failed:', e); }
+
                     const localPlans = getPlans();
-                    // Start with cloud as base
                     finalPlans = { ...cloudPlans };
-                    // Only add local plans that are NEW (created after last sync)
                     for (const name in localPlans) {
                         const local = localPlans[name];
                         const cloud = finalPlans[name];
                         if (cloud) {
-                            // Both exist: keep newer
                             if (local.savedAt && (!cloud.savedAt || local.savedAt > cloud.savedAt)) {
                                 finalPlans[name] = local;
                             }
                         } else {
-                            // Only in local: keep ONLY if created after last sync (genuinely new)
                             if (local.savedAt && local.savedAt > lastSync) {
                                 finalPlans[name] = local;
                             }
-                            // Otherwise: was deleted from cloud, don't re-add
                         }
                     }
-                    // Also remove tombstoned plans
                     deletedNames.forEach(name => { delete finalPlans[name]; });
                     localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(finalPlans));
                     refreshPlanSelect();
                 }
 
-                // Encrypt and save to gist
-                const encrypted = await encryptData(finalPlans, password);
-                if (gistId) {
-                    await gistUpdate(token, gistId, encrypted);
-                } else {
-                    gistId = await gistCreate(token, encrypted);
-                    localStorage.setItem('cry_gist_id', gistId);
-                }
+                // Push to server
+                await fetch(SYNC_API + '/push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin, data: finalPlans })
+                });
 
-                // Record sync time and clear tombstones
                 localStorage.setItem('cry_last_sync', new Date().toISOString());
                 clearDeletedNames();
                 setSyncStatus('synced');
@@ -3346,31 +3248,22 @@
             document.getElementById('stockInput').focus();
         });
     </script>
-<!-- Auth Modal (outside .card to avoid backdrop-filter breaking fixed positioning) -->
+<!-- Auth Modal -->
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-box">
         <h2>云端同步</h2>
         <p style="font-size:12px;color:#64748B;margin-bottom:16px;line-height:1.5">
-            输入 GitHub Token 即可开启云端同步。<br>
-            Token 同时用于认证和加密，只需输入一次。
+            输入 PIN 码开启跨设备同步。<br>
+            同一个 PIN 码在不同设备上可以同步方案数据。
         </p>
         <div class="field">
-            <label>GitHub Token</label>
-            <input type="password" id="authToken" placeholder="ghp_xxxx">
+            <label>PIN 码</label>
+            <input type="password" inputmode="numeric" maxlength="10" id="authPin" placeholder="输入 PIN 码" style="text-align:center;font-size:20px;letter-spacing:8px;">
         </div>
         <div class="auth-error" id="authError"></div>
         <div class="auth-actions">
             <button class="auth-btn-primary" id="authSubmitBtn" onclick="doAuth()">同步</button>
         </div>
-        <details style="margin-top:14px;font-size:11px;color:#475569">
-            <summary style="cursor:pointer">如何获取 Token？</summary>
-            <ol style="padding-left:18px;line-height:1.8;margin-top:8px">
-                <li>打开 github.com → Settings → Developer settings</li>
-                <li>Personal access tokens → Tokens (classic)</li>
-                <li>Generate new token → 勾选 <b>gist</b></li>
-                <li>复制 token 粘贴到上方</li>
-            </ol>
-        </details>
         <div class="auth-close" onclick="hideAuth()">取消</div>
     </div>
 </div>

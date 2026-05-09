@@ -1,0 +1,15 @@
+[Unit]
+Description=Cry Sync API
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /opt/cry/repo/deploy/sync-api.mjs
+Restart=always
+RestartSec=5
+Environment=SYNC_DIR=/var/www/cry/sync
+Environment=SYNC_PORT=3001
+WorkingDirectory=/opt/cry/repo/deploy
+
+[Install]
+WantedBy=multi-user.target
