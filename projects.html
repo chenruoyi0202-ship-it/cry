@@ -272,6 +272,7 @@ function render(d){
         +(editing?'<div class="card-actions">'
           +'<button onclick="moveCard(\''+sec.key+'\','+i+',-1)" title="上移">▲</button>'
           +'<button onclick="moveCard(\''+sec.key+'\','+i+',1)" title="下移">▼</button>'
+          +'<button onclick="deleteCard(\''+sec.key+'\','+i+')" title="删除" style="color:#ef4444">✕</button>'
           +'</div>'
           :'<span class="card-arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>');
       if(!editing){
@@ -327,6 +328,13 @@ function saveEdit(){
   syncSave(data,function(ok){
     showToast(ok?'已保存并同步到云端':'已保存到本地');
   });
+}
+function deleteCard(secKey,idx){
+  if(!confirm('确定删除这张卡片？'))return;
+  var sec=data.sections.find(function(s){return s.key===secKey});
+  if(!sec)return;
+  sec.cards.splice(idx,1);
+  render(data);
 }
 function moveCard(secKey,idx,dir){
   var sec=data.sections.find(function(s){return s.key===secKey});
