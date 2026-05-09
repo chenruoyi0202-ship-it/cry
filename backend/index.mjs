@@ -128,6 +128,26 @@ export async function handler(req, resp) {
       return json(resp, 200, { success: true });
     }
 
+    // GET /migraine — public, no auth needed
+    if (method === 'GET' && path.endsWith('/migraine')) {
+      const data = await ossGet('migraine/data.json');
+      return json(resp, 200, data || { records: [], deletedIds: [] });
+    }
+
+    // POST /migraine — public, no auth needed
+    if (method === 'POST' && path.endsWith('/migraine')) {
+      const body = parseBody(req);
+      if (!body.records || !Array.isArray(body.records)) return json(resp, 400, { error: '无效数据' });
+      const cloud = await ossGet('migraine/data.json') || { records: [], deletedIds: [] };
+      const allDeleted = new Set([...(cloud.deletedIds || []), ...(body.deletedIds || [])]);
+      const merged = new Map();
+      cloud.records.forEach(r => { if (!allDeleted.has(r.id)) merged.set(r.id, r); });
+      body.records.forEach(r => { if (!allDeleted.has(r.id)) merged.set(r.id, r); });
+      const result = { records: Array.from(merged.values()), deletedIds: Array.from(allDeleted), updatedAt: new Date().toISOString() };
+      await ossPut('migraine/data.json', result);
+      return json(resp, 200, result);
+    }
+
     // 404
     json(resp, 404, { error: '接口不存在' });
 
